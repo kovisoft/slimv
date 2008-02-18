@@ -1,4 +1,4 @@
-# run with: c:\Python25\1.py | clisp
+# run with: c:\Python24\1.py | clisp
 
 # Special characters:
 # 08		Backspace
@@ -14,13 +14,8 @@
 
 # :'<,'>py for l in vim.current.buffer[vim.current.range.start:vim.current.range.end+1]: print l
 
-#TODO: use popen for opening a pipe to subprocess
 #TODO: check pty module
-
-"""
-(defun square (x) (* x x))
-(square 16)
-"""
+#TODO: merge with server.py, run server upon request (-s command line switch)
 
 
 import os
@@ -31,12 +26,15 @@ import socket
 #import select
 #from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, ENOTCONN
 #from threading import Thread
+from subprocess import *
 
 HOST		= ''		# Symbolic name meaning the local host
-PORT		= 7171		# Arbitrary non-privileged port
+PORT		= 7171		# Arbitrary non-privileged port. TODO: make this configurable
 
 debug_level	= 0		# Debug level for diagnostic messages
 
+mswindows = (sys.platform == "win32")
+ 
 
 def log( s, level ):
 	"""
@@ -49,7 +47,25 @@ def log( s, level ):
 if __name__ == "__main__":
 
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-	s.connect( ( 'localhost', PORT ) )
+	try:
+		s.connect( ( 'localhost', PORT ) )
+	except socket.error, msg:
+		s.close()
+		#TODO: Modify this to work outside Windows
+		#TODO: spawn subprocess only if socket connect failed
+		if mswindows:
+			from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
+			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
+		else:
+			server = Popen( ['server.py'] )
+
+		s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+		try:
+			s.connect( ( 'localhost', PORT ) )
+		except socket.error, msg:
+			s.close()
+			sys.exit()
+
 
 	if len( sys.argv ) < 2:
 		# No command line arguments specified, read input from stdin
