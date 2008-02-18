@@ -20,6 +20,7 @@
 
 import os
 import sys
+import getopt
 import time
 #import msvcrt # for getch()
 import socket
@@ -44,8 +45,7 @@ def log( s, level ):
 		print s
 
 
-if __name__ == "__main__":
-
+def connect_server():
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 	try:
 		s.connect( ( 'localhost', PORT ) )
@@ -62,12 +62,20 @@ if __name__ == "__main__":
 		s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 		try:
 			s.connect( ( 'localhost', PORT ) )
+			time.sleep( 1.0 )	# Allow subprocess to start
 		except socket.error, msg:
 			s.close()
-			sys.exit()
+			#sys.exit()
+			s =  None
+	return s
 
 
-	if len( sys.argv ) < 2:
+def client( argv ):
+	s = connect_server()
+	if s is None:
+		return
+
+	if len( argv ) < 2:
 		# No command line arguments specified, read input from stdin
 		while 1:
 #			if sys.stdout.closed:
@@ -85,10 +93,13 @@ if __name__ == "__main__":
 
 	else:
 		# Send command line arguments to the server
-		for line in sys.argv[1:]:
+		for line in argv[1:]:
 			s.send( line )
-			time.sleep(0.1)
+			time.sleep(0.01)
 
 	log( 'closing', 1 )
 	s.close()
+
+if __name__ == "__main__":
+	client( sys.argv )
 
