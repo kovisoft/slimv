@@ -1,12 +1,5 @@
 # run with: c:\Python24\1.py | clisp
 
-# Special characters:
-# 08		Backspace
-# 16		Ctrl+V
-# E0 52		Shift+Ins
-# E0 48		Up
-# E0 50		Down
-
 # :py import vim
 # :py import sys
 # :'<,'>py sys.argv = [''] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
@@ -34,7 +27,7 @@ PORT		= 7171		# Arbitrary non-privileged port. TODO: make this configurable
 
 debug_level	= 0		# Debug level for diagnostic messages
 
-mswindows = (sys.platform == "win32")
+mswindows = (sys.platform == 'win32')
  
 
 def log( s, level ):
@@ -70,12 +63,12 @@ def connect_server():
 	return s
 
 
-def client( argv ):
+def client( args ):
 	s = connect_server()
 	if s is None:
 		return
 
-	if len( argv ) < 2:
+	if len( args ) < 1:
 		# No command line arguments specified, read input from stdin
 		while 1:
 #			if sys.stdout.closed:
@@ -84,7 +77,7 @@ def client( argv ):
 				line = raw_input()
 				s.send( line )
 			except ( EOFError, KeyboardInterrupt ):
-				#sys.stdout.write( chr( 26 ) + "\n" )
+				#sys.stdout.write( chr( 26 ) + '\n' )
 				#sys.stdout.flush()
 #				sys.stdout.close()
 #				os.close( 1 ) # 1=stdout
@@ -93,13 +86,60 @@ def client( argv ):
 
 	else:
 		# Send command line arguments to the server
-		for line in argv[1:]:
+		for line in args:
 			s.send( line )
 			time.sleep(0.01)
 
 	log( 'closing', 1 )
 	s.close()
 
-if __name__ == "__main__":
-	client( sys.argv )
+
+def server( args ):
+	print 'server', args
+
+
+def usage():
+	"""Displays program usage information
+	"""
+	progname = os.path.basename( sys.argv[0] )
+	print 'Usage: ', progname + ' [-d LEVEL] [-s] [-c ARGS]'
+	print
+	print 'Options:'
+	print '  -?, -h, --help             show this help message and exit'
+	print '  -d LEVEL, --debug=LEVEL    set debug LEVEL (0..3)'
+	print '  -s                         start server'
+	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
+	print '                             (if present, this option must be the last one)'
+
+
+if __name__ == '__main__':
+
+	EXIT, SERVER, CLIENT = range( 3 )
+	mode = EXIT
+
+	# Get command line options
+	try:
+		opts, args = getopt.getopt( sys.argv[1:], '?hcsd:', ['help', 'client', 'server', 'debug='] )
+
+		# Process options
+		for o, a in opts:
+			if o in ('-?', '-h', '--help'):
+				usage()
+				break
+			if o in ('-d', '--debug'):
+				debug_level = int(a)
+			if o in ('-s', '--server'):
+				mode = SERVER
+			if o in ('-c', '--client'):
+				mode = CLIENT
+
+	except getopt.GetoptError:
+		# print help information and exit:
+		usage()
+
+	if mode == SERVER:
+		server( args )
+
+	if mode == CLIENT:
+		client( args )
 
