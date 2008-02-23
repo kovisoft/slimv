@@ -32,6 +32,14 @@ terminate	= 0		# Main program termination flag
 buffer		= ''
 buflen		= 0
 
+#python_path     = 'python24.exe'
+python_path     = 'c:\\Python24\\python'
+#lisp_path       = 'clisp.exe'
+lisp_path       = 'c:\\lispbox\\clisp-2.37\\clisp.exe'
+#slimvim_path    = os.environ.get['$VIMR'] + '/vimfiles/plugin/slimvim.py' #TODO: get this from caller
+#slimvim_path    = os.environ.get['$VIMRUNTIME'] + '/plugin/slimvim.py' #TODO: get this from caller
+slimvim_path    = 'slimvim.py'
+
 mswindows = (sys.platform == 'win32')
  
 
@@ -44,6 +52,8 @@ def log( s, level ):
 
 
 def connect_server():
+	global python_path
+
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 	try:
 		s.connect( ( 'localhost', PORT ) )
@@ -54,7 +64,8 @@ def connect_server():
 		if mswindows:
 			from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
 #			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
-			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
+#			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
+			server = Popen( [python_path, slimvim_path, '-s'], creationflags=CREATE_NEW_CONSOLE )
 		else:
 			server = Popen( ['server.py'] )
 
@@ -185,16 +196,17 @@ class output_listener( Thread ):
 
 
 def server( args ):
+	global lisp_path
 	global terminate
 	global buffer
 	global buflen
 
 	if mswindows:
 		from win32con import CREATE_NO_WINDOW
-		p1 = Popen( ["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
+		p1 = Popen( [lisp_path], stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
 			    creationflags=CREATE_NO_WINDOW )
 	else:
-		p1 = Popen( ["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+		p1 = Popen( [lisp_path], stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 #	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
 #			creationflags=win32con.CREATE_NO_WINDOW)
 	ol = output_listener( p1.stdout )
@@ -253,6 +265,8 @@ def usage():
 	print
 	print 'Options:'
 	print '  -?, -h, --help             show this help message and exit'
+	print '  -p, --python=PATH          path of Python interpreter'
+	print '  -l, --lisp=PATH            path of Lisp interpreter'
 	print '  -d LEVEL, --debug=LEVEL    set debug LEVEL (0..3)'
 	print '  -s                         start server'
 	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
@@ -260,19 +274,27 @@ def usage():
 
 
 if __name__ == '__main__':
+#	global python_path
+#	global lisp_path
 
 	EXIT, SERVER, CLIENT = range( 3 )
 	mode = EXIT
+	slimvim_path = sys.argv[0]
 
 	# Get command line options
 	try:
-		opts, args = getopt.getopt( sys.argv[1:], '?hcsd:', ['help', 'client', 'server', 'debug='] )
+		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:d:', \
+                                                          ['help', 'client', 'server', 'python=', 'lisp=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
 			if o in ('-?', '-h', '--help'):
 				usage()
 				break
+			if o in ('-p', '--python'):
+				python_path = a
+			if o in ('-l', '--lisp'):
+				lisp_path = a
 			if o in ('-d', '--debug'):
 				debug_level = int(a)
 			if o in ('-s', '--server'):
