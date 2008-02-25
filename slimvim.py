@@ -33,9 +33,9 @@ buffer		= ''
 buflen		= 0
 
 #python_path     = 'python24.exe'
-python_path     = 'c:\\Python24\\python'
+python_path     = 'c:/Python24/python'
 #lisp_path       = 'clisp.exe'
-lisp_path       = 'c:\\lispbox\\clisp-2.37\\clisp.exe'
+lisp_path       = 'clisp.exe'
 #slimvim_path    = os.environ.get['$VIMR'] + '/vimfiles/plugin/slimvim.py' #TODO: get this from caller
 #slimvim_path    = os.environ.get['$VIMRUNTIME'] + '/plugin/slimvim.py' #TODO: get this from caller
 slimvim_path    = 'slimvim.py'
@@ -284,7 +284,7 @@ if __name__ == '__main__':
 	# Get command line options
 	try:
 		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:d:', \
-                                                          ['help', 'client', 'server', 'python=', 'lisp=', 'debug='] )
+                                            ['help', 'client', 'server', 'python=', 'lisp=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
