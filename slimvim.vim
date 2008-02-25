@@ -1,4 +1,4 @@
-" Slimvim:      The Superior Lisp Interaction Mode for VIM
+" slimvim.vim:  The Superior Lisp Interaction Mode for VIM
 " Last Change:	2008 Feb 24
 " Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
 " License:	This file is placed in the public domain.
@@ -19,15 +19,19 @@ if !exists("g:slimvim_path")
 endif
 
 if !exists("g:slimvim_python")
-    let g:slimvim_python    = "c:\python24"
+    let g:slimvim_python    = "c:/python24/python.exe"
 endif
 
 if !exists("g:slimvim_lisp")
-    let g:slimvim_lisp      = "c:\lispbox\clisp-2.37\clisp.exe"
+    let g:slimvim_lisp      = "c:/lispbox/clisp-2.37/clisp.exe"
 endif
 
 "py import vim
 "py import sys
+"
+"vim.command( 'let user_input = input( "Enter something" )' )
+"user_input = vim.eval( "user_input" )
+
 
 function! SlimvimLoad()
     if g:slimvim_loaded_python == 0
@@ -46,7 +50,9 @@ function! SlimvimSendRange()
 "    py print '>>>', os.environ
 "    py sys.argv = [os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + 
 "                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-    py sys.argv = [vim.eval("g:slimvim_path"), '-c'] + 
+    py sys.argv = [vim.eval("g:slimvim_path"),
+                  \ '-p', vim.eval("g:slimvim_python"),
+                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
                   \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
 "    pyfile c:\python24\slimvim.py
 "    pyfile c:\Program Files\Vim\vim71\plugin\slimvim.py
@@ -57,7 +63,10 @@ endfunction
 function! SlimvimSendAll()
     call SlimvimLoad()
 "    py sys.argv=[os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + vim.current.buffer[0:]
-    py sys.argv=[vim.eval("g:slimvim_path"), '-c'] + vim.current.buffer[0:]
+    py sys.argv = [vim.eval("g:slimvim_path"),
+                  \ '-p', vim.eval("g:slimvim_python"),
+                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
+                  \ vim.current.buffer[0:]
 "    pyfile c:\python24\slimvim.py
 "    pyfile $VIMRUNTIME/plugin/slimvim.py
     execute ":pyfile " . g:slimvim_path
