@@ -44,36 +44,78 @@ function! SlimvimLoad()
     endif
 endfunction
 
-function! SlimvimSendRange()
+function! SlimvimEval(args)
+"    echo a:args
     call SlimvimLoad()
 "    py sys.argv=['slimvim.py', '-c'] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
 "    py print '>>>', os.environ
 "    py sys.argv = [os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + 
 "                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
+"    let s:xxx = py vim.current.buffer[vim.current.range.start]
     py sys.argv = [vim.eval("g:slimvim_path"),
                   \ '-p', vim.eval("g:slimvim_python"),
                   \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
-                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-"    pyfile c:\python24\slimvim.py
-"    pyfile c:\Program Files\Vim\vim71\plugin\slimvim.py
-"    pyfile $VIMRUNTIME/plugin/slimvim.py
+                  \ vim.eval("a:args")
+"                  \ [vim.eval("a:args")]
     execute ":pyfile " . g:slimvim_path
 endfunction
 
-function! SlimvimSendAll()
-    call SlimvimLoad()
-"    py sys.argv=[os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + vim.current.buffer[0:]
-    py sys.argv = [vim.eval("g:slimvim_path"),
-                  \ '-p', vim.eval("g:slimvim_python"),
-                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
-                  \ vim.current.buffer[0:]
-"    pyfile c:\python24\slimvim.py
-"    pyfile $VIMRUNTIME/plugin/slimvim.py
-    execute ":pyfile " . g:slimvim_path
+function! SlimvimEvalDefun()
+endfunction
+
+function! SlimvimEvalLastExp()
+endfunction
+
+function! SlimvimPprintEvalLastExp()
+"                 (dolist (o list)
+"                   (pprint o))
+endfunction
+
+function! SlimvimEvalRegion()
+"    call SlimvimLoad()
+
+"    py sys.argv=['slimvim.py', '-c'] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
+"    py print '>>>', os.environ
+"    py sys.argv = [os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + 
+"                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
+"    let s:xxx = py vim.current.buffer[vim.current.range.start]
+"    let lines = getline(".")
+"TODO: In visual mode this is called in a loop for all lines
+    let lines = getline("'<", "'>")
+    call SlimvimEval(lines)
+"    py sys.argv = [vim.eval("g:slimvim_path"),
+"                  \ '-p', vim.eval("g:slimvim_python"),
+"                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
+"                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
+"    execute ":pyfile " . g:slimvim_path
+endfunction
+
+function! SlimvimEvalBuffer()
+    let lines = getline(1, '$')
+    call SlimvimEval(lines)
+
+"    call SlimvimLoad()
+""    py sys.argv=[os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + vim.current.buffer[0:]
+"    py sys.argv = [vim.eval("g:slimvim_path"),
+"                  \ '-p', vim.eval("g:slimvim_python"),
+"                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
+"                  \ vim.current.buffer[0:]
+""    pyfile c:\python24\slimvim.py
+""    pyfile c:\Program Files\Vim\vim71\plugin\slimvim.py
+""    pyfile $VIMRUNTIME/plugin/slimvim.py
+"    execute ":pyfile " . g:slimvim_path
 endfunction
 
 "map <A-F5> :py import vim<CR>:py import sys<CR>
 "map <C-F5> :py sys.argv=['']+vim.current.buffer[vim.current.range.start:vim.current.range.end+1]<CR>:pyfile c:\python24\slimvim.py<CR>
-map <C-F5> :call SlimvimSendRange()<CR>
-map <C-F6> :call SlimvimSendAll()<CR>
+" SLIME: <C-A-x>
+map <C-F1> :call SlimvimEvalDefun()<CR>
+" SLIME: <C-x> <C-e>
+map <C-F2> :call SlimvimEvalLastExp()<CR>
+" SLIME: 
+map <C-F3> :call SlimvimPprintEvalLastExp()<CR>
+" SLIME: <C-c> <C-r>
+map <C-F5> :call SlimvimEvalRegion()<CR>
+" SLIME: ???
+map <C-F6> :call SlimvimEvalBuffer()<CR>
 
