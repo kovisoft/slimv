@@ -71,7 +71,7 @@ function! SlimvimPprintEvalLastExp()
 "                   (pprint o))
 endfunction
 
-function! SlimvimEvalRegion()
+function! SlimvimEvalRegion() range
 "    call SlimvimLoad()
 
 "    py sys.argv=['slimvim.py', '-c'] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
@@ -80,8 +80,13 @@ function! SlimvimEvalRegion()
 "                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
 "    let s:xxx = py vim.current.buffer[vim.current.range.start]
 "    let lines = getline(".")
-"TODO: In visual mode this is called in a loop for all lines
-    let lines = getline("'<", "'>")
+"TODO: In visual mode this is called in a loop for all lines, now OK
+"    let lines = getline("'<", "'>")
+    if mode() == "v" || mode() == "V"
+        let lines = getline(a:firstline, a:lastline)
+    else
+        let lines = getline("'<", "'>")
+    endif
     call SlimvimEval(lines)
 "    py sys.argv = [vim.eval("g:slimvim_path"),
 "                  \ '-p', vim.eval("g:slimvim_python"),
