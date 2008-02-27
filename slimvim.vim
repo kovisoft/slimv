@@ -6,7 +6,7 @@
 "               *** ***   Use At-Your-Own-Risk!   *** ***
 "
 " ---------------------------------------------------------------------
-"  Load Once: {{{1
+"  Load Once:
 if &cp || exists("g:slimvim_loaded")
     finish
 endif
@@ -60,17 +60,6 @@ function! SlimvimEval(args)
     execute ":pyfile " . g:slimvim_path
 endfunction
 
-function! SlimvimEvalDefun()
-endfunction
-
-function! SlimvimEvalLastExp()
-endfunction
-
-function! SlimvimPprintEvalLastExp()
-"                 (dolist (o list)
-"                   (pprint o))
-endfunction
-
 function! SlimvimEvalRegion() range
 "    call SlimvimLoad()
 
@@ -109,6 +98,29 @@ function! SlimvimEvalBuffer()
 ""    pyfile c:\Program Files\Vim\vim71\plugin\slimvim.py
 ""    pyfile $VIMRUNTIME/plugin/slimvim.py
 "    execute ":pyfile " . g:slimvim_path
+endfunction
+
+function! SlimvimEvalLastExp()
+    " Select (...) block in visual mode
+    normal va(v
+    " Evaluate visual mode region
+    '<,'>call SlimvimEvalRegion()
+    "let lines = getline("'<", "'>")
+    "call SlimvimEval(lines)
+endfunction
+
+function! SlimvimEvalDefun()
+    " Find previous 'defun' string from the end of line
+    normal $?\<defun\><CR>
+    call SlimvimEvalLastExp()
+endfunction
+
+function! SlimvimPprintEvalLastExp()
+    normal va(v
+    let lines = ["(dolist (o"] + getline("'<", "'>") + [")(pprint o))"]
+    call SlimvimEval(lines)
+"                 (dolist (o list)
+"                   (pprint o))
 endfunction
 
 "map <A-F5> :py import vim<CR>:py import sys<CR>
