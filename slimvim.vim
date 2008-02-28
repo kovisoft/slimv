@@ -6,6 +6,16 @@
 "               *** ***   Use At-Your-Own-Risk!   *** ***
 "
 " ---------------------------------------------------------------------
+"  Issues:
+"  - register s is used
+"
+"  TODO: swank server
+"  TODO: make it work on Linux
+"  TODO: handle not whole line selection
+"  TODO: is it possible to redirect output to VIM buffer?
+"  TODO: handle '(...) and #'(,,,), etc type s-expressions
+"  TODO: compile related functions and keybindings
+"  TODO: documentation commands
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
     finish
@@ -84,6 +94,12 @@ function! SlimvimEvalRegion() range
 "    execute ":pyfile " . g:slimvim_path
 endfunction
 
+function! SlimvimEvalRegister()
+    let lines = []
+    call add(lines, getreg('"s'))
+    call SlimvimEval(lines)
+endfunction
+
 function! SlimvimEvalBuffer()
     let lines = getline(1, '$')
     call SlimvimEval(lines)
@@ -102,25 +118,37 @@ endfunction
 
 function! SlimvimEvalLastExp()
     " Select (...) block in visual mode
-    normal va(v
+    "normal va(v
+    normal va("sy
+    "'<,'>call SlimvimEvalRegion()
     " Evaluate visual mode region
-    '<,'>call SlimvimEvalRegion()
+    call SlimvimEvalRegister()
     "let lines = getline("'<", "'>")
     "call SlimvimEval(lines)
 endfunction
 
 function! SlimvimEvalDefun()
     " Find previous 'defun' string from the end of line
-    normal $?\<defun\><CR>
+    "normal $?\<defun\><CR>
+    normal 99[(
     call SlimvimEvalLastExp()
 endfunction
 
 function! SlimvimPprintEvalLastExp()
-    normal va(v
-    let lines = ["(dolist (o"] + getline("'<", "'>") + [")(pprint o))"]
+    "normal va(v
+    normal va("sy
+    "let lines = ["(dolist (o"] + getline("'<", "'>") + [")(pprint o))"]
+    let lines = ["(dolist (o" . getreg('"s') . ")(pprint o))"]
     call SlimvimEval(lines)
 "                 (dolist (o list)
 "                   (pprint o))
+endfunction
+
+function! SlimvimUndefineFunction()
+    normal viw"sy
+    let lines = ['(fmakunbound (read-from-string "' . getreg('"s') . '"))']
+    call SlimvimEval(lines)
+"  (fmakunbound (read-from-string "my-but-last"))
 endfunction
 
 "map <A-F5> :py import vim<CR>:py import sys<CR>
