@@ -25,7 +25,7 @@ from subprocess import *
 from threading import Thread
 
 HOST		= ''		# Symbolic name meaning the local host
-PORT		= 7171		# Arbitrary non-privileged port. TODO: make this configurable
+PORT		= 5151		# Arbitrary non-privileged port. TODO: make this configurable
 
 debug_level	= 0		# Debug level for diagnostic messages
 terminate	= 0		# Main program termination flag
@@ -122,6 +122,9 @@ def client( args ):
 	else:
 		# Send command line arguments to the server
 		for line in args:
+			l = len(line)
+			lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
+			s.send( lstr )		# make if a swank protocol
 			s.send( line )
 			time.sleep(0.01)
 
@@ -149,20 +152,23 @@ class socket_listener( Thread ):
 			log( "sl.listen", 1 )
 			self.s.listen( 1 )
 			conn, addr = self.s.accept()
-			while not terminate:
-				log( "sl.recv", 1 )
-				received = conn.recv(1024)
-#				sys.stdout.write( received + '\n' )
-#				sys.stdout.flush()
-				if len( received ) == 0:
-					break
-				self.inp.write( received + '\n' )
-				#time.sleep(0.1)
-#				l = len( buffer )
-#				while buflen < l:
-#					sys.stdout.write( buffer[buflen] )
-#					buflen = buflen + 1
-				buffer = buffer + received + '\n'
+			l = 0
+			lstr = ''
+			if not terminate:
+				# swank server: read length first
+				log( "sl.recv len", 1 )
+				lstr = conn.recv(4)
+				if len( lstr ) > 0:
+					l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
+#			while not terminate and len( lstr ) > 0:
+			if not terminate and len( lstr ) > 0:
+				log( "sl.recv data", 1 )
+				received = conn.recv(l)
+				if len( received ) > 0:
+					self.inp.write( received + '\n' )
+					buffer = buffer + received + '\n'
+#				else:
+#					break
 			log( "sl.close", 1 )
 			conn.close()
 
@@ -285,6 +291,7 @@ def usage():
 	print '  -?, -h, --help             show this help message and exit'
 	print '  -p, --python=PATH          path of Python interpreter'
 	print '  -l, --lisp=PATH            path of Lisp interpreter'
+	print '  -r, --run=PATH             full command to run the server'
 	print '  -d LEVEL, --debug=LEVEL    set debug LEVEL (0..3)'
 	print '  -s                         start server'
 	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
