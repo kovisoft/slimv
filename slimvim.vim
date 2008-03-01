@@ -16,12 +16,16 @@
 "  TODO: handle '(...) and #'(,,,), etc type s-expressions
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
+"  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
     finish
 endif
 let g:slimvim_loaded        = 1
 let g:slimvim_loaded_python = 0
+
+" ---------------------------------------------------------------------
+"  Global variable definitions
 
 if !exists("g:slimvim_path")
 "    let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
@@ -30,6 +34,7 @@ endif
 
 if !exists("g:slimvim_python")
     let g:slimvim_python    = "c:/python24/python.exe"
+"    let g:slimvim_python    = 'console -r "/k c:/python24/python.exe"'
 endif
 
 if !exists("g:slimvim_lisp")
@@ -42,8 +47,13 @@ endif
 "vim.command( 'let user_input = input( "Enter something" )' )
 "user_input = vim.eval( "user_input" )
 
+" ---------------------------------------------------------------------
+"  General utility functions
 
 function! SlimvimLoad()
+    " 
+    " Load Python library and necessary modules
+    "
     if g:slimvim_loaded_python == 0
         py import vim
         py import sys
@@ -54,7 +64,23 @@ function! SlimvimLoad()
     endif
 endfunction
 
+function! SlimvimSelectSymbol()
+    normal viw"sy
+endfunction
+
+function! SlimvimSelectForm()
+    normal va("sy
+endfunction
+
+function! SlimvimSelectToplevelForm()
+    normal 99[(
+    call SlimvimSelectForm()
+endfunction
+
 function! SlimvimEval(args)
+    "
+    " Send argument to Lisp server for evaluation
+    "
 "    echo a:args
     call SlimvimLoad()
 "    py sys.argv=['slimvim.py', '-c'] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
@@ -71,85 +97,98 @@ function! SlimvimEval(args)
 endfunction
 
 function! SlimvimEvalRegion() range
-"    call SlimvimLoad()
-
-"    py sys.argv=['slimvim.py', '-c'] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-"    py print '>>>', os.environ
-"    py sys.argv = [os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + 
-"                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-"    let s:xxx = py vim.current.buffer[vim.current.range.start]
-"    let lines = getline(".")
-"TODO: In visual mode this is called in a loop for all lines, now OK
-"    let lines = getline("'<", "'>")
+    "
+    " Eval buffer lines in the given range
+    "
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
     else
         let lines = getline("'<", "'>")
     endif
     call SlimvimEval(lines)
-"    py sys.argv = [vim.eval("g:slimvim_path"),
-"                  \ '-p', vim.eval("g:slimvim_python"),
-"                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
-"                  \ vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-"    execute ":pyfile " . g:slimvim_path
 endfunction
 
-function! SlimvimEvalRegister()
+function! SlimvimEvalSelection()
+    "
+    " Eval contents of the 's' register
+    "
     let lines = []
     call add(lines, getreg('"s'))
     call SlimvimEval(lines)
 endfunction
 
+function! SlimvimEvalForm(template)
+    "
+    " Eval Lisp form.
+    " Form given in the template is passed to Lisp without modification.
+    "
+    let lines = [a:template]
+    call SlimvimEval(lines)
+endfunction
+
+function! SlimvimEvalForm1(template, par1)
+    "
+    " Eval Lisp form, with the given parameter substituted in the template.
+    " %par1% string is substituted with par1
+    "
+    let temp1 = substitute(a:template, '%par1%', a:par1, "g")
+    let lines = [temp1]
+    call SlimvimEval(lines)
+endfunction
+
+function! SlimvimEvalForm2(template, par1, par2)
+    "
+    " Eval Lisp form, with the given parameters substituted in the template.
+    " %par1% string is substituted with par1
+    " %par2% string is substituted with par2
+    "
+    let temp1 = substitute(a:template, '%par1%', a:par1, "g")
+    let temp2 = substitute(temp1,      '%par2%', a:par2, "g")
+    let lines = [temp2]
+    call SlimvimEval(lines)
+endfunction
+
+" ---------------------------------------------------------------------
+"  Special functions
+
 function! SlimvimEvalBuffer()
+    "
+    " Evaluate the whole buffer
+    "
     let lines = getline(1, '$')
     call SlimvimEval(lines)
-
-"    call SlimvimLoad()
-""    py sys.argv=[os.environ.get('VIMRUNTIME')+'/plugin/slimvim.py', '-c'] + vim.current.buffer[0:]
-"    py sys.argv = [vim.eval("g:slimvim_path"),
-"                  \ '-p', vim.eval("g:slimvim_python"),
-"                  \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
-"                  \ vim.current.buffer[0:]
-""    pyfile c:\python24\slimvim.py
-""    pyfile c:\Program Files\Vim\vim71\plugin\slimvim.py
-""    pyfile $VIMRUNTIME/plugin/slimvim.py
-"    execute ":pyfile " . g:slimvim_path
 endfunction
 
 function! SlimvimEvalLastExp()
-    " Select (...) block in visual mode
-    "normal va(v
-    normal va("sy
-    "'<,'>call SlimvimEvalRegion()
-    " Evaluate visual mode region
-    call SlimvimEvalRegister()
-    "let lines = getline("'<", "'>")
-    "call SlimvimEval(lines)
+    call SlimvimSelectForm()
+    call SlimvimEvalSelection()
 endfunction
 
 function! SlimvimEvalDefun()
-    " Find previous 'defun' string from the end of line
-    "normal $?\<defun\><CR>
-    normal 99[(
-    call SlimvimEvalLastExp()
+    call SlimvimSelectToplevelForm()
+    call SlimvimEvalSelection()
 endfunction
 
 function! SlimvimPprintEvalLastExp()
     "normal va(v
-    normal va("sy
+    call SlimvimSelectForm()
+    "normal va("sy
     "let lines = ["(dolist (o"] + getline("'<", "'>") + [")(pprint o))"]
-    let lines = ["(dolist (o" . getreg('"s') . ")(pprint o))"]
-    call SlimvimEval(lines)
+"    let lines = ["(dolist (o" . getreg('"s') . ")(pprint o))"]
+"    call SlimvimEval(lines)
 "                 (dolist (o list)
 "                   (pprint o))
+    call SlimvimEvalForm1('(dolist (o %par1%)(pprint o))', getreg('"s'))
 endfunction
 
 function! SlimvimUndefineFunction()
-    normal viw"sy
-    let lines = ['(fmakunbound (read-from-string "' . getreg('"s') . '"))']
-    call SlimvimEval(lines)
-"  (fmakunbound (read-from-string "my-but-last"))
+    "normal viw"sy
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1('(fmakunbound (read-from-string %par1%))', '"' . getreg('"s') . '"')
 endfunction
+
+" ---------------------------------------------------------------------
+"  Slimvim keybindings
 
 "map <A-F5> :py import vim<CR>:py import sys<CR>
 "map <C-F5> :py sys.argv=['']+vim.current.buffer[vim.current.range.start:vim.current.range.end+1]<CR>:pyfile c:\python24\slimvim.py<CR>
