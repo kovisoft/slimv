@@ -65,6 +65,8 @@ def connect_server():
 			from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
 #			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
 #			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
+#			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
+#					creationflags=CREATE_NEW_CONSOLE )
 			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
 					creationflags=CREATE_NEW_CONSOLE )
 		else:
