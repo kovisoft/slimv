@@ -15,6 +15,7 @@ import os
 import sys
 import getopt
 import time
+import shlex
 #import msvcrt # for getch()
 import socket
 #import select
@@ -39,6 +40,7 @@ lisp_path       = 'clisp.exe'
 #slimvim_path    = os.environ.get['$VIMR'] + '/vimfiles/plugin/slimvim.py' #TODO: get this from caller
 #slimvim_path    = os.environ.get['$VIMRUNTIME'] + '/plugin/slimvim.py' #TODO: get this from caller
 slimvim_path    = 'slimvim.py'
+run_cmd		= ''
 
 mswindows = (sys.platform == 'win32')
  
@@ -53,6 +55,7 @@ def log( s, level ):
 
 def connect_server():
 	global python_path
+	global run_cmd
 
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 	try:
@@ -61,14 +64,26 @@ def connect_server():
 		s.close()
 		#TODO: Modify this to work outside Windows
 		#TODO: spawn subprocess only if socket connect failed
+		if run_cmd == '':
+		    cmd = [python_path, slimvim_path, '-l', lisp_path, '-s']
+		else:
+		    cmd = shlex.split(run_cmd)
+#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -?"'
+#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -l ' \
+#				+ lisp_path + ' -s"'
+		#cmd = 'c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -?'
 		if mswindows:
 			from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
 #			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
 #			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
 #			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
 #					creationflags=CREATE_NEW_CONSOLE )
-			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
-					creationflags=CREATE_NEW_CONSOLE )
+#			server = Popen( [python_path, slimvim_path, '-l', lisp_path, '-s'], \
+#					creationflags=CREATE_NEW_CONSOLE )
+			server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
+#			server = Popen( ['console', '-r', \
+#                '"/k c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -l ' + lisp_path + ' -s"'], \
+#					creationflags=CREATE_NEW_CONSOLE )
 		else:
 			server = Popen( ['server.py'] )
 
@@ -286,8 +301,8 @@ if __name__ == '__main__':
 
 	# Get command line options
 	try:
-		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:d:', \
-                                            ['help', 'client', 'server', 'python=', 'lisp=', 'debug='] )
+		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:r:d:', \
+                                            ['help', 'client', 'server', 'python=', 'lisp=', 'run=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
@@ -298,6 +313,8 @@ if __name__ == '__main__':
 				python_path = a
 			if o in ('-l', '--lisp'):
 				lisp_path = a
+			if o in ('-r', '--run'):
+				run_cmd = a
 			if o in ('-d', '--debug'):
 				debug_level = int(a)
 			if o in ('-s', '--server'):
