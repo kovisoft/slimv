@@ -9,13 +9,40 @@
 "  Issues:
 "  - register s is used
 "
-"  TODO: swank server
 "  TODO: make it work on Linux
 "  TODO: is it possible to redirect output to VIM buffer?
-"  TODO: handle '(...) and #'(,,,), etc type s-expressions
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
+"  TODO: macroexpand and similar stuff
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
+" ---------------------------------------------------------------------
+"  Mini-FAQ:
+"  - Q: Why is this plugin called 'Slimvim'?
+"  - A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
+"       In SLIME 'E' stands for 'Emacs', so here it is replaced with 'vim'.
+"
+"  - Q: Why another 'Superior Lisp Mode' if there is already one?
+"  - A: Because many programmers prefer VIM as a program text editor
+"       over Emacs, including me. I don't want to start a holy war or
+"       whatever, I'm just happy if someone else finds this plugin useful.
+"
+"  - Q: How does Slimvim work?
+"  - A: Slimvim consists of three parts: VIM plugin, client and server.
+"       The Slimvim server is a swank server that embeds a Lisp REPL.
+"       The Slimvim client interfaces with the server and is responsible
+"       for sending Lisp commands to the Lisp REPL.
+"       The VIM plugin is translating editor commands to Lisp commands to be
+"       sent to the server by the client.
+"       So the dataflow is like this:
+"       VIM -> VIM plugin -> Slimvim client -> Slimvim server -> Lisp REPL
+"       The plugin resides in 'slimvim.vim', the client and the server both
+"       reside in 'slimvim.py'.
+"
+"  - Q: Why is the default port number 5151?
+"  - A: Hint: what roman numbers are 5,1,5,1? Bingo: V,I,V,I or double VI.
+"
+"  - Q: Are you a Lisp expert?
+"  - A: No, not at all. I'm just learning Lisp.
 " ---------------------------------------------------------------------
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
@@ -76,7 +103,16 @@ endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvimSelectForm()
-    normal va("sy
+    "normal va("sy
+    normal va(o
+    " Handle '() or #'() etc. type special syntax forms
+    " TODO: what to do with ` operator?
+    let c = col(".") - 2
+    while c > 0 && match(' \t()', getline(".")[c]) < 0
+        normal h
+	let c = c - 1
+    endwhile
+    normal "sy
 endfunction
 
 " Select top level form the cursor is inside and copy it to register 's'
