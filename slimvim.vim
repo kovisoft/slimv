@@ -13,8 +13,6 @@
 "  TODO: is it possible to redirect output to VIM buffer?
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
-"  TODO: macroexpand and similar stuff:
-"        (defmacro mmm (...) ...) -> (macroexpand-1 '(mmm (...)))
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
 " ---------------------------------------------------------------------
 "  Mini-FAQ:
@@ -77,15 +75,19 @@ if !exists("g:slimvim_template_pprint")
 endif
 
 if !exists("g:slimvim_template_undefine")
-    let g:slimvim_template_undefine = '(fmakunbound (read-from-string %par1%))'
+    let g:slimvim_template_undefine = '(fmakunbound (read-from-string "%par1%"))'
 endif
 
 if !exists("g:slimvim_template_describe")
-    let g:slimvim_template_describe = '(describe (read-from-string %par1%))'
+    let g:slimvim_template_describe = '(describe (read-from-string "%par1%"))'
+endif
+
+if !exists("g:slimvim_template_disassemble")
+    let g:slimvim_template_disassemble = "(disassemble #'%par1%)"
 endif
 
 if !exists("g:slimvim_template_apropos")
-    let g:slimvim_template_apropos = '(apropos %par1%)'
+    let g:slimvim_template_apropos = '(apropos "%par1%")'
 endif
 
 if !exists("g:slimvim_template_macroexpand")
@@ -94,6 +96,10 @@ endif
 
 if !exists("g:slimvim_template_macroexpand_all")
     let g:slimvim_template_macroexpand_all = '(pprint %par1%)'
+endif
+
+if !exists("g:slimvim_template_compile_file")
+    let g:slimvim_template_compile_file = '(compile-file "%par1%")'
 endif
 
 if !exists("mapleader")
@@ -236,17 +242,22 @@ endfunction
 
 function! SlimvimUndefineFunction()
     call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_undefine, '"' . SlimvimGetSelection() . '"')
+    call SlimvimEvalForm1(g:slimvim_template_undefine, SlimvimGetSelection())
 endfunction
 
 function! SlimvimDescribeSymbol()
     call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_describe, '"' . SlimvimGetSelection() . '"')
+    call SlimvimEvalForm1(g:slimvim_template_describe, SlimvimGetSelection())
+endfunction
+
+function! SlimvimDisassemble()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_disassemble, SlimvimGetSelection())
 endfunction
 
 function! SlimvimApropos()
     call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_apropos, '"' . SlimvimGetSelection() . '"')
+    call SlimvimEvalForm1(g:slimvim_template_apropos, SlimvimGetSelection())
 endfunction
 
 function! SlimvimMacroexpand()
@@ -261,6 +272,11 @@ function! SlimvimMacroexpandAll()
     let m = SlimvimGetSelection() . "))"
     let m = substitute(m, "defmacro\\s*", "macroexpand '(", "g")
     call SlimvimEvalForm1(g:slimvim_template_macroexpand_all, m)
+endfunction
+
+function! SlimvimCompileFile()
+    let f = input( "Compile filename: " )
+    call SlimvimEvalForm1(g:slimvim_template_compile_file, f)
 endfunction
 
 " =====================================================================
@@ -285,9 +301,13 @@ map <Leader>u :call SlimvimUndefineFunction()<CR>
 " SLIME: ???
 map <Leader>s :call SlimvimDescribeSymbol()<CR>
 " SLIME: ???
+map <Leader>i :call SlimvimDisassemble()<CR>
+" SLIME: ???
 map <Leader>a :call SlimvimApropos()<CR>
 " SLIME: ???
 map <Leader>1 :call SlimvimMacroexpand()<CR>
 " SLIME: ???
 map <Leader>m :call SlimvimMacroexpandAll()<CR>
+" SLIME: ???
+map <Leader>f :call SlimvimCompileFile()<CR>
 
