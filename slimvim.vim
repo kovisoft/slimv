@@ -1,11 +1,11 @@
 " slimvim.vim:  The Superior Lisp Interaction Mode for VIM
-" Last Change:	2008 Mar 01
+" Last Change:	2008 Mar 02
 " Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
 " License:	This file is placed in the public domain.
 "               No warranty, express or implied.
 "               *** ***   Use At-Your-Own-Risk!   *** ***
 "
-" ---------------------------------------------------------------------
+" =====================================================================
 "  Issues:
 "  - register s is used
 "
@@ -13,7 +13,8 @@
 "  TODO: is it possible to redirect output to VIM buffer?
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
-"  TODO: macroexpand and similar stuff
+"  TODO: macroexpand and similar stuff:
+"        (defmacro mmm (...) ...) -> (macroexpand-1 '(mmm (...)))
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
 " ---------------------------------------------------------------------
 "  Mini-FAQ:
@@ -43,7 +44,7 @@
 "
 "  - Q: Are you a Lisp expert?
 "  - A: No, not at all. I'm just learning Lisp.
-" ---------------------------------------------------------------------
+" =====================================================================
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
     finish
@@ -51,9 +52,9 @@ endif
 let g:slimvim_loaded        = 1
 let g:slimvim_loaded_python = 0
 
-" ---------------------------------------------------------------------
+" =====================================================================
 "  Global variable definitions
-" ---------------------------------------------------------------------
+" =====================================================================
 
 if !exists("g:slimvim_path")
 "    let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
@@ -79,12 +80,32 @@ if !exists("g:slimvim_template_undefine")
     let g:slimvim_template_undefine = '(fmakunbound (read-from-string %par1%))'
 endif
 
+if !exists("g:slimvim_template_describe")
+    let g:slimvim_template_describe = '(describe (read-from-string %par1%))'
+endif
+
+if !exists("g:slimvim_template_apropos")
+    let g:slimvim_template_apropos = '(apropos %par1%)'
+endif
+
+if !exists("g:slimvim_template_macroexpand")
+    let g:slimvim_template_macroexpand = '(pprint %par1%)'
+endif
+
+if !exists("g:slimvim_template_macroexpand_all")
+    let g:slimvim_template_macroexpand_all = '(pprint %par1%)'
+endif
+
+if !exists("mapleader")
+    let mapleader = ','
+endif
+
 "vim.command( 'let user_input = input( "Enter something" )' )
 "user_input = vim.eval( "user_input" )
 
-" ---------------------------------------------------------------------
+" =====================================================================
 "  General utility functions
-" ---------------------------------------------------------------------
+" =====================================================================
 
 " Load Python library and necessary modules
 function! SlimvimLoad()
@@ -144,6 +165,7 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvimEvalRegion() range
+    "TODO: handle continuous (not whole line) selection case
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
     else
@@ -169,7 +191,8 @@ endfunction
 " Eval Lisp form, with the given parameter substituted in the template.
 " %par1% string is substituted with par1
 function! SlimvimEvalForm1(template, par1)
-    let temp1 = substitute(a:template, '%par1%', a:par1, "g")
+    let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
+    let temp1 = substitute(a:template, '%par1%', p1, "g")
     let lines = [temp1]
     call SlimvimEval(lines)
 endfunction
@@ -178,15 +201,17 @@ endfunction
 " %par1% string is substituted with par1
 " %par2% string is substituted with par2
 function! SlimvimEvalForm2(template, par1, par2)
-    let temp1 = substitute(a:template, '%par1%', a:par1, "g")
-    let temp2 = substitute(temp1,      '%par2%', a:par2, "g")
+    let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
+    let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
+    let temp1 = substitute(a:template, '%par1%', p1, "g")
+    let temp2 = substitute(temp1,      '%par2%', p2, "g")
     let lines = [temp2]
     call SlimvimEval(lines)
 endfunction
 
-" ---------------------------------------------------------------------
+" =====================================================================
 "  Special functions
-" ---------------------------------------------------------------------
+" =====================================================================
 
 " Evaluate the whole buffer
 function! SlimvimEvalBuffer()
@@ -214,18 +239,55 @@ function! SlimvimUndefineFunction()
     call SlimvimEvalForm1(g:slimvim_template_undefine, '"' . SlimvimGetSelection() . '"')
 endfunction
 
-" ---------------------------------------------------------------------
-"  Slimvim keybindings
-" ---------------------------------------------------------------------
+function! SlimvimDescribeSymbol()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_describe, '"' . SlimvimGetSelection() . '"')
+endfunction
 
+function! SlimvimApropos()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_apropos, '"' . SlimvimGetSelection() . '"')
+endfunction
+
+function! SlimvimMacroexpand()
+    normal 99[(vt(%"sy
+    let m = SlimvimGetSelection() . "))"
+    let m = substitute(m, "defmacro\\s*", "macroexpand-1 '(", "g")
+    call SlimvimEvalForm1(g:slimvim_template_macroexpand, m)
+endfunction
+
+function! SlimvimMacroexpandAll()
+    normal 99[(vt(%"sy
+    let m = SlimvimGetSelection() . "))"
+    let m = substitute(m, "defmacro\\s*", "macroexpand '(", "g")
+    call SlimvimEvalForm1(g:slimvim_template_macroexpand_all, m)
+endfunction
+
+" =====================================================================
+"  Slimvim keybindings
+" =====================================================================
+
+" <Leader> can be set in .vimrc, it defaults here to ','
+" <Leader> timeouts in 1000 msec by default, if this is too short,
+" then increase 'timeoutlen'
 " SLIME: <C-A-x>
-map <C-F1> :call SlimvimEvalDefun()<CR>
+map <Leader>d :call SlimvimEvalDefun()<CR>
 " SLIME: <C-x> <C-e>
-map <C-F2> :call SlimvimEvalLastExp()<CR>
-" SLIME: 
-map <C-F3> :call SlimvimPprintEvalLastExp()<CR>
-" SLIME: <C-c> <C-r>
-map <C-F5> :call SlimvimEvalRegion()<CR>
+map <Leader>e :call SlimvimEvalLastExp()<CR>
 " SLIME: ???
-map <C-F6> :call SlimvimEvalBuffer()<CR>
+map <Leader>p :call SlimvimPprintEvalLastExp()<CR>
+" SLIME: <C-c> <C-r>
+map <Leader>r :call SlimvimEvalRegion()<CR>
+" SLIME: ???
+map <Leader>b :call SlimvimEvalBuffer()<CR>
+" SLIME: ???
+map <Leader>u :call SlimvimUndefineFunction()<CR>
+" SLIME: ???
+map <Leader>s :call SlimvimDescribeSymbol()<CR>
+" SLIME: ???
+map <Leader>a :call SlimvimApropos()<CR>
+" SLIME: ???
+map <Leader>1 :call SlimvimMacroexpand()<CR>
+" SLIME: ???
+map <Leader>m :call SlimvimMacroexpandAll()<CR>
 
