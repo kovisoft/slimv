@@ -37,11 +37,21 @@
 "       The plugin resides in 'slimvim.vim', the client and the server both
 "       reside in 'slimvim.py'.
 "
+"  - Q: Why is SLIME functionality XYZ missing from Slimvim?
+"  - A: There are two possible reasons:
+"       1. The dataflow of Slimvim is one-directional: from client to server.
+"          There is no data sent back from the server to the client, so if a
+"          functionality requires that Slimvim reads data from REPL, then
+"          currently it is not possible to implement it.
+"       2. It is possible to implement it, but I did not (yet) do it.
+"          Maybe future releases will contain it.
+"
 "  - Q: Why is the default port number 5151?
 "  - A: Hint: what roman numbers are 5,1,5,1? Bingo: V,I,V,I or double VI.
 "
 "  - Q: Are you a Lisp expert?
-"  - A: No, not at all. I'm just learning Lisp.
+"  - A: No, not at all. I'm just learning Lisp. Also just learning VIM
+"       scripting.
 " =====================================================================
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
@@ -310,4 +320,27 @@ map <Leader>1 :call SlimvimMacroexpand()<CR>
 map <Leader>m :call SlimvimMacroexpandAll()<CR>
 " SLIME: ???
 map <Leader>f :call SlimvimCompileFile()<CR>
+
+" =====================================================================
+"  Slimvim menu
+" =====================================================================
+
+" Works only if 'wildcharm' is <Tab>
+map <Leader>, :emenu Slimvim.<Tab>
+
+menu &Slimvim.&Evaluation.Eval-&Defun          :call SlimvimEvalDefun()<CR>
+menu &Slimvim.&Evaluation.Eval-Last-&Exp       :call SlimvimEvalLastExp()<CR>
+menu &Slimvim.&Evaluation.&Pprint-Eval-Last    :call SlimvimPprintEvalLastExp()<CR>
+menu &Slimvim.&Evaluation.Eval-&Region         :call SlimvimEvalRegion()<CR>
+menu &Slimvim.&Evaluation.Eval-&Buffer         :call SlimvimEvalBuffer()<CR>
+menu &Slimvim.&Evaluation.&Undefine-Function   :call SlimvimUndefineFunction()<CR>
+
+menu &Slimvim.De&bugging.Macroexpand-&1        :call SlimvimMacroexpand()<CR>
+menu &Slimvim.De&bugging.&Macroexpand-All      :call SlimvimMacroexpandAll()<CR>
+menu &Slimvim.De&bugging.D&isassemble          :call SlimvimDisassemble()<CR>
+
+menu &Slimvim.&Compilation.Compile-&File\.\.\. :call SlimvimCompileFile()<CR>
+
+menu &Slimvim.&Documentation.Describe-&Symbol  :call SlimvimDescribeSymbol()<CR>
+menu &Slimvim.&Documentation.&Apropos          :call SlimvimApropos()<CR>
 
