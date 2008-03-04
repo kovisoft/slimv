@@ -1,5 +1,5 @@
 " slimvim.vim:  The Superior Lisp Interaction Mode for VIM
-" Last Change:	2008 Mar 02
+" Last Change:	2008 Mar 04
 " Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
 " License:	This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -90,6 +90,14 @@ endif
 
 if !exists("g:slimvim_template_describe")
     let g:slimvim_template_describe = '(describe (read-from-string "%par1%"))'
+endif
+
+if !exists("g:slimvim_template_trace")
+    let g:slimvim_template_trace = "(trace %par1%)"
+endif
+
+if !exists("g:slimvim_template_untrace")
+    let g:slimvim_template_untrace = "(untrace %par1%)"
 endif
 
 if !exists("g:slimvim_template_disassemble")
@@ -207,7 +215,8 @@ endfunction
 " Eval Lisp form, with the given parameter substituted in the template.
 " %par1% string is substituted with par1
 function! SlimvimEvalForm1(template, par1)
-    let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
+    "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
+    let p1 = escape(a:par1, '&')
     let temp1 = substitute(a:template, '%par1%', p1, "g")
     let lines = [temp1]
     call SlimvimEval(lines)
@@ -217,8 +226,10 @@ endfunction
 " %par1% string is substituted with par1
 " %par2% string is substituted with par2
 function! SlimvimEvalForm2(template, par1, par2)
-    let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
-    let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
+    "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
+    "let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
+    let p1 = escape(a:par1, '&')
+    let p2 = escape(a:par2, '&')
     let temp1 = substitute(a:template, '%par1%', p1, "g")
     let temp2 = substitute(temp1,      '%par2%', p2, "g")
     let lines = [temp2]
@@ -228,6 +239,11 @@ endfunction
 " =====================================================================
 "  Special functions
 " =====================================================================
+
+function! SlimvimEvalDefun()
+    call SlimvimSelectToplevelForm()
+    call SlimvimEvalSelection()
+endfunction
 
 " Evaluate the whole buffer
 function! SlimvimEvalBuffer()
@@ -245,9 +261,9 @@ function! SlimvimPprintEvalLastExp()
     call SlimvimEvalForm1(g:slimvim_template_pprint, SlimvimGetSelection())
 endfunction
 
-function! SlimvimEvalDefun()
-    call SlimvimSelectToplevelForm()
-    call SlimvimEvalSelection()
+function! SlimvimInteractiveEval()
+    let f = [input( "Eval: " )]
+    call SlimvimEval(f)
 endfunction
 
 function! SlimvimUndefineFunction()
@@ -255,20 +271,7 @@ function! SlimvimUndefineFunction()
     call SlimvimEvalForm1(g:slimvim_template_undefine, SlimvimGetSelection())
 endfunction
 
-function! SlimvimDescribeSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_describe, SlimvimGetSelection())
-endfunction
-
-function! SlimvimDisassemble()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_disassemble, SlimvimGetSelection())
-endfunction
-
-function! SlimvimApropos()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_apropos, SlimvimGetSelection())
-endfunction
+" ---------------------------------------------------------------------
 
 function! SlimvimMacroexpand()
     normal 99[(vt(%"sy
@@ -284,9 +287,42 @@ function! SlimvimMacroexpandAll()
     call SlimvimEvalForm1(g:slimvim_template_macroexpand_all, m)
 endfunction
 
+function! SlimvimTrace()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_trace, SlimvimGetSelection())
+endfunction
+
+function! SlimvimTrace()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_untrace, SlimvimGetSelection())
+endfunction
+
+function! SlimvimDisassemble()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_disassemble, SlimvimGetSelection())
+endfunction
+
+" ---------------------------------------------------------------------
+
+" compile-string
+"      (funcall (compile nil (read-from-string
+"                             (format nil "(~S () ~A)" 'lambda string)
+
+
 function! SlimvimCompileFile()
-    let f = input( "Compile filename: " )
-    call SlimvimEvalForm1(g:slimvim_template_compile_file, f)
+    call SlimvimEvalForm1(g:slimvim_template_compile_file, bufname(""))
+endfunction
+
+function! SlimvimDescribeSymbol()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_describe, SlimvimGetSelection())
+endfunction
+
+" ---------------------------------------------------------------------
+
+function! SlimvimApropos()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_apropos, SlimvimGetSelection())
 endfunction
 
 " =====================================================================
@@ -296,51 +332,51 @@ endfunction
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
-" SLIME: <C-A-x>
 map <Leader>d :call SlimvimEvalDefun()<CR>
-" SLIME: <C-x> <C-e>
 map <Leader>e :call SlimvimEvalLastExp()<CR>
-" SLIME: ???
 map <Leader>p :call SlimvimPprintEvalLastExp()<CR>
-" SLIME: <C-c> <C-r>
 map <Leader>r :call SlimvimEvalRegion()<CR>
-" SLIME: ???
 map <Leader>b :call SlimvimEvalBuffer()<CR>
-" SLIME: ???
+map <Leader>i :call SlimvimInteractiveEval()<CR>
 map <Leader>u :call SlimvimUndefineFunction()<CR>
-" SLIME: ???
-map <Leader>s :call SlimvimDescribeSymbol()<CR>
-" SLIME: ???
-map <Leader>i :call SlimvimDisassemble()<CR>
-" SLIME: ???
-map <Leader>a :call SlimvimApropos()<CR>
-" SLIME: ???
+
 map <Leader>1 :call SlimvimMacroexpand()<CR>
-" SLIME: ???
 map <Leader>m :call SlimvimMacroexpandAll()<CR>
-" SLIME: ???
+map <Leader>t :call SlimvimTrace()<CR>
+map <Leader>n :call SlimvimUntrace()<CR>
+map <Leader>l :call SlimvimDisassemble()<CR>
+
 map <Leader>f :call SlimvimCompileFile()<CR>
+
+map <Leader>s :call SlimvimDescribeSymbol()<CR>
+map <Leader>a :call SlimvimApropos()<CR>
 
 " =====================================================================
 "  Slimvim menu
 " =====================================================================
 
 " Works only if 'wildcharm' is <Tab>
-map <Leader>, :emenu Slimvim.<Tab>
+":map <Leader>, :emenu Slimvim.<Tab>
+if &wildcharm != 0
+    execute ":map <Leader>, :emenu Slimvim." . nr2char(&wildcharm)
+endif
 
-menu &Slimvim.&Evaluation.Eval-&Defun          :call SlimvimEvalDefun()<CR>
-menu &Slimvim.&Evaluation.Eval-Last-&Exp       :call SlimvimEvalLastExp()<CR>
-menu &Slimvim.&Evaluation.&Pprint-Eval-Last    :call SlimvimPprintEvalLastExp()<CR>
-menu &Slimvim.&Evaluation.Eval-&Region         :call SlimvimEvalRegion()<CR>
-menu &Slimvim.&Evaluation.Eval-&Buffer         :call SlimvimEvalBuffer()<CR>
-menu &Slimvim.&Evaluation.&Undefine-Function   :call SlimvimUndefineFunction()<CR>
+menu &Slimvim.&Evaluation.Eval-&Defun              :call SlimvimEvalDefun()<CR>
+menu &Slimvim.&Evaluation.Eval-Last-&Exp           :call SlimvimEvalLastExp()<CR>
+menu &Slimvim.&Evaluation.&Pprint-Eval-Last        :call SlimvimPprintEvalLastExp()<CR>
+menu &Slimvim.&Evaluation.Eval-&Region             :call SlimvimEvalRegion()<CR>
+menu &Slimvim.&Evaluation.Eval-&Buffer             :call SlimvimEvalBuffer()<CR>
+menu &Slimvim.&Evaluation.&Interactive-Eval\.\.\.  :call SlimvimInteractiveEval()<CR>
+menu &Slimvim.&Evaluation.&Undefine-Function       :call SlimvimUndefineFunction()<CR>
 
-menu &Slimvim.De&bugging.Macroexpand-&1        :call SlimvimMacroexpand()<CR>
-menu &Slimvim.De&bugging.&Macroexpand-All      :call SlimvimMacroexpandAll()<CR>
-menu &Slimvim.De&bugging.D&isassemble          :call SlimvimDisassemble()<CR>
+menu &Slimvim.De&bugging.Macroexpand-&1            :call SlimvimMacroexpand()<CR>
+menu &Slimvim.De&bugging.&Macroexpand-All          :call SlimvimMacroexpandAll()<CR>
+menu &Slimvim.De&bugging.&Trace                    :call SlimvimTrace()<CR>
+menu &Slimvim.De&bugging.U&ntrace                  :call SlimvimUntrace()<CR>
+menu &Slimvim.De&bugging.Disassemb&le              :call SlimvimDisassemble()<CR>
 
-menu &Slimvim.&Compilation.Compile-&File\.\.\. :call SlimvimCompileFile()<CR>
+menu &Slimvim.&Compilation.Compile-&File           :call SlimvimCompileFile()<CR>
 
-menu &Slimvim.&Documentation.Describe-&Symbol  :call SlimvimDescribeSymbol()<CR>
-menu &Slimvim.&Documentation.&Apropos          :call SlimvimApropos()<CR>
+menu &Slimvim.&Documentation.Describe-&Symbol      :call SlimvimDescribeSymbol()<CR>
+menu &Slimvim.&Documentation.&Apropos              :call SlimvimApropos()<CR>
 
