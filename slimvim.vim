@@ -7,7 +7,9 @@
 "
 " =====================================================================
 "  Issues:
-"  - register s is used
+"  - VIM register s is used
+"  - (un)profile does not work
+"  - first evaluation (which brings up REPL) does not work
 "
 "  TODO: make it work on Linux
 "  TODO: is it possible to redirect output to VIM buffer?
@@ -98,6 +100,16 @@ endif
 
 if !exists("g:slimvim_template_untrace")
     let g:slimvim_template_untrace = "(untrace %par1%)"
+endif
+
+if !exists("g:slimvim_template_profile")
+    "TODO: support different Lisp implementations
+    let g:slimvim_template_profile = "(mon:monitor %par1%)"
+endif
+
+if !exists("g:slimvim_template_unprofile")
+    "TODO: support different Lisp implementations
+    let g:slimvim_template_unprofile = "(mon:unmonitor %par1%)"
 endif
 
 if !exists("g:slimvim_template_disassemble")
@@ -262,8 +274,10 @@ function! SlimvimPprintEvalLastExp()
 endfunction
 
 function! SlimvimInteractiveEval()
-    let f = [input( "Eval: " )]
-    call SlimvimEval(f)
+    let e = input( "Eval: " )
+    if e
+        call SlimvimEval([e])
+    endif
 endfunction
 
 function! SlimvimUndefineFunction()
@@ -288,18 +302,63 @@ function! SlimvimMacroexpandAll()
 endfunction
 
 function! SlimvimTrace()
+    let s = input( "Trace: " )
+    if s
+        call SlimvimEvalForm1(g:slimvim_template_trace, s)
+    endif
+endfunction
+
+function! SlimvimTraceSymbol()
     call SlimvimSelectSymbol()
     call SlimvimEvalForm1(g:slimvim_template_trace, SlimvimGetSelection())
 endfunction
 
-function! SlimvimTrace()
+function! SlimvimUntrace()
+    let s = input( "Untrace: " )
+    if s
+        call SlimvimEvalForm1(g:slimvim_template_untrace, s)
+    endif
+endfunction
+
+function! SlimvimUntraceSymbol()
     call SlimvimSelectSymbol()
     call SlimvimEvalForm1(g:slimvim_template_untrace, SlimvimGetSelection())
 endfunction
 
 function! SlimvimDisassemble()
+    let s = input( "Disassemble: " )
+    if s
+        call SlimvimEvalForm1(g:slimvim_template_disassemble, s)
+    endif
+endfunction
+
+function! SlimvimDisassembleSymbol()
     call SlimvimSelectSymbol()
     call SlimvimEvalForm1(g:slimvim_template_disassemble, SlimvimGetSelection())
+endfunction
+
+function! SlimvimProfile()
+    let s = input( "Profile: " )
+    if s
+        call SlimvimEvalForm1(g:slimvim_template_profile, s)
+    endif
+endfunction
+
+function! SlimvimProfileSymbol()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_profile, SlimvimGetSelection())
+endfunction
+
+function! SlimvimUnProfile()
+    let s = input( "Unprofile: " )
+    if s
+        call SlimvimEvalForm1(g:slimvim_template_unprofile, s)
+    endif
+endfunction
+
+function! SlimvimUnprofileSymbol()
+    call SlimvimSelectSymbol()
+    call SlimvimEvalForm1(g:slimvim_template_unprofile, SlimvimGetSelection())
 endfunction
 
 " ---------------------------------------------------------------------
@@ -310,7 +369,7 @@ endfunction
 
 
 function! SlimvimCompileFile()
-    call SlimvimEvalForm1(g:slimvim_template_compile_file, bufname(""))
+    call SlimvimEvalForm1(g:slimvim_template_compile_file, fnamemodify(bufname(""), ":p"))
 endfunction
 
 function! SlimvimDescribeSymbol()
@@ -332,24 +391,31 @@ endfunction
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
-map <Leader>d :call SlimvimEvalDefun()<CR>
-map <Leader>e :call SlimvimEvalLastExp()<CR>
-map <Leader>p :call SlimvimPprintEvalLastExp()<CR>
-map <Leader>r :call SlimvimEvalRegion()<CR>
-map <Leader>b :call SlimvimEvalBuffer()<CR>
-map <Leader>i :call SlimvimInteractiveEval()<CR>
-map <Leader>u :call SlimvimUndefineFunction()<CR>
+map <Leader>d  :call SlimvimEvalDefun()<CR>
+map <Leader>e  :call SlimvimEvalLastExp()<CR>
+map <Leader>E  :call SlimvimPprintEvalLastExp()<CR>
+map <Leader>r  :call SlimvimEvalRegion()<CR>
+map <Leader>b  :call SlimvimEvalBuffer()<CR>
+map <Leader>i  :call SlimvimInteractiveEval()<CR>
+map <Leader>u  :call SlimvimUndefineFunction()<CR>
 
-map <Leader>1 :call SlimvimMacroexpand()<CR>
-map <Leader>m :call SlimvimMacroexpandAll()<CR>
-map <Leader>t :call SlimvimTrace()<CR>
-map <Leader>n :call SlimvimUntrace()<CR>
-map <Leader>l :call SlimvimDisassemble()<CR>
+map <Leader>1  :call SlimvimMacroexpand()<CR>
+map <Leader>m  :call SlimvimMacroexpandAll()<CR>
+map <Leader>t  :call SlimvimTrace()<CR>
+map <Leader>gt :call SlimvimTraceSymbol()<CR>
+map <Leader>T  :call SlimvimUntrace()<CR>
+map <Leader>gT :call SlimvimUntraceSymbol()<CR>
+map <Leader>l  :call SlimvimDisassemble()<CR>
 
-map <Leader>f :call SlimvimCompileFile()<CR>
+map <Leader>f  :call SlimvimCompileFile()<CR>
 
-map <Leader>s :call SlimvimDescribeSymbol()<CR>
-map <Leader>a :call SlimvimApropos()<CR>
+map <Leader>p  :call SlimvimProfile()<CR>
+map <Leader>gp :call SlimvimProfileSymbol()<CR>
+map <Leader>P  :call SlimvimUnprofile()<CR>
+map <Leader>gP :call SlimvimUnprofileSymbol()<CR>
+
+map <Leader>s  :call SlimvimDescribeSymbol()<CR>
+map <Leader>a  :call SlimvimApropos()<CR>
 
 " =====================================================================
 "  Slimvim menu
@@ -371,11 +437,14 @@ menu &Slimvim.&Evaluation.&Undefine-Function       :call SlimvimUndefineFunction
 
 menu &Slimvim.De&bugging.Macroexpand-&1            :call SlimvimMacroexpand()<CR>
 menu &Slimvim.De&bugging.&Macroexpand-All          :call SlimvimMacroexpandAll()<CR>
-menu &Slimvim.De&bugging.&Trace                    :call SlimvimTrace()<CR>
-menu &Slimvim.De&bugging.U&ntrace                  :call SlimvimUntrace()<CR>
-menu &Slimvim.De&bugging.Disassemb&le              :call SlimvimDisassemble()<CR>
+menu &Slimvim.De&bugging.&Trace\.\.\.              :call SlimvimTrace()<CR>
+menu &Slimvim.De&bugging.U&ntrace\.\.\.            :call SlimvimUntrace()<CR>
+menu &Slimvim.De&bugging.Disassemb&le\.\.\.        :call SlimvimDisassemble()<CR>
 
 menu &Slimvim.&Compilation.Compile-&File           :call SlimvimCompileFile()<CR>
+
+menu &Slimvim.&Profiling.&Profile\.\.\.            :call SlimvimProfile()<CR>
+menu &Slimvim.&Profiling.&Unprofile\.\.\.          :call SlimvimUnprofile()<CR>
 
 menu &Slimvim.&Documentation.Describe-&Symbol      :call SlimvimDescribeSymbol()<CR>
 menu &Slimvim.&Documentation.&Apropos              :call SlimvimApropos()<CR>
