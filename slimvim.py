@@ -41,6 +41,9 @@ lisp_path       = 'clisp.exe'
 #slimvim_path    = os.environ.get['$VIMRUNTIME'] + '/plugin/slimvim.py' #TODO: get this from caller
 slimvim_path    = 'slimvim.py'
 run_cmd		= ''
+# Linux:
+#python_path = '/opt/python2.5/usr/local/bin/python'
+#lisp_path   = '/usr/bin/sbcl'
 
 mswindows = (sys.platform == 'win32')
  
@@ -85,12 +88,22 @@ def connect_server():
 #                '"/k c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -l ' + lisp_path + ' -s"'], \
 #					creationflags=CREATE_NEW_CONSOLE )
 		else:
-			server = Popen( ['server.py'] )
+			#server = Popen( ['server.py'] )
+			#print python_path
+			#print lisp_path
+			#print slimvim_path
+			#server = Popen( [python_path, slimvim_path, '-s'] )
+			#server = Popen( [python_path] )
+			#TODO support older python versions with no subprocess module?
+#			os.spawnlp( os.P_NOWAIT, 'xterm', 'xterm', '-e', python_path )
+#			server = Popen( ['xterm', '-e', python_path, '&'] )
+			server = Popen( ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s'] )
+# call server example: 'xterm -e python slimvim.py -l sbcl -s'
 
 		s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 		try:
-			s.connect( ( 'localhost', PORT ) )
 			time.sleep( 1.0 )	# Allow subprocess to start
+			s.connect( ( 'localhost', PORT ) )
 		except socket.error, msg:
 			s.close()
 			#sys.exit()
