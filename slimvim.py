@@ -111,6 +111,17 @@ def connect_server():
 	return s
 
 
+def send_line( server, line ):
+	line = line.replace( '\\n', '\n' )
+	#if line.find( '\n' ) < 0:
+	#	line = line + '\n'
+	l = len(line)
+	lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
+	server.send( lstr )		# make it a swank protocol
+	server.send( line )
+	time.sleep(0.01)
+
+
 def client( args ):
 	s = connect_server()
 	if s is None:
@@ -123,7 +134,7 @@ def client( args ):
 #				sys.stdout = os.open( 'CON:', 'wt' ) # 1=stdout
 			try:
 				line = raw_input()
-				s.send( line )
+				send_line( s, line )
 			except ( EOFError, KeyboardInterrupt ):
 				#sys.stdout.write( chr( 26 ) + '\n' )
 				#sys.stdout.flush()
@@ -134,12 +145,9 @@ def client( args ):
 
 	else:
 		# Send command line arguments to the server
+		print args
 		for line in args:
-			l = len(line)
-			lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
-			s.send( lstr )		# make if a swank protocol
-			s.send( line )
-			time.sleep(0.01)
+			send_line( s, line )
 
 	log( 'closing', 1 )
 	s.close()
@@ -165,21 +173,27 @@ class socket_listener( Thread ):
 			log( "sl.listen", 1 )
 			self.s.listen( 1 )
 			conn, addr = self.s.accept()
-			l = 0
-			lstr = ''
-			if not terminate:
+			while not terminate:
+				l = 0
+				lstr = ''
+				#if not terminate:
 				# swank server: read length first
 				log( "sl.recv len", 1 )
 				lstr = conn.recv(4)
-				if len( lstr ) > 0:
-					l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
-#			while not terminate and len( lstr ) > 0:
-			if not terminate and len( lstr ) > 0:
+				if len( lstr ) <= 0:
+					break;
+				l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
+#				while not terminate and len( lstr ) > 0:
+				#if not terminate and len( lstr ) > 0:
+				if terminate or len( lstr ) <= 0:
+					break
 				log( "sl.recv data", 1 )
 				received = conn.recv(l)
-				if len( received ) > 0:
-					self.inp.write( received + '\n' )
-					buffer = buffer + received + '\n'
+				#if len( received ) > 0:
+				if len( received ) < l:
+					break
+				self.inp.write( received + '\n' )
+				buffer = buffer + received + '\n'
 #				else:
 #					break
 			log( "sl.close", 1 )
@@ -238,12 +252,14 @@ def server( args ):
 	global buffer
 	global buflen
 
+	#print 'lisp path:', lisp_path
+	cmd = shlex.split( lisp_path )
 	if mswindows:
 		from win32con import CREATE_NO_WINDOW
-		p1 = Popen( [lisp_path], stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
+		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
 			    creationflags=CREATE_NO_WINDOW )
 	else:
-		p1 = Popen( [lisp_path], stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 #	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
 #			creationflags=win32con.CREATE_NO_WINDOW)
 	ol = output_listener( p1.stdout )
