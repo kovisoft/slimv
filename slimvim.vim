@@ -9,7 +9,7 @@
 "  Issues:
 "  - VIM register s is used
 "  - (un)profile does not work
-"  - first evaluation (which brings up REPL) does not work
+"  - on Windows a cmd window appears then disappears at each eval command
 "
 "  TODO: make it work on Linux
 "  TODO: is it possible to redirect output to VIM buffer?
@@ -59,6 +59,13 @@
 if &cp || exists("g:slimvim_loaded")
     finish
 endif
+
+if has("win32") || has("win95") || has("win64") || has("win16")
+    let g:slimvim_windows   = 1
+else
+    let g:slimvim_windows   = 0
+endif
+
 let g:slimvim_loaded        = 1
 let g:slimvim_loaded_python = 0
 
@@ -67,24 +74,52 @@ let g:slimvim_loaded_python = 0
 " =====================================================================
 
 if !exists('g:slimvim_path')
-"    let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
-    let g:slimvim_path = $VIM . '/vimfiles/plugin/slimvim.py'
+    if g:slimvim_windows
+	"let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
+	let g:slimvim_path = $VIM . '/vimfiles/plugin/slimvim.py'
+    else
+	let g:slimvim_path = $HOME . '/.vim/plugin/slimvim.py'
+    endif
 endif
 
 if !exists('g:slimvim_python')
-    let g:slimvim_python    = 'c:/python24/python.exe'
+    if g:slimvim_windows
+	"let g:slimvim_python    = 'python.exe'
+	let g:slimvim_python    = 'c:/python24/python.exe'
+    else
+	let g:slimvim_python    = 'python'
+    endif
 endif
 
 if !exists('g:slimvim_lisp')
-    let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+    if g:slimvim_windows
+	"let g:slimvim_lisp      = 'clisp.exe'
+	"let g:slimvim_lisp      = 'c:/lispbox/clisp-2.37/clisp.exe'
+	let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+    else
+	let g:slimvim_lisp      = 'clisp'
+    endif
 endif
 
-let g:slimvim_command = g:slimvim_python . ' \"' . g:slimvim_path . '\"'
-let g:slimvim_server = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
-"let g:slimvim_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimvim.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
-"let g:slimvim_server = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
+if !exists('g:slimvim_server')
+    if g:slimvim_windows
+	let g:slimvim_command = g:slimvim_python . ' \"' . g:slimvim_path . '\"'
+	"let g:slimvim_server = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
+	let g:slimvim_server = ':!start console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
+	"let g:slimvim_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimvim.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
+	"let g:slimvim_server = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
+    else
+	let g:slimvim_server = ':!xterm -e ' . g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -s &'
+    endif
+endif
 
-"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
+if !exists('g:slimvim_client')
+    "let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
+    "let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+    let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+endif
+
+" ---------------------------------------------------------------------
 
 if !exists("g:slimvim_template_pprint")
     let g:slimvim_template_pprint = '(dolist (o %1)(pprint o))'
@@ -149,7 +184,8 @@ endif
 
 function! SlimvimConnectServer()
     "TODO: make this work on Linux
-    silent execute ":!start " . g:slimvim_server
+    "silent execute ":!start " . g:slimvim_server
+    silent execute g:slimvim_server
 endfunction
 
 " Load Python library and necessary modules
@@ -222,11 +258,17 @@ function! SlimvimEval(args)
 "    silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c "(+ 1 2)"'
 "    echo '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
 
-    silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+    "silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+"    silent execute g:slimvim_client . SlimvimMakeArgs(a:args)
     "TODO: why does the followign give an E371: Command not found error on Windows?
     "silent execute ':!start /WAIT /B ' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
     "silent execute '!cmd /c /q ' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
     "execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+
+    "let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+    "let result = system( g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args) )
+    let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+    "echo result
 endfunction
 
 " Eval buffer lines in the given range
