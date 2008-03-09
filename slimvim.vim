@@ -66,70 +66,74 @@ let g:slimvim_loaded_python = 0
 "  Global variable definitions
 " =====================================================================
 
-if !exists("g:slimvim_path")
+if !exists('g:slimvim_path')
 "    let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
-    let g:slimvim_path = $VIM . "/vimfiles/plugin/slimvim.py"
+    let g:slimvim_path = $VIM . '/vimfiles/plugin/slimvim.py'
 endif
 
-if !exists("g:slimvim_python")
-    let g:slimvim_python    = "c:/python24/python.exe"
+if !exists('g:slimvim_python')
+    let g:slimvim_python    = 'c:/python24/python.exe'
 endif
 
-if !exists("g:slimvim_lisp")
-    let g:slimvim_lisp      = "c:/lispbox/clisp-2.37/clisp.exe"
+if !exists('g:slimvim_lisp')
+    let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
 endif
 
-let g:slimvim_command = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
-"let g:slimvim_command = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
+let g:slimvim_command = g:slimvim_python . ' \"' . g:slimvim_path . '\"'
+let g:slimvim_server = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
+"let g:slimvim_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimvim.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
+"let g:slimvim_server = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
+
+"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
 
 if !exists("g:slimvim_template_pprint")
-    let g:slimvim_template_pprint = '(dolist (o %par1%)(pprint o))'
+    let g:slimvim_template_pprint = '(dolist (o %1)(pprint o))'
 endif
 
 if !exists("g:slimvim_template_undefine")
-    let g:slimvim_template_undefine = '(fmakunbound (read-from-string "%par1%"))'
+    let g:slimvim_template_undefine = '(fmakunbound (read-from-string "%1"))'
 endif
 
 if !exists("g:slimvim_template_describe")
-    let g:slimvim_template_describe = '(describe (read-from-string "%par1%"))'
+    let g:slimvim_template_describe = '(describe (read-from-string "%1"))'
 endif
 
 if !exists("g:slimvim_template_trace")
-    let g:slimvim_template_trace = "(trace %par1%)"
+    let g:slimvim_template_trace = "(trace %1)"
 endif
 
 if !exists("g:slimvim_template_untrace")
-    let g:slimvim_template_untrace = "(untrace %par1%)"
+    let g:slimvim_template_untrace = "(untrace %1)"
 endif
 
 if !exists("g:slimvim_template_profile")
     "TODO: support different Lisp implementations
-    let g:slimvim_template_profile = "(mon:monitor %par1%)"
+    let g:slimvim_template_profile = "(mon:monitor %1)"
 endif
 
 if !exists("g:slimvim_template_unprofile")
     "TODO: support different Lisp implementations
-    let g:slimvim_template_unprofile = "(mon:unmonitor %par1%)"
+    let g:slimvim_template_unprofile = "(mon:unmonitor %1)"
 endif
 
 if !exists("g:slimvim_template_disassemble")
-    let g:slimvim_template_disassemble = "(disassemble #'%par1%)"
+    let g:slimvim_template_disassemble = "(disassemble #'%1)"
 endif
 
 if !exists("g:slimvim_template_apropos")
-    let g:slimvim_template_apropos = '(apropos "%par1%")'
+    let g:slimvim_template_apropos = '(apropos "%1")'
 endif
 
 if !exists("g:slimvim_template_macroexpand")
-    let g:slimvim_template_macroexpand = '(pprint %par1%)'
+    let g:slimvim_template_macroexpand = '(pprint %1)'
 endif
 
 if !exists("g:slimvim_template_macroexpand_all")
-    let g:slimvim_template_macroexpand_all = '(pprint %par1%)'
+    let g:slimvim_template_macroexpand_all = '(pprint %1)'
 endif
 
 if !exists("g:slimvim_template_compile_file")
-    let g:slimvim_template_compile_file = '(compile-file "%par1%")'
+    let g:slimvim_template_compile_file = '(compile-file "%1")'
 endif
 
 if !exists("mapleader")
@@ -145,11 +149,13 @@ endif
 
 " Load Python library and necessary modules
 function! SlimvimLoad()
+"echo 'console -r "/k %p \"%s\" -l %l -s"'
     if g:slimvim_loaded_python == 0
-        py import vim
-        py import sys
-        py import os
+        "py import vim
+        "py import sys
+        "py import os
         let g:slimvim_loaded_python = 1
+        silent execute ":!start " . g:slimvim_server
     endif
 endfunction
 
@@ -183,20 +189,35 @@ function! SlimvimGetSelection()
     return getreg('"s')
 endfunction
 
+function SlimvimMakeArgs(args)
+    "echo a:args
+    let a = '"' . join(a:args, '" "') . '" '
+    let a = substitute(a, '\n', '\\n', 'g')
+    "let a = ''
+    ""let a = a . '"' . substitute(a:args[0], '\n', '\\n" "', 'g') . '" '
+    "let a = a . '"' . substitute(a:args[0], '\n', '\\n', 'g') . '" '
+    "echo a
+    return a
+endfunction
+
 " Send argument to Lisp server for evaluation
 function! SlimvimEval(args)
+    "TODO: overcome command line argument length limitations
+    "TODO: eliminate the use of python in VIM
+    "TODO: in visual mode and not called from EvalRegion do not call this in a
+    "      loop for all lines in the selection
     call SlimvimLoad()
-    if exists("g:slimvim_command")
-        py sys.argv = [vim.eval("g:slimvim_path"),
-                      \ '-r', vim.eval("g:slimvim_command"), '-c'] + 
-                      \ vim.eval("a:args")
-    else
-        py sys.argv = [vim.eval("g:slimvim_path"),
-                      \ '-p', vim.eval("g:slimvim_python"),
-                      \ '-l', vim.eval("g:slimvim_lisp"), '-c'] + 
-                      \ vim.eval("a:args")
-    endif
-    execute ":pyfile " . g:slimvim_path
+" start client with server command given
+"    py sys.argv = [vim.eval("g:slimvim_path"),
+"                  \ '-r', vim.eval("g:slimvim_server"), '-c'] + 
+"                  \ vim.eval("a:args")
+    "call SlimvimMakeArgs(a:args)
+    "py sys.argv = [vim.eval("g:slimvim_path"), '-c'] + vim.eval("a:args")
+    "execute ":pyfile " . g:slimvim_path
+"    silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c "(+ 1 2)"'
+"    echo '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+    silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+    "execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
 endfunction
 
 " Eval buffer lines in the given range
@@ -212,8 +233,8 @@ endfunction
 
 " Eval contents of the 's' register
 function! SlimvimEvalSelection()
-    let lines = []
-    call add(lines, SlimvimGetSelection())
+    let lines = [SlimvimGetSelection()]
+    "call add(lines, SlimvimGetSelection())
     call SlimvimEval(lines)
 endfunction
 
@@ -225,25 +246,25 @@ function! SlimvimEvalForm(template)
 endfunction
 
 " Eval Lisp form, with the given parameter substituted in the template.
-" %par1% string is substituted with par1
+" %1 string is substituted with par1
 function! SlimvimEvalForm1(template, par1)
     "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
     let p1 = escape(a:par1, '&')
-    let temp1 = substitute(a:template, '%par1%', p1, "g")
+    let temp1 = substitute(a:template, '%1', p1, "g")
     let lines = [temp1]
     call SlimvimEval(lines)
 endfunction
 
 " Eval Lisp form, with the given parameters substituted in the template.
-" %par1% string is substituted with par1
-" %par2% string is substituted with par2
+" %1 string is substituted with par1
+" %2 string is substituted with par2
 function! SlimvimEvalForm2(template, par1, par2)
     "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
     "let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
     let p1 = escape(a:par1, '&')
     let p2 = escape(a:par2, '&')
-    let temp1 = substitute(a:template, '%par1%', p1, "g")
-    let temp2 = substitute(temp1,      '%par2%', p2, "g")
+    let temp1 = substitute(a:template, '%1', p1, "g")
+    let temp2 = substitute(temp1,      '%2', p2, "g")
     let lines = [temp2]
     call SlimvimEval(lines)
 endfunction
