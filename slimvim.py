@@ -250,6 +250,16 @@ class output_listener( Thread ):
 			buffer = buffer + c
 
 
+def buffer_read_and_display():
+	global buffer
+	global buflen
+
+	l = len( buffer )
+	while buflen < l:
+		sys.stdout.write( buffer[buflen] )
+		buflen = buflen + 1
+
+
 def server( args ):
 	global lisp_path
 	global terminate
@@ -273,15 +283,20 @@ def server( args ):
 	sl = socket_listener( p1.stdin )
 	sl.start()
 	log( "in.start", 1 )
+	sys.stdout.write( ";;; Slimvim is starting Lisp...\n" )
+	time.sleep(0.5)			# wait for Lisp to start
+	buffer_read_and_display()	# read Lisp startup messages
+	sys.stdout.write( ";;; Slimvim connection established\n" )
 	while not terminate:
 		try:
 			log( "in.step", 1 )
 			time.sleep(0.01)
 			#time.sleep(1)
-			l = len( buffer )
-			while buflen < l:
-				sys.stdout.write( buffer[buflen] )
-				buflen = buflen + 1
+			buffer_read_and_display()
+			#l = len( buffer )
+			#while buflen < l:
+			#	sys.stdout.write( buffer[buflen] )
+			#	buflen = buflen + 1
 #			time.sleep(1)
 #			log( 'check buflen', 1 )
 #			log( "in.raw_input", 1 )
@@ -308,7 +323,8 @@ def server( args ):
 	p1.stdin.close()
 	#p1.stdout.close()
 
-	print 'Come back soon...'
+	#print 'Come back soon...'
+	print 'Thank you for using Slimvim.'
 
 	# Wait for the child process to exit
 	time.sleep(1)
