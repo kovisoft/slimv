@@ -64,6 +64,10 @@ def connect_server():
 	try:
 		s.connect( ( 'localhost', PORT ) )
 	except socket.error, msg:
+		print "Server not found"
+		return None
+
+	if False:
 		s.close()
 		#TODO: Modify this to work outside Windows
 		#TODO: spawn subprocess only if socket connect failed
