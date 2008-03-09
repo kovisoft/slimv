@@ -147,6 +147,11 @@ endif
 "  General utility functions
 " =====================================================================
 
+function! SlimvimConnectServer()
+    "TODO: make this work on Linux
+    silent execute ":!start " . g:slimvim_server
+endfunction
+
 " Load Python library and necessary modules
 function! SlimvimLoad()
 "echo 'console -r "/k %p \"%s\" -l %l -s"'
@@ -155,7 +160,7 @@ function! SlimvimLoad()
         "py import sys
         "py import os
         let g:slimvim_loaded_python = 1
-        silent execute ":!start " . g:slimvim_server
+	call SlimvimConnectServer()
     endif
 endfunction
 
@@ -216,7 +221,11 @@ function! SlimvimEval(args)
     "execute ":pyfile " . g:slimvim_path
 "    silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c "(+ 1 2)"'
 "    echo '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+
     silent execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+    "TODO: why does the followign give an E371: Command not found error on Windows?
+    "silent execute ':!start /WAIT /B ' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
+    "silent execute '!cmd /c /q ' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
     "execute '!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args)
 endfunction
 
@@ -412,6 +421,8 @@ endfunction
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
+map <Leader>c  :call SlimvimConnectServer()<CR>
+
 map <Leader>d  :call SlimvimEvalDefun()<CR>
 map <Leader>e  :call SlimvimEvalLastExp()<CR>
 map <Leader>E  :call SlimvimPprintEvalLastExp()<CR>
