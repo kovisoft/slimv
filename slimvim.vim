@@ -114,9 +114,13 @@ if !exists('g:slimvim_server')
 endif
 
 if !exists('g:slimvim_client')
-    "let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
-    "let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
-    let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+    if g:slimvim_windows
+	"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
+	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+    else
+	let g:slimvim_client = g:slimvim_python . ' ' . g:slimvim_path . ' -c '
+    endif
 endif
 
 " ---------------------------------------------------------------------
@@ -186,6 +190,8 @@ function! SlimvimConnectServer()
     "TODO: make this work on Linux
     "silent execute ":!start " . g:slimvim_server
     silent execute g:slimvim_server
+    " Wait for server + Lisp startup
+    sleep 1
 endfunction
 
 " Load Python library and necessary modules
