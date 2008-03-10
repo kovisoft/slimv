@@ -10,6 +10,7 @@
 #TODO: check pty module
 #TODO: merge with server.py, run server upon request (-s command line switch)
 
+nolisptest = 0
 
 import os
 import sys
@@ -21,7 +22,8 @@ import socket
 #import select
 #from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, ENOTCONN
 #from threading import Thread
-from subprocess import *
+if not nolisptest:	#TODO: support older python versions that does not have subprocess module
+	from subprocess import *
 from threading import Thread
 
 HOST		= ''		# Symbolic name meaning the local host
@@ -265,23 +267,30 @@ def server( args ):
 	global terminate
 	global buffer
 	global buflen
+	global nolisptest
 
 	#print 'lisp path:', lisp_path
-	cmd = shlex.split( lisp_path )
-	if mswindows:
-		from win32con import CREATE_NO_WINDOW
-		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
-			    creationflags=CREATE_NO_WINDOW )
+	if nolisptest:
+		il = input_listener( sys.stdout )
+		il.start()
+		sl = socket_listener( sys.stdout )
+		sl.start()
 	else:
-		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
-#	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
-#			creationflags=win32con.CREATE_NO_WINDOW)
-	ol = output_listener( p1.stdout )
-	ol.start()
-	il = input_listener( p1.stdin )
-	il.start()
-	sl = socket_listener( p1.stdin )
-	sl.start()
+		cmd = shlex.split( lisp_path )
+		if mswindows:
+			from win32con import CREATE_NO_WINDOW
+			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
+					creationflags=CREATE_NO_WINDOW )
+		else:
+			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+	#	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
+	#			creationflags=win32con.CREATE_NO_WINDOW)
+		ol = output_listener( p1.stdout )
+		ol.start()
+		il = input_listener( p1.stdin )
+		il.start()
+		sl = socket_listener( p1.stdin )
+		sl.start()
 	log( "in.start", 1 )
 	sys.stdout.write( ";;; Slimvim is starting Lisp...\n" )
 	time.sleep(0.5)			# wait for Lisp to start
@@ -319,9 +328,10 @@ def server( args ):
 
 	# Send exit command to child process and
 	# wake output listener up at the same time
-#	p1.stdin.write( "(exit)\n" )
-	p1.stdin.close()
-	#p1.stdout.close()
+	if not nolisptest:
+	#	p1.stdin.write( "(exit)\n" )
+		p1.stdin.close()
+		#p1.stdout.close()
 
 	#print 'Come back soon...'
 	print 'Thank you for using Slimvim.'
