@@ -188,6 +188,7 @@ endif
 
 function! SlimvimConnectServer()
     "TODO: make this work on Linux
+    "TODO: handle if called again after server already started
     "silent execute ":!start " . g:slimvim_server
     silent execute g:slimvim_server
     " Wait for server + Lisp startup
@@ -280,6 +281,7 @@ endfunction
 " Eval buffer lines in the given range
 function! SlimvimEvalRegion() range
     "TODO: handle continuous (not whole line) selection case
+    "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
     else
@@ -290,7 +292,9 @@ endfunction
 
 " Eval contents of the 's' register
 function! SlimvimEvalSelection()
+    "TODO: VIM 6.x does not have lists. What to do?
     let lines = [SlimvimGetSelection()]
+    "let lines = []
     "call add(lines, SlimvimGetSelection())
     call SlimvimEval(lines)
 endfunction
