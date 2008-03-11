@@ -7,9 +7,9 @@
 "
 " =====================================================================
 "  Issues:
-"  - VIM register s is used
+"  - VIM register 's' is used
 "  - (un)profile does not work
-"  - on Windows a cmd window appears then disappears at each eval command
+"  - needs Python 2.4 or higher
 "
 "  TODO: make it work on Linux
 "  TODO: is it possible to redirect output to VIM buffer?
@@ -53,12 +53,26 @@
 "
 "  - Q: Are you a Lisp expert?
 "  - A: No, not at all. I'm just learning Lisp. Also just learning VIM
-"       scripting.
+"       scripting. And I'm not a Python expert too, however (at the moment)
+"       I have more experience with Python than with Lisp.
+"
+"  - Q: Why using Python for the client/server code? Why not Lisp?
+"  - A: This is for historical reasons and may change in the future.
+"       Preliminary versions used VIM's built-in Python support.
+"       Later on the client/server code was separated from VIM but still
+"       remained written in Python. On Linux this should not be a problem,
+"       most Linux distributions contain a Python interpreter.
+"       On Windows this means, you need to install Python, if you don't have
+"       one (at least version 2.4). Anyway, Python is a nice language and
+"       also a perfect replacement for calculator.exe :-)
 " =====================================================================
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
     finish
 endif
+
+let g:slimvim_loaded        = 1
+let g:slimvim_loaded_python = 0
 
 if has("win32") || has("win95") || has("win64") || has("win16")
     let g:slimvim_windows   = 1
@@ -66,12 +80,14 @@ else
     let g:slimvim_windows   = 0
 endif
 
-let g:slimvim_loaded        = 1
-let g:slimvim_loaded_python = 0
-
 " =====================================================================
 "  Global variable definitions
 " =====================================================================
+
+if !exists('g:slimvim_port')
+    "TODO: pass this to the client
+    let g:slimvim_port = 5151
+endif
 
 if !exists('g:slimvim_path')
     if g:slimvim_windows
@@ -95,7 +111,8 @@ if !exists('g:slimvim_lisp')
     if g:slimvim_windows
 	"let g:slimvim_lisp      = 'clisp.exe'
 	"let g:slimvim_lisp      = 'c:/lispbox/clisp-2.37/clisp.exe'
-	let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+"	let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+	let g:slimvim_lisp      = '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
     else
 	let g:slimvim_lisp      = 'clisp'
     endif
@@ -117,11 +134,21 @@ if !exists('g:slimvim_client')
     if g:slimvim_windows
 	"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
 	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
-	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+"	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
     else
-	let g:slimvim_client = g:slimvim_python . ' ' . g:slimvim_path . ' -c '
+	let g:slimvim_client = g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -c '
     endif
 endif
+
+
+"let g:term = 'console -r \"/k %p \\"%s\\" -l %l -s\"'
+"let g:term1 = substitute( g:term,  '%p', g:slimvim_python, 'g' )
+"let g:term2 = substitute( g:term1, '%s', g:slimvim_path, 'g' )
+"let g:term3 = substitute( g:term2, '%l', g:slimvim_lisp, 'g' )
+"let g:client = '%p %s -r \"console -r \\"/k %p \\\"%s\\\" -l %l -s\\"\" -c'
+"let g:client = '%p %s -r \"%p \\"%s\\" -l %l -s\" -c'
+
 
 " ---------------------------------------------------------------------
 
@@ -186,8 +213,19 @@ endif
 "  General utility functions
 " =====================================================================
 
+function! SlimvimServerRunning()
+    "TODO: make this work on Linux
+    let netstat = system( 'netstat -a' )
+    "let netstat = execute '!netstat -a'
+    if match( netstat, printf( '%d', g:slimvim_port ) ) >= 0
+	return 1
+    else
+	return 0
+endfunction
+
 function! SlimvimConnectServer()
     "TODO: make this work on Linux
+    "TODO: handle if called again after server already started
     "silent execute ":!start " . g:slimvim_server
     silent execute g:slimvim_server
     " Wait for server + Lisp startup
@@ -196,13 +234,13 @@ endfunction
 
 " Load Python library and necessary modules
 function! SlimvimLoad()
-"echo 'console -r "/k %p \"%s\" -l %l -s"'
+""echo 'console -r "/k %p \"%s\" -l %l -s"'
     if g:slimvim_loaded_python == 0
         "py import vim
         "py import sys
         "py import os
         let g:slimvim_loaded_python = 1
-	call SlimvimConnectServer()
+"	call SlimvimConnectServer()
     endif
 endfunction
 
@@ -273,13 +311,16 @@ function! SlimvimEval(args)
 
     "let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
     "let result = system( g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args) )
+"    echo g:slimvim_client . SlimvimMakeArgs(a:args)
     let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+"    execute '!' . g:slimvim_client . SlimvimMakeArgs(a:args)
     "echo result
 endfunction
 
 " Eval buffer lines in the given range
 function! SlimvimEvalRegion() range
     "TODO: handle continuous (not whole line) selection case
+    "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
     else
@@ -290,7 +331,9 @@ endfunction
 
 " Eval contents of the 's' register
 function! SlimvimEvalSelection()
+    "TODO: VIM 6.x does not have lists. What to do?
     let lines = [SlimvimGetSelection()]
+    "let lines = []
     "call add(lines, SlimvimGetSelection())
     call SlimvimEval(lines)
 endfunction
