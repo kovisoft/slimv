@@ -10,6 +10,7 @@
 #TODO: check pty module
 #TODO: merge with server.py, run server upon request (-s command line switch)
 
+nolisptest = 0
 
 import os
 import sys
@@ -21,8 +22,11 @@ import socket
 #import select
 #from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, ENOTCONN
 #from threading import Thread
-from subprocess import *
+if not nolisptest:	#TODO: support older python versions that does not have subprocess module
+	from subprocess import *
 from threading import Thread
+
+autoconnect	= 1		# Start and connect server automatically
 
 HOST		= ''		# Symbolic name meaning the local host
 PORT		= 5151		# Arbitrary non-privileged port. TODO: make this configurable
@@ -59,59 +63,65 @@ def log( s, level ):
 def connect_server():
 	global python_path
 	global run_cmd
+	global autoconnect
 
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 	try:
 		s.connect( ( 'localhost', PORT ) )
 	except socket.error, msg:
-		print "Server not found"
-		return None
-
-	if False:
-		s.close()
-		#TODO: Modify this to work outside Windows
-		#TODO: spawn subprocess only if socket connect failed
-		if run_cmd == '':
-		    cmd = [python_path, slimvim_path, '-l', lisp_path, '-s']
-		else:
-		    cmd = shlex.split(run_cmd)
-#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -?"'
-#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -l ' \
-#				+ lisp_path + ' -s"'
-		#cmd = 'c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -?'
-		if mswindows:
-			from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
-#			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
-#			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
-#			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
-#					creationflags=CREATE_NEW_CONSOLE )
-#			server = Popen( [python_path, slimvim_path, '-l', lisp_path, '-s'], \
-#					creationflags=CREATE_NEW_CONSOLE )
-			server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
-#			server = Popen( ['console', '-r', \
-#                '"/k c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -l ' + lisp_path + ' -s"'], \
-#					creationflags=CREATE_NEW_CONSOLE )
-		else:
-			#server = Popen( ['server.py'] )
-			#print python_path
-			#print lisp_path
-			#print slimvim_path
-			#server = Popen( [python_path, slimvim_path, '-s'] )
-			#server = Popen( [python_path] )
-			#TODO support older python versions with no subprocess module?
-#			os.spawnlp( os.P_NOWAIT, 'xterm', 'xterm', '-e', python_path )
-#			server = Popen( ['xterm', '-e', python_path, '&'] )
-			server = Popen( ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s'] )
-# call server example: 'xterm -e python slimvim.py -l sbcl -s'
-
-		s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-		try:
-			time.sleep( 1.0 )	# Allow subprocess to start
-			s.connect( ( 'localhost', PORT ) )
-		except socket.error, msg:
+		if autoconnect:
 			s.close()
-			#sys.exit()
-			s =  None
+			#TODO: Modify this to work outside Windows
+			#TODO: spawn subprocess only if socket connect failed
+			if run_cmd == '':
+				if mswindows:
+					cmd = [python_path, slimvim_path, '-l', lisp_path, '-s']
+				else:
+					#cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s &']
+					cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s']
+			else:
+			    cmd = shlex.split(run_cmd)
+	#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -?"'
+	#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -l ' \
+	#				+ lisp_path + ' -s"'
+			#cmd = 'c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -?'
+			if mswindows:
+				from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
+	#			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
+	#			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
+	#			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
+	#					creationflags=CREATE_NEW_CONSOLE )
+	#			server = Popen( [python_path, slimvim_path, '-l', lisp_path, '-s'], \
+	#					creationflags=CREATE_NEW_CONSOLE )
+				server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
+	#			server = Popen( ['console', '-r', \
+	#                '"/k c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -l ' + lisp_path + ' -s"'], \
+	#					creationflags=CREATE_NEW_CONSOLE )
+			else:
+				#server = Popen( ['server.py'] )
+				#print python_path
+				#print lisp_path
+				#print slimvim_path
+				#server = Popen( [python_path, slimvim_path, '-s'] )
+				#server = Popen( [python_path] )
+				#TODO support older python versions with no subprocess module?
+	#			os.spawnlp( os.P_NOWAIT, 'xterm', 'xterm', '-e', python_path )
+	#			server = Popen( ['xterm', '-e', python_path, '&'] )
+#				server = Popen( ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s'] )
+				server = Popen( cmd )
+	# call server example: 'xterm -e python slimvim.py -l sbcl -s'
+
+			s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+			try:
+				time.sleep( 2.0 )	# Allow subprocess to start
+				s.connect( ( 'localhost', PORT ) )
+			except socket.error, msg:
+				s.close()
+				#sys.exit()
+				s =  None
+		else:	# not autoconnect
+			print "Server not found"
+			s = None
 	return s
 
 
@@ -265,23 +275,42 @@ def server( args ):
 	global terminate
 	global buffer
 	global buflen
+	global nolisptest
 
-	#print 'lisp path:', lisp_path
-	cmd = shlex.split( lisp_path )
-	if mswindows:
-		from win32con import CREATE_NO_WINDOW
-		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
-			    creationflags=CREATE_NO_WINDOW )
+	# First check if server already runs
+	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+	try:
+		s.connect( ( 'localhost', PORT ) )
+	except socket.error, msg:
+		# Server not found, our time has come, we'll start a new server in a moment
+		pass
 	else:
-		p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
-#	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
-#			creationflags=win32con.CREATE_NO_WINDOW)
-	ol = output_listener( p1.stdout )
-	ol.start()
-	il = input_listener( p1.stdin )
-	il.start()
-	sl = socket_listener( p1.stdin )
-	sl.start()
+		# Server found, nothing to do here
+		s.close()
+		print "Server is already running"
+		return
+
+	if nolisptest:
+		il = input_listener( sys.stdout )
+		il.start()
+		sl = socket_listener( sys.stdout )
+		sl.start()
+	else:
+		cmd = shlex.split( lisp_path )
+		if mswindows:
+			from win32con import CREATE_NO_WINDOW
+			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
+					creationflags=CREATE_NO_WINDOW )
+		else:
+			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+	#	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
+	#			creationflags=win32con.CREATE_NO_WINDOW)
+		ol = output_listener( p1.stdout )
+		ol.start()
+		il = input_listener( p1.stdin )
+		il.start()
+		sl = socket_listener( p1.stdin )
+		sl.start()
 	log( "in.start", 1 )
 	sys.stdout.write( ";;; Slimvim is starting Lisp...\n" )
 	time.sleep(0.5)			# wait for Lisp to start
@@ -319,9 +348,10 @@ def server( args ):
 
 	# Send exit command to child process and
 	# wake output listener up at the same time
-#	p1.stdin.write( "(exit)\n" )
-	p1.stdin.close()
-	#p1.stdout.close()
+	if not nolisptest:
+	#	p1.stdin.write( "(exit)\n" )
+		p1.stdin.close()
+		#p1.stdout.close()
 
 	#print 'Come back soon...'
 	print 'Thank you for using Slimvim.'
@@ -354,6 +384,9 @@ if __name__ == '__main__':
 	EXIT, SERVER, CLIENT = range( 3 )
 	mode = EXIT
 	slimvim_path = sys.argv[0]
+	python_path = sys.executable
+	if python_path.find( ' ' ) >= 0:
+		python_path = '"' + python_path + '"'
 
 	# Get command line options
 	try:
@@ -383,6 +416,11 @@ if __name__ == '__main__':
 		usage()
 
 	if mode == SERVER:
+		if run_cmd != '':
+			# It is possible to pass special argument placeholders to run_cmd
+			run_cmd = run_cmd.replace( '%p', python_path )
+			run_cmd = run_cmd.replace( '%s', slimvim_path )
+			run_cmd = run_cmd.replace( '%%', '%' )
 		server( args )
 
 	if mode == CLIENT:
