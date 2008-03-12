@@ -135,7 +135,10 @@ if !exists('g:slimvim_client')
 	"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
 	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
 "	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
-	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
+
+	"let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
+	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -r ' .
+       	                       \ '"console -w Slimvim -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimvim_lisp . ' -c '
     else
 	let g:slimvim_client = g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -c '
     endif
