@@ -360,6 +360,17 @@ def server( args ):
 	time.sleep(1)
 
 
+def escape_path( path ):
+	if path.find( ' ' ) < 0:
+		return path
+	if path[0:2] == '\\\"':
+		return path
+	elif path[0] == '\"':
+		return '\\' + path + '\\'
+	else:
+		return '\\\"' + path + '\\\"'
+
+
 def usage():
 	"""Displays program usage information
 	"""
@@ -416,13 +427,17 @@ if __name__ == '__main__':
 		usage()
 
 	if mode == SERVER:
-		if run_cmd != '':
-			# It is possible to pass special argument placeholders to run_cmd
-			run_cmd = run_cmd.replace( '%p', python_path )
-			run_cmd = run_cmd.replace( '%s', slimvim_path )
-			run_cmd = run_cmd.replace( '%%', '%' )
 		server( args )
 
 	if mode == CLIENT:
+		if run_cmd != '':
+			# It is possible to pass special argument placeholders to run_cmd
+			#print run_cmd
+			run_cmd = run_cmd.replace( '@p', escape_path( python_path ) )
+			run_cmd = run_cmd.replace( '@s', escape_path( slimvim_path ) )
+			run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
+			run_cmd = run_cmd.replace( '@@', '@' )
+			#run_cmd = run_cmd.replace( '"', '\\"' )
+			#print run_cmd
 		client( args )
 
