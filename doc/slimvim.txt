@@ -1,15 +1,17 @@
-*slimvim.txt*                  Slimvim               Last Change: 11 Mar 2008
+*slimvim.txt*                  Slimvim               Last Change: 14 Mar 2008
 
 Slimvim                                                              *slimvim*
-                                Version 0.1
+                               Version 0.1
 
 Plugin for easily exploring (or browsing) Vim |:buffers|.
 
-|slimvim-usage|              Usage
 |slimvim-installation|       Installation
 |slimvim-customization|      Customization
+|slimvim-usage|              Usage
+|slimvim-functions|          Function Reference
 |slimvim-faq|                Frequently Asked Questions
 |slimvim-changelog|          Change Log
+|slimvim-issues|             Known Issues
 |slimvim-todo|               Todo
 |slimvim-credits|            Credits
 
@@ -22,9 +24,11 @@ This plugin is only available if 'compatible' is not set.
 INSTALLATION                                            *slimvim-installation*
 
 To install:
-  - Download the bufexplorer.zip.
-  - Extract the zip archive into your runtime directory.
-    The archive contains plugin/bufexplorer.vim, and doc/bufexplorer.txt.
+  - Download the slimvim.zip.
+  - Extract the zip archive into your vimfiles or runtime directory.
+    See VIM help file |usr_05.txt| for details on adding a plugin.
+    The archive contains plugin/slimvim.vim, plugin/slimvim.py,
+    and doc/slimvim.txt.
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
@@ -32,56 +36,20 @@ To install:
 <
     This will generate all the help tags for any file located in the doc
     directory.
-
-==============================================================================
-USAGE                                                          *slimvim-usage*
-
-To start exploring in the current window, use: >
-
- \be   OR  :BufExplorer
-
-If you would like to use something other than '\', you may simply change the
-leader (see |mapleader|).
-
-Note: If the current buffer is modified when bufexplorer started, the current
-      window is always split and the new bufexplorer is displayed in that new
-      window.
-
-Commands to use once exploring:
-
- <enter>       Opens the buffer that is under the cursor into the current
-               window.
- <F1>          Toggle help information.
- <leftmouse>   Opens the buffer that is under the cursor into the current
-               window.
- <shift-enter> Opens the buffer that is under the cursor in another tab.
- d             |:wipeout| the buffer under the cursor from the list.
-               When a buffers is wiped, it will not be shown when unlisted
-               buffer are displayed.
- D             |:delete| the buffer under the cursor from the list.
-               The buffer's 'buflisted' is cleared. This allows for the buffer
-               to be displayed again using the 'show unlisted' command.
- f             Toggles whether you are taken to the active window when
-               selecting a buffer or not.
- p             Toggles the showing of a split filename/pathname.
- q             Quit exploring.
- r             Reverses the order the buffers are listed in.
- R             Toggles relative path/absolute path.
- s             Selects the order the buffers are listed in. Either by buffer
-               number, file name, file extension, most recently used (MRU), or
-               full path.
- t             Opens the buffer that is under the cursor in another tab.
- u             Toggles the showing of "unlisted" buffers.
-
-Once invoked, Buffer Explorer displays a sorted list (MRU is the default
-sort method) of all the buffers that are currently opened. You are then
-able to move the cursor to the line containing the buffer's name you are
-wanting to act upon. Once you have selected the buffer you would like,
-you can then either open it, close it(delete), resort the list, reverse
-the sort, quit exploring and so on...
+  - Enter path definitions into your vimrc (if the default values are not
+    valid for your VIM/Python/Lisp installation, which is highly probable).
+    See |slimvim-customization| below on how to do this.
 
 ===============================================================================
 CUSTOMIZATION                                           *slimvim-customization*
+
+For a minimum, Slimvim needs to know the path of the existing Python and Lisp
+installation.
+
+- directories (with or without a shell frontend)
+- options
+- keyboard mappings and issues
+- templates
 
                                                      *g:bufExplorerDefaultHelp*
 To control whether the default help is displayed or not, use: >
@@ -144,62 +112,128 @@ To control whether to split out the path and file name or not, use: >
                                        " name.
 The default is to split the path and file name.
 
+==============================================================================
+USAGE                                                          *slimvim-usage*
+
+To start exploring in the current window, use: >
+
+ \be   OR  :BufExplorer
+
+If you would like to use something other than '\', you may simply change the
+leader (see |mapleader|).
+
+Note: If the current buffer is modified when bufexplorer started, the current
+      window is always split and the new bufexplorer is displayed in that new
+      window.
+
+Commands to use once exploring:
+
+ <enter>       Opens the buffer that is under the cursor into the current
+               window.
+ <F1>          Toggle help information.
+ <leftmouse>   Opens the buffer that is under the cursor into the current
+               window.
+ <shift-enter> Opens the buffer that is under the cursor in another tab.
+ d             |:wipeout| the buffer under the cursor from the list.
+               When a buffers is wiped, it will not be shown when unlisted
+               buffer are displayed.
+ D             |:delete| the buffer under the cursor from the list.
+               The buffer's 'buflisted' is cleared. This allows for the buffer
+               to be displayed again using the 'show unlisted' command.
+ f             Toggles whether you are taken to the active window when
+               selecting a buffer or not.
+ p             Toggles the showing of a split filename/pathname.
+ q             Quit exploring.
+ r             Reverses the order the buffers are listed in.
+ R             Toggles relative path/absolute path.
+ s             Selects the order the buffers are listed in. Either by buffer
+               number, file name, file extension, most recently used (MRU), or
+               full path.
+ t             Opens the buffer that is under the cursor in another tab.
+ u             Toggles the showing of "unlisted" buffers.
+
+Once invoked, Buffer Explorer displays a sorted list (MRU is the default
+sort method) of all the buffers that are currently opened. You are then
+able to move the cursor to the line containing the buffer's name you are
+wanting to act upon. Once you have selected the buffer you would like,
+you can then either open it, close it(delete), resort the list, reverse
+the sort, quit exploring and so on...
+
+===============================================================================
+FAQ                                                               *slimvim-faq*
+
+- Q: Why is this plugin called 'Slimvim'?
+- A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
+     In SLIME 'E' stands for 'Emacs', so here it is replaced with 'vim'.
+
+- Q: Why another 'Superior Lisp Mode' if there is already one?
+- A: Because many programmers prefer VIM as a program text editor over Emacs,
+     including me. I don't want to start a holy war or whatever, I'm just
+     happy if someone else finds this plugin useful.
+
+- Q: How does Slimvim work?
+- A: Slimvim consists of three parts: VIM plugin, client and server.
+     The Slimvim server is a swank server that embeds a Lisp REPL.
+     The Slimvim client interfaces with the server and is responsible
+     for sending Lisp commands to the Lisp REPL.
+     The VIM plugin is translating editor commands to Lisp commands to be
+     sent to the server by the client.
+     So the dataflow is like this:
+     VIM -> VIM plugin -> Slimvim client -> Slimvim server -> Lisp REPL
+     The plugin resides in 'slimvim.vim', the client and the server both
+     reside in 'slimvim.py'.
+
+- Q: Why is SLIME functionality XYZ missing from Slimvim?
+- A: There are two possible reasons:
+     1. The dataflow of Slimvim is one-directional: from client to server.
+        There is no data sent back from the server to the client, so if a
+        functionality requires that Slimvim reads data from REPL, then
+        currently it is not possible to implement it.
+     2. It is possible to implement it, but I did not (yet) do it.
+        Maybe future releases will contain it.
+
+- Q: Why is the default port number 5151?
+- A: Hint: what roman numerals are 5,1,5,1? Bingo: VI, doubled.
+
+- Q: Are you a Lisp expert?
+- A: No, not at all. I'm just learning Lisp. Also just learning VIM
+     scripting. And I'm not a Python expert either, however (at the moment)
+     I have more experience with Python than with Lisp.
+
+- Q: Why using Python for the client/server code? Why not Lisp?
+- A: This is for historical reasons and may change in the future.
+     Preliminary versions used VIM's built-in Python support.
+     Later on the client/server code was separated from VIM but still remained
+     written in Python. On Linux this should not be a problem, most Linux
+     distributions contain a Python interpreter with high enough version.
+     On Windows this means, you need to install Python, if you don't have
+     one (at least version 2.4). Anyway, Python is a nice language and
+     also a perfect replacement for calculator.exe :-)
+
 ===============================================================================
 CHANGE LOG                                                  *slimvim-changelog*
 
-7.0.4  - Fixed a problem discovered first by Xiangjiang Ma. Well since I've
-         been using vim 7.0 and not 6.3, I started using a function (getftype)
-         that is not in 6.3. So for backward compatibility, I conditionaly use
-         this function now.  Thus, the g:bufExplorerShowDirectories feature is
-         only available when using vim 7.0 and above.
-7.0.3  - Thanks to Erwin Waterlander for finding a problem when the last
-         buffer was deleted. This issue got me to rewrite the buffer display
-         logic (which I've wanted to do for sometime now).
-         Also great thanks to Dave Eggum for coming up with idea for
-         g:bufExplorerShowDirectories. Read the above information about this
-         feature.
-7.0.2  - Thanks to Thomas Arendsen Hein for finding a problem when a user
-         has the default help turned off and then brought up the explorer. An
-         E493 would be displayed.
-7.0.1  - Thanks to Erwin Waterlander for finding a couple problems.
-         The first problem allowed a modified buffer to be deleted.  Opps! The
-         second problem occurred when several files were opened, BufExplorer
-         was started, the current buffer was deleted using the 'd' option, and
-         then BufExplorer was exited. The deleted buffer was still visible
-         while it is not in the buffers list. Opps again!
-7.0.0  - Thanks to Shankar R. for suggesting to add the ability to set
-         the fixed width (g:bufExplorerSplitVertSize) of a new window
-         when opening bufexplorer vertically and fixed height
-         (g:bufExplorerSplitHorzSize) of a new window when opening
-         bufexplorer horizontally. By default, the windows are normally
-         split to use half the existing width or height.
-6.3.0  - Added keepjumps so that the jumps list would not get cluttered with
-         bufexplorer related stuff.
-6.2.3  - Thanks to Jay Logan for finding a bug in the vertical split position
-         of the code. When selecting that the window was to be split
-         vertically by doing a '\bv', from then on, all splits, i.e. '\bs',
-         were split vertically, even though g:bufExplorerSplitType was not set
-         to 'v'.
-6.0.6  - Copyright notice added. Needed this so that it could be distributed
-         with Debian Linux. Fixed problem with the SortListing() function
-         failing when there was only one buffer to display.
-6.0.5  - Fixed problems reported by David Pascoe, in that you where unable to
-         hit 'd' on a buffer that belonged to a files that no longer existed
-         and that the 'yank' buffer was being overridden by the help text when
-         the bufexplorer was opened.
-6.0.4  - Thanks to Charles Campbell, Jr. for making this plugin more plugin
-         *compliant*, adding default keymappings of <Leader>be and <Leader>bs
-         as well as fixing the 'w:sortDirLabel not being defined' bug.
-6.0.3  - Added sorting capabilities. Sort taken from explorer.vim.
-6.0.2  - Can't remember.
-0.1    - Initial release.
+0.1    - Initial release. Will it ever go higher?
+
+===============================================================================
+ISSUES                                                         *slimvim-issues*
+
+- Needs VIM version 7.0 or above, because of the intensive use of lists.
+- VIM register 's' is used for all form selections, so its original content is
+  destroyed.
+- (un)profile does not work
+- Needs Python 2.4 or higher (needs the subprocess module)
+- Works only via the Python interpreter, does not work using a Python IDE
+  (like IDLE).
 
 ===============================================================================
 TODO                                                             *slimvim-todo*
 
-- The issuing of a ':bd' command does not always remove the buffer number from
-  the MRU list.
+- Rewrite client/server in Lisp, so that no Python would be needed.
+- Add profile functions
 - Look into adding '\bs' (buffer split) command back into the code.
+- Use a VIM buffer for the REPL. This does not look possible with the current
+  state of VIM, or at least I can not see an easy way to do it.
 
 ===============================================================================
 CREDITS                                                       *slimvim-credits*
@@ -207,7 +241,7 @@ CREDITS                                                       *slimvim-credits*
 Author: Tamas Kovacs <kovisoft at gmail dot com>
 
 Credit must go out to Bram Moolenaar and all the Vim developers for
-making the world's best editor (IMHO). I also want to thank everyone who
+making the world's (one of the) best editor. I also want to thank everyone who
 helped and gave me suggestions. I wouldn't want to leave anyone out so I
 won't list names.
 
