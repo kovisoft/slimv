@@ -6,65 +6,14 @@
 "               *** ***   Use At-Your-Own-Risk!   *** ***
 "
 " =====================================================================
-"  Issues:
-"  - VIM register 's' is used
-"  - (un)profile does not work
-"  - needs Python 2.4 or higher
 "
 "  TODO: make it work on Linux
 "  TODO: is it possible to redirect output to VIM buffer?
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
-" ---------------------------------------------------------------------
-"  Mini-FAQ:
-"  - Q: Why is this plugin called 'Slimvim'?
-"  - A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
-"       In SLIME 'E' stands for 'Emacs', so here it is replaced with 'vim'.
+"  TODO: find slimvim.vim, if not in vimfiles, but still in the VIM runtimepath
 "
-"  - Q: Why another 'Superior Lisp Mode' if there is already one?
-"  - A: Because many programmers prefer VIM as a program text editor
-"       over Emacs, including me. I don't want to start a holy war or
-"       whatever, I'm just happy if someone else finds this plugin useful.
-"
-"  - Q: How does Slimvim work?
-"  - A: Slimvim consists of three parts: VIM plugin, client and server.
-"       The Slimvim server is a swank server that embeds a Lisp REPL.
-"       The Slimvim client interfaces with the server and is responsible
-"       for sending Lisp commands to the Lisp REPL.
-"       The VIM plugin is translating editor commands to Lisp commands to be
-"       sent to the server by the client.
-"       So the dataflow is like this:
-"       VIM -> VIM plugin -> Slimvim client -> Slimvim server -> Lisp REPL
-"       The plugin resides in 'slimvim.vim', the client and the server both
-"       reside in 'slimvim.py'.
-"
-"  - Q: Why is SLIME functionality XYZ missing from Slimvim?
-"  - A: There are two possible reasons:
-"       1. The dataflow of Slimvim is one-directional: from client to server.
-"          There is no data sent back from the server to the client, so if a
-"          functionality requires that Slimvim reads data from REPL, then
-"          currently it is not possible to implement it.
-"       2. It is possible to implement it, but I did not (yet) do it.
-"          Maybe future releases will contain it.
-"
-"  - Q: Why is the default port number 5151?
-"  - A: Hint: what roman numbers are 5,1,5,1? Bingo: V,I,V,I or double VI.
-"
-"  - Q: Are you a Lisp expert?
-"  - A: No, not at all. I'm just learning Lisp. Also just learning VIM
-"       scripting. And I'm not a Python expert too, however (at the moment)
-"       I have more experience with Python than with Lisp.
-"
-"  - Q: Why using Python for the client/server code? Why not Lisp?
-"  - A: This is for historical reasons and may change in the future.
-"       Preliminary versions used VIM's built-in Python support.
-"       Later on the client/server code was separated from VIM but still
-"       remained written in Python. On Linux this should not be a problem,
-"       most Linux distributions contain a Python interpreter.
-"       On Windows this means, you need to install Python, if you don't have
-"       one (at least version 2.4). Anyway, Python is a nice language and
-"       also a perfect replacement for calculator.exe :-)
 " =====================================================================
 "  Load Once:
 if &cp || exists("g:slimvim_loaded")
@@ -155,6 +104,7 @@ endif
 
 " ---------------------------------------------------------------------
 
+"TODO: change %1 to @1 to be conform with @p, @s, @l above (or just leave it alone?)
 if !exists("g:slimvim_template_pprint")
     let g:slimvim_template_pprint = '(dolist (o %1)(pprint o))'
 endif
@@ -216,24 +166,24 @@ endif
 "  General utility functions
 " =====================================================================
 
-function! SlimvimServerRunning()
-    "TODO: make this work on Linux
-    let netstat = system( 'netstat -a' )
-    "let netstat = execute '!netstat -a'
-    if match( netstat, printf( '%d', g:slimvim_port ) ) >= 0
-	return 1
-    else
-	return 0
-endfunction
+"function! SlimvimServerRunning()
+"    "TODO: make this work on Linux
+"    let netstat = system( 'netstat -a' )
+"    "let netstat = execute '!netstat -a'
+"    if match( netstat, printf( '%d', g:slimvim_port ) ) >= 0
+"	return 1
+"    else
+"	return 0
+"endfunction
 
-function! SlimvimConnectServer()
-    "TODO: make this work on Linux
-    "TODO: handle if called again after server already started
-    "silent execute ":!start " . g:slimvim_server
-    silent execute g:slimvim_server
-    " Wait for server + Lisp startup
-    sleep 1
-endfunction
+"function! SlimvimConnectServer()
+"    "TODO: make this work on Linux
+"    "TODO: handle if called again after server already started
+"    "silent execute ":!start " . g:slimvim_server
+"    silent execute g:slimvim_server
+"    " Wait for server + Lisp startup
+"    sleep 1
+"endfunction
 
 " Load Python library and necessary modules
 function! SlimvimLoad()
@@ -318,6 +268,10 @@ function! SlimvimEval(args)
     let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
 "    execute '!' . g:slimvim_client . SlimvimMakeArgs(a:args)
     "echo result
+endfunction
+
+function! SlimvimConnectServer()
+    call SlimvimEval([])
 endfunction
 
 " Eval buffer lines in the given range
