@@ -50,17 +50,24 @@ run_cmd		= ''
 #lisp_path   = '/usr/bin/sbcl'
 
 mswindows = (sys.platform == 'win32')
- 
 
 def log( s, level ):
-	"""
-	Print diagnostic messages according to the actual debug level
+	"""Print diagnostic messages according to the actual debug level.
 	"""
 	if debug_level >= level:
 		print s
 
 
+###############################################################################
+#
+# Client part
+#
+###############################################################################
+
 def connect_server():
+	"""Try to connect server, if server not found then spawn it.
+	   Return socket object on success, None on failure.
+	"""
 	global python_path
 	global run_cmd
 	global autoconnect
@@ -71,8 +78,6 @@ def connect_server():
 	except socket.error, msg:
 		if autoconnect:
 			s.close()
-			#TODO: Modify this to work outside Windows
-			#TODO: spawn subprocess only if socket connect failed
 			if run_cmd == '':
 				if mswindows:
 					cmd = [python_path, slimvim_path, '-l', lisp_path, '-s']
@@ -81,35 +86,13 @@ def connect_server():
 					cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s']
 			else:
 			    cmd = shlex.split(run_cmd)
-	#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -?"'
-	#		run_cmd = 'console -r "/k c:/python24/python.exe \\"c:/Program Files/VIM/vimfiles/plugin/slimvim.py\\" -l ' \
-	#				+ lisp_path + ' -s"'
-			#cmd = 'c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -?'
 			if mswindows:
-				from win32process import CREATE_NEW_CONSOLE	#TODO: only for Windows
-	#			server = Popen( ['c:\\Python24\\python', 'c:\\Python24\\server.py'], creationflags=CREATE_NEW_CONSOLE )
-	#			server = Popen( [python_path, 'c:\\Python24\\slimvim.py', '-s'], creationflags=CREATE_NEW_CONSOLE )
-	#			server = Popen( [python_path, slimvim_path, '-p', python_path, '-l', lisp_path, '-s'], \
-	#					creationflags=CREATE_NEW_CONSOLE )
-	#			server = Popen( [python_path, slimvim_path, '-l', lisp_path, '-s'], \
-	#					creationflags=CREATE_NEW_CONSOLE )
+				from win32process import CREATE_NEW_CONSOLE
 				server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
-	#			server = Popen( ['console', '-r', \
-	#                '"/k c:/python24/python.exe "c:/Program Files/VIM/vimfiles/plugin/slimvim.py" -l ' + lisp_path + ' -s"'], \
-	#					creationflags=CREATE_NEW_CONSOLE )
 			else:
-				#server = Popen( ['server.py'] )
-				#print python_path
-				#print lisp_path
-				#print slimvim_path
-				#server = Popen( [python_path, slimvim_path, '-s'] )
-				#server = Popen( [python_path] )
 				#TODO support older python versions with no subprocess module?
-	#			os.spawnlp( os.P_NOWAIT, 'xterm', 'xterm', '-e', python_path )
-	#			server = Popen( ['xterm', '-e', python_path, '&'] )
-#				server = Popen( ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s'] )
 				server = Popen( cmd )
-	# call server example: 'xterm -e python slimvim.py -l sbcl -s'
+				# call server example: 'xterm -e python slimvim.py -l sbcl -s'
 
 			s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 			try:
@@ -117,7 +100,6 @@ def connect_server():
 				s.connect( ( 'localhost', PORT ) )
 			except socket.error, msg:
 				s.close()
-				#sys.exit()
 				s =  None
 		else:	# not autoconnect
 			print "Server not found"
@@ -126,6 +108,10 @@ def connect_server():
 
 
 def send_line( server, line ):
+	"""Send a line to the swank server:
+	   first send line length in 4 bytes, then send the line itself.
+	   All backslash+n character-pairs are converted to newline.
+	"""
 	line = line.replace( '\\n', '\n' )
 	#if line.find( '\n' ) < 0:
 	#	line = line + '\n'
@@ -137,6 +123,8 @@ def send_line( server, line ):
 
 
 def client( args ):
+	"""Main client routine: starts server if needed then send text to server.
+	"""
 	s = connect_server()
 	if s is None:
 		return
@@ -144,16 +132,10 @@ def client( args ):
 	if len( args ) < 1:
 		# No command line arguments specified, read input from stdin
 		while 1:
-#			if sys.stdout.closed:
-#				sys.stdout = os.open( 'CON:', 'wt' ) # 1=stdout
 			try:
 				line = raw_input()
 				send_line( s, line )
 			except ( EOFError, KeyboardInterrupt ):
-				#sys.stdout.write( chr( 26 ) + '\n' )
-				#sys.stdout.flush()
-#				sys.stdout.close()
-#				os.close( 1 ) # 1=stdout
 				log( 'breaking', 1 )
 				break
 
@@ -167,9 +149,14 @@ def client( args ):
 	s.close()
 
 
+###############################################################################
+#
+# Server part
+#
+###############################################################################
+
 class socket_listener( Thread ):
-	"""
-	Server thread to receive text from the client via socket
+	"""Server thread to receive text from the client via socket.
 	"""
 
 	def __init__ ( self, inp ):
@@ -190,33 +177,33 @@ class socket_listener( Thread ):
 			while not terminate:
 				l = 0
 				lstr = ''
-				#if not terminate:
 				# swank server: read length first
 				log( "sl.recv len", 1 )
-				lstr = conn.recv(4)
-				if len( lstr ) <= 0:
-					break;
+				try:
+					lstr = conn.recv(4)
+					if len( lstr ) <= 0:
+						break;
+				except:
+					break
+				if terminate:
+					break
 				l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
-#				while not terminate and len( lstr ) > 0:
-				#if not terminate and len( lstr ) > 0:
-				if terminate or len( lstr ) <= 0:
-					break
-				log( "sl.recv data", 1 )
-				received = conn.recv(l)
-				#if len( received ) > 0:
-				if len( received ) < l:
-					break
-				self.inp.write( received + '\n' )
-				buffer = buffer + received + '\n'
-#				else:
-#					break
+				if l > 0:
+					log( "sl.recv data", 1 )
+					try:
+						received = conn.recv(l)
+						if len( received ) < l:
+							break
+					except:
+						break
+					self.inp.write( received + '\n' )
+					buffer = buffer + received + '\n'
 			log( "sl.close", 1 )
 			conn.close()
 
 
 class input_listener( Thread ):
-	"""
-	
+	"""Server thread to receive input from console.
 	"""
 
 	def __init__ ( self, inp ):
@@ -241,8 +228,7 @@ class input_listener( Thread ):
 
 
 class output_listener( Thread ):
-	"""
-	
+	"""Server thread to receive REPL output.
 	"""
 
 	def __init__ ( self, out ):
@@ -256,21 +242,32 @@ class output_listener( Thread ):
 		while not terminate:
 			#line = self.out.readline()
 			log( "ol.read", 1 )
-			c = self.out.read(1)
-			buffer = buffer + c
+			try:
+				c = self.out.read(1)
+				buffer = buffer + c
+			except:
+				break
 
 
 def buffer_read_and_display():
+	"""Read and display lines received in global buffer.
+	"""
 	global buffer
 	global buflen
 
 	l = len( buffer )
 	while buflen < l:
-		sys.stdout.write( buffer[buflen] )
-		buflen = buflen + 1
+		try:
+			sys.stdout.write( buffer[buflen] )
+			buflen = buflen + 1
+		except:
+			break
 
 
 def server( args ):
+	"""Main server routine: starts REPL and helper threads for
+	   sending and receiving data to/from REPL.
+	"""
 	global lisp_path
 	global terminate
 	global buffer
@@ -311,6 +308,7 @@ def server( args ):
 		il.start()
 		sl = socket_listener( p1.stdin )
 		sl.start()
+
 	log( "in.start", 1 )
 	sys.stdout.write( ";;; Slimvim is starting Lisp...\n" )
 	time.sleep(0.5)			# wait for Lisp to start
@@ -341,16 +339,25 @@ def server( args ):
 #	p1.communicate()
 	# The socket is opened only for waking up the server thread
 	# in order to recognize the termination message
+	#TODO: exit REPL if this script is about to exit
 	cs = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-	cs.connect( ( 'localhost', PORT ) )
-	cs.send( " " )
-	cs.close()
+	try:
+		cs.connect( ( 'localhost', PORT ) )
+		cs.send( " " )
+	finally:
+		# We don't care if this above fails, we'll exit anyway
+		cs.close()
 
 	# Send exit command to child process and
 	# wake output listener up at the same time
 	if not nolisptest:
+		#TODO: put this in a try-block
 	#	p1.stdin.write( "(exit)\n" )
-		p1.stdin.close()
+		try:
+			p1.stdin.close()
+		except:
+			# We don't care if this above fails, we'll exit anway
+			pass
 		#p1.stdout.close()
 
 	#print 'Come back soon...'
@@ -361,6 +368,9 @@ def server( args ):
 
 
 def escape_path( path ):
+	"""Surround path containing spaces with backslash + double quote,
+	   so that it can be passed as a command line argument.
+	"""
 	if path.find( ' ' ) < 0:
 		return path
 	if path[0:2] == '\\\"':
@@ -372,7 +382,7 @@ def escape_path( path ):
 
 
 def usage():
-	"""Displays program usage information
+	"""Displays program usage information.
 	"""
 	progname = os.path.basename( sys.argv[0] )
 	print 'Usage: ', progname + ' [-d LEVEL] [-s] [-c ARGS]'
@@ -387,6 +397,12 @@ def usage():
 	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
 	print '                             (if present, this option must be the last one)'
 
+
+###############################################################################
+#
+# Main program
+#
+###############################################################################
 
 if __name__ == '__main__':
 #	global python_path
