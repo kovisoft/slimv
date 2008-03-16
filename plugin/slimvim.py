@@ -1,14 +1,4 @@
-# run with: c:\Python24\1.py | clisp
-
-# :py import vim
-# :py import sys
-# :'<,'>py sys.argv = [''] + vim.current.buffer[vim.current.range.start:vim.current.range.end+1]
-# :pyfile client.py
-
-# :'<,'>py for l in vim.current.buffer[vim.current.range.start:vim.current.range.end+1]: print l
-
-#TODO: check pty module
-#TODO: merge with server.py, run server upon request (-s command line switch)
+#!/usr/bin/env python
 
 nolisptest = 0
 
@@ -29,7 +19,7 @@ from threading import Thread
 autoconnect	= 1		# Start and connect server automatically
 
 HOST		= ''		# Symbolic name meaning the local host
-PORT		= 5151		# Arbitrary non-privileged port. TODO: make this configurable
+PORT		= 5151		# Arbitrary non-privileged port
 
 debug_level	= 0		# Debug level for diagnostic messages
 terminate	= 0		# Main program termination flag
@@ -38,11 +28,10 @@ buffer		= ''
 buflen		= 0
 
 #python_path     = 'python24.exe'
-python_path     = 'c:/Python24/python'
+#python_path     = 'c:/Python24/python'
+python_path     = 'python'
 #lisp_path       = 'clisp.exe'
 lisp_path       = 'clisp.exe'
-#slimvim_path    = os.environ.get['$VIMR'] + '/vimfiles/plugin/slimvim.py' #TODO: get this from caller
-#slimvim_path    = os.environ.get['$VIMRUNTIME'] + '/plugin/slimvim.py' #TODO: get this from caller
 slimvim_path    = 'slimvim.py'
 run_cmd		= ''
 # Linux:
@@ -310,7 +299,8 @@ def server( args ):
 		sl.start()
 
 	log( "in.start", 1 )
-	sys.stdout.write( ";;; Slimvim is starting Lisp...\n" )
+	sys.stdout.write( ";;; Slimvim server is started on port " + str(PORT) + "\n" )
+	sys.stdout.write( ";;; Slimvim is spawning REPL...\n" )
 	time.sleep(0.5)			# wait for Lisp to start
 	buffer_read_and_display()	# read Lisp startup messages
 	sys.stdout.write( ";;; Slimvim connection established\n" )
@@ -318,16 +308,7 @@ def server( args ):
 		try:
 			log( "in.step", 1 )
 			time.sleep(0.01)
-			#time.sleep(1)
 			buffer_read_and_display()
-			#l = len( buffer )
-			#while buflen < l:
-			#	sys.stdout.write( buffer[buflen] )
-			#	buflen = buflen + 1
-#			time.sleep(1)
-#			log( 'check buflen', 1 )
-#			log( "in.raw_input", 1 )
-#			p1.stdin.write( raw_input() + '\n' )
 
 		except EOFError:
 			log( "in.EOFError", 1 )
@@ -336,7 +317,6 @@ def server( args ):
 			log( "in.KeyboardInterrupt", 1 )
 			terminate = 1
 
-#	p1.communicate()
 	# The socket is opened only for waking up the server thread
 	# in order to recognize the termination message
 	#TODO: exit REPL if this script is about to exit
@@ -351,8 +331,7 @@ def server( args ):
 	# Send exit command to child process and
 	# wake output listener up at the same time
 	if not nolisptest:
-		#TODO: put this in a try-block
-	#	p1.stdin.write( "(exit)\n" )
+		#p1.stdin.write( "(exit)\n" )
 		try:
 			p1.stdin.close()
 		except:
@@ -389,9 +368,9 @@ def usage():
 	print
 	print 'Options:'
 	print '  -?, -h, --help             show this help message and exit'
-	print '  -p, --python=PATH          path of Python interpreter'
 	print '  -l, --lisp=PATH            path of Lisp interpreter'
 	print '  -r, --run=PATH             full command to run the server'
+	print '  -p, --port=PORT            port number to use by the server/client'
 	print '  -d LEVEL, --debug=LEVEL    set debug LEVEL (0..3)'
 	print '  -s                         start server'
 	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
@@ -405,8 +384,6 @@ def usage():
 ###############################################################################
 
 if __name__ == '__main__':
-#	global python_path
-#	global lisp_path
 
 	EXIT, SERVER, CLIENT = range( 3 )
 	mode = EXIT
@@ -418,21 +395,29 @@ if __name__ == '__main__':
 	# Get command line options
 	try:
 		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:r:d:', \
-                                            ['help', 'client', 'server', 'python=', 'lisp=', 'run=', 'debug='] )
+                                            ['help', 'client', 'server', 'port=', 'lisp=', 'run=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
 			if o in ('-?', '-h', '--help'):
 				usage()
 				break
-			if o in ('-p', '--python'):
-				python_path = a
+			if o in ('-p', '--port'):
+				try:
+					PORT = int(a)
+				except:
+					# If given port number is malformed, then keep default value
+					pass
 			if o in ('-l', '--lisp'):
 				lisp_path = a
 			if o in ('-r', '--run'):
 				run_cmd = a
 			if o in ('-d', '--debug'):
-				debug_level = int(a)
+				try:
+					debug_level = int(a)
+				except:
+					# If given level is malformed, then keep default value
+					pass
 			if o in ('-s', '--server'):
 				mode = SERVER
 			if o in ('-c', '--client'):
