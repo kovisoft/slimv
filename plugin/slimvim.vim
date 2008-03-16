@@ -353,7 +353,7 @@ endfunction
 
 function! SlimvimInteractiveEval()
     let e = input( "Eval: " )
-    if e
+    if e != ""
         call SlimvimEval([e])
     endif
 endfunction
@@ -380,63 +380,44 @@ function! SlimvimMacroexpandAll()
 endfunction
 
 function! SlimvimTrace()
-    let s = input( "Trace: " )
-    if s
+    call SlimvimSelectSymbol()
+    let s = input( "Trace: ", SlimvimGetSelection() )
+    echo s
+    if s != ""
         call SlimvimEvalForm1(g:slimvim_template_trace, s)
     endif
 endfunction
 
-function! SlimvimTraceSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_trace, SlimvimGetSelection())
-endfunction
-
 function! SlimvimUntrace()
-    let s = input( "Untrace: " )
-    if s
+    call SlimvimSelectSymbol()
+    let s = input( "Untrace: ", SlimvimGetSelection() )
+    if s != ""
         call SlimvimEvalForm1(g:slimvim_template_untrace, s)
     endif
 endfunction
 
-function! SlimvimUntraceSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_untrace, SlimvimGetSelection())
-endfunction
-
 function! SlimvimDisassemble()
-    let s = input( "Disassemble: " )
-    if s
+    call SlimvimSelectSymbol()
+    let s = input( "Disassemble: ", SlimvimGetSelection() )
+    if s != ""
         call SlimvimEvalForm1(g:slimvim_template_disassemble, s)
     endif
 endfunction
 
-function! SlimvimDisassembleSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_disassemble, SlimvimGetSelection())
-endfunction
-
 function! SlimvimProfile()
-    let s = input( "Profile: " )
-    if s
+    call SlimvimSelectSymbol()
+    let s = input( "Profile: ", SlimvimGetSelection() )
+    if s != ""
         call SlimvimEvalForm1(g:slimvim_template_profile, s)
     endif
 endfunction
 
-function! SlimvimProfileSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_profile, SlimvimGetSelection())
-endfunction
-
 function! SlimvimUnProfile()
-    let s = input( "Unprofile: " )
-    if s
+    call SlimvimSelectSymbol()
+    let s = input( "Unprofile: ", SlimvimGetSelection() )
+    if s != ""
         call SlimvimEvalForm1(g:slimvim_template_unprofile, s)
     endif
-endfunction
-
-function! SlimvimUnprofileSymbol()
-    call SlimvimSelectSymbol()
-    call SlimvimEvalForm1(g:slimvim_template_unprofile, SlimvimGetSelection())
 endfunction
 
 " ---------------------------------------------------------------------
@@ -469,7 +450,7 @@ endfunction
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
-map <Leader>c  :call SlimvimConnectServer()<CR>
+map <Leader>S  :call SlimvimConnectServer()<CR>
 
 map <Leader>d  :call SlimvimEvalDefun()<CR>
 map <Leader>e  :call SlimvimEvalLastExp()<CR>
@@ -482,17 +463,13 @@ map <Leader>u  :call SlimvimUndefineFunction()<CR>
 map <Leader>1  :call SlimvimMacroexpand()<CR>
 map <Leader>m  :call SlimvimMacroexpandAll()<CR>
 map <Leader>t  :call SlimvimTrace()<CR>
-map <Leader>gt :call SlimvimTraceSymbol()<CR>
 map <Leader>T  :call SlimvimUntrace()<CR>
-map <Leader>gT :call SlimvimUntraceSymbol()<CR>
 map <Leader>l  :call SlimvimDisassemble()<CR>
 
 map <Leader>f  :call SlimvimCompileFile()<CR>
 
 map <Leader>p  :call SlimvimProfile()<CR>
-map <Leader>gp :call SlimvimProfileSymbol()<CR>
 map <Leader>P  :call SlimvimUnprofile()<CR>
-map <Leader>gP :call SlimvimUnprofileSymbol()<CR>
 
 map <Leader>s  :call SlimvimDescribeSymbol()<CR>
 map <Leader>a  :call SlimvimApropos()<CR>
