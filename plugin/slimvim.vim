@@ -13,6 +13,10 @@
 "  TODO: documentation commands
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
 "  TODO: find slimvim.vim, if not in vimfiles, but still in the VIM runtimepath
+"  TODO: autodetect Python and Lisp installation directory
+"  TODO: find slimvim.py in the VIM search path
+" globpath(&rtp, "**/slimvim.py")
+"  TODO: pass port to client/server (if not default)
 "
 " =====================================================================
 "  Load Once:
@@ -33,51 +37,63 @@ endif
 "  Global variable definitions
 " =====================================================================
 
+function! SlimvimAutodetectPython()
+    if g:slimvim_windows
+	"return 'python.exe'
+	return 'c:/python24/python.exe'
+    else
+	return 'python'
+    endif
+endfunction
+
+function! SlimvimAutodetectLisp()
+    if g:slimvim_windows
+	"return 'clisp.exe'
+	"return 'c:/lispbox/clisp-2.37/clisp.exe'
+	"return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+	return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
+    else
+	return 'clisp'
+    endif
+endfunction
+
 if !exists('g:slimvim_port')
     "TODO: pass this to the client
     let g:slimvim_port = 5151
 endif
 
 if !exists('g:slimvim_path')
-    if g:slimvim_windows
-	"let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
-	let g:slimvim_path = $VIM . '/vimfiles/plugin/slimvim.py'
-    else
-	let g:slimvim_path = $HOME . '/.vim/plugin/slimvim.py'
-    endif
+"    if g:slimvim_windows
+"	"let g:slimvim_path = $VIMRUNTIME . "/plugin/slimvim.py"
+"	let g:slimvim_path = $VIM . '/vimfiles/plugin/slimvim.py'
+"    else
+"	let g:slimvim_path = $HOME . '/.vim/plugin/slimvim.py'
+"    endif
+    "let g:slimvim_path = globpath(&runtimepath, '**/slimvim.py')
+    "let g:slimvim_path = globpath(&runtimepath, '*/slimvim.py')
+    let plugins = split( globpath( &runtimepath, 'plugin/**/slimvim.py'), '\n' )
+    let g:slimvim_path = plugins[0]
 endif
 
 if !exists('g:slimvim_python')
-    if g:slimvim_windows
-	"let g:slimvim_python    = 'python.exe'
-	let g:slimvim_python    = 'c:/python24/python.exe'
-    else
-	let g:slimvim_python    = 'python'
-    endif
+    let g:slimvim_python = SlimvimAutodetectPython()
 endif
 
 if !exists('g:slimvim_lisp')
-    if g:slimvim_windows
-	"let g:slimvim_lisp      = 'clisp.exe'
-	"let g:slimvim_lisp      = 'c:/lispbox/clisp-2.37/clisp.exe'
-"	let g:slimvim_lisp      = '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
-	let g:slimvim_lisp      = '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
-    else
-	let g:slimvim_lisp      = 'clisp'
-    endif
+    let g:slimvim_lisp = SlimvimAutodetectLisp()
 endif
 
-if !exists('g:slimvim_server')
-    if g:slimvim_windows
-	let g:slimvim_command = g:slimvim_python . ' \"' . g:slimvim_path . '\"'
-	"let g:slimvim_server = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
-	let g:slimvim_server = ':!start console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
-	"let g:slimvim_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimvim.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
-	"let g:slimvim_server = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
-    else
-	let g:slimvim_server = ':!xterm -e ' . g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -s &'
-    endif
-endif
+"if !exists('g:slimvim_server')
+"    if g:slimvim_windows
+"	let g:slimvim_command = g:slimvim_python . ' \"' . g:slimvim_path . '\"'
+"	"let g:slimvim_server = 'console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
+"	let g:slimvim_server = ':!start console -r "/k ' . g:slimvim_python . ' \"' . g:slimvim_path . '\" -l ' . g:slimvim_lisp . ' -s"'
+"	"let g:slimvim_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimvim.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
+"	"let g:slimvim_server = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -s'
+"    else
+"	let g:slimvim_server = ':!xterm -e ' . g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -s &'
+"    endif
+"endif
 
 if !exists('g:slimvim_client')
     if g:slimvim_windows
