@@ -1,5 +1,5 @@
 " slimvim.vim:  The Superior Lisp Interaction Mode for VIM
-" Last Change:	2008 Mar 04
+" Last Change:	2008 Mar 17
 " Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
 " License:	This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -14,9 +14,11 @@
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
 "  TODO: find slimvim.vim, if not in vimfiles, but still in the VIM runtimepath
 "  TODO: autodetect Python and Lisp installation directory
+" You should look at (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER)/Software/Python. 
 "  TODO: find slimvim.py in the VIM search path
 " globpath(&rtp, "**/slimvim.py")
 "  TODO: pass port to client/server (if not default)
+"  TODO: handle double quotes in forms (or ;; comment) sent to server
 "
 " =====================================================================
 "  Load Once:
@@ -37,30 +39,123 @@ endif
 "  Global variable definitions
 " =====================================================================
 
-function! SlimvimAutodetectPython()
-    if g:slimvim_windows
-	"return 'python.exe'
-	return 'c:/python24/python.exe'
-    else
-	return 'python'
-    endif
-endfunction
-
-function! SlimvimAutodetectLisp()
-    if g:slimvim_windows
-	"return 'clisp.exe'
-	"return 'c:/lispbox/clisp-2.37/clisp.exe'
-	"return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
-	return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
-    else
-	return 'clisp'
-    endif
-endfunction
-
 if !exists('g:slimvim_port')
     "TODO: pass this to the client
     let g:slimvim_port = 5151
 endif
+
+function! SlimvimAutodetectPython()
+    if executable( 'python' )
+	return 'python'
+    endif
+
+    if g:slimvim_windows
+	" Try to find Python on the standard installation places
+	let pythons = globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' )
+	if len( pythons ) > 0
+	    return pythons[0]
+	endif
+	" Go deeper in subdirectories
+	let pythons = globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' )
+	if len( pythons ) > 0
+	    return pythons[0]
+	endif
+	return ''
+    else
+	return ''
+    endif
+endfunction
+
+function! SlimvimAutodetectLisp()
+    if executable( 'clisp' )
+	" Common Lisp
+	return 'clisp'
+    endif
+    if executable( 'gcl' )
+	" GNU Common Lisp
+	return 'gcl'
+    endif
+    if executable( 'cmucl' )
+	" Carnegie Mellon University Common Lisp
+	return 'cmucl'
+    endif
+    if executable( 'sbcl' )
+	" Steel Bank Common Lisp
+	return 'sbcl'
+    endif
+    if executable( 'ecl' )
+	" Embeddable Common Lisp
+	return 'ecl'
+    endif
+    if executable( 'acl' )
+	" Allegro Common Lisp
+	return 'acl'
+    endif
+    if executable( 'lwl' )
+	" LispWorks
+	return 'lwl'
+    endif
+
+    if g:slimvim_windows
+	" Try to find Python on the standard installation places
+	let lisps = globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	"return 'clisp.exe'
+	"return 'c:/lispbox/clisp-2.37/clisp.exe'
+	"return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+	"TODO: remove this hack
+	"return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
+	return ''
+    else
+	return ''
+    endif
+endfunction
+
+function SlimvimClientCommand()
+    if g:slimvim_python == '' || g:slimvim_lisp == ''
+	" We don't have enough information to build the command to start the client
+	return g:slimvim_client = ''
+    endif
+    if g:slimvim_port == 5151
+	let port = ''
+    else
+	" Using port number other than default, must pass it to client
+	let port = ' -p ' . g:slimvim_port
+    endif
+    if g:slimvim_windows
+	"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
+	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+"	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
+
+	"let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
+	return g:slimvim_python . ' "' . g:slimvim_path . port . '" -r ' .
+	       \ '"console -w Slimvim -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimvim_lisp . ' -c '
+    else
+	return g:slimvim_python . ' ' . g:slimvim_path . port . ' -l ' . g:slimvim_lisp . ' -c '
+    endif
+endfunction
 
 if !exists('g:slimvim_path')
 "    if g:slimvim_windows
@@ -72,7 +167,11 @@ if !exists('g:slimvim_path')
     "let g:slimvim_path = globpath(&runtimepath, '**/slimvim.py')
     "let g:slimvim_path = globpath(&runtimepath, '*/slimvim.py')
     let plugins = split( globpath( &runtimepath, 'plugin/**/slimvim.py'), '\n' )
-    let g:slimvim_path = plugins[0]
+    if len( plugins ) > 0
+	let g:slimvim_path = plugins[0]
+    else
+	let g:slimvim_path = 'slimvim.py'
+    endif
 endif
 
 if !exists('g:slimvim_python')
@@ -96,17 +195,7 @@ endif
 "endif
 
 if !exists('g:slimvim_client')
-    if g:slimvim_windows
-	"let g:slimvim_client = g:slimvim_path . ' -r ' . g:slimvim_server . ' -c '
-	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
-"	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
-
-	"let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
-	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -r ' .
-       	                       \ '"console -w Slimvim -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimvim_lisp . ' -c '
-    else
-	let g:slimvim_client = g:slimvim_python . ' ' . g:slimvim_path . ' -l ' . g:slimvim_lisp . ' -c '
-    endif
+    let g:slimvim_client = SlimvimClientCommand()
 endif
 
 
@@ -175,8 +264,6 @@ if !exists("mapleader")
     let mapleader = ','
 endif
 
-"vim.command( 'let user_input = input( "Enter something" )' )
-"user_input = vim.eval( "user_input" )
 
 " =====================================================================
 "  General utility functions
@@ -215,6 +302,7 @@ endfunction
 
 " Select symbol under cursor and copy it to register 's'
 function! SlimvimSelectSymbol()
+    "TODO: can we use expand('<cWORD>') here?
     normal viw"sy
 endfunction
 
@@ -257,10 +345,22 @@ endfunction
 " Send argument to Lisp server for evaluation
 function! SlimvimEval(args)
     "TODO: overcome command line argument length limitations
-    "TODO: eliminate the use of python in VIM
     "TODO: in visual mode and not called from EvalRegion do not call this in a
     "      loop for all lines in the selection
     call SlimvimLoad()
+
+    if g:slimvim_client == ''
+	" No command to start client, we are clueless, ask user for assistance
+	if g:slimvim_python == ''
+	    let g:slimvim_python = input( "Enter Python path (or fill g:slimvim_python in your vimrc): ", "", "file" )
+	endif
+	if g:slimvim_lisp == ''
+	    let g:slimvim_lisp = input( "Enter Lisp path (or fill g:slimvim_lisp in your vimrc): ", "", "file" )
+	endif
+	let g:slimvim_client = SlimvimClientCommand()
+    endif
+
+    if g:slimvim_client != ''
 " start client with server command given
 "    py sys.argv = [vim.eval("g:slimvim_path"),
 "                  \ '-r', vim.eval("g:slimvim_server"), '-c'] + 
@@ -281,9 +381,10 @@ function! SlimvimEval(args)
     "let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
     "let result = system( g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args) )
 "    echo g:slimvim_client . SlimvimMakeArgs(a:args)
-    let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+	let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
 "    execute '!' . g:slimvim_client . SlimvimMakeArgs(a:args)
     "echo result
+    endif
 endfunction
 
 function! SlimvimConnectServer()
@@ -296,9 +397,15 @@ function! SlimvimEvalRegion() range
     "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
+	let firstcol = col(a:firstline-1)
+	let lastcol  = col(a:lastline -1)
     else
         let lines = getline("'<", "'>")
+	let firstcol = col("'<")
+	let lastcol  = col("'>")
     endif
+    let lines[len(line)-1] = lines[len(line)-1][:lastcol]
+    let lines[0]           = lines[0][firstcol:]
     call SlimvimEval(lines)
 endfunction
 
@@ -496,6 +603,9 @@ map <Leader>a  :call SlimvimApropos()<CR>
 
 " Works only if 'wildcharm' is <Tab>
 ":map <Leader>, :emenu Slimvim.<Tab>
+if &wildcharm == 0
+    set wildcharm=<Tab>
+endif
 if &wildcharm != 0
     execute ":map <Leader>, :emenu Slimvim." . nr2char(&wildcharm)
 endif
