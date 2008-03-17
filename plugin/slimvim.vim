@@ -397,15 +397,19 @@ function! SlimvimEvalRegion() range
     "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
-	let firstcol = col(a:firstline-1)
-	let lastcol  = col(a:lastline -1)
+	let firstcol = col(a:firstline) - 1
+	let lastcol  = col(a:lastline ) - 2
     else
         let lines = getline("'<", "'>")
-	let firstcol = col("'<")
-	let lastcol  = col("'>")
+	let firstcol = col("'<") - 1
+	let lastcol  = col("'>") - 2
     endif
-    let lines[len(line)-1] = lines[len(line)-1][:lastcol]
-    let lines[0]           = lines[0][firstcol:]
+    if lastcol >= 0
+	let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+    else
+	let lines[len(lines)-1] = ''
+    endif
+    let lines[0] = lines[0][firstcol : ]
     call SlimvimEval(lines)
 endfunction
 
