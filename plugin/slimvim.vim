@@ -17,7 +17,6 @@
 " You should look at (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER)/Software/Python. 
 "  TODO: find slimvim.py in the VIM search path
 " globpath(&rtp, "**/slimvim.py")
-"  TODO: pass port to client/server (if not default)
 "  TODO: handle double quotes in forms (or ;; comment) sent to server
 "
 " =====================================================================
@@ -51,12 +50,12 @@ function! SlimvimAutodetectPython()
 
     if g:slimvim_windows
 	" Try to find Python on the standard installation places
-	let pythons = globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' )
+	let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
 	if len( pythons ) > 0
 	    return pythons[0]
 	endif
 	" Go deeper in subdirectories
-	let pythons = globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' )
+	let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
 	if len( pythons ) > 0
 	    return pythons[0]
 	endif
@@ -98,27 +97,27 @@ function! SlimvimAutodetectLisp()
 
     if g:slimvim_windows
 	" Try to find Python on the standard installation places
-	let lisps = globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' )
+	let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
-	let lisps = globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' )
+	let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
-	let lisps = globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' )
+	let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
-	let lisps = globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' )
+	let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
-	let lisps = globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' )
+	let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
-	let lisps = globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' )
+	let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
@@ -133,10 +132,10 @@ function! SlimvimAutodetectLisp()
     endif
 endfunction
 
-function SlimvimClientCommand()
+function! SlimvimClientCommand()
     if g:slimvim_python == '' || g:slimvim_lisp == ''
 	" We don't have enough information to build the command to start the client
-	return g:slimvim_client = ''
+	return ''
     endif
     if g:slimvim_port == 5151
 	let port = ''
@@ -149,8 +148,8 @@ function SlimvimClientCommand()
 	"let g:slimvim_client = ':!' . g:slimvim_python . ' "' . g:slimvim_path . '" -c '
 "	let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -c '
 
-	"let g:slimvim_client = g:slimvim_python . ' "' . g:slimvim_path . '" -l ' . g:slimvim_lisp . ' -c '
-	return g:slimvim_python . ' "' . g:slimvim_path . port . '" -r ' .
+	"return g:slimvim_python . ' "' . g:slimvim_path . '"' . port  . ' -l ' . g:slimvim_lisp . ' -c '
+	return g:slimvim_python . ' "' . g:slimvim_path . '"' . port . ' -r ' .
 	       \ '"console -w Slimvim -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimvim_lisp . ' -c '
     else
 	return g:slimvim_python . ' ' . g:slimvim_path . port . ' -l ' . g:slimvim_lisp . ' -c '
@@ -196,6 +195,7 @@ endif
 
 if !exists('g:slimvim_client')
     let g:slimvim_client = SlimvimClientCommand()
+    "let g:slimvim_client = ''
 endif
 
 
