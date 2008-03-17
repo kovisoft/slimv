@@ -69,10 +69,10 @@ def connect_server():
 			s.close()
 			if run_cmd == '':
 				if mswindows:
-					cmd = [python_path, slimvim_path, '-l', lisp_path, '-s']
+					cmd = [python_path, slimvim_path, '-p', str(PORT), '-l', lisp_path, '-s']
 				else:
 					#cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s &']
-					cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s']
+					cmd = ['xterm', '-e', python_path, slimvim_path, '-p', str(PORT), '-l', lisp_path, '-s']
 			else:
 			    cmd = shlex.split(run_cmd)
 			if mswindows:
