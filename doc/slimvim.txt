@@ -171,6 +171,16 @@ FAQ                                                               *slimvim-faq*
      including me. I don't want to start a holy war or whatever, I'm just
      happy if someone else finds this plugin useful.
 
+- Q: There is a project already called Slim-Vim. Is Slimvim the same?
+     If not then why is the naming so confusing?
+- A: When I started the project, this name jumped out of my mind.
+     Later on I found the Slim-Vim project on the net
+     (wiki page: http://wiki.alu.org/Slim-Vim, mailing list archive:
+     http://www.lispniks.com/pipermail/slim-vim/), however that project seems
+     to be abandoned since 2007. So I decided to keep the original name.
+     If this violates someone's rights, please let me know and I will find
+     another name.
+
 - Q: How does Slimvim work?
 - A: Slimvim consists of three parts: VIM plugin, client and server.
      The Slimvim server is a swank server that embeds a Lisp REPL.
