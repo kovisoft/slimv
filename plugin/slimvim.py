@@ -282,7 +282,7 @@ def server( args ):
 		sl = socket_listener( sys.stdout )
 		sl.start()
 	else:
-		cmd = shlex.split( lisp_path )
+		cmd = shlex.split( lisp_path.replace( '\\', '\\\\' ) )
 		if mswindows:
 			from win32con import CREATE_NO_WINDOW
 			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
