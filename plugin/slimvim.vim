@@ -1,5 +1,5 @@
 " slimvim.vim:  The Superior Lisp Interaction Mode for VIM
-" Last Change:	2008 Mar 17
+" Last Change:	2008 Mar 18
 " Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
 " License:	This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -12,12 +12,8 @@
 "  TODO: compile related functions and keybindings
 "  TODO: documentation commands
 "  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
-"  TODO: find slimvim.vim, if not in vimfiles, but still in the VIM runtimepath
 "  TODO: autodetect Python and Lisp installation directory
 " You should look at (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER)/Software/Python. 
-"  TODO: find slimvim.py in the VIM search path
-" globpath(&rtp, "**/slimvim.py")
-"  TODO: handle double quotes in forms (or ;; comment) sent to server
 "
 " =====================================================================
 "  Load Once:
@@ -96,8 +92,13 @@ function! SlimvimAutodetectLisp()
     endif
 
     if g:slimvim_windows
+	"return 'c:/lispbox/clisp-2.37/clisp.exe'
 	" Try to find Python on the standard installation places
 	let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
+	if len( lisps ) > 0
+	    return lisps[0]
+	endif
+	let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
 	if len( lisps ) > 0
 	    return lisps[0]
 	endif
@@ -333,11 +334,20 @@ endfunction
 
 function SlimvimMakeArgs(args)
     "echo a:args
-    let a = '"' . join(a:args, '" "') . '" '
+    let ar = a:args
+    let i = 0
+    while i < len(ar)
+	let ar[i] = substitute(ar[i], '"',  '\\"', 'g')
+	let i = i + 1
+    endwhile
+    let a = join(ar, '" "')
+    "let a = substitute(a, '"',  '\\"', 'g')
     let a = substitute(a, '\n', '\\n', 'g')
+    let a = '"' . a . '" '
     "let a = ''
     ""let a = a . '"' . substitute(a:args[0], '\n', '\\n" "', 'g') . '" '
     "let a = a . '"' . substitute(a:args[0], '\n', '\\n', 'g') . '" '
+    "TODO: debug option: printout here
     "echo a
     return a
 endfunction
@@ -380,8 +390,25 @@ function! SlimvimEval(args)
 
     "let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
     "let result = system( g:slimvim_python . ' "' . g:slimvim_path . '" -c ' . SlimvimMakeArgs(a:args) )
+    let l = 0
+    let i = 0
+    let j = 0
+    while j < len(a:args)
+	if l + len(a:args[j]) < 1000
+	    let l = l + len(a:args[j])
+	else
+	    let result = system( g:slimvim_client . SlimvimMakeArgs(a:args[i : j-1]) )
+	    let i = j
+	    let l = 0
+	endif
+	let j = j + 1
+    endwhile
+    if i < j
+	let result = system( g:slimvim_client . SlimvimMakeArgs(a:args[i : j-1]) )
+    endif
 "    echo g:slimvim_client . SlimvimMakeArgs(a:args)
-	let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+"	let result = system( g:slimvim_client . SlimvimMakeArgs(a:args) )
+    "TODO: debug option: keep client window open
 "    execute '!' . g:slimvim_client . SlimvimMakeArgs(a:args)
     "echo result
     endif
