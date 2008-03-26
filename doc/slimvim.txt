@@ -1,19 +1,21 @@
-*slimvim.txt*                  Slimvim               Last Change: 14 Mar 2008
+*slimv.txt*                    Slimv                 Last Change: 26 Mar 2008
 
-Slimvim                                                              *slimvim*
+Slimv                                                                  *slimv*
                                Version 0.1
 
-Plugin for easily exploring (or browsing) Vim |:buffers|.
+The Superior Lisp Interaction Mode for Vim.
+This plugin is aimed to help Lisp development by interfacing between VIM and
+the Lisp REPL, similarly to Emacs/SLIME.
 
-|slimvim-installation|       Installation
-|slimvim-customization|      Customization
-|slimvim-usage|              Usage
-|slimvim-functions|          Function Reference
-|slimvim-faq|                Frequently Asked Questions
-|slimvim-changelog|          Change Log
-|slimvim-issues|             Known Issues
-|slimvim-todo|               Todo
-|slimvim-credits|            Credits
+|slimv-installation|         Installation
+|slimv-customization|        Customization
+|slimv-usage|                Usage
+|slimv-functions|            Function Reference
+|slimv-faq|                  Frequently Asked Questions
+|slimv-changelog|            Change Log
+|slimv-issues|               Known Issues
+|slimv-todo|                 Todo
+|slimv-credits|              Credits
 
 For Vim version 7.0 and above.
 This plugin is only available if 'compatible' is not set.
@@ -21,14 +23,13 @@ This plugin is only available if 'compatible' is not set.
 {Vi does not have any of this}
 
 ==============================================================================
-INSTALLATION                                            *slimvim-installation*
+INSTALLATION                                              *slimv-installation*
 
 To install:
-  - Download the slimvim.zip.
+  - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See VIM help file |usr_05.txt| for details on adding a plugin.
-    The archive contains plugin/slimvim.vim, plugin/slimvim.py,
-    and doc/slimvim.txt.
+    The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
@@ -38,18 +39,157 @@ To install:
     directory.
   - Enter path definitions into your vimrc (if the default values are not
     valid for your VIM/Python/Lisp installation, which is highly probable).
-    See |slimvim-customization| below on how to do this.
+    See |slimv-customization| below on how to do this.
 
 ===============================================================================
-CUSTOMIZATION                                           *slimvim-customization*
+CUSTOMIZATION                                             *slimv-customization*
 
-For a minimum, Slimvim needs to know the path of the existing Python and Lisp
-installation.
-
+|slimv-options|              Options
+|slimv-templates|            Templates
+|slimv-keyboard|             Keyboard mappings
 - directories (with or without a shell frontend)
 - options
 - keyboard mappings and issues
 - templates
+
+-------------------------------------------------------------------------------
+                                                                *slimv_options*
+Slimv tries to autodetect the Python and Lisp installation directories,
+however the algorzthm is not very sophisticated.
+If the installation directories are put in the path, then the autodetection
+should find them (this is usually the case on Linux). Otherwise (on Windows)
+some frequently used directories are searched under C:\ and C:\Program Files.
+For a minimum, Slimv needs to know the path of the existing Python and Lisp
+installation, so if autodetection does not work for you, then set the following
+global variables in your vimrc:
+
+                                                               *g:slimv_python*
+This is the installation path of the Python interpreter.
+Example:
+    let g:slimv_python = 'C:/MyPythonDir/python.exe'
+
+                                                                 *g:slimv_lisp*
+This is the installation path of the Lisp interpreter.
+Example:
+    let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
+
+                                                                 *g:slimv_port*
+The default port used by Slimv is 5151. If this port is used by another
+program then set this variable to a free port number.
+Example:
+    let g:slimv_port = 10101
+
+                                                               *g:slimv_client*
+You may want to use a shell frontend other then the default one or put
+additional command line parameters for starting the server.
+In this case you can omit the variables above and use g:slimv_client instead.
+This is the complete command that is used to start the client. If not set
+by the user, this is automatically built from the variables above.
+
+The command format is the following:
+    <python> <slimv> -p <port> -r <server_cmd> -c <form_to_REPL>
+Where:
+    <python>       is the command to start the Python interpreter
+    <slimv>        is the path of Slimv.py
+    <port>         is the port number to use (if other than default)
+    <server_cmd>   is the command to start the server
+    <form_to_REPL> is the Lisp form to be sent to the REPL
+
+The format of <server_cmd> is the following:
+    <python> <slimv> -l <lisp> -s
+Where:
+    <python>       is the command to start the Python interpreter
+    <slimv>        is the path of Slimv.py
+    <lisp>         is the command to start the Lisp REPL
+You can also pass the following shortcuts in <server_cmd>:
+    @p             equals <python>
+    @s             equals <slimv>
+    @l             equals <lisp>
+    @@             use it if you need to insert an @ character
+    \"             use it to insert a " character
+
+The reason behind the duplication of the <python> and <slimv> part is that
+you may want to start the server/REPL in a shell frontend that needs
+special command line options. For example on Windows I highly recommend
+to use Console (http://sourceforge.net/projects/console/) which is greatly
+configurable and you also get usable select/copy/paste functions.
+
+Example to start the Slimv server via Console:
+  let g:slimv_client = 
+  \ 'python slimv.py -p 5152 -r "console -r \"/k @p @s -l clisp -s\"" -c '
+
+
+-------------------------------------------------------------------------------
+                                                              *slimv_templates*
+Many Slimv commands are performed by creating a special Lisp form from the
+selected symbol (or form) and send it to the REPL for execution.
+Slimv defines various templates to build these special Lisp forms.
+You can override them to suit your needs. Use %1 for substituting the selected
+symbol's name or the selected form.
+Here follows a list of the templates defined in Slimv.
+
+                                                      *g:slimv_template_pprint*
+Lisp form built when issuing the 'pprint' command.
+Example:
+    let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
+
+                                                    *g:slimv_template_undefine*
+Lisp form built when issuing the 'undefine' command.
+Example:
+    let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
+
+                                                    *g:slimv_template_describe*
+Lisp form built when issuing the 'describe' command.
+Example:
+    let g:slimv_template_describe = '(describe (read-from-string "%1"))'
+
+                                                       *g:slimv_template_trace*
+Lisp form built when issuing the 'trace' command.
+Example:
+    let g:slimv_template_trace = "(trace %1)"
+
+                                                     *g:slimv_template_untrace*
+Lisp form built when issuing the 'untrace' command.
+Example:
+    let g:slimv_template_untrace = "(untrace %1)"
+
+                                                     *g:slimv_template_profile*
+Lisp form built when issuing the 'profile' command.
+Example:
+    let g:slimv_template_profile = "(mon:monitor %1)"
+
+                                                   *g:slimv_template_unprofile*
+Lisp form built when issuing the 'unprofile' command.
+Example:
+    let g:slimv_template_unprofile = "(mon:unmonitor %1)"
+
+                                                 *g:slimv_template_disassemble*
+Lisp form built when issuing the 'disassemble' command.
+Example:
+    let g:slimv_template_disassemble = "(disassemble #'%1)"
+
+                                                     *g:slimv_template_apropos*
+Lisp form built when issuing the 'apropos' command.
+Example:
+    let g:slimv_template_apropos = '(apropos "%1")'
+
+                                                 *g:slimv_template_macroexpand*
+Lisp form built when issuing the 'macroexpand-1' command.
+Example:
+    let g:slimv_template_macroexpand = '(pprint %1)'
+
+                                             *g:slimv_template_macroexpand_all*
+Lisp form built when issuing the 'macroexpand-all' command.
+Example:
+    let g:slimv_template_macroexpand_all = '(pprint %1)'
+
+                                                *g:slimv_template_compile_file*
+Lisp form built when issuing the 'compile-file' command.
+Example:
+    let g:slimv_template_compile_file = '(compile-file "%1")'
+
+
+-------------------------------------------------------------------------------
 
                                                      *g:bufExplorerDefaultHelp*
 To control whether the default help is displayed or not, use: >
@@ -57,44 +197,12 @@ To control whether the default help is displayed or not, use: >
   let g:bufExplorerDefaultHelp=1       " Show default help.
 The default is to show the default help.
 
-                                                    *g:bufExplorerDetailedHelp*
-To control whether detailed help is display by, use: >
-  let g:bufExplorerDetailedHelp=0      " Do not show detailed help.
-  let g:bufExplorerDetailedHelp=1      " Show detailed help.
-The default is NOT to show detailed help.
-
-                                                      *g:bufExplorerFindActive*
-To control whether you are taken to the active window when selecting a buffer,
-use: >
-  let g:bufExplorerFindActive=0        " Do not go to active window.
-  let g:bufExplorerFindActive=1        " Go to active window.
-The default is to be taken to the active window.
-
-                                                     *g:bufExplorerReverseSort*
-To control whether to sort the buffer in reverse order or not, use: >
-  let g:bufExplorerReverseSort=0       " Do not sort in reverse order.
-  let g:bufExplorerReverseSort=1       " Sort in reverse order.
-The default is NOT to sort in reverse order.
-
-                                                 *g:bufExplorerShowDirectories*
-Directories usually show up in the list from using a command like ":e .".
-To control whether to show directories in the buffer list or not, use: >
-  let g:bufExplorerShowDirectories=1   " Show directories.
-  let g:bufExplorerShowDirectories=0   " Don't show directories.
-The default is to show directories.
-
                                                 *g:bufExplorerShowRelativePath*
 To control whether to show absolute paths or relative to the current
 directory, use: >
   let g:bufExplorerShowRelativePath=0  " Show absolute paths.
   let g:bufExplorerShowRelativePath=1  " Show relative paths.
 The default is to show absolute paths.
-
-                                                    *g:bufExplorerShowUnlisted*
-To control whether to show unlisted buffer or not, use: >
-  let g:bufExplorerShowUnlisted=0      " Do not show unlisted buffers.
-  let g:bufExplorerShowUnlisted=1      " Show unlisted buffers.
-The default is to NOT show unlisted buffers.
 
                                                           *g:bufExplorerSortBy*
 To control what field the buffers are sorted by, use: >
@@ -113,7 +221,7 @@ To control whether to split out the path and file name or not, use: >
 The default is to split the path and file name.
 
 ==============================================================================
-USAGE                                                          *slimvim-usage*
+USAGE                                                            *slimv-usage*
 
 To start exploring in the current window, use: >
 
@@ -160,44 +268,37 @@ you can then either open it, close it(delete), resort the list, reverse
 the sort, quit exploring and so on...
 
 ===============================================================================
-FAQ                                                               *slimvim-faq*
+FAQ                                                                 *slimv-faq*
 
-- Q: Why is this plugin called 'Slimvim'?
+- Q: Why is this plugin called 'Slimv'?
 - A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
-     In SLIME 'E' stands for 'Emacs', so here it is replaced with 'vim'.
+     In SLIME 'E' stands for 'Emacs', so here it is replaced with 'V' as Vim.
+     To tell the truth, first I gave the name 'Slimvim' to the plugin but
+     then I found an (already abandoned) project called 'Slim-Vim' and I did
+     not want to give such a similar name.
 
 - Q: Why another 'Superior Lisp Mode' if there is already one?
 - A: Because many programmers prefer VIM as a program text editor over Emacs,
      including me. I don't want to start a holy war or whatever, I'm just
      happy if someone else finds this plugin useful.
 
-- Q: There is a project already called Slim-Vim. Is Slimvim the same?
-     If not then why is the naming so confusing?
-- A: When I started the project, this name jumped out of my mind.
-     Later on I found the Slim-Vim project on the net
-     (wiki page: http://wiki.alu.org/Slim-Vim, mailing list archive:
-     http://www.lispniks.com/pipermail/slim-vim/), however that project seems
-     to be abandoned since 2007. So I decided to keep the original name.
-     If this violates someone's rights, please let me know and I will find
-     another name.
-
-- Q: How does Slimvim work?
-- A: Slimvim consists of three parts: VIM plugin, client and server.
-     The Slimvim server is a swank server that embeds a Lisp REPL.
-     The Slimvim client interfaces with the server and is responsible
+- Q: How does Slimv work?
+- A: Slimv consists of three parts: VIM plugin, client and server.
+     The Slimv server is a swank server that embeds a Lisp REPL.
+     The Slimv client interfaces with the server and is responsible
      for sending Lisp commands to the Lisp REPL.
      The VIM plugin is translating editor commands to Lisp commands to be
      sent to the server by the client.
      So the dataflow is like this:
-     VIM -> VIM plugin -> Slimvim client -> Slimvim server -> Lisp REPL
-     The plugin resides in 'slimvim.vim', the client and the server both
-     reside in 'slimvim.py'.
+     VIM -> VIM plugin -> Slimv client -> Slimv server -> Lisp REPL
+     The plugin resides in 'slimv.vim', the client and the server both
+     reside in 'slimv.py'.
 
-- Q: Why is SLIME functionality XYZ missing from Slimvim?
+- Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: There are two possible reasons:
-     1. The dataflow of Slimvim is one-directional: from client to server.
+     1. The dataflow of Slimv is one-directional: from client to server.
         There is no data sent back from the server to the client, so if a
-        functionality requires that Slimvim reads data from REPL, then
+        functionality requires that Slimv reads data from REPL, then
         currently it is not possible to implement it.
      2. It is possible to implement it, but I did not (yet) do it.
         Maybe future releases will contain it.
@@ -221,32 +322,31 @@ FAQ                                                               *slimvim-faq*
      also a perfect replacement for calculator.exe :-)
 
 ===============================================================================
-CHANGE LOG                                                  *slimvim-changelog*
+CHANGE LOG                                                    *slimv-changelog*
 
 0.1    - Initial release. Will it ever go higher?
 
 ===============================================================================
-ISSUES                                                         *slimvim-issues*
+KNOWN ISSUES                                                     *slimv-issues*
 
 - Needs VIM version 7.0 or above, because of the intensive use of lists.
 - VIM register 's' is used for all form selections, so its original content is
   destroyed.
 - (un)profile does not work
-- Needs Python 2.4 or higher (needs the subprocess module)
+- Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
   (like IDLE).
 
 ===============================================================================
-TODO                                                             *slimvim-todo*
+TODO                                                               *slimv-todo*
 
 - Rewrite client/server in Lisp, so that no Python would be needed.
 - Add profile functions
-- Look into adding '\bs' (buffer split) command back into the code.
-- Use a VIM buffer for the REPL. This does not look possible with the current
-  state of VIM, or at least I can not see an easy way to do it.
+- Use a Vim buffer for the REPL. This does not look possible with the current
+  state of Vim, or at least I can not see an easy way to do it.
 
 ===============================================================================
-CREDITS                                                       *slimvim-credits*
+CREDITS                                                         *slimv-credits*
 
 Author: Tamas Kovacs <kovisoft at gmail dot com>
 
