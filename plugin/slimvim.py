@@ -32,7 +32,7 @@ buflen		= 0
 python_path     = 'python'
 #lisp_path       = 'clisp.exe'
 lisp_path       = 'clisp.exe'
-slimvim_path    = 'slimvim.py'
+slimv_path      = 'slimv.py'
 run_cmd		= ''
 # Linux:
 #python_path = '/opt/python2.5/usr/local/bin/python'
@@ -69,10 +69,10 @@ def connect_server():
 			s.close()
 			if run_cmd == '':
 				if mswindows:
-					cmd = [python_path, slimvim_path, '-p', str(PORT), '-l', lisp_path, '-s']
+					cmd = [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
 				else:
-					#cmd = ['xterm', '-e', python_path, slimvim_path, '-l', lisp_path, '-s &']
-					cmd = ['xterm', '-e', python_path, slimvim_path, '-p', str(PORT), '-l', lisp_path, '-s']
+					#cmd = ['xterm', '-e', python_path, slimv_path, '-l', lisp_path, '-s &']
+					cmd = ['xterm', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
 			else:
 			    cmd = shlex.split(run_cmd)
 			if mswindows:
@@ -81,7 +81,7 @@ def connect_server():
 			else:
 				#TODO support older python versions with no subprocess module?
 				server = Popen( cmd )
-				# call server example: 'xterm -e python slimvim.py -l sbcl -s'
+				# call server example: 'xterm -e python slimv.py -l sbcl -s'
 
 			s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 			try:
@@ -299,11 +299,11 @@ def server( args ):
 		sl.start()
 
 	log( "in.start", 1 )
-	sys.stdout.write( ";;; Slimvim server is started on port " + str(PORT) + "\n" )
-	sys.stdout.write( ";;; Slimvim is spawning REPL...\n" )
+	sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + "\n" )
+	sys.stdout.write( ";;; Slimv is spawning REPL...\n" )
 	time.sleep(0.5)			# wait for Lisp to start
 	buffer_read_and_display()	# read Lisp startup messages
-	sys.stdout.write( ";;; Slimvim connection established\n" )
+	sys.stdout.write( ";;; Slimv connection established\n" )
 	while not terminate:
 		try:
 			log( "in.step", 1 )
@@ -340,7 +340,7 @@ def server( args ):
 		#p1.stdout.close()
 
 	#print 'Come back soon...'
-	print 'Thank you for using Slimvim.'
+	print 'Thank you for using Slimv.'
 
 	# Wait for the child process to exit
 	time.sleep(1)
@@ -387,7 +387,7 @@ if __name__ == '__main__':
 
 	EXIT, SERVER, CLIENT = range( 3 )
 	mode = EXIT
-	slimvim_path = sys.argv[0]
+	slimv_path = sys.argv[0]
 	python_path = sys.executable
 	if python_path.find( ' ' ) >= 0:
 		python_path = '"' + python_path + '"'
@@ -435,7 +435,7 @@ if __name__ == '__main__':
 			# It is possible to pass special argument placeholders to run_cmd
 			#print run_cmd
 			run_cmd = run_cmd.replace( '@p', escape_path( python_path ) )
-			run_cmd = run_cmd.replace( '@s', escape_path( slimvim_path ) )
+			run_cmd = run_cmd.replace( '@s', escape_path( slimv_path ) )
 			run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
 			run_cmd = run_cmd.replace( '@@', '@' )
 			#run_cmd = run_cmd.replace( '"', '\\"' )
