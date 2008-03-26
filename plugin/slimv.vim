@@ -145,16 +145,13 @@ function! SlimvClientCommand()
 	let port = ' -p ' . g:slimv_port
     endif
     if g:slimv_windows
-	"TODO: do not add '-c' here, add it when appending the form to send
-	"let g:slimv_client = g:slimv_path . ' -r ' . g:slimv_server . ' -c '
-	"let g:slimv_client = ':!' . g:slimv_python . ' "' . g:slimv_path . '" -c '
-"	let g:slimv_client = g:slimv_python . ' "' . g:slimv_path . '" -c '
-
-	"return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp . ' -c '
+	"return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
+"	return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
+"	       \ '"console -w Slimv -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimv_lisp
 	return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-	       \ '"console -w Slimv -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimv_lisp . ' -c '
+	       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
     else
-	return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp . ' -c '
+	return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
     endif
 endfunction
 
@@ -354,7 +351,7 @@ function SlimvMakeArgs(args)
 endfunction
 
 function! SlimvSendToClient(args)
-    let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
+    let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
     "TODO: debug option: keep client window open
 "    execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
 endfunction
