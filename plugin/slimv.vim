@@ -394,38 +394,54 @@ function! SlimvEval(args)
 
     "let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
     "let result = system( g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args) )
-    let total = 0
-    let i = 0
-    let j = 0
-    while j < len( a:args )
-	let l = len( a:args[j] )
-	if l >= 1000
-	    " Check the length of each line
-	    echo 'Line #' . j . ' too long'
-	    break
-	endif
-	if total + l < 1000
-	    " Limit also total length to be passed to the client
-	    " in command line args
-	    let total = total + l
-	else
-	    " Total length would be too large, pass lines collected previously
-	    " and start over collecting lines
+
+    let use_temp_file = 1
+    if use_temp_file
+	"TODO: option to set explicit temp file name and delete/keep after usage
+	let tmp = tempname()
+	"let tmp = "c:/Progra~1/Vim/vimfiles/plugin/slimv.tmp"
+	try
+	    call writefile( a:args, tmp )
+	    let result = system( g:slimv_client . ' -f ' . tmp )
+"	    echo tmp
+	finally
+"	    call delete(tmp)
+	endtry
+    else
+
+	let total = 0
+	let i = 0
+	let j = 0
+	while j < len( a:args )
+	    let l = len( a:args[j] )
+	    if l >= 1000
+		" Check the length of each line
+		echo 'Line #' . j . ' too long'
+		break
+	    endif
+	    if total + l < 1000
+		" Limit also total length to be passed to the client
+		" in command line args
+		let total = total + l
+	    else
+		" Total length would be too large, pass lines collected previously
+		" and start over collecting lines
+		call SlimvSendToClient(a:args[i : j-1])
+		let i = j
+		let total = 0
+	    endif
+	    let j = j + 1
+	endwhile
+	if i < j
+	    " There are some lines left unsent, send them now
 	    call SlimvSendToClient(a:args[i : j-1])
-	    let i = j
-	    let total = 0
 	endif
-	let j = j + 1
-    endwhile
-    if i < j
-	" There are some lines left unsent, send them now
-	call SlimvSendToClient(a:args[i : j-1])
+"	echo g:slimv_client . SlimvMakeArgs(a:args)
+"	    let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
+	"TODO: debug option: keep client window open
+"	execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
+	"echo result
     endif
-"    echo g:slimv_client . SlimvMakeArgs(a:args)
-"	let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
-    "TODO: debug option: keep client window open
-"    execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
-    "echo result
     endif
 endfunction
 
