@@ -97,22 +97,51 @@ def connect_server():
 
 
 def send_line( server, line ):
-	"""Send a line to the swank server:
+	"""Send a line to the server:
 	   first send line length in 4 bytes, then send the line itself.
+	"""
+	l = len(line)
+	lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
+	server.send( lstr )		# send message length first
+	server.send( line )		# then the message itself
+	time.sleep(0.01)
+
+
+def translate_send_line( server, line ):
+	"""Send a line to the server.
 	   All backslash+n character-pairs are converted to newline.
 	"""
 	line = line.replace( '\\n', '\n' )
 	#if line.find( '\n' ) < 0:
 	#	line = line + '\n'
-	l = len(line)
-	lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
-	server.send( lstr )		# make it a swank protocol
-	server.send( line )
-	time.sleep(0.01)
+	send_line( server, line )
 
 
-def client( args ):
-	"""Main client routine: starts server if needed then send text to server.
+def client_file( filename ):
+	"""Main client routine - input file version:
+	   starts server if needed then send text to server.
+	"""
+	s = connect_server()
+	if s is None:
+		return
+
+	try:
+		file = open( filename, 'rt' )
+		try:
+			for line in file:
+			    send_line( s, line.rstrip( '\n' ) )
+		finally:
+			file.close()
+	except:
+		return
+
+	log( 'closing', 1 )
+	s.close()
+
+
+def client_args( args ):
+	"""Main client routine - command line argument version:
+	   starts server if needed then send text to server.
 	"""
 	s = connect_server()
 	if s is None:
@@ -123,7 +152,7 @@ def client( args ):
 		while 1:
 			try:
 				line = raw_input()
-				send_line( s, line )
+				translate_send_line( s, line )
 			except ( EOFError, KeyboardInterrupt ):
 				log( 'breaking', 1 )
 				break
@@ -132,7 +161,7 @@ def client( args ):
 		# Send command line arguments to the server
 		print args
 		for line in args:
-			send_line( s, line )
+			translate_send_line( s, line )
 
 	log( 'closing', 1 )
 	s.close()
@@ -166,7 +195,7 @@ class socket_listener( Thread ):
 			while not terminate:
 				l = 0
 				lstr = ''
-				# swank server: read length first
+				# read length first
 				log( "sl.recv len", 1 )
 				try:
 					lstr = conn.recv(4)
@@ -180,6 +209,7 @@ class socket_listener( Thread ):
 				if l > 0:
 					log( "sl.recv data", 1 )
 					try:
+						# then read trhe message itself
 						received = conn.recv(l)
 						if len( received ) < l:
 							break
@@ -367,14 +397,17 @@ def usage():
 	print 'Usage: ', progname + ' [-d LEVEL] [-s] [-c ARGS]'
 	print
 	print 'Options:'
-	print '  -?, -h, --help             show this help message and exit'
-	print '  -l, --lisp=PATH            path of Lisp interpreter'
-	print '  -r, --run=PATH             full command to run the server'
-	print '  -p, --port=PORT            port number to use by the server/client'
-	print '  -d LEVEL, --debug=LEVEL    set debug LEVEL (0..3)'
-	print '  -s                         start server'
-	print '  -c LINE1 LINE2 ... LINEn   start client mode and send LINE1...LINEn to server'
-	print '                             (if present, this option must be the last one)'
+	print '  -?, -h, --help                show this help message and exit'
+	print '  -l PATH, --lisp=PATH          path of Lisp interpreter'
+	print '  -r PATH, --run=PATH           full command to run the server'
+	print '  -p PORT, --port=PORT          port number to use by the server/client'
+	print '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)'
+	print '  -s                            start server'
+	print '  -f FILENAME, --file=FILENAME  start client and send contents of file'
+	print '                                named FILENAME to server'
+	print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
+	print '                                (if present, this option must be the last one,'
+	print '                                mutually exclusive with the -f option)'
 
 
 ###############################################################################
@@ -394,8 +427,8 @@ if __name__ == '__main__':
 
 	# Get command line options
 	try:
-		opts, args = getopt.getopt( sys.argv[1:], '?hcsp:l:r:d:', \
-                                            ['help', 'client', 'server', 'port=', 'lisp=', 'run=', 'debug='] )
+		opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
+                                            ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
@@ -422,6 +455,10 @@ if __name__ == '__main__':
 				mode = SERVER
 			if o in ('-c', '--client'):
 				mode = CLIENT
+				client_filename = ''
+			if o in ('-f', '--file'):
+				mode = CLIENT
+				client_filename = a
 
 	except getopt.GetoptError:
 		# print help information and exit:
@@ -440,5 +477,8 @@ if __name__ == '__main__':
 			run_cmd = run_cmd.replace( '@@', '@' )
 			#run_cmd = run_cmd.replace( '"', '\\"' )
 			#print run_cmd
-		client( args )
+		if client_filename != '':
+			client_file( client_filename )
+		else:
+			client_args( args )
 
