@@ -256,7 +256,15 @@ if !exists("g:slimv_template_macroexpand_all")
 endif
 
 if !exists("g:slimv_template_compile_file")
-    let g:slimv_template_compile_file = '(compile-file "%1")'
+"    let g:slimv_template_compile_file = '(compile-file "%1")'
+    let g:slimv_template_compile_file =
+    \ '(let ((fasl-file (compile-file "%1")))' .
+    \ '	 (when (and %2 fasl-file) (load fasl-file)))'
+endif
+
+if !exists("g:slimv_template_compile_string")
+    let g:slimv_template_compile_string = 
+    \ '(funcall (compile nil (read-from-string (format nil "(~S () ~A)" ' . "'" . 'lambda "%1"))))'
 endif
 
 if !exists("mapleader")
@@ -449,6 +457,27 @@ function! SlimvConnectServer()
     call SlimvEval([";;; Slimv client connected successfully"])
 endfunction
 
+function! SlimvGetRegion() range
+    "TODO: handle continuous (not whole line) selection case
+    "TODO: getline has only one argument in VIM 6.x
+    if mode() == "v" || mode() == "V"
+        let lines = getline(a:firstline, a:lastline)
+	let firstcol = col(a:firstline) - 1
+	let lastcol  = col(a:lastline ) - 2
+    else
+        let lines = getline("'<", "'>")
+	let firstcol = col("'<") - 1
+	let lastcol  = col("'>") - 2
+    endif
+    if lastcol >= 0
+	let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+    else
+	let lines[len(lines)-1] = ''
+    endif
+    let lines[0] = lines[0][firstcol : ]
+    return lines
+endfunction
+
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
     "TODO: handle continuous (not whole line) selection case
@@ -492,6 +521,7 @@ endfunction
 function! SlimvEvalForm1(template, par1)
     "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
     let p1 = escape(a:par1, '&')
+    let p1 = escape(p1, '\\')
     let temp1 = substitute(a:template, '%1', p1, "g")
     let lines = [temp1]
     call SlimvEval(lines)
@@ -503,9 +533,15 @@ endfunction
 function! SlimvEvalForm2(template, par1, par2)
     "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
     "let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
+    "echo a:par1
     let p1 = escape(a:par1, '&')
     let p2 = escape(a:par2, '&')
+    "echo p1
+    let p1 = escape(p1, '\\')
+    let p2 = escape(p2, '\\')
+    "echo p1
     let temp1 = substitute(a:template, '%1', p1, "g")
+    "echo temp1
     let temp2 = substitute(temp1,      '%2', p2, "g")
     let lines = [temp2]
     call SlimvEval(lines)
@@ -612,8 +648,29 @@ endfunction
 "                             (format nil "(~S () ~A)" 'lambda string)
 
 
+function! SlimvCompileDefun()
+    "TODO: handle double quote characters in form
+    call SlimvSelectToplevelForm()
+    call SlimvEvalForm1(g:slimv_template_compile_string, SlimvGetSelection())
+endfunction
+
+function! SlimvCompileLoadFile()
+    let filename = fnamemodify(bufname(""), ":p")
+    let filename = escape(filename, '\\')
+    call SlimvEvalForm2(g:slimv_template_compile_file, filename, "T")
+endfunction
+
 function! SlimvCompileFile()
-    call SlimvEvalForm1(g:slimv_template_compile_file, fnamemodify(bufname(""), ":p"))
+    let filename = fnamemodify(bufname(""), ":p")
+    let filename = escape(filename, '\\')
+    call SlimvEvalForm2(g:slimv_template_compile_file, filename, "NIL")
+endfunction
+
+function! SlimvCompileRegion() range
+    "TODO: handle double quote characters in form
+    let lines = SlimvGetRegion()
+    let region = join(lines, ' ')
+    call SlimvEvalForm1(g:slimv_template_compile_string, region)
 endfunction
 
 function! SlimvDescribeSymbol()
@@ -651,7 +708,10 @@ map <Leader>t  :call SlimvTrace()<CR>
 map <Leader>T  :call SlimvUntrace()<CR>
 map <Leader>l  :call SlimvDisassemble()<CR>
 
-map <Leader>f  :call SlimvCompileFile()<CR>
+map <Leader>D  :call SlimvCompileDefun()<CR>
+map <Leader>L  :call SlimvCompileLoadFile()<CR>
+map <Leader>F  :call SlimvCompileFile()<CR>
+map <Leader>R  :call SlimvCompileRegion()<CR>
 
 map <Leader>p  :call SlimvProfile()<CR>
 map <Leader>P  :call SlimvUnprofile()<CR>
@@ -686,7 +746,10 @@ menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
 menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
 menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
 
+menu &Slimv.&Compilation.Compile-&Defun            :call SlimvCompileDefun()<CR>
+menu &Slimv.&Compilation.Compile-&Load-File        :call SlimvCompileLoadFile()<CR>
 menu &Slimv.&Compilation.Compile-&File             :call SlimvCompileFile()<CR>
+menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
 
 menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
 menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
