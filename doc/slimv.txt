@@ -1,10 +1,10 @@
-*slimv.txt*                    Slimv                 Last Change: 26 Mar 2008
+*slimv.txt*                    Slimv                 Last Change: 28 Mar 2008
 
 Slimv                                                                  *slimv*
                                Version 0.1
 
 The Superior Lisp Interaction Mode for Vim.
-This plugin is aimed to help Lisp development by interfacing between VIM and
+This plugin is aimed to help Lisp development by interfacing between Vim and
 the Lisp REPL, similarly to Emacs/SLIME.
 
 |slimv-installation|         Installation
@@ -28,7 +28,7 @@ INSTALLATION                                              *slimv-installation*
 To install:
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
-    See VIM help file |usr_05.txt| for details on adding a plugin.
+    See Vim help file |usr_05.txt| for details on adding a plugin.
     The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
@@ -38,7 +38,7 @@ To install:
     This will generate all the help tags for any file located in the doc
     directory.
   - Enter path definitions into your vimrc (if the default values are not
-    valid for your VIM/Python/Lisp installation, which is highly probable).
+    valid for your Vim/Python/Lisp installation, which is highly probable).
     See |slimv-customization| below on how to do this.
 
 ===============================================================================
@@ -61,7 +61,12 @@ should find them (this is usually the case on Linux). Otherwise (on Windows)
 some frequently used directories are searched under C:\ and C:\Program Files.
 For a minimum, Slimv needs to know the path of the existing Python and Lisp
 installation, so if autodetection does not work for you, then set the following
-global variables in your vimrc:
+global variables in your vimrc.
+
+Note: On Windows use the / (slash) character instead of \ (backslash) as the
+      directory separator to avoid any incidental character escaping problems
+      while the paths are beeing passed between the Slimv processes.
+      On Linux this is not an issue.
 
                                                                *g:slimv_python*
 This is the installation path of the Python interpreter.
@@ -76,6 +81,8 @@ Example:
                                                                  *g:slimv_port*
 The default port used by Slimv is 5151. If this port is used by another
 program then set this variable to a free port number.
+It is also possible to run multiple REPLs from multiple Vim processes, just
+set a different port number for each Vim instance.
 Example:
     let g:slimv_port = 10101
 
@@ -114,9 +121,18 @@ special command line options. For example on Windows I highly recommend
 to use Console (http://sourceforge.net/projects/console/) which is greatly
 configurable and you also get usable select/copy/paste functions.
 
+Note: Remember to escape with a \ all " characters that are supposed to be
+      inside a command line argument, otherwise the argument will be split
+      by the shell.
+
 Example to start the Slimv server via Console:
+
   let g:slimv_client = 
-  \ 'python slimv.py -p 5152 -r "console -r \"/k @p @s -l clisp -s\"" -c '
+  \ 'python slimv.py -p 5152 -r "console -r \"/k @p @s -l clisp -s\""'
+
+So the server will be started as if we typed at the command line:
+
+  console -r "/k python slimv.py -l clisp -s"
 
 
 -------------------------------------------------------------------------------
@@ -190,7 +206,12 @@ Example:
 
 
 -------------------------------------------------------------------------------
+                                                               *slimv_keyboard*
 
+
+-------------------------------------------------------------------------------
+
+Note: delete this
                                                      *g:bufExplorerDefaultHelp*
 To control whether the default help is displayed or not, use: >
   let g:bufExplorerDefaultHelp=0       " Do not show default help.
@@ -222,6 +243,17 @@ The default is to split the path and file name.
 
 ==============================================================================
 USAGE                                                            *slimv-usage*
+
+After proper installation start Vim and load a .lisp source file into a
+buffer. When the first Slimv command is entered (either from the menu or
+via keyboard shortcut or entering a :call Slimv...() at the Vim command line)
+then Slimv checks if the server/REPL runs and starts it if nedeed.
+When the server is running, the Slimv commands send the appropriate Lisp
+forms to the server/REPL for processing. That's it.
+All you need to know then is the list of possible Slimv commands, how to
+enter them and under what conditions.
+
+
 
 To start exploring in the current window, use: >
 
@@ -278,19 +310,19 @@ FAQ                                                                 *slimv-faq*
      not want to give such a similar name.
 
 - Q: Why another 'Superior Lisp Mode' if there is already one?
-- A: Because many programmers prefer VIM as a program text editor over Emacs,
+- A: Because many programmers prefer Vim as a program text editor over Emacs,
      including me. I don't want to start a holy war or whatever, I'm just
      happy if someone else finds this plugin useful.
 
 - Q: How does Slimv work?
-- A: Slimv consists of three parts: VIM plugin, client and server.
+- A: Slimv consists of three parts: Vim plugin, client and server.
      The Slimv server is a swank server that embeds a Lisp REPL.
      The Slimv client interfaces with the server and is responsible
      for sending Lisp commands to the Lisp REPL.
-     The VIM plugin is translating editor commands to Lisp commands to be
+     The Vim plugin is translating editor commands to Lisp commands to be
      sent to the server by the client.
      So the dataflow is like this:
-     VIM -> VIM plugin -> Slimv client -> Slimv server -> Lisp REPL
+     Vim -> Vim plugin -> Slimv client -> Slimv server -> Lisp REPL
      The plugin resides in 'slimv.vim', the client and the server both
      reside in 'slimv.py'.
 
@@ -307,14 +339,14 @@ FAQ                                                                 *slimv-faq*
 - A: Hint: what roman numerals are 5,1,5,1? Bingo: VI, doubled.
 
 - Q: Are you a Lisp expert?
-- A: No, not at all. I'm just learning Lisp. Also just learning VIM
+- A: No, not at all. I'm just learning Lisp. Also just learning Vim
      scripting. And I'm not a Python expert either, however (at the moment)
      I have more experience with Python than with Lisp.
 
 - Q: Why using Python for the client/server code? Why not Lisp?
 - A: This is for historical reasons and may change in the future.
-     Preliminary versions used VIM's built-in Python support.
-     Later on the client/server code was separated from VIM but still remained
+     Preliminary versions used Vim's built-in Python support.
+     Later on the client/server code was separated from Vim but still remained
      written in Python. On Linux this should not be a problem, most Linux
      distributions contain a Python interpreter with high enough version.
      On Windows this means, you need to install Python, if you don't have
@@ -324,13 +356,13 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.1    - Initial release. Will it ever go higher?
+0.1    - Initial release. And hope not the last one :-)
 
 ===============================================================================
 KNOWN ISSUES                                                     *slimv-issues*
 
-- Needs VIM version 7.0 or above, because of the intensive use of lists.
-- VIM register 's' is used for all form selections, so its original content is
+- Needs Vim version 7.0 or above, because of the intensive use of lists.
+- Vim register 's' is used for all form selections, so its original content is
   destroyed.
 - (un)profile does not work
 - Needs Python 2.4 or higher (uses the subprocess module)
@@ -343,17 +375,17 @@ TODO                                                               *slimv-todo*
 - Rewrite client/server in Lisp, so that no Python would be needed.
 - Add profile functions
 - Use a Vim buffer for the REPL. This does not look possible with the current
-  state of Vim, or at least I can not see an easy way to do it.
+  state of Vim, or at least I can not see any easy way to do it.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
 
 Author: Tamas Kovacs <kovisoft at gmail dot com>
 
-Credit must go out to Bram Moolenaar and all the Vim developers for
-making the world's (one of the) best editor. I also want to thank everyone who
-helped and gave me suggestions. I wouldn't want to leave anyone out so I
-won't list names.
+Credit must go out to Bram Moolenaar and all the Vim developers for making
+the world's (one of the) best editor.
+Also special thanks to Eric Marsden and all the Emacs/SLIME developers for
+making SLIME.
 
 ===============================================================================
 vim:tw=78:noet:wrap:ts=8:ft=help:norl:
