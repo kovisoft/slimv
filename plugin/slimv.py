@@ -72,7 +72,7 @@ def connect_server():
 					cmd = [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
 				else:
 					#cmd = ['xterm', '-e', python_path, slimv_path, '-l', lisp_path, '-s &']
-					cmd = ['xterm', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
+					cmd = ['xterm', '-T', 'Slimv', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
 			else:
 			    cmd = shlex.split(run_cmd)
 			if mswindows:
@@ -316,7 +316,7 @@ def server( args ):
 		if mswindows:
 			from win32con import CREATE_NO_WINDOW
 			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, \
-					creationflags=CREATE_NO_WINDOW )
+				    creationflags=CREATE_NO_WINDOW )
 		else:
 			p1 = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 	#	p1 = Popen(["c:\\lispbox\\clisp-2.37\\clisp.exe"], stdin=PIPE, stdout=PIPE, stderr=PIPE,
@@ -428,7 +428,7 @@ if __name__ == '__main__':
 	# Get command line options
 	try:
 		opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
-                                            ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
+					    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
 
 		# Process options
 		for o, a in opts:
