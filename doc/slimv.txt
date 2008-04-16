@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 28 Mar 2008
+*slimv.txt*                    Slimv                 Last Change: 16 Apr 2008
 
 Slimv                                                                  *slimv*
                                Version 0.1
@@ -54,8 +54,10 @@ CUSTOMIZATION                                             *slimv-customization*
 
 -------------------------------------------------------------------------------
                                                                 *slimv_options*
+Note: Most options below require to restart the Vim session when modified.
+
 Slimv tries to autodetect the Python and Lisp installation directories,
-however the algorzthm is not very sophisticated.
+however the algorithm is not very sophisticated.
 If the installation directories are put in the path, then the autodetection
 should find them (this is usually the case on Linux). Otherwise (on Windows)
 some frequently used directories are searched under C:\ and C:\Program Files.
@@ -183,6 +185,11 @@ Example:
 Lisp form built when issuing the 'disassemble' command.
 Example:
     let g:slimv_template_disassemble = "(disassemble #'%1)"
+
+                                                     *g:slimv_template_inspect*
+Lisp form built when issuing the 'inspect' command.
+Example:
+    let g:slimv_template_inspect = "(inspect %1)"
 
                                                      *g:slimv_template_apropos*
 Lisp form built when issuing the 'apropos' command.
@@ -373,7 +380,10 @@ KNOWN ISSUES                                                     *slimv-issues*
 TODO                                                               *slimv-todo*
 
 - Rewrite client/server in Lisp, so that no Python would be needed.
-- Add profile functions
+- Add Compile System
+- Add Cross Reference functions
+- Add Profile functions
+- Handle specific REPL output in Vim (like compilation notes)
 - Use a Vim buffer for the REPL. This does not look possible with the current
   state of Vim, or at least I can not see any easy way to do it.
 
@@ -386,6 +396,8 @@ Credit must go out to Bram Moolenaar and all the Vim developers for making
 the world's (one of the) best editor.
 Also special thanks to Eric Marsden and all the Emacs/SLIME developers for
 making SLIME.
+Last but not least many thanks to my wife Andrea (for the Italians out there:
+hey, this is a female name in Hungary :-) for her support and patience.
 
 ===============================================================================
 vim:tw=78:noet:wrap:ts=8:ft=help:norl:
