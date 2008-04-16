@@ -243,6 +243,10 @@ if !exists("g:slimv_template_disassemble")
     let g:slimv_template_disassemble = "(disassemble #'%1)"
 endif
 
+if !exists("g:slimv_template_inspect")
+    let g:slimv_template_inspect = "(inspect %1)"
+endif
+
 if !exists("g:slimv_template_apropos")
     let g:slimv_template_apropos = '(apropos "%1")'
 endif
@@ -625,6 +629,14 @@ function! SlimvDisassemble()
     endif
 endfunction
 
+function! SlimvInspect()
+    call SlimvSelectSymbol()
+    let s = input( "Inspect: ", SlimvGetSelection() )
+    if s != ""
+        call SlimvEvalForm1(g:slimv_template_inspect, s)
+    endif
+endfunction
+
 function! SlimvProfile()
     call SlimvSelectSymbol()
     let s = input( "Profile: ", SlimvGetSelection() )
@@ -699,7 +711,7 @@ map <Leader>e  :call SlimvEvalLastExp()<CR>
 map <Leader>E  :call SlimvPprintEvalLastExp()<CR>
 map <Leader>r  :call SlimvEvalRegion()<CR>
 map <Leader>b  :call SlimvEvalBuffer()<CR>
-map <Leader>i  :call SlimvInteractiveEval()<CR>
+map <Leader>v  :call SlimvInteractiveEval()<CR>
 map <Leader>u  :call SlimvUndefineFunction()<CR>
 
 map <Leader>1  :call SlimvMacroexpand()<CR>
@@ -707,6 +719,7 @@ map <Leader>m  :call SlimvMacroexpandAll()<CR>
 map <Leader>t  :call SlimvTrace()<CR>
 map <Leader>T  :call SlimvUntrace()<CR>
 map <Leader>l  :call SlimvDisassemble()<CR>
+map <Leader>i  :call SlimvInspect()<CR>
 
 map <Leader>D  :call SlimvCompileDefun()<CR>
 map <Leader>L  :call SlimvCompileLoadFile()<CR>
@@ -737,7 +750,7 @@ menu &Slimv.&Evaluation.Eval-Last-&Exp             :call SlimvEvalLastExp()<CR>
 menu &Slimv.&Evaluation.&Pprint-Eval-Last          :call SlimvPprintEvalLastExp()<CR>
 menu &Slimv.&Evaluation.Eval-&Region               :call SlimvEvalRegion()<CR>
 menu &Slimv.&Evaluation.Eval-&Buffer               :call SlimvEvalBuffer()<CR>
-menu &Slimv.&Evaluation.&Interactive-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
+menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
 menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
 
 menu &Slimv.De&bugging.Macroexpand-&1              :call SlimvMacroexpand()<CR>
@@ -745,6 +758,7 @@ menu &Slimv.De&bugging.&Macroexpand-All            :call SlimvMacroexpandAll()<C
 menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
 menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
 menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
+menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
 
 menu &Slimv.&Compilation.Compile-&Defun            :call SlimvCompileDefun()<CR>
 menu &Slimv.&Compilation.Compile-&Load-File        :call SlimvCompileLoadFile()<CR>
