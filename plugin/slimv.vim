@@ -1,7 +1,7 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Last Change:	2008 Mar 26
-" Maintainer:	Tamas Kovacs <kovisoft@gmail.com>
-" License:	This file is placed in the public domain.
+" Last Change:  2008 Mar 26
+" Maintainer:   Tamas Kovacs <kovisoft@gmail.com>
+" License:      This file is placed in the public domain.
 "               No warranty, express or implied.
 "               *** ***   Use At-Your-Own-Risk!   *** ***
 "
@@ -41,134 +41,134 @@ endif
 
 function! SlimvAutodetectPython()
     if executable( 'python' )
-	return 'python'
+        return 'python'
     endif
 
     if g:slimv_windows
-	" Try to find Python on the standard installation places
-	let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
-	if len( pythons ) > 0
-	    return pythons[0]
-	endif
-	" Go deeper in subdirectories
-	let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
-	if len( pythons ) > 0
-	    return pythons[0]
-	endif
-	return ''
+        " Try to find Python on the standard installation places
+        let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
+        if len( pythons ) > 0
+            return pythons[0]
+        endif
+        " Go deeper in subdirectories
+        let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
+        if len( pythons ) > 0
+            return pythons[0]
+        endif
+        return ''
     else
-	return ''
+        return ''
     endif
 endfunction
 
 function! SlimvAutodetectLisp()
     if executable( 'clisp' )
-	" Common Lisp
-	return 'clisp'
+        " Common Lisp
+        return 'clisp'
     endif
     if executable( 'gcl' )
-	" GNU Common Lisp
-	return 'gcl'
+        " GNU Common Lisp
+        return 'gcl'
     endif
     if executable( 'cmucl' )
-	" Carnegie Mellon University Common Lisp
-	return 'cmucl'
+        " Carnegie Mellon University Common Lisp
+        return 'cmucl'
     endif
     if executable( 'sbcl' )
-	" Steel Bank Common Lisp
-	return 'sbcl'
+        " Steel Bank Common Lisp
+        return 'sbcl'
     endif
     if executable( 'ecl' )
-	" Embeddable Common Lisp
-	return 'ecl'
+        " Embeddable Common Lisp
+        return 'ecl'
     endif
     if executable( 'acl' )
-	" Allegro Common Lisp
-	return 'acl'
+        " Allegro Common Lisp
+        return 'acl'
     endif
     if executable( 'lwl' )
-	" LispWorks
-	return 'lwl'
+        " LispWorks
+        return 'lwl'
     endif
 
     if g:slimv_windows
-	"return 'c:/lispbox/clisp-2.37/clisp.exe'
-	" Try to find Python on the standard installation places
-	let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
-	if len( lisps ) > 0
-	    return lisps[0]
-	endif
-	"return 'clisp.exe'
-	"return 'c:/lispbox/clisp-2.37/clisp.exe'
-	"return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
-	"TODO: remove this hack
-	"return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
-	return ''
+        "return 'c:/lispbox/clisp-2.37/clisp.exe'
+        " Try to find Python on the standard installation places
+        let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
+        if len( lisps ) > 0
+            return lisps[0]
+        endif
+        "return 'clisp.exe'
+        "return 'c:/lispbox/clisp-2.37/clisp.exe'
+        "return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
+        "TODO: remove this hack
+        "return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
+        return ''
     else
-	return ''
+        return ''
     endif
 endfunction
 
 function! SlimvClientCommand()
     if g:slimv_python == '' || g:slimv_lisp == ''
-	" We don't have enough information to build the command to start the client
-	return ''
+        " We don't have enough information to build the command to start the client
+        return ''
     endif
     if g:slimv_port == 5151
-	let port = ''
+        let port = ''
     else
-	" Using port number other than default, must pass it to client
-	let port = ' -p ' . g:slimv_port
+        " Using port number other than default, must pass it to client
+        let port = ' -p ' . g:slimv_port
     endif
     if g:slimv_windows
-	"return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
-"	return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-"	       \ '"console -w Slimv -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimv_lisp
-	return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-	       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
+        "return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
+"       return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
+"              \ '"console -w Slimv -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimv_lisp
+        return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
+               \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
     else
-	return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
+        return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
     endif
 endfunction
 
 if !exists('g:slimv_path')
 "    if g:slimv_windows
-"	"let g:slimv_path = $VIMRUNTIME . "/plugin/slimv.py"
-"	let g:slimv_path = $VIM . '/vimfiles/plugin/slimv.py'
+"       "let g:slimv_path = $VIMRUNTIME . "/plugin/slimv.py"
+"       let g:slimv_path = $VIM . '/vimfiles/plugin/slimv.py'
 "    else
-"	let g:slimv_path = $HOME . '/.vim/plugin/slimv.py'
+"       let g:slimv_path = $HOME . '/.vim/plugin/slimv.py'
 "    endif
     "let g:slimv_path = globpath(&runtimepath, '**/slimv.py')
     "let g:slimv_path = globpath(&runtimepath, '*/slimv.py')
     let plugins = split( globpath( &runtimepath, 'plugin/**/slimv.py'), '\n' )
     if len( plugins ) > 0
-	let g:slimv_path = plugins[0]
+        let g:slimv_path = plugins[0]
     else
-	let g:slimv_path = 'slimv.py'
+        let g:slimv_path = 'slimv.py'
     endif
 endif
 
@@ -182,13 +182,13 @@ endif
 
 "if !exists('g:slimv_server')
 "    if g:slimv_windows
-"	let g:slimv_command = g:slimv_python . ' \"' . g:slimv_path . '\"'
-"	"let g:slimv_server = 'console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
-"	let g:slimv_server = ':!start console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
-"	"let g:slimv_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimv.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
-"	"let g:slimv_server = g:slimv_python . ' "' . g:slimv_path . '" -l ' . g:slimv_lisp . ' -s'
+"       let g:slimv_command = g:slimv_python . ' \"' . g:slimv_path . '\"'
+"       "let g:slimv_server = 'console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
+"       let g:slimv_server = ':!start console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
+"       "let g:slimv_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimv.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
+"       "let g:slimv_server = g:slimv_python . ' "' . g:slimv_path . '" -l ' . g:slimv_lisp . ' -s'
 "    else
-"	let g:slimv_server = ':!xterm -e ' . g:slimv_python . ' ' . g:slimv_path . ' -l ' . g:slimv_lisp . ' -s &'
+"       let g:slimv_server = ':!xterm -e ' . g:slimv_python . ' ' . g:slimv_path . ' -l ' . g:slimv_lisp . ' -s &'
 "    endif
 "endif
 
@@ -263,7 +263,7 @@ if !exists("g:slimv_template_compile_file")
 "    let g:slimv_template_compile_file = '(compile-file "%1")'
     let g:slimv_template_compile_file =
     \ '(let ((fasl-file (compile-file "%1")))' .
-    \ '	 (when (and %2 fasl-file) (load fasl-file)))'
+    \ '  (when (and %2 fasl-file) (load fasl-file)))'
 endif
 
 if !exists("g:slimv_template_compile_string")
@@ -285,9 +285,9 @@ endif
 "    let netstat = system( 'netstat -a' )
 "    "let netstat = execute '!netstat -a'
 "    if match( netstat, printf( '%d', g:slimv_port ) ) >= 0
-"	return 1
+"       return 1
 "    else
-"	return 0
+"       return 0
 "endfunction
 
 "function! SlimvConnectServer()
@@ -307,7 +307,7 @@ function! SlimvLoad()
         "py import sys
         "py import os
         let g:slimv_loaded_python = 1
-"	call SlimvConnectServer()
+"       call SlimvConnectServer()
     endif
 endfunction
 
@@ -326,7 +326,7 @@ function! SlimvSelectForm()
     let c = col(".") - 2
     while c > 0 && match(' \t()', getline(".")[c]) < 0
         normal h
-	let c = c - 1
+        let c = c - 1
     endwhile
     normal "sy
 endfunction
@@ -347,8 +347,8 @@ function SlimvMakeArgs(args)
     let ar = a:args
     let i = 0
     while i < len(ar)
-	let ar[i] = substitute(ar[i], '"',  '\\"', 'g')
-	let i = i + 1
+        let ar[i] = substitute(ar[i], '"',  '\\"', 'g')
+        let i = i + 1
     endwhile
     let a = join(ar, '" "')
     "let a = substitute(a, '"',  '\\"', 'g')
@@ -376,14 +376,14 @@ function! SlimvEval(args)
     call SlimvLoad()
 
     if g:slimv_client == ''
-	" No command to start client, we are clueless, ask user for assistance
-	if g:slimv_python == ''
-	    let g:slimv_python = input( "Enter Python path (or fill g:slimv_python in your vimrc): ", "", "file" )
-	endif
-	if g:slimv_lisp == ''
-	    let g:slimv_lisp = input( "Enter Lisp path (or fill g:slimv_lisp in your vimrc): ", "", "file" )
-	endif
-	let g:slimv_client = SlimvClientCommand()
+        " No command to start client, we are clueless, ask user for assistance
+        if g:slimv_python == ''
+            let g:slimv_python = input( "Enter Python path (or fill g:slimv_python in your vimrc): ", "", "file" )
+        endif
+        if g:slimv_lisp == ''
+            let g:slimv_lisp = input( "Enter Lisp path (or fill g:slimv_lisp in your vimrc): ", "", "file" )
+        endif
+        let g:slimv_client = SlimvClientCommand()
     endif
 
     if g:slimv_client != ''
@@ -409,50 +409,50 @@ function! SlimvEval(args)
 
     let use_temp_file = 1
     if use_temp_file
-	"TODO: option to set explicit temp file name and delete/keep after usage
-	let tmp = tempname()
-	"let tmp = "c:/Progra~1/Vim/vimfiles/plugin/slimv.tmp"
-	try
-	    call writefile( a:args, tmp )
-	    let result = system( g:slimv_client . ' -f ' . tmp )
-"	    echo tmp
-	finally
-"	    call delete(tmp)
-	endtry
+        "TODO: option to set explicit temp file name and delete/keep after usage
+        let tmp = tempname()
+        "let tmp = "c:/Progra~1/Vim/vimfiles/plugin/slimv.tmp"
+        try
+            call writefile( a:args, tmp )
+            let result = system( g:slimv_client . ' -f ' . tmp )
+"           echo tmp
+        finally
+"           call delete(tmp)
+        endtry
     else
 
-	let total = 0
-	let i = 0
-	let j = 0
-	while j < len( a:args )
-	    let l = len( a:args[j] )
-	    if l >= 1000
-		" Check the length of each line
-		echo 'Line #' . j . ' too long'
-		break
-	    endif
-	    if total + l < 1000
-		" Limit also total length to be passed to the client
-		" in command line args
-		let total = total + l
-	    else
-		" Total length would be too large, pass lines collected previously
-		" and start over collecting lines
-		call SlimvSendToClient(a:args[i : j-1])
-		let i = j
-		let total = 0
-	    endif
-	    let j = j + 1
-	endwhile
-	if i < j
-	    " There are some lines left unsent, send them now
-	    call SlimvSendToClient(a:args[i : j-1])
-	endif
-"	echo g:slimv_client . SlimvMakeArgs(a:args)
-"	    let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
-	"TODO: debug option: keep client window open
-"	execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
-	"echo result
+        let total = 0
+        let i = 0
+        let j = 0
+        while j < len( a:args )
+            let l = len( a:args[j] )
+            if l >= 1000
+                " Check the length of each line
+                echo 'Line #' . j . ' too long'
+                break
+            endif
+            if total + l < 1000
+                " Limit also total length to be passed to the client
+                " in command line args
+                let total = total + l
+            else
+                " Total length would be too large, pass lines collected previously
+                " and start over collecting lines
+                call SlimvSendToClient(a:args[i : j-1])
+                let i = j
+                let total = 0
+            endif
+            let j = j + 1
+        endwhile
+        if i < j
+            " There are some lines left unsent, send them now
+            call SlimvSendToClient(a:args[i : j-1])
+        endif
+"       echo g:slimv_client . SlimvMakeArgs(a:args)
+"           let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
+        "TODO: debug option: keep client window open
+"       execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
+        "echo result
     endif
     endif
 endfunction
@@ -466,17 +466,17 @@ function! SlimvGetRegion() range
     "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
-	let firstcol = col(a:firstline) - 1
-	let lastcol  = col(a:lastline ) - 2
+        let firstcol = col(a:firstline) - 1
+        let lastcol  = col(a:lastline ) - 2
     else
         let lines = getline("'<", "'>")
-	let firstcol = col("'<") - 1
-	let lastcol  = col("'>") - 2
+        let firstcol = col("'<") - 1
+        let lastcol  = col("'>") - 2
     endif
     if lastcol >= 0
-	let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+        let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
     else
-	let lines[len(lines)-1] = ''
+        let lines[len(lines)-1] = ''
     endif
     let lines[0] = lines[0][firstcol : ]
     return lines
@@ -488,17 +488,17 @@ function! SlimvEvalRegion() range
     "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
-	let firstcol = col(a:firstline) - 1
-	let lastcol  = col(a:lastline ) - 2
+        let firstcol = col(a:firstline) - 1
+        let lastcol  = col(a:lastline ) - 2
     else
         let lines = getline("'<", "'>")
-	let firstcol = col("'<") - 1
-	let lastcol  = col("'>") - 2
+        let firstcol = col("'<") - 1
+        let lastcol  = col("'>") - 2
     endif
     if lastcol >= 0
-	let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+        let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
     else
-	let lines[len(lines)-1] = ''
+        let lines[len(lines)-1] = ''
     endif
     let lines[0] = lines[0][firstcol : ]
     call SlimvEval(lines)
