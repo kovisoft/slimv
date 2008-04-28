@@ -1,5 +1,5 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Last Change:  2008 Mar 26
+" Last Change:  2008 Apr 28
 " Maintainer:   Tamas Kovacs <kovisoft@gmail.com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -7,26 +7,17 @@
 "
 " =====================================================================
 "
-"  TODO: make it work on Linux
-"  TODO: is it possible to redirect output to VIM buffer?
-"  TODO: compile related functions and keybindings
-"  TODO: documentation commands
-"  TODO: possibility to use cmd frontend (like Console: console "/k <command>")
-"  TODO: autodetect Python and Lisp installation directory
-" You should look at (HKEY_LOCAL_MACHINE,HKEY_CURRENT_USER)/Software/Python. 
-"
-" =====================================================================
 "  Load Once:
 if &cp || exists("g:slimv_loaded")
     finish
 endif
 
 let g:slimv_loaded        = 1
-let g:slimv_loaded_python = 0
 
 if has("win32") || has("win95") || has("win64") || has("win16")
     let g:slimv_windows   = 1
 else
+    " This means Linux only at the moment
     let g:slimv_windows   = 0
 endif
 
@@ -34,11 +25,12 @@ endif
 "  Global variable definitions
 " =====================================================================
 
+" TCP port number to use
 if !exists('g:slimv_port')
-    "TODO: pass this to the client
     let g:slimv_port = 5151
 endif
 
+" Try to autodetect Python executable
 function! SlimvAutodetectPython()
     if executable( 'python' )
         return 'python'
@@ -61,7 +53,9 @@ function! SlimvAutodetectPython()
     endif
 endfunction
 
+" Try to autodetect Lisp executable
 function! SlimvAutodetectLisp()
+    " Check the easy cases
     if executable( 'clisp' )
         " Common Lisp
         return 'clisp'
@@ -92,7 +86,6 @@ function! SlimvAutodetectLisp()
     endif
 
     if g:slimv_windows
-        "return 'c:/lispbox/clisp-2.37/clisp.exe'
         " Try to find Python on the standard installation places
         let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
         if len( lisps ) > 0
@@ -122,20 +115,16 @@ function! SlimvAutodetectLisp()
         if len( lisps ) > 0
             return lisps[0]
         endif
-        "return 'clisp.exe'
-        "return 'c:/lispbox/clisp-2.37/clisp.exe'
-        "return '\"c:/lispbox/clisp-2.37/clisp.exe -ansi\"'
-        "TODO: remove this hack
-        "return '"c:/lispbox/clisp-2.37/clisp.exe -ansi"'
         return ''
     else
         return ''
     endif
 endfunction
 
+" Build the command to start the client
 function! SlimvClientCommand()
     if g:slimv_python == '' || g:slimv_lisp == ''
-        " We don't have enough information to build the command to start the client
+        " We don't have enough information to build client command
         return ''
     endif
     if g:slimv_port == 5151
@@ -145,25 +134,18 @@ function! SlimvClientCommand()
         let port = ' -p ' . g:slimv_port
     endif
     if g:slimv_windows
-        "return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
-"       return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-"              \ '"console -w Slimv -r \"/k @p @s -l @l -s\""' . ' -l ' . g:slimv_lisp
-        return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-               \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
+        return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
+	" This one can be used to start Lisp in a 'Console' window
+	" instead of the default DOS box
+        "return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
+        "       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
     else
         return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
     endif
 endfunction
 
+" Find slimv.py in the Vim plugin directory (if not given in vimrc)
 if !exists('g:slimv_path')
-"    if g:slimv_windows
-"       "let g:slimv_path = $VIMRUNTIME . "/plugin/slimv.py"
-"       let g:slimv_path = $VIM . '/vimfiles/plugin/slimv.py'
-"    else
-"       let g:slimv_path = $HOME . '/.vim/plugin/slimv.py'
-"    endif
-    "let g:slimv_path = globpath(&runtimepath, '**/slimv.py')
-    "let g:slimv_path = globpath(&runtimepath, '*/slimv.py')
     let plugins = split( globpath( &runtimepath, 'plugin/**/slimv.py'), '\n' )
     if len( plugins ) > 0
         let g:slimv_path = plugins[0]
@@ -172,41 +154,25 @@ if !exists('g:slimv_path')
     endif
 endif
 
+" Find Python (if not given in vimrc)
 if !exists('g:slimv_python')
     let g:slimv_python = SlimvAutodetectPython()
 endif
 
+" Find Lisp (if not given in vimrc)
 if !exists('g:slimv_lisp')
     let g:slimv_lisp = SlimvAutodetectLisp()
 endif
 
-"if !exists('g:slimv_server')
-"    if g:slimv_windows
-"       let g:slimv_command = g:slimv_python . ' \"' . g:slimv_path . '\"'
-"       "let g:slimv_server = 'console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
-"       let g:slimv_server = ':!start console -r "/k ' . g:slimv_python . ' \"' . g:slimv_path . '\" -l ' . g:slimv_lisp . ' -s"'
-"       "let g:slimv_server = 'console -r "/k c:/python24/python.exe \"c:/Program Files/Vim/vimfiles/plugin/slimv.py\" -l \"c:/lispbox/clisp-2.37/clisp.exe -ansi\" -s"'
-"       "let g:slimv_server = g:slimv_python . ' "' . g:slimv_path . '" -l ' . g:slimv_lisp . ' -s'
-"    else
-"       let g:slimv_server = ':!xterm -e ' . g:slimv_python . ' ' . g:slimv_path . ' -l ' . g:slimv_lisp . ' -s &'
-"    endif
-"endif
-
+" Build client command (if not given in vimrc)
 if !exists('g:slimv_client')
     let g:slimv_client = SlimvClientCommand()
-    "let g:slimv_client = ''
 endif
 
 
-"let g:term = 'console -r \"/k %p \\"%s\\" -l %l -s\"'
-"let g:term1 = substitute( g:term,  '%p', g:slimv_python, 'g' )
-"let g:term2 = substitute( g:term1, '%s', g:slimv_path, 'g' )
-"let g:term3 = substitute( g:term2, '%l', g:slimv_lisp, 'g' )
-"let g:client = '%p %s -r \"console -r \\"/k %p \\\"%s\\\" -l %l -s\\"\" -c'
-"let g:client = '%p %s -r \"%p \\"%s\\" -l %l -s\" -c'
-
-
-" ---------------------------------------------------------------------
+" =====================================================================
+"  Template definitions
+" =====================================================================
 
 "TODO: change %1 to @1 to be conform with @p, @s, @l above (or just leave it alone?)
 if !exists("g:slimv_template_pprint")
@@ -280,37 +246,6 @@ endif
 "  General utility functions
 " =====================================================================
 
-"function! SlimvServerRunning()
-"    "TODO: make this work on Linux
-"    let netstat = system( 'netstat -a' )
-"    "let netstat = execute '!netstat -a'
-"    if match( netstat, printf( '%d', g:slimv_port ) ) >= 0
-"       return 1
-"    else
-"       return 0
-"endfunction
-
-"function! SlimvConnectServer()
-"    "TODO: make this work on Linux
-"    "TODO: handle if called again after server already started
-"    "silent execute ":!start " . g:slimv_server
-"    silent execute g:slimv_server
-"    " Wait for server + Lisp startup
-"    sleep 1
-"endfunction
-
-" Load Python library and necessary modules
-function! SlimvLoad()
-""echo 'console -r "/k %p \"%s\" -l %l -s"'
-    if g:slimv_loaded_python == 0
-        "py import vim
-        "py import sys
-        "py import os
-        let g:slimv_loaded_python = 1
-"       call SlimvConnectServer()
-    endif
-endfunction
-
 " Select symbol under cursor and copy it to register 's'
 function! SlimvSelectSymbol()
     "TODO: can we use expand('<cWORD>') here?
@@ -342,8 +277,8 @@ function! SlimvGetSelection()
     return getreg('"s')
 endfunction
 
+" Prepare argument list to be sent to the client
 function SlimvMakeArgs(args)
-    "echo a:args
     let ar = a:args
     let i = 0
     while i < len(ar)
@@ -354,14 +289,12 @@ function SlimvMakeArgs(args)
     "let a = substitute(a, '"',  '\\"', 'g')
     let a = substitute(a, '\n', '\\n', 'g')
     let a = '"' . a . '" '
-    "let a = ''
-    ""let a = a . '"' . substitute(a:args[0], '\n', '\\n" "', 'g') . '" '
-    "let a = a . '"' . substitute(a:args[0], '\n', '\\n', 'g') . '" '
     "TODO: debug option: printout here
     "echo a
     return a
 endfunction
 
+" Send text to the client
 function! SlimvSendToClient(args)
     let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
     "TODO: debug option: keep client window open
@@ -373,7 +306,6 @@ function! SlimvEval(args)
     "TODO: overcome command line argument length limitations
     "TODO: in visual mode and not called from EvalRegion do not call this in a
     "      loop for all lines in the selection
-    call SlimvLoad()
 
     if g:slimv_client == ''
         " No command to start client, we are clueless, ask user for assistance
@@ -386,41 +318,24 @@ function! SlimvEval(args)
         let g:slimv_client = SlimvClientCommand()
     endif
 
-    if g:slimv_client != ''
-" start client with server command given
-"    py sys.argv = [vim.eval("g:slimv_path"),
-"                  \ '-r', vim.eval("g:slimv_server"), '-c'] + 
-"                  \ vim.eval("a:args")
-    "call SlimvMakeArgs(a:args)
-    "py sys.argv = [vim.eval("g:slimv_path"), '-c'] + vim.eval("a:args")
-    "execute ":pyfile " . g:slimv_path
-"    silent execute '!' . g:slimv_python . ' "' . g:slimv_path . '" -c "(+ 1 2)"'
-"    echo '!' . g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args)
+    if g:slimv_client == ''
+        return
+    endif
 
-    "silent execute '!' . g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args)
-"    silent execute g:slimv_client . SlimvMakeArgs(a:args)
-    "TODO: why does the followign give an E371: Command not found error on Windows?
-    "silent execute ':!start /WAIT /B ' . g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args)
-    "silent execute '!cmd /c /q ' . g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args)
-    "execute '!' . g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args)
-
-    "let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
-    "let result = system( g:slimv_python . ' "' . g:slimv_path . '" -c ' . SlimvMakeArgs(a:args) )
-
+    " Hardcoded to use temporary file for passing text to the client
     let use_temp_file = 1
     if use_temp_file
         "TODO: option to set explicit temp file name and delete/keep after usage
         let tmp = tempname()
-        "let tmp = "c:/Progra~1/Vim/vimfiles/plugin/slimv.tmp"
         try
             call writefile( a:args, tmp )
             let result = system( g:slimv_client . ' -f ' . tmp )
-"           echo tmp
         finally
-"           call delete(tmp)
         endtry
     else
-
+	" Send text to the client via command line arguments
+	" This is problematic due to command line argument size limitations
+	" So currently it is not used
         let total = 0
         let i = 0
         let j = 0
@@ -448,22 +363,16 @@ function! SlimvEval(args)
             " There are some lines left unsent, send them now
             call SlimvSendToClient(a:args[i : j-1])
         endif
-"       echo g:slimv_client . SlimvMakeArgs(a:args)
-"           let result = system( g:slimv_client . SlimvMakeArgs(a:args) )
-        "TODO: debug option: keep client window open
-"       execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
-        "echo result
-    endif
     endif
 endfunction
 
+" Start and connect slimv server
+" This is a quite dummy function that just evaluates a comment
 function! SlimvConnectServer()
     call SlimvEval([";;; Slimv client connected successfully"])
 endfunction
 
 function! SlimvGetRegion() range
-    "TODO: handle continuous (not whole line) selection case
-    "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
         let firstcol = col(a:firstline) - 1
@@ -484,8 +393,6 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    "TODO: handle continuous (not whole line) selection case
-    "TODO: getline has only one argument in VIM 6.x
     if mode() == "v" || mode() == "V"
         let lines = getline(a:firstline, a:lastline)
         let firstcol = col(a:firstline) - 1
@@ -506,10 +413,7 @@ endfunction
 
 " Eval contents of the 's' register
 function! SlimvEvalSelection()
-    "TODO: VIM 6.x does not have lists. What to do?
     let lines = [SlimvGetSelection()]
-    "let lines = []
-    "call add(lines, SlimvGetSelection())
     call SlimvEval(lines)
 endfunction
 
@@ -523,7 +427,6 @@ endfunction
 " Eval Lisp form, with the given parameter substituted in the template.
 " %1 string is substituted with par1
 function! SlimvEvalForm1(template, par1)
-    "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
     let p1 = escape(a:par1, '&')
     let p1 = escape(p1, '\\')
     let temp1 = substitute(a:template, '%1', p1, "g")
@@ -535,17 +438,11 @@ endfunction
 " %1 string is substituted with par1
 " %2 string is substituted with par2
 function! SlimvEvalForm2(template, par1, par2)
-    "let p1 = substitute(a:par1, '&', '\\&', "g")  " & -> \&
-    "let p2 = substitute(a:par2, '&', '\\&', "g")  " & -> \&
-    "echo a:par1
     let p1 = escape(a:par1, '&')
     let p2 = escape(a:par2, '&')
-    "echo p1
     let p1 = escape(p1, '\\')
     let p2 = escape(p2, '\\')
-    "echo p1
     let temp1 = substitute(a:template, '%1', p1, "g")
-    "echo temp1
     let temp2 = substitute(temp1,      '%2', p2, "g")
     let lines = [temp2]
     call SlimvEval(lines)
@@ -654,11 +551,6 @@ function! SlimvUnProfile()
 endfunction
 
 " ---------------------------------------------------------------------
-
-" compile-string
-"      (funcall (compile nil (read-from-string
-"                             (format nil "(~S () ~A)" 'lambda string)
-
 
 function! SlimvCompileDefun()
     "TODO: handle double quote characters in form
