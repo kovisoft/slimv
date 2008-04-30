@@ -21,14 +21,10 @@ else
     let g:slimv_windows   = 0
 endif
 
-" =====================================================================
-"  Global variable definitions
-" =====================================================================
 
-" TCP port number to use
-if !exists('g:slimv_port')
-    let g:slimv_port = 5151
-endif
+" =====================================================================
+"  Functionsused by global variable definitions
+" =====================================================================
 
 " Try to autodetect Python executable
 function! SlimvAutodetectPython()
@@ -154,6 +150,16 @@ if !exists('g:slimv_path')
     endif
 endif
 
+
+" =====================================================================
+"  Global variable definitions
+" =====================================================================
+
+" TCP port number to use
+if !exists('g:slimv_port')
+    let g:slimv_port = 5151
+endif
+
 " Find Python (if not given in vimrc)
 if !exists('g:slimv_python')
     let g:slimv_python = SlimvAutodetectPython()
@@ -254,7 +260,6 @@ endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm()
-    "normal va("sy
     normal va(o
     " Handle '() or #'() etc. type special syntax forms
     " TODO: what to do with ` operator?
@@ -328,9 +333,17 @@ function! SlimvEval(args)
         "TODO: option to set explicit temp file name and delete/keep after usage
         let tmp = tempname()
         try
-            call writefile( a:args, tmp )
+            let ar = []
+            let i = 0
+            while i < len( a:args )
+                call extend( ar, split( a:args[i], '\n' ) )
+                let i = i + 1
+            endwhile
+            call writefile( ar, tmp )
             let result = system( g:slimv_client . ' -f ' . tmp )
+            "execute '!' . g:slimv_client . ' -f ' . tmp
         finally
+            call delete(tmp)
         endtry
     else
 	" Send text to the client via command line arguments
@@ -393,21 +406,7 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    if mode() == "v" || mode() == "V"
-        let lines = getline(a:firstline, a:lastline)
-        let firstcol = col(a:firstline) - 1
-        let lastcol  = col(a:lastline ) - 2
-    else
-        let lines = getline("'<", "'>")
-        let firstcol = col("'<") - 1
-        let lastcol  = col("'>") - 2
-    endif
-    if lastcol >= 0
-        let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
-    else
-        let lines[len(lines)-1] = ''
-    endif
-    let lines[0] = lines[0][firstcol : ]
+    let lines = SlimvGetRegion()
     call SlimvEval(lines)
 endfunction
 
