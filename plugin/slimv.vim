@@ -8,13 +8,13 @@
 " =====================================================================
 "
 "  Load Once:
-if &cp || exists("g:slimv_loaded")
+if &cp || exists( 'g:slimv_loaded' )
     finish
 endif
 
 let g:slimv_loaded        = 1
 
-if has("win32") || has("win95") || has("win64") || has("win16")
+if has( 'win32' ) || has( 'win95' ) || has( 'win64' ) || has( 'win16' )
     let g:slimv_windows   = 1
 else
     " This means Linux only at the moment
@@ -28,7 +28,7 @@ endif
 
 " Write debug message to logile (message must be a list)
 function! SlimvWriteLog( level, message )
-    if exists('g:slimv_debug') && exists('g:slimv_logfile') && g:slimv_debug >= a:level
+    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && g:slimv_debug >= a:level
         " We need to make a hack: write things into a temporary file
         " then append temp file contents to the logfile
         let tmp = tempname()
@@ -49,12 +49,12 @@ endfunction
 
 " Write debug message to logile with a timestamp
 function! SlimvLog( level, message )
-    if exists("*strftime")
+    if exists( '*strftime' )
         let time = strftime( '%Y %b %d %X' )
     else
         let time = localtime()
     endif
-    call SlimvWriteLog( a:level, [time] + a:message )
+    call SlimvWriteLog( a:level, ['***** ' . time] + a:message + [''] )
 endfunction
 
 " Try to autodetect Python executable
@@ -172,7 +172,7 @@ function! SlimvClientCommand()
 endfunction
 
 " Find slimv.py in the Vim plugin directory (if not given in vimrc)
-if !exists('g:slimv_path')
+if !exists( 'g:slimv_path' )
     let plugins = split( globpath( &runtimepath, 'plugin/**/slimv.py'), '\n' )
     if len( plugins ) > 0
         let g:slimv_path = plugins[0]
@@ -187,32 +187,32 @@ endif
 " =====================================================================
 
 " Debug level (0 = no debug)
-if !exists('g:slimv_debug')
+if !exists( 'g:slimv_debug' )
     let g:slimv_debug = 0
 endif
 
 " Logfile name for debug messages
-if !exists('g:slimv_logfile')
+if !exists( 'g:slimv_logfile' )
     let g:slimv_logfile = 'slimv.log'
 endif
 
 " TCP port number to use
-if !exists('g:slimv_port')
+if !exists( 'g:slimv_port' )
     let g:slimv_port = 5151
 endif
 
 " Find Python (if not given in vimrc)
-if !exists('g:slimv_python')
+if !exists( 'g:slimv_python' )
     let g:slimv_python = SlimvAutodetectPython()
 endif
 
 " Find Lisp (if not given in vimrc)
-if !exists('g:slimv_lisp')
+if !exists( 'g:slimv_lisp' )
     let g:slimv_lisp = SlimvAutodetectLisp()
 endif
 
 " Build client command (if not given in vimrc)
-if !exists('g:slimv_client')
+if !exists( 'g:slimv_client' )
     let g:slimv_client = SlimvClientCommand()
 endif
 
@@ -222,70 +222,83 @@ endif
 " =====================================================================
 
 "TODO: change %1 to @1 to be conform with @p, @s, @l above (or just leave it alone?)
-if !exists("g:slimv_template_pprint")
+if !exists( 'g:slimv_template_pprint' )
     let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
 endif
 
-if !exists("g:slimv_template_undefine")
+if !exists( 'g:slimv_template_undefine' )
     let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
 endif
 
-if !exists("g:slimv_template_describe")
+if !exists( 'g:slimv_template_describe' )
     let g:slimv_template_describe = '(describe (read-from-string "%1"))'
 endif
 
-if !exists("g:slimv_template_trace")
-    let g:slimv_template_trace = "(trace %1)"
+if !exists( 'g:slimv_template_trace' )
+    let g:slimv_template_trace = '(trace %1)'
 endif
 
-if !exists("g:slimv_template_untrace")
-    let g:slimv_template_untrace = "(untrace %1)"
+if !exists( 'g:slimv_template_untrace' )
+    let g:slimv_template_untrace = '(untrace %1)'
 endif
 
-if !exists("g:slimv_template_profile")
+if !exists( 'g:slimv_template_profile' )
     "TODO: support different Lisp implementations
-    let g:slimv_template_profile = "(mon:monitor %1)"
+    let g:slimv_template_profile = '(mon:monitor %1)'
 endif
 
-if !exists("g:slimv_template_unprofile")
+if !exists( 'g:slimv_template_unprofile' )
     "TODO: support different Lisp implementations
-    let g:slimv_template_unprofile = "(mon:unmonitor %1)"
+    let g:slimv_template_unprofile = '(mon:unmonitor %1)'
 endif
 
-if !exists("g:slimv_template_disassemble")
+if !exists( 'g:slimv_template_disassemble' )
     let g:slimv_template_disassemble = "(disassemble #'%1)"
 endif
 
-if !exists("g:slimv_template_inspect")
-    let g:slimv_template_inspect = "(inspect %1)"
+if !exists( 'g:slimv_template_inspect' )
+    let g:slimv_template_inspect = '(inspect %1)'
 endif
 
-if !exists("g:slimv_template_apropos")
+if !exists( 'g:slimv_template_apropos' )
     let g:slimv_template_apropos = '(apropos "%1")'
 endif
 
-if !exists("g:slimv_template_macroexpand")
+if !exists( 'g:slimv_template_macroexpand' )
     let g:slimv_template_macroexpand = '(pprint %1)'
 endif
 
-if !exists("g:slimv_template_macroexpand_all")
+if !exists( 'g:slimv_template_macroexpand_all' )
     let g:slimv_template_macroexpand_all = '(pprint %1)'
 endif
 
-if !exists("g:slimv_template_compile_file")
+if !exists( 'g:slimv_template_compile_file' )
 "    let g:slimv_template_compile_file = '(compile-file "%1")'
     let g:slimv_template_compile_file =
     \ '(let ((fasl-file (compile-file "%1")))' .
     \ '  (when (and %2 fasl-file) (load fasl-file)))'
 endif
 
-if !exists("g:slimv_template_compile_string")
+if !exists( 'g:slimv_template_compile_string' )
     let g:slimv_template_compile_string = 
     \ '(funcall (compile nil (read-from-string (format nil "(~S () ~A)" ' . "'" . 'lambda "%1"))))'
 endif
 
-if !exists("mapleader")
+if !exists( 'mapleader' )
     let mapleader = ','
+endif
+
+if !exists( 'g:slimv_info_logged' )
+    " Log global variables to logfile (if debug log set)
+    let g:slimv_info_logged = 1
+    let info = [ 'Slimv loaded' ]
+    call add( info,  printf( 'g:slimv_debug = %d',   g:slimv_debug ) )
+    call add( info,  printf( 'g:slimv_logfile = %s', g:slimv_logfile ) )
+    call add( info,  printf( 'g:slimv_port = %d',    g:slimv_port ) )
+    call add( info,  printf( 'g:slimv_python = %s',  g:slimv_python ) )
+    call add( info,  printf( 'g:slimv_lisp = %s',    g:slimv_lisp ) )
+    call add( info,  printf( 'g:slimv_client = %s',  g:slimv_client ) )
+    call SlimvLog( g:slimv_debug, info )
 endif
 
 
@@ -304,8 +317,8 @@ function! SlimvSelectForm()
     normal va(o
     " Handle '() or #'() etc. type special syntax forms
     " TODO: what to do with ` operator?
-    let c = col(".") - 2
-    while c > 0 && match(' \t()', getline(".")[c]) < 0
+    let c = col( '.' ) - 2
+    while c > 0 && match( ' \t()', getline( '.' )[c] ) < 0
         normal h
         let c = c - 1
     endwhile
@@ -320,7 +333,7 @@ endfunction
 
 " Return the contents of register 's'
 function! SlimvGetSelection()
-    return getreg('"s')
+    return getreg( '"s' )
 endfunction
 
 " Prepare argument list to be sent to the client
@@ -328,12 +341,12 @@ function SlimvMakeArgs( args )
     let ar = a:args
     let i = 0
     while i < len(ar)
-        let ar[i] = substitute(ar[i], '"',  '\\"', 'g')
+        let ar[i] = substitute( ar[i], '"',  '\\"', 'g' )
         let i = i + 1
     endwhile
-    let a = join(ar, '" "')
-    "let a = substitute(a, '"',  '\\"', 'g')
-    let a = substitute(a, '\n', '\\n', 'g')
+    let a = join( ar, '" "' )
+    "let a = substitute( a, '"',  '\\"', 'g' )
+    let a = substitute( a, '\n', '\\n', 'g' )
     let a = '"' . a . '" '
     "TODO: debug option: printout here
     "echo a
@@ -356,10 +369,10 @@ function! SlimvEval( args )
     if g:slimv_client == ''
         " No command to start client, we are clueless, ask user for assistance
         if g:slimv_python == ''
-            let g:slimv_python = input( "Enter Python path (or fill g:slimv_python in your vimrc): ", "", "file" )
+            let g:slimv_python = input( 'Enter Python path (or fill g:slimv_python in your vimrc): ', '', 'file' )
         endif
         if g:slimv_lisp == ''
-            let g:slimv_lisp = input( "Enter Lisp path (or fill g:slimv_lisp in your vimrc): ", "", "file" )
+            let g:slimv_lisp = input( 'Enter Lisp path (or fill g:slimv_lisp in your vimrc): ', '', 'file' )
         endif
         let g:slimv_client = SlimvClientCommand()
     endif
@@ -408,7 +421,7 @@ function! SlimvEval( args )
             else
                 " Total length would be too large, pass lines collected previously
                 " and start over collecting lines
-                call SlimvSendToClient(a:args[i : j-1])
+                call SlimvSendToClient( a:args[i : j-1] )
                 let i = j
                 let total = 0
             endif
@@ -416,7 +429,7 @@ function! SlimvEval( args )
         endwhile
         if i < j
             " There are some lines left unsent, send them now
-            call SlimvSendToClient(a:args[i : j-1])
+            call SlimvSendToClient( a:args[i : j-1] )
         endif
     endif
 endfunction
@@ -424,18 +437,18 @@ endfunction
 " Start and connect slimv server
 " This is a quite dummy function that just evaluates a comment
 function! SlimvConnectServer()
-    call SlimvEval([";;; Slimv client connected successfully"])
+    call SlimvEval([';;; Slimv client connected successfully'])
 endfunction
 
 function! SlimvGetRegion() range
-    if mode() == "v" || mode() == "V"
-        let lines = getline(a:firstline, a:lastline)
-        let firstcol = col(a:firstline) - 1
-        let lastcol  = col(a:lastline ) - 2
+    if mode() == 'v' || mode() == 'V'
+        let lines = getline( a:firstline, a:lastline )
+        let firstcol = col( a:firstline ) - 1
+        let lastcol  = col( a:lastline  ) - 2
     else
-        let lines = getline("'<", "'>")
-        let firstcol = col("'<") - 1
-        let lastcol  = col("'>") - 2
+        let lines = getline( "'<", "'>" )
+        let firstcol = col( "'<" ) - 1
+        let lastcol  = col( "'>" ) - 2
     endif
     if lastcol >= 0
         let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
@@ -449,45 +462,46 @@ endfunction
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
     let lines = SlimvGetRegion()
-    call SlimvEval(lines)
+    call SlimvEval( lines )
 endfunction
 
 " Eval contents of the 's' register
 function! SlimvEvalSelection()
     let lines = [SlimvGetSelection()]
-    call SlimvEval(lines)
+    call SlimvEval( lines )
 endfunction
 
 " Eval Lisp form.
 " Form given in the template is passed to Lisp without modification.
 function! SlimvEvalForm( template )
     let lines = [a:template]
-    call SlimvEval(lines)
+    call SlimvEval( lines )
 endfunction
 
 " Eval Lisp form, with the given parameter substituted in the template.
 " %1 string is substituted with par1
 function! SlimvEvalForm1( template, par1 )
-    let p1 = escape(a:par1, '&')
-    let p1 = escape(p1, '\\')
-    let temp1 = substitute(a:template, '%1', p1, "g")
+    let p1 = escape( a:par1, '&' )
+    let p1 = escape( p1, '\\' )
+    let temp1 = substitute( a:template, '%1', p1, 'g' )
     let lines = [temp1]
-    call SlimvEval(lines)
+    call SlimvEval( lines )
 endfunction
 
 " Eval Lisp form, with the given parameters substituted in the template.
 " %1 string is substituted with par1
 " %2 string is substituted with par2
 function! SlimvEvalForm2( template, par1, par2 )
-    let p1 = escape(a:par1, '&')
-    let p2 = escape(a:par2, '&')
-    let p1 = escape(p1, '\\')
-    let p2 = escape(p2, '\\')
-    let temp1 = substitute(a:template, '%1', p1, "g")
-    let temp2 = substitute(temp1,      '%2', p2, "g")
+    let p1 = escape( a:par1, '&' )
+    let p2 = escape( a:par2, '&' )
+    let p1 = escape( p1, '\\' )
+    let p2 = escape( p2, '\\' )
+    let temp1 = substitute( a:template, '%1', p1, 'g' )
+    let temp2 = substitute( temp1,      '%2', p2, 'g' )
     let lines = [temp2]
-    call SlimvEval(lines)
+    call SlimvEval( lines )
 endfunction
+
 
 " =====================================================================
 "  Special functions
@@ -500,8 +514,8 @@ endfunction
 
 " Evaluate the whole buffer
 function! SlimvEvalBuffer()
-    let lines = getline(1, '$')
-    call SlimvEval(lines)
+    let lines = getline( 1, '$' )
+    call SlimvEval( lines )
 endfunction
 
 function! SlimvEvalLastExp()
@@ -511,83 +525,83 @@ endfunction
 
 function! SlimvPprintEvalLastExp()
     call SlimvSelectForm()
-    call SlimvEvalForm1(g:slimv_template_pprint, SlimvGetSelection())
+    call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
 endfunction
 
 function! SlimvInteractiveEval()
-    let e = input( "Eval: " )
-    if e != ""
+    let e = input( 'Eval: ' )
+    if e != ''
         call SlimvEval([e])
     endif
 endfunction
 
 function! SlimvUndefineFunction()
     call SlimvSelectSymbol()
-    call SlimvEvalForm1(g:slimv_template_undefine, SlimvGetSelection())
+    call SlimvEvalForm1( g:slimv_template_undefine, SlimvGetSelection() )
 endfunction
 
 " ---------------------------------------------------------------------
 
 function! SlimvMacroexpand()
     normal 99[(vt(%"sy
-    let m = SlimvGetSelection() . "))"
-    let m = substitute(m, "defmacro\\s*", "macroexpand-1 '(", "g")
-    call SlimvEvalForm1(g:slimv_template_macroexpand, m)
+    let m = SlimvGetSelection() . '))'
+    let m = substitute( m, "defmacro\\s*", "macroexpand-1 '(", 'g' )
+    call SlimvEvalForm1( g:slimv_template_macroexpand, m )
 endfunction
 
 function! SlimvMacroexpandAll()
     normal 99[(vt(%"sy
-    let m = SlimvGetSelection() . "))"
-    let m = substitute(m, "defmacro\\s*", "macroexpand '(", "g")
-    call SlimvEvalForm1(g:slimv_template_macroexpand_all, m)
+    let m = SlimvGetSelection() . '))'
+    let m = substitute( m, "defmacro\\s*", "macroexpand '(", 'g' )
+    call SlimvEvalForm1( g:slimv_template_macroexpand_all, m )
 endfunction
 
 function! SlimvTrace()
     call SlimvSelectSymbol()
-    let s = input( "Trace: ", SlimvGetSelection() )
+    let s = input( 'Trace: ', SlimvGetSelection() )
     echo s
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_trace, s)
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_trace, s )
     endif
 endfunction
 
 function! SlimvUntrace()
     call SlimvSelectSymbol()
-    let s = input( "Untrace: ", SlimvGetSelection() )
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_untrace, s)
+    let s = input( 'Untrace: ', SlimvGetSelection() )
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_untrace, s )
     endif
 endfunction
 
 function! SlimvDisassemble()
     call SlimvSelectSymbol()
-    let s = input( "Disassemble: ", SlimvGetSelection() )
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_disassemble, s)
+    let s = input( 'Disassemble: ', SlimvGetSelection() )
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_disassemble, s )
     endif
 endfunction
 
 function! SlimvInspect()
     call SlimvSelectSymbol()
-    let s = input( "Inspect: ", SlimvGetSelection() )
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_inspect, s)
+    let s = input( 'Inspect: ', SlimvGetSelection() )
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_inspect, s )
     endif
 endfunction
 
 function! SlimvProfile()
     call SlimvSelectSymbol()
-    let s = input( "Profile: ", SlimvGetSelection() )
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_profile, s)
+    let s = input( 'Profile: ', SlimvGetSelection() )
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_profile, s )
     endif
 endfunction
 
 function! SlimvUnProfile()
     call SlimvSelectSymbol()
-    let s = input( "Unprofile: ", SlimvGetSelection() )
-    if s != ""
-        call SlimvEvalForm1(g:slimv_template_unprofile, s)
+    let s = input( 'Unprofile: ', SlimvGetSelection() )
+    if s != ''
+        call SlimvEvalForm1( g:slimv_template_unprofile, s )
     endif
 endfunction
 
@@ -596,38 +610,38 @@ endfunction
 function! SlimvCompileDefun()
     "TODO: handle double quote characters in form
     call SlimvSelectToplevelForm()
-    call SlimvEvalForm1(g:slimv_template_compile_string, SlimvGetSelection())
+    call SlimvEvalForm1( g:slimv_template_compile_string, SlimvGetSelection() )
 endfunction
 
 function! SlimvCompileLoadFile()
-    let filename = fnamemodify(bufname(""), ":p")
-    let filename = escape(filename, '\\')
-    call SlimvEvalForm2(g:slimv_template_compile_file, filename, "T")
+    let filename = fnamemodify( bufname(''), ':p' )
+    let filename = escape( filename, '\\' )
+    call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
 endfunction
 
 function! SlimvCompileFile()
-    let filename = fnamemodify(bufname(""), ":p")
-    let filename = escape(filename, '\\')
-    call SlimvEvalForm2(g:slimv_template_compile_file, filename, "NIL")
+    let filename = fnamemodify( bufname(''), ':p' )
+    let filename = escape( filename, '\\' )
+    call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'NIL' )
 endfunction
 
 function! SlimvCompileRegion() range
     "TODO: handle double quote characters in form
     let lines = SlimvGetRegion()
-    let region = join(lines, ' ')
-    call SlimvEvalForm1(g:slimv_template_compile_string, region)
+    let region = join( lines, ' ' )
+    call SlimvEvalForm1( g:slimv_template_compile_string, region )
 endfunction
 
 function! SlimvDescribeSymbol()
     call SlimvSelectSymbol()
-    call SlimvEvalForm1(g:slimv_template_describe, SlimvGetSelection())
+    call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
 endfunction
 
 " ---------------------------------------------------------------------
 
 function! SlimvApropos()
     call SlimvSelectSymbol()
-    call SlimvEvalForm1(g:slimv_template_apropos, SlimvGetSelection())
+    call SlimvEvalForm1( g:slimv_template_apropos, SlimvGetSelection() )
 endfunction
 
 " =====================================================================
@@ -637,33 +651,36 @@ endfunction
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
-map <Leader>S  :call SlimvConnectServer()<CR>
 
-map <Leader>d  :call SlimvEvalDefun()<CR>
-map <Leader>e  :call SlimvEvalLastExp()<CR>
-map <Leader>E  :call SlimvPprintEvalLastExp()<CR>
-map <Leader>r  :call SlimvEvalRegion()<CR>
-map <Leader>b  :call SlimvEvalBuffer()<CR>
-map <Leader>v  :call SlimvInteractiveEval()<CR>
-map <Leader>u  :call SlimvUndefineFunction()<CR>
-
-map <Leader>1  :call SlimvMacroexpand()<CR>
-map <Leader>m  :call SlimvMacroexpandAll()<CR>
-map <Leader>t  :call SlimvTrace()<CR>
-map <Leader>T  :call SlimvUntrace()<CR>
-map <Leader>l  :call SlimvDisassemble()<CR>
-map <Leader>i  :call SlimvInspect()<CR>
-
-map <Leader>D  :call SlimvCompileDefun()<CR>
-map <Leader>L  :call SlimvCompileLoadFile()<CR>
-map <Leader>F  :call SlimvCompileFile()<CR>
-map <Leader>R  :call SlimvCompileRegion()<CR>
-
-map <Leader>p  :call SlimvProfile()<CR>
-map <Leader>P  :call SlimvUnprofile()<CR>
-
-map <Leader>s  :call SlimvDescribeSymbol()<CR>
-map <Leader>a  :call SlimvApropos()<CR>
+if !exists( 'g:slimv_nokeybindings' )
+    map <Leader>S  :call SlimvConnectServer()<CR>
+    
+    map <Leader>d  :call SlimvEvalDefun()<CR>
+    map <Leader>e  :call SlimvEvalLastExp()<CR>
+    map <Leader>E  :call SlimvPprintEvalLastExp()<CR>
+    map <Leader>r  :call SlimvEvalRegion()<CR>
+    map <Leader>b  :call SlimvEvalBuffer()<CR>
+    map <Leader>v  :call SlimvInteractiveEval()<CR>
+    map <Leader>u  :call SlimvUndefineFunction()<CR>
+    
+    map <Leader>1  :call SlimvMacroexpand()<CR>
+    map <Leader>m  :call SlimvMacroexpandAll()<CR>
+    map <Leader>t  :call SlimvTrace()<CR>
+    map <Leader>T  :call SlimvUntrace()<CR>
+    map <Leader>l  :call SlimvDisassemble()<CR>
+    map <Leader>i  :call SlimvInspect()<CR>
+    
+    map <Leader>D  :call SlimvCompileDefun()<CR>
+    map <Leader>L  :call SlimvCompileLoadFile()<CR>
+    map <Leader>F  :call SlimvCompileFile()<CR>
+    map <Leader>R  :call SlimvCompileRegion()<CR>
+    
+    map <Leader>p  :call SlimvProfile()<CR>
+    map <Leader>P  :call SlimvUnprofile()<CR>
+    
+    map <Leader>s  :call SlimvDescribeSymbol()<CR>
+    map <Leader>a  :call SlimvApropos()<CR>
+endif
 
 " =====================================================================
 "  Slimv menu
@@ -675,32 +692,34 @@ if &wildcharm == 0
     set wildcharm=<Tab>
 endif
 if &wildcharm != 0
-    execute ":map <Leader>, :emenu Slimv." . nr2char(&wildcharm)
+    execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
 endif
 
-menu &Slimv.&Evaluation.Eval-&Defun                :call SlimvEvalDefun()<CR>
-menu &Slimv.&Evaluation.Eval-Last-&Exp             :call SlimvEvalLastExp()<CR>
-menu &Slimv.&Evaluation.&Pprint-Eval-Last          :call SlimvPprintEvalLastExp()<CR>
-menu &Slimv.&Evaluation.Eval-&Region               :call SlimvEvalRegion()<CR>
-menu &Slimv.&Evaluation.Eval-&Buffer               :call SlimvEvalBuffer()<CR>
-menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
-menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
-
-menu &Slimv.De&bugging.Macroexpand-&1              :call SlimvMacroexpand()<CR>
-menu &Slimv.De&bugging.&Macroexpand-All            :call SlimvMacroexpandAll()<CR>
-menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
-menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
-menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
-menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
-
-menu &Slimv.&Compilation.Compile-&Defun            :call SlimvCompileDefun()<CR>
-menu &Slimv.&Compilation.Compile-&Load-File        :call SlimvCompileLoadFile()<CR>
-menu &Slimv.&Compilation.Compile-&File             :call SlimvCompileFile()<CR>
-menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
-
-menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
-menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
-
-menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
-menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
+if !exists( 'g:slimv_nomenu' )
+    menu &Slimv.&Evaluation.Eval-&Defun                :call SlimvEvalDefun()<CR>
+    menu &Slimv.&Evaluation.Eval-Last-&Exp             :call SlimvEvalLastExp()<CR>
+    menu &Slimv.&Evaluation.&Pprint-Eval-Last          :call SlimvPprintEvalLastExp()<CR>
+    menu &Slimv.&Evaluation.Eval-&Region               :call SlimvEvalRegion()<CR>
+    menu &Slimv.&Evaluation.Eval-&Buffer               :call SlimvEvalBuffer()<CR>
+    menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
+    menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
+    
+    menu &Slimv.De&bugging.Macroexpand-&1              :call SlimvMacroexpand()<CR>
+    menu &Slimv.De&bugging.&Macroexpand-All            :call SlimvMacroexpandAll()<CR>
+    menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
+    menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
+    menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
+    menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
+    
+    menu &Slimv.&Compilation.Compile-&Defun            :call SlimvCompileDefun()<CR>
+    menu &Slimv.&Compilation.Compile-&Load-File        :call SlimvCompileLoadFile()<CR>
+    menu &Slimv.&Compilation.Compile-&File             :call SlimvCompileFile()<CR>
+    menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
+    
+    menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
+    menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
+    
+    menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
+    menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
+endif
 
