@@ -23,8 +23,39 @@ endif
 
 
 " =====================================================================
-"  Functionsused by global variable definitions
+"  Functions used by global variable definitions
 " =====================================================================
+
+" Write debug message to logile (message must be a list)
+function! SlimvWriteLog( level, message )
+    if exists('g:slimv_debug') && exists('g:slimv_logfile') && g:slimv_debug >= a:level
+        " We need to make a hack: write things into a temporary file
+        " then append temp file contents to the logfile
+        let tmp = tempname()
+        try
+            call writefile( a:message, tmp )
+        finally
+            if g:slimv_windows
+                silent execute '!type ' . tmp . ' >> ' . g:slimv_logfile
+            else
+                silent execute '!cat ' . tmp . ' >> ' . g:slimv_logfile
+            endif
+            call delete(tmp)
+        endtry
+        " Unfortunately I know no way to tell writefile to append the text
+        "call writefile( a:message, g:slimv_logfile )
+    endif
+endfunction
+
+" Write debug message to logile with a timestamp
+function! SlimvLog( level, message )
+    if exists("*strftime")
+        let time = strftime( '%Y %b %d %X' )
+    else
+        let time = localtime()
+    endif
+    call SlimvWriteLog( a:level, [time] + a:message )
+endfunction
 
 " Try to autodetect Python executable
 function! SlimvAutodetectPython()
@@ -131,8 +162,8 @@ function! SlimvClientCommand()
     endif
     if g:slimv_windows
         return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
-	" This one can be used to start Lisp in a 'Console' window
-	" instead of the default DOS box
+        " This one can be used to start Lisp in a 'Console' window
+        " instead of the default DOS box
         "return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
         "       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
     else
@@ -154,6 +185,16 @@ endif
 " =====================================================================
 "  Global variable definitions
 " =====================================================================
+
+" Debug level (0 = no debug)
+if !exists('g:slimv_debug')
+    let g:slimv_debug = 0
+endif
+
+" Logfile name for debug messages
+if !exists('g:slimv_logfile')
+    let g:slimv_logfile = 'slimv.log'
+endif
 
 " TCP port number to use
 if !exists('g:slimv_port')
@@ -283,7 +324,7 @@ function! SlimvGetSelection()
 endfunction
 
 " Prepare argument list to be sent to the client
-function SlimvMakeArgs(args)
+function SlimvMakeArgs( args )
     let ar = a:args
     let i = 0
     while i < len(ar)
@@ -300,14 +341,14 @@ function SlimvMakeArgs(args)
 endfunction
 
 " Send text to the client
-function! SlimvSendToClient(args)
+function! SlimvSendToClient( args )
     let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
     "TODO: debug option: keep client window open
 "    execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
 endfunction
 
 " Send argument to Lisp server for evaluation
-function! SlimvEval(args)
+function! SlimvEval( args )
     "TODO: overcome command line argument length limitations
     "TODO: in visual mode and not called from EvalRegion do not call this in a
     "      loop for all lines in the selection
@@ -339,6 +380,7 @@ function! SlimvEval(args)
                 call extend( ar, split( a:args[i], '\n' ) )
                 let i = i + 1
             endwhile
+            call SlimvLog( 1, a:args )
             call writefile( ar, tmp )
             let result = system( g:slimv_client . ' -f ' . tmp )
             "execute '!' . g:slimv_client . ' -f ' . tmp
@@ -346,9 +388,9 @@ function! SlimvEval(args)
             call delete(tmp)
         endtry
     else
-	" Send text to the client via command line arguments
-	" This is problematic due to command line argument size limitations
-	" So currently it is not used
+        " Send text to the client via command line arguments
+        " This is problematic due to command line argument size limitations
+        " So currently it is not used
         let total = 0
         let i = 0
         let j = 0
@@ -418,14 +460,14 @@ endfunction
 
 " Eval Lisp form.
 " Form given in the template is passed to Lisp without modification.
-function! SlimvEvalForm(template)
+function! SlimvEvalForm( template )
     let lines = [a:template]
     call SlimvEval(lines)
 endfunction
 
 " Eval Lisp form, with the given parameter substituted in the template.
 " %1 string is substituted with par1
-function! SlimvEvalForm1(template, par1)
+function! SlimvEvalForm1( template, par1 )
     let p1 = escape(a:par1, '&')
     let p1 = escape(p1, '\\')
     let temp1 = substitute(a:template, '%1', p1, "g")
@@ -436,7 +478,7 @@ endfunction
 " Eval Lisp form, with the given parameters substituted in the template.
 " %1 string is substituted with par1
 " %2 string is substituted with par2
-function! SlimvEvalForm2(template, par1, par2)
+function! SlimvEvalForm2( template, par1, par2 )
     let p1 = escape(a:par1, '&')
     let p2 = escape(a:par2, '&')
     let p1 = escape(p1, '\\')
