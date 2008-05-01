@@ -288,10 +288,9 @@ if !exists( 'mapleader' )
     let mapleader = ','
 endif
 
-if !exists( 'g:slimv_info_logged' )
-    " Log global variables to logfile (if debug log set)
-    let g:slimv_info_logged = 1
-    let info = [ 'Slimv loaded' ]
+" Log global variables to logfile (if debug log set)
+function! SlimvLogGlobals()
+    let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
     call add( info,  printf( 'g:slimv_debug = %d',   g:slimv_debug ) )
     call add( info,  printf( 'g:slimv_logfile = %s', g:slimv_logfile ) )
     call add( info,  printf( 'g:slimv_port = %d',    g:slimv_port ) )
@@ -299,7 +298,9 @@ if !exists( 'g:slimv_info_logged' )
     call add( info,  printf( 'g:slimv_lisp = %s',    g:slimv_lisp ) )
     call add( info,  printf( 'g:slimv_client = %s',  g:slimv_client ) )
     call SlimvLog( g:slimv_debug, info )
-endif
+endfunction
+
+au BufNewFile,BufRead *.lisp call SlimvLogGlobals()
 
 
 " =====================================================================
@@ -653,33 +654,33 @@ endfunction
 " then increase 'timeoutlen'
 
 if !exists( 'g:slimv_nokeybindings' )
-    map <Leader>S  :call SlimvConnectServer()<CR>
+    noremap <Leader>S  :call SlimvConnectServer()<CR>
     
-    map <Leader>d  :call SlimvEvalDefun()<CR>
-    map <Leader>e  :call SlimvEvalLastExp()<CR>
-    map <Leader>E  :call SlimvPprintEvalLastExp()<CR>
-    map <Leader>r  :call SlimvEvalRegion()<CR>
-    map <Leader>b  :call SlimvEvalBuffer()<CR>
-    map <Leader>v  :call SlimvInteractiveEval()<CR>
-    map <Leader>u  :call SlimvUndefineFunction()<CR>
+    noremap <Leader>d  :call SlimvEvalDefun()<CR>
+    noremap <Leader>e  :call SlimvEvalLastExp()<CR>
+    noremap <Leader>E  :call SlimvPprintEvalLastExp()<CR>
+    noremap <Leader>r  :call SlimvEvalRegion()<CR>
+    noremap <Leader>b  :call SlimvEvalBuffer()<CR>
+    noremap <Leader>v  :call SlimvInteractiveEval()<CR>
+    noremap <Leader>u  :call SlimvUndefineFunction()<CR>
     
-    map <Leader>1  :call SlimvMacroexpand()<CR>
-    map <Leader>m  :call SlimvMacroexpandAll()<CR>
-    map <Leader>t  :call SlimvTrace()<CR>
-    map <Leader>T  :call SlimvUntrace()<CR>
-    map <Leader>l  :call SlimvDisassemble()<CR>
-    map <Leader>i  :call SlimvInspect()<CR>
+    noremap <Leader>1  :call SlimvMacroexpand()<CR>
+    noremap <Leader>m  :call SlimvMacroexpandAll()<CR>
+    noremap <Leader>t  :call SlimvTrace()<CR>
+    noremap <Leader>T  :call SlimvUntrace()<CR>
+    noremap <Leader>l  :call SlimvDisassemble()<CR>
+    noremap <Leader>i  :call SlimvInspect()<CR>
     
-    map <Leader>D  :call SlimvCompileDefun()<CR>
-    map <Leader>L  :call SlimvCompileLoadFile()<CR>
-    map <Leader>F  :call SlimvCompileFile()<CR>
-    map <Leader>R  :call SlimvCompileRegion()<CR>
+    noremap <Leader>D  :call SlimvCompileDefun()<CR>
+    noremap <Leader>L  :call SlimvCompileLoadFile()<CR>
+    noremap <Leader>F  :call SlimvCompileFile()<CR>
+    noremap <Leader>R  :call SlimvCompileRegion()<CR>
     
-    map <Leader>p  :call SlimvProfile()<CR>
-    map <Leader>P  :call SlimvUnprofile()<CR>
+    noremap <Leader>p  :call SlimvProfile()<CR>
+    noremap <Leader>P  :call SlimvUnprofile()<CR>
     
-    map <Leader>s  :call SlimvDescribeSymbol()<CR>
-    map <Leader>a  :call SlimvApropos()<CR>
+    noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
+    noremap <Leader>a  :call SlimvApropos()<CR>
 endif
 
 " =====================================================================
