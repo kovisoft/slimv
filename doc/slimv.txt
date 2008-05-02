@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 16 Apr 2008
+*slimv.txt*                    Slimv                 Last Change: 02 May 2008
 
 Slimv                                                                  *slimv*
                                Version 0.1
@@ -136,6 +136,26 @@ So the server will be started as if we typed at the command line:
 
   console -r "/k python slimv.py -l clisp -s"
 
+                                                                *g:slimv_debug*
+Defines the debug log level. Level 0 means no debug messages at all. The debug
+messages go into the logfile defined by |slimv-logfile|.
+
+                                                         *g:slimv_debug_client*
+Set this to nonzero only if you want to keep the Slimv client window open.
+Currently works only on Windows.
+
+                                                              *g:slimv_logfile*
+Name of the Slimv logfile. Defaults to slimv.log.
+
+                                                          *g:slimv_keybindings*
+Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
+Value 1 defines the short keybinding with one-key bindings (after <Leader>).
+Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
+
+                                                                 *g:slimv_menu*
+If nonzero then the Slimv menu us added to the end of the global menu.
+Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
+
 
 -------------------------------------------------------------------------------
                                                               *slimv_templates*
@@ -216,38 +236,6 @@ Example:
                                                                *slimv_keyboard*
 
 
--------------------------------------------------------------------------------
-
-Note: delete this
-                                                     *g:bufExplorerDefaultHelp*
-To control whether the default help is displayed or not, use: >
-  let g:bufExplorerDefaultHelp=0       " Do not show default help.
-  let g:bufExplorerDefaultHelp=1       " Show default help.
-The default is to show the default help.
-
-                                                *g:bufExplorerShowRelativePath*
-To control whether to show absolute paths or relative to the current
-directory, use: >
-  let g:bufExplorerShowRelativePath=0  " Show absolute paths.
-  let g:bufExplorerShowRelativePath=1  " Show relative paths.
-The default is to show absolute paths.
-
-                                                          *g:bufExplorerSortBy*
-To control what field the buffers are sorted by, use: >
-  let g:bufExplorerSortBy='extension'  " Sort by file extension.
-  let g:bufExplorerSortBy='fullpath'   " Sort by full file path name.
-  let g:bufExplorerSortBy='mru'        " Sort by most recently used.
-  let g:bufExplorerSortBy='name'       " Sort by the buffer's name.
-  let g:bufExplorerSortBy='number'     " Sort by the buffer's number.
-The default is to sort by mru.
-
-                                                *g:bufExplorerSplitOutPathName*
-To control whether to split out the path and file name or not, use: >
-  let g:bufExplorerSplitOutPathName=1  " Split the path and file name.
-  let g:bufExplorerSplitOutPathName=0  " Don't split the path and file
-                                       " name.
-The default is to split the path and file name.
-
 ==============================================================================
 USAGE                                                            *slimv-usage*
 
@@ -260,51 +248,6 @@ forms to the server/REPL for processing. That's it.
 All you need to know then is the list of possible Slimv commands, how to
 enter them and under what conditions.
 
-
-
-To start exploring in the current window, use: >
-
- \be   OR  :BufExplorer
-
-If you would like to use something other than '\', you may simply change the
-leader (see |mapleader|).
-
-Note: If the current buffer is modified when bufexplorer started, the current
-      window is always split and the new bufexplorer is displayed in that new
-      window.
-
-Commands to use once exploring:
-
- <enter>       Opens the buffer that is under the cursor into the current
-               window.
- <F1>          Toggle help information.
- <leftmouse>   Opens the buffer that is under the cursor into the current
-               window.
- <shift-enter> Opens the buffer that is under the cursor in another tab.
- d             |:wipeout| the buffer under the cursor from the list.
-               When a buffers is wiped, it will not be shown when unlisted
-               buffer are displayed.
- D             |:delete| the buffer under the cursor from the list.
-               The buffer's 'buflisted' is cleared. This allows for the buffer
-               to be displayed again using the 'show unlisted' command.
- f             Toggles whether you are taken to the active window when
-               selecting a buffer or not.
- p             Toggles the showing of a split filename/pathname.
- q             Quit exploring.
- r             Reverses the order the buffers are listed in.
- R             Toggles relative path/absolute path.
- s             Selects the order the buffers are listed in. Either by buffer
-               number, file name, file extension, most recently used (MRU), or
-               full path.
- t             Opens the buffer that is under the cursor in another tab.
- u             Toggles the showing of "unlisted" buffers.
-
-Once invoked, Buffer Explorer displays a sorted list (MRU is the default
-sort method) of all the buffers that are currently opened. You are then
-able to move the cursor to the line containing the buffer's name you are
-wanting to act upon. Once you have selected the buffer you would like,
-you can then either open it, close it(delete), resort the list, reverse
-the sort, quit exploring and so on...
 
 ===============================================================================
 FAQ                                                                 *slimv-faq*
