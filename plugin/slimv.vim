@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Last Change:  2008 Apr 28
-" Maintainer:   Tamas Kovacs <kovisoft@gmail.com>
+" Last Change:  2008 May 02
+" Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
 "               *** ***   Use At-Your-Own-Risk!   *** ***
@@ -12,13 +12,13 @@ if &cp || exists( 'g:slimv_loaded' )
     finish
 endif
 
-let g:slimv_loaded        = 1
+let g:slimv_loaded = 1
 
 if has( 'win32' ) || has( 'win95' ) || has( 'win64' ) || has( 'win16' )
-    let g:slimv_windows   = 1
+    let g:slimv_windows = 1
 else
     " This means Linux only at the moment
-    let g:slimv_windows   = 0
+    let g:slimv_windows = 0
 endif
 
 
@@ -181,14 +181,34 @@ if !exists( 'g:slimv_path' )
     endif
 endif
 
+" Log global variables to logfile (if debug log set)
+function! SlimvLogGlobals()
+    let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
+    call add( info,  printf( 'g:slimv_debug = %d',   g:slimv_debug ) )
+    call add( info,  printf( 'g:slimv_logfile = %s', g:slimv_logfile ) )
+    call add( info,  printf( 'g:slimv_port = %d',    g:slimv_port ) )
+    call add( info,  printf( 'g:slimv_python = %s',  g:slimv_python ) )
+    call add( info,  printf( 'g:slimv_lisp = %s',    g:slimv_lisp ) )
+    call add( info,  printf( 'g:slimv_client = %s',  g:slimv_client ) )
+    call SlimvLog( g:slimv_debug, info )
+endfunction
+
+au BufNewFile,BufRead *.lisp call SlimvLogGlobals()
+
 
 " =====================================================================
 "  Global variable definitions
 " =====================================================================
 
-" Debug level (0 = no debug)
+" Debug level (0 = no debug messages)
 if !exists( 'g:slimv_debug' )
     let g:slimv_debug = 0
+endif
+
+" Leave client window open for debugging purposes
+" (works only on Windows at the moment)
+if !exists( 'g:slimv_debug_client' )
+    let g:slimv_debug_client = 0
 endif
 
 " Logfile name for debug messages
@@ -216,12 +236,21 @@ if !exists( 'g:slimv_client' )
     let g:slimv_client = SlimvClientCommand()
 endif
 
+" Slimv keybinding set (0 = no keybindings)
+if !exists( 'g:slimv_keybindings' )
+    let g:slimv_keybindings = 1
+endif
+
+" Append Slimv menu to the global menu (0 = no menu)
+if !exists( 'g:slimv_menu' )
+    let g:slimv_menu = 1
+endif
+
 
 " =====================================================================
 "  Template definitions
 " =====================================================================
 
-"TODO: change %1 to @1 to be conform with @p, @s, @l above (or just leave it alone?)
 if !exists( 'g:slimv_template_pprint' )
     let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
 endif
@@ -288,20 +317,6 @@ if !exists( 'mapleader' )
     let mapleader = ','
 endif
 
-" Log global variables to logfile (if debug log set)
-function! SlimvLogGlobals()
-    let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
-    call add( info,  printf( 'g:slimv_debug = %d',   g:slimv_debug ) )
-    call add( info,  printf( 'g:slimv_logfile = %s', g:slimv_logfile ) )
-    call add( info,  printf( 'g:slimv_port = %d',    g:slimv_port ) )
-    call add( info,  printf( 'g:slimv_python = %s',  g:slimv_python ) )
-    call add( info,  printf( 'g:slimv_lisp = %s',    g:slimv_lisp ) )
-    call add( info,  printf( 'g:slimv_client = %s',  g:slimv_client ) )
-    call SlimvLog( g:slimv_debug, info )
-endfunction
-
-au BufNewFile,BufRead *.lisp call SlimvLogGlobals()
-
 
 " =====================================================================
 "  General utility functions
@@ -349,24 +364,20 @@ function SlimvMakeArgs( args )
     "let a = substitute( a, '"',  '\\"', 'g' )
     let a = substitute( a, '\n', '\\n', 'g' )
     let a = '"' . a . '" '
-    "TODO: debug option: printout here
-    "echo a
     return a
 endfunction
 
 " Send text to the client
 function! SlimvSendToClient( args )
-    let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
-    "TODO: debug option: keep client window open
-"    execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
+    if g:slimv_debug_client == 0
+        let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
+    else
+        execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
+    endif
 endfunction
 
 " Send argument to Lisp server for evaluation
 function! SlimvEval( args )
-    "TODO: overcome command line argument length limitations
-    "TODO: in visual mode and not called from EvalRegion do not call this in a
-    "      loop for all lines in the selection
-
     if g:slimv_client == ''
         " No command to start client, we are clueless, ask user for assistance
         if g:slimv_python == ''
@@ -385,7 +396,6 @@ function! SlimvEval( args )
     " Hardcoded to use temporary file for passing text to the client
     let use_temp_file = 1
     if use_temp_file
-        "TODO: option to set explicit temp file name and delete/keep after usage
         let tmp = tempname()
         try
             let ar = []
@@ -396,8 +406,11 @@ function! SlimvEval( args )
             endwhile
             call SlimvLog( 1, a:args )
             call writefile( ar, tmp )
-            let result = system( g:slimv_client . ' -f ' . tmp )
-            "execute '!' . g:slimv_client . ' -f ' . tmp
+            if g:slimv_debug_client == 0
+                let result = system( g:slimv_client . ' -f ' . tmp )
+            else
+                execute '!' . g:slimv_client . ' -f ' . tmp
+            endif
         finally
             call delete(tmp)
         endtry
@@ -508,6 +521,7 @@ endfunction
 "  Special functions
 " =====================================================================
 
+" Evaluate top level form at the cursor pos
 function! SlimvEvalDefun()
     call SlimvSelectToplevelForm()
     call SlimvEvalSelection()
@@ -519,16 +533,19 @@ function! SlimvEvalBuffer()
     call SlimvEval( lines )
 endfunction
 
+" Evaluate last expression
 function! SlimvEvalLastExp()
     call SlimvSelectForm()
     call SlimvEvalSelection()
 endfunction
 
+" Evaluate and pretty print last expression
 function! SlimvPprintEvalLastExp()
     call SlimvSelectForm()
     call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
 endfunction
 
+" Evaluate expression entered interactively
 function! SlimvInteractiveEval()
     let e = input( 'Eval: ' )
     if e != ''
@@ -536,6 +553,7 @@ function! SlimvInteractiveEval()
     endif
 endfunction
 
+" Undefine function
 function! SlimvUndefineFunction()
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_undefine, SlimvGetSelection() )
@@ -543,6 +561,7 @@ endfunction
 
 " ---------------------------------------------------------------------
 
+" Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
     normal 99[(vt(%"sy
     let m = SlimvGetSelection() . '))'
@@ -550,6 +569,7 @@ function! SlimvMacroexpand()
     call SlimvEvalForm1( g:slimv_template_macroexpand, m )
 endfunction
 
+" Macroexpand the current top level form
 function! SlimvMacroexpandAll()
     normal 99[(vt(%"sy
     let m = SlimvGetSelection() . '))'
@@ -557,6 +577,7 @@ function! SlimvMacroexpandAll()
     call SlimvEvalForm1( g:slimv_template_macroexpand_all, m )
 endfunction
 
+" Switch trace on for the selected function
 function! SlimvTrace()
     call SlimvSelectSymbol()
     let s = input( 'Trace: ', SlimvGetSelection() )
@@ -566,6 +587,7 @@ function! SlimvTrace()
     endif
 endfunction
 
+" Switch trace off for the selected function
 function! SlimvUntrace()
     call SlimvSelectSymbol()
     let s = input( 'Untrace: ', SlimvGetSelection() )
@@ -574,6 +596,7 @@ function! SlimvUntrace()
     endif
 endfunction
 
+" Disassemble the selected function
 function! SlimvDisassemble()
     call SlimvSelectSymbol()
     let s = input( 'Disassemble: ', SlimvGetSelection() )
@@ -582,6 +605,7 @@ function! SlimvDisassemble()
     endif
 endfunction
 
+" Inspect symbol
 function! SlimvInspect()
     call SlimvSelectSymbol()
     let s = input( 'Inspect: ', SlimvGetSelection() )
@@ -590,6 +614,7 @@ function! SlimvInspect()
     endif
 endfunction
 
+" Switch profiling on for the selected function
 function! SlimvProfile()
     call SlimvSelectSymbol()
     let s = input( 'Profile: ', SlimvGetSelection() )
@@ -598,6 +623,7 @@ function! SlimvProfile()
     endif
 endfunction
 
+" Switch profiling off for the selected function
 function! SlimvUnProfile()
     call SlimvSelectSymbol()
     let s = input( 'Unprofile: ', SlimvGetSelection() )
@@ -608,18 +634,21 @@ endfunction
 
 " ---------------------------------------------------------------------
 
+" Compile the current top-level form
 function! SlimvCompileDefun()
     "TODO: handle double quote characters in form
     call SlimvSelectToplevelForm()
     call SlimvEvalForm1( g:slimv_template_compile_string, SlimvGetSelection() )
 endfunction
 
+" Compile and load whole file
 function! SlimvCompileLoadFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = escape( filename, '\\' )
     call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
 endfunction
 
+" Compile whole file
 function! SlimvCompileFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = escape( filename, '\\' )
@@ -633,6 +662,7 @@ function! SlimvCompileRegion() range
     call SlimvEvalForm1( g:slimv_template_compile_string, region )
 endfunction
 
+" Describe the selected symbol
 function! SlimvDescribeSymbol()
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
@@ -640,6 +670,7 @@ endfunction
 
 " ---------------------------------------------------------------------
 
+" Apropos of the selected symbol
 function! SlimvApropos()
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_apropos, SlimvGetSelection() )
@@ -653,27 +684,29 @@ endfunction
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
 
-if !exists( 'g:slimv_nokeybindings' )
+if g:slimv_keybindings == 1
+    " Short (one-key) keybinding set
+
     noremap <Leader>S  :call SlimvConnectServer()<CR>
     
-    noremap <Leader>d  :call SlimvEvalDefun()<CR>
-    noremap <Leader>e  :call SlimvEvalLastExp()<CR>
-    noremap <Leader>E  :call SlimvPprintEvalLastExp()<CR>
+    noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
+    noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
+    noremap <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
     noremap <Leader>r  :call SlimvEvalRegion()<CR>
-    noremap <Leader>b  :call SlimvEvalBuffer()<CR>
+    noremap <Leader>b  :<C-U>call SlimvEvalBuffer()<CR>
     noremap <Leader>v  :call SlimvInteractiveEval()<CR>
     noremap <Leader>u  :call SlimvUndefineFunction()<CR>
     
-    noremap <Leader>1  :call SlimvMacroexpand()<CR>
-    noremap <Leader>m  :call SlimvMacroexpandAll()<CR>
+    noremap <Leader>1  :<C-U>call SlimvMacroexpand()<CR>
+    noremap <Leader>m  :<C-U>call SlimvMacroexpandAll()<CR>
     noremap <Leader>t  :call SlimvTrace()<CR>
     noremap <Leader>T  :call SlimvUntrace()<CR>
     noremap <Leader>l  :call SlimvDisassemble()<CR>
     noremap <Leader>i  :call SlimvInspect()<CR>
     
-    noremap <Leader>D  :call SlimvCompileDefun()<CR>
-    noremap <Leader>L  :call SlimvCompileLoadFile()<CR>
-    noremap <Leader>F  :call SlimvCompileFile()<CR>
+    noremap <Leader>D  :<C-U>call SlimvCompileDefun()<CR>
+    noremap <Leader>L  :<C-U>call SlimvCompileLoadFile()<CR>
+    noremap <Leader>F  :<C-U>call SlimvCompileFile()<CR>
     noremap <Leader>R  :call SlimvCompileRegion()<CR>
     
     noremap <Leader>p  :call SlimvProfile()<CR>
@@ -681,40 +714,78 @@ if !exists( 'g:slimv_nokeybindings' )
     
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
+
+elseif g:slimv_keybindings == 2
+    " Easy to remember (two-key) keybinding set
+
+    " Connection commands
+    noremap <Leader>cs  :call SlimvConnectServer()<CR>
+    
+    " Evaluation commands
+    noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
+    noremap <Leader>ee  :<C-U>call SlimvEvalLastExp()<CR>
+    noremap <Leader>ep  :<C-U>call SlimvPprintEvalLastExp()<CR>
+    noremap <Leader>er  :call SlimvEvalRegion()<CR>
+    noremap <Leader>eb  :<C-U>call SlimvEvalBuffer()<CR>
+    noremap <Leader>ei  :call SlimvInteractiveEval()<CR>
+    noremap <Leader>eu  :call SlimvUndefineFunction()<CR>
+    
+    " Debug commands
+    noremap <Leader>m1  :<C-U>call SlimvMacroexpand()<CR>
+    noremap <Leader>ma  :<C-U>call SlimvMacroexpandAll()<CR>
+    noremap <Leader>dt  :call SlimvTrace()<CR>
+    noremap <Leader>du  :call SlimvUntrace()<CR>
+    noremap <Leader>dd  :call SlimvDisassemble()<CR>
+    noremap <Leader>di  :call SlimvInspect()<CR>
+    
+    " Compile commands
+    noremap <Leader>cd  :<C-U>call SlimvCompileDefun()<CR>
+    noremap <Leader>cl  :<C-U>call SlimvCompileLoadFile()<CR>
+    noremap <Leader>cf  :<C-U>call SlimvCompileFile()<CR>
+    noremap <Leader>cr  :call SlimvCompileRegion()<CR>
+    
+    " Profile commands
+    noremap <Leader>pp  :call SlimvProfile()<CR>
+    noremap <Leader>pu  :call SlimvUnprofile()<CR>
+    
+    " Documentation commands
+    noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
+    noremap <Leader>da  :call SlimvApropos()<CR>
+
 endif
 
 " =====================================================================
 "  Slimv menu
 " =====================================================================
 
-" Works only if 'wildcharm' is <Tab>
-":map <Leader>, :emenu Slimv.<Tab>
-if &wildcharm == 0
-    set wildcharm=<Tab>
-endif
-if &wildcharm != 0
-    execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
-endif
+if g:slimv_menu == 1
+    " Works only if 'wildcharm' is <Tab>
+    ":map <Leader>, :emenu Slimv.<Tab>
+    if &wildcharm == 0
+        set wildcharm=<Tab>
+    endif
+    if &wildcharm != 0
+        execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
+    endif
 
-if !exists( 'g:slimv_nomenu' )
-    menu &Slimv.&Evaluation.Eval-&Defun                :call SlimvEvalDefun()<CR>
-    menu &Slimv.&Evaluation.Eval-Last-&Exp             :call SlimvEvalLastExp()<CR>
-    menu &Slimv.&Evaluation.&Pprint-Eval-Last          :call SlimvPprintEvalLastExp()<CR>
+    menu &Slimv.&Evaluation.Eval-&Defun                :<C-U>call SlimvEvalDefun()<CR>
+    menu &Slimv.&Evaluation.Eval-Last-&Exp             :<C-U>call SlimvEvalLastExp()<CR>
+    menu &Slimv.&Evaluation.&Pprint-Eval-Last          :<C-U>call SlimvPprintEvalLastExp()<CR>
     menu &Slimv.&Evaluation.Eval-&Region               :call SlimvEvalRegion()<CR>
-    menu &Slimv.&Evaluation.Eval-&Buffer               :call SlimvEvalBuffer()<CR>
+    menu &Slimv.&Evaluation.Eval-&Buffer               :<C-U>call SlimvEvalBuffer()<CR>
     menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
     menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
     
-    menu &Slimv.De&bugging.Macroexpand-&1              :call SlimvMacroexpand()<CR>
-    menu &Slimv.De&bugging.&Macroexpand-All            :call SlimvMacroexpandAll()<CR>
+    menu &Slimv.De&bugging.Macroexpand-&1              :<C-U>call SlimvMacroexpand()<CR>
+    menu &Slimv.De&bugging.&Macroexpand-All            :<C-U>call SlimvMacroexpandAll()<CR>
     menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
     menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
     menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
     menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
     
-    menu &Slimv.&Compilation.Compile-&Defun            :call SlimvCompileDefun()<CR>
-    menu &Slimv.&Compilation.Compile-&Load-File        :call SlimvCompileLoadFile()<CR>
-    menu &Slimv.&Compilation.Compile-&File             :call SlimvCompileFile()<CR>
+    menu &Slimv.&Compilation.Compile-&Defun            :<C-U>call SlimvCompileDefun()<CR>
+    menu &Slimv.&Compilation.Compile-&Load-File        :<C-U>call SlimvCompileLoadFile()<CR>
+    menu &Slimv.&Compilation.Compile-&File             :<C-U>call SlimvCompileFile()<CR>
     menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
     
     menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
