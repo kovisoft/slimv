@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 May 2008
+*slimv.txt*                    Slimv                 Last Change: 30 Jan 2009
 
 Slimv                                                                  *slimv*
                                Version 0.1
@@ -47,13 +47,10 @@ CUSTOMIZATION                                             *slimv-customization*
 |slimv-options|              Options
 |slimv-templates|            Templates
 |slimv-keyboard|             Keyboard mappings
-- directories (with or without a shell frontend)
-- options
-- keyboard mappings and issues
-- templates
 
 -------------------------------------------------------------------------------
                                                                 *slimv_options*
+
 Note: Most options below require to restart the Vim session when modified.
 
 Slimv tries to autodetect the Python and Lisp installation directories,
@@ -62,8 +59,8 @@ If the installation directories are put in the path, then the autodetection
 should find them (this is usually the case on Linux). Otherwise (on Windows)
 some frequently used directories are searched under C:\ and C:\Program Files.
 For a minimum, Slimv needs to know the path of the existing Python and Lisp
-installation, so if autodetection does not work for you, then set the following
-global variables in your vimrc.
+installations, so if autodetection does not work for you, then set the
+following global variables in your vimrc.
 
 Note: On Windows use the / (slash) character instead of \ (backslash) as the
       directory separator to avoid any incidental character escaping problems
@@ -151,6 +148,7 @@ Name of the Slimv logfile. Defaults to slimv.log.
 Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
 Value 1 defines the short keybinding with one-key bindings (after <Leader>).
 Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
+Other values mean no predefined keybinding is wanted.
 
                                                                  *g:slimv_menu*
 If nonzero then the Slimv menu us added to the end of the global menu.
@@ -159,6 +157,7 @@ Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
 -------------------------------------------------------------------------------
                                                               *slimv_templates*
+
 Many Slimv commands are performed by creating a special Lisp form from the
 selected symbol (or form) and send it to the REPL for execution.
 Slimv defines various templates to build these special Lisp forms.
@@ -235,16 +234,88 @@ Example:
 -------------------------------------------------------------------------------
                                                                *slimv_keyboard*
 
+The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
+
+    ,,  Slimv Menu
+
+    ,S  Connect to Server
+
+    ,d  Eval Defun
+    ,e  Eval Last Expression
+    ,E  Pprint Eval Last Expression
+    ,r  Eval Region
+    ,b  Eval Buffer
+    ,v  Interactive Eval
+    ,u  Undefine Function
+
+    ,1  Macroexpand-1
+    ,m  Macroexpand
+    ,t  Trace
+    ,T  Untrace
+    ,l  Disassemble
+    ,i  Inspect
+
+    ,D  Compile Defun
+    ,L  Compile and Load File
+    ,F  Compile File
+    ,R  Compile Region
+
+    ,p  Profile
+    ,P  Unprofile
+
+    ,s  Describe Symbol
+    ,a  Apropos
+
+There is another easy to remember built in keybinding set
+(g:slimv_keybindings=2):
+ 
+    ,,  Slimv Menu
+
+    Connection commands:
+    ,cs  Connect to Server
+
+    Evaluation commands:
+    ,ed  Eval Defun
+    ,ee  Eval Last Expression
+    ,ep  Pprint Eval Last Expression
+    ,er  Eval Region
+    ,eb  Eval Buffer
+    ,ei  Interactive Eval
+    ,eu  Undefine Function
+
+    Debug commands:
+    ,m1  Macroexpand-1
+    ,ma  Macroexpand
+    ,dt  Trace
+    ,du  Untrace
+    ,dd  Disassemble
+    ,di  Inspect
+
+    Compile commands:
+    ,cd  Compile Defun
+    ,cl  Compile and Load File
+    ,cf  Compile File
+    ,cr  Compile Region
+
+    Profile commands:
+    ,pp  Profile
+    ,pu  Unprofile
+
+    Documentation commands:
+    ,ds  Describe Symbol
+    ,da  Apropos
+
 
 ==============================================================================
 USAGE                                                            *slimv-usage*
 
-After proper installation start Vim and load a .lisp source file into a
+After proper installation start Vim and load a *.lisp source file into a
 buffer. When the first Slimv command is entered (either from the menu or
 via keyboard shortcut or entering a :call Slimv...() at the Vim command line)
 then Slimv checks if the server/REPL runs and starts it if nedeed.
 When the server is running, the Slimv commands send the appropriate Lisp
 forms to the server/REPL for processing. That's it.
+
 All you need to know then is the list of possible Slimv commands, how to
 enter them and under what conditions.
 
@@ -257,11 +328,11 @@ FAQ                                                                 *slimv-faq*
      In SLIME 'E' stands for 'Emacs', so here it is replaced with 'V' as Vim.
      To tell the truth, first I gave the name 'Slimvim' to the plugin but
      then I found an (already abandoned) project called 'Slim-Vim' and I did
-     not want to give such a similar name.
+     not want to interfere with it.
 
 - Q: Why another 'Superior Lisp Mode' if there is already one?
 - A: Because many programmers prefer Vim as a program text editor over Emacs,
-     including me. I don't want to start a holy war or whatever, I'm just
+     including me. I don't want to start a holy war or whatsoever, I'm just
      happy if someone else finds this plugin useful.
 
 - Q: How does Slimv work?
