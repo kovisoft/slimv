@@ -7,7 +7,7 @@ import time
 import shlex
 import socket
 from subprocess import Popen, PIPE, STDOUT
-from threading import Thread
+from threading import Thread, BoundedSemaphore
 
 autoconnect = 1             # Start and connect server automatically
 
@@ -19,6 +19,8 @@ terminate   = 0             # Main program termination flag
 
 buffer      = ''            # Text buffer (display queue) to collect socket input and REPL output
 buflen      = 0             # Amount of text currently in the buffer
+buffer_sema = BoundedSemaphore();
+                            # Semaphore to synchronize access to the global display queue
 
 python_path = 'python'      # Path of the Python interpreter (overridden via command line args)
 lisp_path   = 'clisp.exe'   # Path of the Lisp interpreter (overridden via command line args)
@@ -98,7 +100,10 @@ def send_line( server, line ):
     lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
     server.send( lstr )     # send message length first
     server.send( line )     # then the message itself
-    time.sleep(0.01)
+
+    time.sleep(0.01)        # give a little chance to receive some output from the REPL before the next query
+                            #TODO: synchronize it correctly
+
 
 
 def translate_send_line( server, line ):
@@ -176,6 +181,7 @@ class socket_listener( Thread ):
 
     def run( self ):
         global buffer
+        global buffer_sema
         global terminate
 
         # Open server socket
@@ -197,7 +203,7 @@ class socket_listener( Thread ):
                 try:
                     lstr = conn.recv(4)
                     if len( lstr ) <= 0:
-                        break;
+                        break
                 except:
                     break
                 if terminate:
@@ -217,7 +223,10 @@ class socket_listener( Thread ):
                     # Fork here: write message to the stdin of REPL
                     # and also write it to the display (display queue buffer)
                     self.inp.write( received + '\n' )
+                    buffer_sema.acquire()
                     buffer = buffer + received + '\n'
+                    buffer_sema.release()
+
             log( "sl.close", 1 )
             conn.close()
 
@@ -260,6 +269,7 @@ class output_listener( Thread ):
 
     def run( self ):
         global buffer
+        global buffer_sema
         global terminate
 
         log( "ol.start", 1 )
@@ -269,7 +279,9 @@ class output_listener( Thread ):
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
                 c = self.out.read(1)
+                buffer_sema.acquire()
                 buffer = buffer + c
+                buffer_sema.release()
             except:
                 #TODO: should we set terminate=1 here as well?
                 break
@@ -280,7 +292,9 @@ def buffer_read_and_display():
     """
     global buffer
     global buflen
+    global buffer_sema
 
+    buffer_sema.acquire()
     l = len( buffer )
     while buflen < l:
         try:
@@ -289,6 +303,9 @@ def buffer_read_and_display():
             buflen = buflen + 1
         except:
             break
+    buffer = ''
+    buflen = 0
+    buffer_sema.release()
 
 
 def server( args ):
@@ -341,7 +358,7 @@ def server( args ):
     while not terminate:
         try:
             # Constantly display messages in the display queue buffer
-            #TODO: it would be better some wakeup mechanism here
+            #TODO: it would be better having some wakeup mechanism here
             log( "in.step", 1 )
             time.sleep(0.01)
             buffer_read_and_display()
