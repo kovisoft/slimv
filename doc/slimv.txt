@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 30 Jan 2009
+*slimv.txt*                    Slimv                 Last Change: 03 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.1
+                               Version 0.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -376,6 +376,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.2    - Corrected memory fillup problem after a long REPL session.
 
 0.1    - Initial release. And hope not the last one :-)
 
