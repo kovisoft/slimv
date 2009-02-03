@@ -246,6 +246,11 @@ if !exists( 'g:slimv_menu' )
     let g:slimv_menu = 1
 endif
 
+" Name of the REPL buffer inside Vim
+if !exists( 'g:slimv_bufname' )
+    let g:slimv_bufname = 'Slimv.REPL'
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -322,6 +327,32 @@ endif
 "  General utility functions
 " =====================================================================
 
+" Open a new REPL buffer or switch to the existing one
+function! SlimvOpenReplBuffer()
+    "TODO: check if this works without 'set hidden'
+    "TODO: add option for split window
+    let repl_buf = bufnr( g:slimv_bufname )
+    if repl_buf == -1
+        " Create a new REPL buffer
+        exe "edit " . g:slimv_bufname
+    else
+        " REPL buffer is already created. Check if it is open in a window
+        let repl_win = bufwinnr( repl_buf )
+        if repl_win != -1
+            " Switch to the REPL window
+            if winnr() != repl_win
+                exe repl_win . "wincmd w"
+            endif
+        else
+            " Switch to the REPL buffer
+            exe "buffer " . repl_buf
+        endif
+    endif
+    
+    " This buffer will not have an associated file
+    set buftype=nofile
+endfunction
+
 " Select symbol under cursor and copy it to register 's'
 function! SlimvSelectSymbol()
     "TODO: can we use expand('<cWORD>') here?
@@ -372,7 +403,7 @@ function! SlimvSendToClient( args )
     if g:slimv_debug_client == 0
         let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
     else
-        execute '!' . g:slimv_client . SlimvMakeArgs(a:args)
+        execute '!' . g:slimv_client . ' -c ' . SlimvMakeArgs(a:args)
     endif
 endfunction
 
