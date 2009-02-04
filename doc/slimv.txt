@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 03 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 04 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.2
+                               Version 0.1.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -216,12 +216,14 @@ Example:
     let g:slimv_template_apropos = '(apropos "%1")'
 
                                                  *g:slimv_template_macroexpand*
-Lisp form built when issuing the 'macroexpand-1' command.
+Lisp form built when issuing the 'macroexpand-1' command, after "defmacro"
+string is replaced with "macroexpand-1".
 Example:
     let g:slimv_template_macroexpand = '(pprint %1)'
 
                                              *g:slimv_template_macroexpand_all*
-Lisp form built when issuing the 'macroexpand-all' command.
+Lisp form built when issuing the 'macroexpand-all' command, after "defmacro"
+string is replaced with "macroexpand".
 Example:
     let g:slimv_template_macroexpand_all = '(pprint %1)'
 
@@ -377,9 +379,9 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.2    - Corrected memory fillup problem after a long REPL session.
+0.1.1  - Corrected memory fillup problem after a long REPL session.
 
-0.1    - Initial release. And hope not the last one :-)
+0.1    - Initial release.
 
 ===============================================================================
 KNOWN ISSUES                                                     *slimv-issues*
