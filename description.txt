@@ -1,5 +1,5 @@
 Description
-Slimv tries to mimic a subset of SLIME's (Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to the Lisp REPL is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
+Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to the Lisp REPL is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 Here follows a list of Slimv commands, for a more complete description with keybindings see the included documentation.
 
@@ -55,6 +55,16 @@ See the included documentation for more complete installation and customization 
 Lisp with Vim: Slimv, a script that tries to mimic a subset of SLIME's functionality inside Vim.
 
 ---------------------------------------------------------------------------------------------
+
+CHANGE LOG
+
+0.1.1  - Corrected memory fillup problem after a long REPL session.
+
+0.1    - Initial release. 
+
+
+---------------------------------------------------------------------------------------------
+
 
 
 Differences to Limp
