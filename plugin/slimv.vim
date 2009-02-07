@@ -328,6 +328,17 @@ endif
 "  General utility functions
 " =====================================================================
 
+function! SlimvRefreshReplBuffer()
+    "normal G$ms
+    "normal G$
+    edit!
+    normal G$
+    startinsert!
+    call setpos( "'s'", [0, line('$'), col('$'), 0] )
+"    let lastline = line("'s")
+"    let lastcol = col("'s")
+endfunction
+
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
     "TODO: check if this works without 'set hidden'
@@ -351,7 +362,13 @@ function! SlimvOpenReplBuffer()
     endif
     
     " This buffer will not have an associated file
-    set buftype=nofile
+"    set buftype=nofile
+"    setlocal autoread
+    inoremap <buffer> <silent> <CR> <CR><C-O>:call SlimvSendCommand()<CR>
+    au FileChangedShell <buffer> :call SlimvRefreshReplBuffer()
+
+    normal G$
+    startinsert!
 endfunction
 
 " Select symbol under cursor and copy it to register 's'
@@ -408,6 +425,19 @@ function! SlimvSendToClient( args )
     endif
 endfunction
 
+" Read output from client
+function! SlimvReadFromClient()
+    "let result = 'test.out'
+    let outfile = g:slimv_bufname
+    try
+        if g:slimv_debug_client == 0
+            let result = system( g:slimv_client . ' -r ' . outfile )
+        else
+            execute '!' . g:slimv_client . ' -r ' . outfile
+        endif
+    endtry
+endfunction
+
 " Send argument to Lisp server for evaluation
 function! SlimvEval( args )
     if g:slimv_client == ''
@@ -425,6 +455,8 @@ function! SlimvEval( args )
         return
     endif
 
+    call SlimvOpenReplBuffer()
+
     " Hardcoded to use temporary file for passing text to the client
     let use_temp_file = 1
     if use_temp_file
@@ -437,7 +469,8 @@ function! SlimvEval( args )
                 let i = i + 1
             endwhile
             call SlimvLog( 1, a:args )
-            call writefile( ar, tmp )
+            call writefile( ar, tmp )           " write args to the temporary file for the client
+"            call append( '$', ar )              " write args to the REPL buffer
             if g:slimv_debug_client == 0
                 let result = system( g:slimv_client . ' -f ' . tmp )
             else
@@ -446,6 +479,8 @@ function! SlimvEval( args )
         finally
             call delete(tmp)
         endtry
+
+        call SlimvReadFromClient()
     else
         " Send text to the client via command line arguments
         " This is problematic due to command line argument size limitations
@@ -478,6 +513,22 @@ function! SlimvEval( args )
             call SlimvSendToClient( a:args[i : j-1] )
         endif
     endif
+
+"    call SlimvOpenReplBuffer()
+    normal G$
+    startinsert!
+endfunction
+
+function! SlimvSendCommand()
+    let lastline = line( "'s" )
+    let lastcol  =  col( "'s" )
+    let cmd = [ strpart( getline( lastline ), lastcol-1) ]
+    let l = lastline + 1
+    while l <= line("$") - 1
+        call add( cmd, strpart( getline( l ), 0) )
+        let l = l + 1
+    endwhile
+    call SlimvEval( cmd )
 endfunction
 
 " Start and connect slimv server
@@ -486,6 +537,7 @@ function! SlimvConnectServer()
     call SlimvEval([';;; Slimv client connected successfully'])
 endfunction
 
+" Get the last region (visual block)
 function! SlimvGetRegion() range
     if mode() == 'v' || mode() == 'V'
         let lines = getline( a:firstline, a:lastline )
