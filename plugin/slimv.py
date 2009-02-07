@@ -114,9 +114,30 @@ def send_line( server, line ):
     server.send( lstr )     # send message length first
     server.send( line )     # then the message itself
 
+#    print "send line"
+#
     time.sleep(0.01)        # give a little chance to receive some output from the REPL before the next query
                             #TODO: synchronize it correctly
-
+#
+#    try:
+#        print "receive length"
+#        lstr = server.recv(4)
+#        if len( lstr ) <= 0:
+#            return
+#    except:
+#        return
+#    l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
+#    if l > 0:
+#        # Valid length received, now wait for the message
+#        try:
+#            # Read the message itself
+#            print "receive message"
+#            received = server.recv(l)
+#            if len( received ) < l:
+#                return
+#        except:
+#            return
+#        print received
 
 
 def translate_send_line( server, line ):
@@ -178,11 +199,59 @@ def client_args( args ):
     s.close()
 
 
+def readout( filename ):
+    """Client readout mode:
+       requests global display buffer contents from server.
+       Output file name is passed to the server, which writes the buffer into the file.
+    """
+    s = connect_server()
+    if s is None:
+        return
+
+    try:
+        # Send readout command to the server
+        send_line( s, 'SLIMV_READOUT::' + filename )
+    finally:
+        s.close()
+
+
 ###############################################################################
 #
 # Server part
 #
 ###############################################################################
+
+def buffer_read_and_display( output ):
+    """Read and display lines received in global display queue buffer.
+    """
+    global buffer
+    global buflen
+    global buffer_sema
+
+    buffer_sema.acquire()
+    l = len( buffer )
+    while buflen < l:
+        try:
+            # Write all lines in the buffer to the display
+            output.write( buffer[buflen] )
+            buflen = buflen + 1
+        except:
+            break
+    buffer = ''
+    buflen = 0
+    buffer_sema.release()
+
+
+def buffer_write( text ):
+    """Write text into the global display queue buffer.
+    """
+    global buffer
+    global buffer_sema
+
+    buffer_sema.acquire()
+    buffer = buffer + text
+    buffer_sema.release()
+
 
 class socket_listener( Thread ):
     """Server thread to receive text from the client via socket.
@@ -193,8 +262,6 @@ class socket_listener( Thread ):
         self.inp = inp
 
     def run( self ):
-        global buffer
-        global buffer_sema
         global terminate
 
         # Open server socket
@@ -233,12 +300,31 @@ class socket_listener( Thread ):
                     except:
                         break
 
-                    # Fork here: write message to the stdin of REPL
-                    # and also write it to the display (display queue buffer)
-                    self.inp.write( received + '\n' )
-                    buffer_sema.acquire()
-                    buffer = buffer + received + '\n'
-                    buffer_sema.release()
+                    if received[0:15] == 'SLIMV_READOUT::':
+                        filename = received[15:]
+                        try:
+                            #file = open( filename, 'wt' )
+                            file = open( filename, 'at' )
+                            try:
+                                buffer_read_and_display( file )
+                            finally:
+                                file.close()
+                        except:
+                            break
+                    else:
+                        # Fork here: write message to the stdin of REPL
+                        # and also write it to the display (display queue buffer)
+                        self.inp.write( received + '\n' )
+                        buffer_write( received + '\n' )
+
+ #                   time.sleep(0.02)
+ #                   line = "Test line"
+ #                   l = len(line)
+ #                   lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
+ #                   conn.send( lstr )     # send message length first
+ #                   conn.send( line )     # then the message itself
+
+
 
             log( "sl.close", 1 )
             conn.close()
@@ -281,8 +367,6 @@ class output_listener( Thread ):
         self.out = out
 
     def run( self ):
-        global buffer
-        global buffer_sema
         global terminate
 
         log( "ol.start", 1 )
@@ -292,33 +376,10 @@ class output_listener( Thread ):
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
                 c = self.out.read(1)
-                buffer_sema.acquire()
-                buffer = buffer + c
-                buffer_sema.release()
+                buffer_write( c )
             except:
                 #TODO: should we set terminate=1 here as well?
                 break
-
-
-def buffer_read_and_display():
-    """Read and display lines received in global display queue buffer.
-    """
-    global buffer
-    global buflen
-    global buffer_sema
-
-    buffer_sema.acquire()
-    l = len( buffer )
-    while buflen < l:
-        try:
-            # Write all lines in the buffer to the display
-            sys.stdout.write( buffer[buflen] )
-            buflen = buflen + 1
-        except:
-            break
-    buffer = ''
-    buflen = 0
-    buffer_sema.release()
 
 
 def server( args ):
@@ -363,9 +424,10 @@ def server( args ):
     log( "in.start", 1 )
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + "\n" )
     sys.stdout.write( ";;; Slimv is spawning REPL...\n" )
-    time.sleep(0.5)             # wait for Lisp to start
-    buffer_read_and_display()   # read Lisp startup messages
+    time.sleep(0.5)                         # wait for Lisp to start
+#    buffer_read_and_display( sys.stdout )   # read Lisp startup messages
     sys.stdout.write( ";;; Slimv connection established\n" )
+    sys.stdout.write( ";;; Type EOF (Ctrl+Z on Windows, Ctrl+D on Linux) and Return to exit server\n" )
 
     # Main server loop
     while not terminate:
@@ -374,7 +436,7 @@ def server( args ):
             #TODO: it would be better having some wakeup mechanism here
             log( "in.step", 1 )
             time.sleep(0.01)
-            buffer_read_and_display()
+#            buffer_read_and_display( sys.stdout )
 
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
@@ -443,6 +505,8 @@ def usage():
     print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
     print '                                (if present, this option must be the last one,'
     print '                                mutually exclusive with the -f option)'
+    print '  -r FILENAME, --readout=FNAME  read out the latest contents of the REPL buffer'
+    print '                                and put it in the given file'
 
 
 ###############################################################################
@@ -453,7 +517,7 @@ def usage():
 
 if __name__ == '__main__':
 
-    EXIT, SERVER, CLIENT = range( 3 )
+    EXIT, SERVER, CLIENT, READOUT = range( 4 )
     mode = EXIT
     slimv_path = sys.argv[0]
     python_path = sys.executable
@@ -465,8 +529,8 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
-                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
+        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:r:', \
+                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug=', 'readout='] )
 
         # Process options
         for o, a in opts:
@@ -493,10 +557,13 @@ if __name__ == '__main__':
                 mode = SERVER
             if o in ('-c', '--client'):
                 mode = CLIENT
-                client_filename = ''
+                filename = ''
             if o in ('-f', '--file'):
                 mode = CLIENT
-                client_filename = a
+                filename = a
+            if o in ('-r', '--readout'):
+                mode = READOUT
+                filename = a
 
     except getopt.GetoptError:
         # print help information and exit:
@@ -515,9 +582,13 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
-        if client_filename != '':
-            client_file( client_filename )
+        if filename != '':
+            client_file( filename )
         else:
             client_args( args )
+
+    if mode == READOUT:
+        # We are started in readout mode
+        readout( filename )
 
 # --- END OF FILE ---
