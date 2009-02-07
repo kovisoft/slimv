@@ -332,6 +332,12 @@ function! SlimvRefreshReplBuffer()
     "normal G$ms
     "normal G$
     edit!
+"    setlocal endofline
+    if &endofline == 1
+        " Handle the situation when the last line is an empty line in REPL
+        " but Vim rejects to handle it as a separate line
+        call append( '$', "" )
+    endif
     normal G$
     startinsert!
     call setpos( "'s'", [0, line('$'), col('$'), 0] )
@@ -364,6 +370,8 @@ function! SlimvOpenReplBuffer()
     " This buffer will not have an associated file
 "    set buftype=nofile
 "    setlocal autoread
+"    setlocal noeol
+"    setlocal eol
     inoremap <buffer> <silent> <CR> <CR><C-O>:call SlimvSendCommand()<CR>
     au FileChangedShell <buffer> :call SlimvRefreshReplBuffer()
 
@@ -522,13 +530,15 @@ endfunction
 function! SlimvSendCommand()
     let lastline = line( "'s" )
     let lastcol  =  col( "'s" )
-    let cmd = [ strpart( getline( lastline ), lastcol-1) ]
-    let l = lastline + 1
-    while l <= line("$") - 1
-        call add( cmd, strpart( getline( l ), 0) )
-        let l = l + 1
-    endwhile
-    call SlimvEval( cmd )
+    if line( "." ) >= lastline
+        let cmd = [ strpart( getline( lastline ), lastcol-1) ]
+        let l = lastline + 1
+        while l <= line("$") - 1
+            call add( cmd, strpart( getline( l ), 0) )
+            let l = l + 1
+        endwhile
+        call SlimvEval( cmd )
+    endif
 endfunction
 
 " Start and connect slimv server
