@@ -332,6 +332,7 @@ function! SlimvRefreshReplBuffer()
     "normal G$ms
     "normal G$
     edit!
+    "TODO: use :read instead and keep only the delta in the readout file
 "    setlocal endofline
     if &endofline == 1
         " Handle the situation when the last line is an empty line in REPL
@@ -369,10 +370,13 @@ function! SlimvOpenReplBuffer()
     
     " This buffer will not have an associated file
 "    set buftype=nofile
+"    set buftype=nowrite
 "    setlocal autoread
 "    setlocal noeol
 "    setlocal eol
-    inoremap <buffer> <silent> <CR> <CR><C-O>:call SlimvSendCommand()<CR>
+    inoremap <buffer> <silent> <CR> <CR><C-O>:call SlimvHandleCR()<CR>
+    "inoremap <buffer> <silent> <BS> <C-O>:call SlimvHandleBS()<CR>
+    inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     au FileChangedShell <buffer> :call SlimvRefreshReplBuffer()
 
     normal G$
@@ -439,9 +443,9 @@ function! SlimvReadFromClient()
     let outfile = g:slimv_bufname
     try
         if g:slimv_debug_client == 0
-            let result = system( g:slimv_client . ' -r ' . outfile )
+            let result = system( g:slimv_client . ' -o ' . outfile )
         else
-            execute '!' . g:slimv_client . ' -r ' . outfile
+            execute '!' . g:slimv_client . ' -o ' . outfile
         endif
     endtry
 endfunction
@@ -479,16 +483,19 @@ function! SlimvEval( args )
             call SlimvLog( 1, a:args )
             call writefile( ar, tmp )           " write args to the temporary file for the client
 "            call append( '$', ar )              " write args to the REPL buffer
+            let outfile = g:slimv_bufname
             if g:slimv_debug_client == 0
-                let result = system( g:slimv_client . ' -f ' . tmp )
+"                let result = system( g:slimv_client . ' -f ' . tmp )
+                let result = system( g:slimv_client . ' -f ' . tmp . ' -o ' . outfile )
             else
-                execute '!' . g:slimv_client . ' -f ' . tmp
+"                execute '!' . g:slimv_client . ' -f ' . tmp
+                execute '!' . g:slimv_client . ' -f ' . tmp . ' -o ' . outfile
             endif
         finally
             call delete(tmp)
         endtry
 
-        call SlimvReadFromClient()
+"        call SlimvReadFromClient()
     else
         " Send text to the client via command line arguments
         " This is problematic due to command line argument size limitations
@@ -527,17 +534,34 @@ function! SlimvEval( args )
     startinsert!
 endfunction
 
-function! SlimvSendCommand()
+function! SlimvHandleCR()
     let lastline = line( "'s" )
     let lastcol  =  col( "'s" )
-    if line( "." ) >= lastline
-        let cmd = [ strpart( getline( lastline ), lastcol-1) ]
-        let l = lastline + 1
-        while l <= line("$") - 1
-            call add( cmd, strpart( getline( l ), 0) )
-            let l = l + 1
-        endwhile
-        call SlimvEval( cmd )
+    if lastline > 0
+        if line( "." ) >= lastline
+            let cmd = [ strpart( getline( lastline ), lastcol-1) ]
+            let l = lastline + 1
+            while l <= line("$") - 1
+                call add( cmd, strpart( getline( l ), 0) )
+                let l = l + 1
+            endwhile
+            call SlimvEval( cmd )
+        endif
+    else
+        call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
+        call append( '$', "" )
+        normal G$
+        startinsert!
+        call setpos( "'s'", [0, line('$'), col('$'), 0] )
+    endif
+endfunction
+
+function! SlimvHandleBS()
+    if line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
+        " No BS allowed before the previous EOF mark
+        return ""
+    else
+        return "\<BS>"
     endif
 endfunction
 
