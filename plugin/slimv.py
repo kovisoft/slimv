@@ -148,7 +148,7 @@ def translate_send_line( server, line ):
     send_line( server, line )
 
 
-def client_file( filename ):
+def client_file( input_filename, output_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
@@ -158,13 +158,17 @@ def client_file( filename ):
         return
 
     try:
-        file = open( filename, 'rt' )
+        file = open( input_filename, 'rt' )
         try:
             # Send contents of the file to the server
             for line in file:
                 send_line( s, line.rstrip( '\n' ) )
         finally:
             file.close()
+
+        if ( output_filename != ''):
+            time.sleep(0.02)
+            send_line( s, 'SLIMV_READOUT::' + output_filename )
     except:
         return
 
@@ -199,20 +203,20 @@ def client_args( args ):
     s.close()
 
 
-def readout( filename ):
-    """Client readout mode:
-       requests global display buffer contents from server.
-       Output file name is passed to the server, which writes the buffer into the file.
-    """
-    s = connect_server()
-    if s is None:
-        return
-
-    try:
-        # Send readout command to the server
-        send_line( s, 'SLIMV_READOUT::' + filename )
-    finally:
-        s.close()
+#def readout( filename ):
+#    """Client readout mode:
+#       requests global display buffer contents from server.
+#       Output file name is passed to the server, which writes the buffer into the file.
+#    """
+#    s = connect_server()
+#    if s is None:
+#        return
+#
+#    try:
+#        # Send readout command to the server
+#        send_line( s, 'SLIMV_READOUT::' + filename )
+#    finally:
+#        s.close()
 
 
 ###############################################################################
@@ -505,7 +509,7 @@ def usage():
     print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
     print '                                (if present, this option must be the last one,'
     print '                                mutually exclusive with the -f option)'
-    print '  -r FILENAME, --readout=FNAME  read out the latest contents of the REPL buffer'
+    print '  -o FILENAME, --readout=FNAME  read out the latest contents of the REPL buffer'
     print '                                and put it in the given file'
 
 
@@ -517,10 +521,13 @@ def usage():
 
 if __name__ == '__main__':
 
-    EXIT, SERVER, CLIENT, READOUT = range( 4 )
+    #EXIT, SERVER, CLIENT, READOUT = range( 4 )
+    EXIT, SERVER, CLIENT = range( 3 )
     mode = EXIT
     slimv_path = sys.argv[0]
     python_path = sys.executable
+    input_filename = ''
+    output_filename = ''
 
     # Always this trouble with the path/filenames containing spaces:
     # enclose them in double quotes
@@ -529,7 +536,7 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:r:', \
+        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:o:', \
                                     ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug=', 'readout='] )
 
         # Process options
@@ -557,13 +564,13 @@ if __name__ == '__main__':
                 mode = SERVER
             if o in ('-c', '--client'):
                 mode = CLIENT
-                filename = ''
+                input_filename = ''
             if o in ('-f', '--file'):
                 mode = CLIENT
-                filename = a
-            if o in ('-r', '--readout'):
-                mode = READOUT
-                filename = a
+                input_filename = a
+            if o in ('-o', '--readout'):
+                #mode = READOUT
+                output_filename = a
 
     except getopt.GetoptError:
         # print help information and exit:
@@ -582,13 +589,13 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
-        if filename != '':
-            client_file( filename )
+        if input_filename != '':
+            client_file( input_filename, output_filename )
         else:
             client_args( args )
 
-    if mode == READOUT:
-        # We are started in readout mode
-        readout( filename )
+#    if mode == READOUT:
+#        # We are started in readout mode
+#        readout( output_filename )
 
 # --- END OF FILE ---
