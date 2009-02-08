@@ -45,6 +45,9 @@ To install the script:
     valid for your Vim/Python/Lisp installation, which is highly probable).
     See |slimv-customization| below on how to do this.
 
+Upgrade from previous script versions:
+  No special upgrade actions are required.
+
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
 
@@ -395,6 +398,8 @@ KNOWN ISSUES                                                     *slimv-issues*
 - Needs Vim version 7.0 or above, because of the intensive use of lists.
 - Vim register 's' is used for all form selections, so its original content is
   destroyed.
+- Vim mark 's' is used for marking the previous End Of File before a new
+  command is started in the REPL buffer.
 - (un)profile does not work
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
