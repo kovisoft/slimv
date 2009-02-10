@@ -330,6 +330,14 @@ endif
 "  General utility functions
 " =====================================================================
 
+function! SlimvEndOfReplBuffer( markit )
+    normal G$
+    startinsert!
+    if a:markit
+        call setpos( "'s'", [0, line('$'), col('$'), 0] )
+    endif
+endfunction
+
 function! SlimvRefreshReplBuffer()
     "normal G$ms
     "normal G$
@@ -341,9 +349,7 @@ function! SlimvRefreshReplBuffer()
         " but Vim rejects to handle it as a separate line
         call append( '$', "" )
     endif
-    normal G$
-    startinsert!
-    call setpos( "'s'", [0, line('$'), col('$'), 0] )
+    call SlimvEndOfReplBuffer( 1 )
 "    let lastline = line("'s")
 "    let lastcol = col("'s")
 endfunction
@@ -381,8 +387,7 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     au FileChangedShell <buffer> :call SlimvRefreshReplBuffer()
 
-    normal G$
-    startinsert!
+    call SlimvEndOfReplBuffer( 0 )
 endfunction
 
 " Select symbol under cursor and copy it to register 's'
@@ -539,8 +544,7 @@ function! SlimvEval( args )
     endif
 
 "    call SlimvOpenReplBuffer()
-    normal G$
-    startinsert!
+    call SlimvEndOfReplBuffer( 0 )
 endfunction
 
 function! SlimvHandleCR()
@@ -559,9 +563,7 @@ function! SlimvHandleCR()
     else
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
         call append( '$', "" )
-        normal G$
-        startinsert!
-        call setpos( "'s'", [0, line('$'), col('$'), 0] )
+        call SlimvEndOfReplBuffer( 1 )
     endif
 endfunction
 
@@ -962,6 +964,7 @@ class refresher( Thread ):
         while not terminate:
 	    time.sleep(1.0)
 	    vim.command("edit!")
+            #vim.command("echo localtime()")
 	    terminate = vim.eval( "g:slimv_terminate" )
 
 
