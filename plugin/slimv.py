@@ -30,11 +30,6 @@ PORT        = 5151          # Arbitrary non-privileged port
 debug_level = 0             # Debug level for diagnostic messages
 terminate   = 0             # Main program termination flag
 
-buffer      = ''            # Text buffer (display queue) to collect socket input and REPL output
-buflen      = 0             # Amount of text currently in the buffer
-buffer_sema = BoundedSemaphore();
-                            # Semaphore to synchronize access to the global display queue
-
 python_path = 'python'      # Path of the Python interpreter (overridden via command line args)
 lisp_path   = 'clisp.exe'   # Path of the Lisp interpreter (overridden via command line args)
 slimv_path  = 'slimv.py'    # Path of this script (determined later)
@@ -57,12 +52,38 @@ def log( s, level ):
 #
 ###############################################################################
 
-def connect_server():
-    """Try to connect server, if server not found then spawn it.
-       Return socket object on success, None on failure.
+def start_server( filename ):
+    """Spawn server.
     """
     global python_path
     global run_cmd
+
+    if run_cmd == '':
+        # Complex run command not given, build it from the information available
+        if mswindows:
+            cmd = [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s', filename]
+        else:
+            cmd = ['xterm', '-T', 'Slimv', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s', filename]
+    else:
+        cmd = shlex.split(run_cmd)
+
+    # Start server
+    #TODO: put in try-block
+    if mswindows:
+        #from win32process import CREATE_NEW_CONSOLE
+        CREATE_NEW_CONSOLE = 16
+        server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
+    else:
+        server = Popen( cmd )
+
+    # Allow subprocess (server) to start
+    time.sleep( 2.0 )
+
+
+def connect_server( output_filename ):
+    """Try to connect server, if server not found then spawn it.
+       Return socket object on success, None on failure.
+    """
     global autoconnect
 
     s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -72,25 +93,7 @@ def connect_server():
         if autoconnect:
             # We need to try to start the server automatically
             s.close()
-            if run_cmd == '':
-                # Complex run command not given, build it from the information available
-                if mswindows:
-                    cmd = [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
-                else:
-                    cmd = ['xterm', '-T', 'Slimv', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
-            else:
-                cmd = shlex.split(run_cmd)
-
-            # Start server
-            #TODO: put in try-block
-            if mswindows:
-                from win32process import CREATE_NEW_CONSOLE
-                server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
-            else:
-                server = Popen( cmd )
-
-            # Allow subprocess (server) to start
-            time.sleep( 2.0 )
+            start_server( output_filename )
 
             # Open socket to the server
             s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -140,20 +143,12 @@ def send_line( server, line ):
 #        print received
 
 
-def translate_send_line( server, line ):
-    """Send a line to the server.
-       All backslash+n character-pairs are converted to newline.
-    """
-    line = line.replace( '\\n', '\n' )
-    send_line( server, line )
-
-
 def client_file( input_filename, output_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
     """
-    s = connect_server()
+    s = connect_server( output_filename )
     if s is None:
         return
 
@@ -171,34 +166,6 @@ def client_file( input_filename, output_filename ):
             send_line( s, 'SLIMV_READOUT::' + output_filename )
     except:
         return
-
-    s.close()
-
-
-def client_args( args ):
-    """Main client routine - command line argument version:
-       starts server if needed then send text to server.
-       Input is read from command line argument.
-    """
-    s = connect_server()
-    if s is None:
-        return
-
-    if len( args ) < 1:
-        # No command line arguments specified, read input from stdin
-        while 1:
-            try:
-                line = raw_input()
-                translate_send_line( s, line )
-            except ( EOFError, KeyboardInterrupt ):
-                log( 'breaking', 1 )
-                break
-
-    else:
-        # Send command line arguments to the server
-        print args
-        for line in args:
-            translate_send_line( s, line )
 
     s.close()
 
@@ -225,122 +192,47 @@ def client_args( args ):
 #
 ###############################################################################
 
-def buffer_read_and_display( output ):
-    """Read and display lines received in global display queue buffer.
-    """
-    global buffer
-    global buflen
-    global buffer_sema
+class repl_buffer:
+    def __init__ ( self ):
 
-    buffer_sema.acquire()
-    l = len( buffer )
-    while buflen < l:
-        try:
-            # Write all lines in the buffer to the display
-            output.write( buffer[buflen] )
-            buflen = buflen + 1
-        except:
-            break
-    buffer = ''
-    buflen = 0
-    buffer_sema.release()
+        self.buffer = ''    # Text buffer (display queue) to collect socket input and REPL output
+        self.buflen = 0     # Amount of text currently in the buffer
+        self.sema   = BoundedSemaphore()
+                            # Semaphore to synchronize access to the global display queue
 
-
-def buffer_write( text ):
-    """Write text into the global display queue buffer.
-    """
-    global buffer
-    global buffer_sema
-
-    buffer_sema.acquire()
-    buffer = buffer + text
-    buffer_sema.release()
+    def read_and_display( self, output ):
+        """Read and display lines received in global display queue buffer.
+        """
+        self.sema.acquire()
+        l = len( self.buffer )
+        while self.buflen < l:
+            try:
+                # Write all lines in the buffer to the display
+                output.write( self.buffer[self.buflen] )
+                self.buflen = self.buflen + 1
+            except:
+                break
+        self.buffer = ''
+        self.buflen = 0
+        self.sema.release()
 
 
-class socket_listener( Thread ):
-    """Server thread to receive text from the client via socket.
-    """
-
-    def __init__ ( self, inp ):
-        Thread.__init__( self )
-        self.inp = inp
-
-    def run( self ):
-        global terminate
-
-        # Open server socket
-        self.s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        log( "sl.bind " + str(PORT), 1 )
-        self.s.bind( (HOST, PORT) )
-
-        while not terminate:
-            # Listen server socket
-            log( "sl.listen", 1 )
-            self.s.listen( 1 )
-            conn, addr = self.s.accept()
-
-            while not terminate:
-                l = 0
-                lstr = ''
-                # Read length first, it comes in 4 bytes
-                log( "sl.recv len", 1 )
-                try:
-                    lstr = conn.recv(4)
-                    if len( lstr ) <= 0:
-                        break
-                except:
-                    break
-                if terminate:
-                    break
-                l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
-                if l > 0:
-                    # Valid length received, now wait for the message
-                    log( "sl.recv data", 1 )
-                    try:
-                        # Read the message itself
-                        received = conn.recv(l)
-                        if len( received ) < l:
-                            break
-                    except:
-                        break
-
-                    if received[0:15] == 'SLIMV_READOUT::':
-                        filename = received[15:]
-                        try:
-                            #file = open( filename, 'wt' )
-                            file = open( filename, 'at' )
-                            try:
-                                buffer_read_and_display( file )
-                            finally:
-                                file.close()
-                        except:
-                            break
-                    else:
-                        # Fork here: write message to the stdin of REPL
-                        # and also write it to the display (display queue buffer)
-                        self.inp.write( received + '\n' )
-                        buffer_write( received + '\n' )
-
- #                   time.sleep(0.02)
- #                   line = "Test line"
- #                   l = len(line)
- #                   lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
- #                   conn.send( lstr )     # send message length first
- #                   conn.send( line )     # then the message itself
-
-
-
-            log( "sl.close", 1 )
-            conn.close()
+    def write( self, text ):
+        """Write text into the global display queue buffer.
+        """
+        self.sema.acquire()
+        self.buffer = self.buffer + text
+        self.sema.release()
 
 
 class input_listener( Thread ):
     """Server thread to receive input from console.
     """
 
-    def __init__ ( self, inp ):
+    def __init__ ( self, inp, buffer ):
         Thread.__init__( self )
         self.inp = inp
+        self.buffer = buffer
 
     def run( self ):
         global terminate
@@ -351,7 +243,9 @@ class input_listener( Thread ):
                 # Read input from the console and write it
                 # to the stdin of REPL
                 log( "il.raw_input", 1 )
-                self.inp.write( raw_input() + '\n' )
+                received = raw_input()
+                self.inp.write( received + '\n' )
+                self.buffer.write( received + '\n' )
             except EOFError:
                 # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
                 log( "il.EOFError", 1 )
@@ -361,14 +255,27 @@ class input_listener( Thread ):
                 log( "il.KeyboardInterrupt", 1 )
                 terminate = 1
 
+            if terminate:
+                # The socket is opened here only for waking up the server thread
+                # in order to recognize the termination message
+                #TODO: exit REPL if this script is about to exit
+                cs = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+                try:
+                    cs.connect( ( 'localhost', PORT ) )
+                    cs.send( " " )
+                finally:
+                    # We don't care if this above fails, we'll exit anyway
+                    cs.close()
+
 
 class output_listener( Thread ):
     """Server thread to receive REPL output.
     """
 
-    def __init__ ( self, out ):
+    def __init__ ( self, out, buffer ):
         Thread.__init__( self )
         self.out = out
+        self.buffer = buffer
 
     def run( self ):
         global terminate
@@ -380,13 +287,13 @@ class output_listener( Thread ):
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
                 c = self.out.read(1)
-                buffer_write( c )
+                self.buffer.write( c )
             except:
                 #TODO: should we set terminate=1 here as well?
                 break
 
 
-def server( args ):
+def server( output_filename ):
     """Main server routine: starts REPL and helper threads for
        sending and receiving data to/from REPL.
     """
@@ -411,56 +318,91 @@ def server( args ):
 
     # Start Lisp
     if mswindows:
-        from win32con import CREATE_NO_WINDOW
+        #from win32con import CREATE_NO_WINDOW
+        CREATE_NO_WINDOW = 134217728
         repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=CREATE_NO_WINDOW )
     else:
         repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
+    buffer = repl_buffer()
+
     # Create and start helper threads
-    ol = output_listener( repl.stdout )
+    ol = output_listener( repl.stdout, buffer )
     ol.start()
-    il = input_listener( repl.stdin )
+    il = input_listener( repl.stdin, buffer )
     il.start()
-    sl = socket_listener( repl.stdin )
-    sl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     log( "in.start", 1 )
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + "\n" )
     sys.stdout.write( ";;; Slimv is spawning REPL...\n" )
     time.sleep(0.5)                         # wait for Lisp to start
-#    buffer_read_and_display( sys.stdout )   # read Lisp startup messages
     sys.stdout.write( ";;; Slimv connection established\n" )
-    sys.stdout.write( ";;; Type EOF (Ctrl+Z on Windows, Ctrl+D on Linux) and Return to exit server\n" )
+    if mswindows:
+        sys.stdout.write( ";;; Type Ctrl-Z then Return to exit server\n" )
+    else:
+        sys.stdout.write( ";;; Type Ctrl-D then Return to exit server\n" )
 
-    # Main server loop
+    # Open server socket
+    s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+    log( "sl.bind " + str(PORT), 1 )
+    s.bind( (HOST, PORT) )
+
     while not terminate:
+        # Listen server socket
+        log( "sl.listen", 1 )
         try:
-            # Constantly display messages in the display queue buffer
-            #TODO: it would be better having some wakeup mechanism here
-            log( "in.step", 1 )
-            time.sleep(0.01)
-#            buffer_read_and_display( sys.stdout )
-
-        except EOFError:
-            # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-            log( "in.EOFError", 1 )
-            terminate = 1
+            s.listen( 1 )
+            conn, addr = s.accept()
         except KeyboardInterrupt:
             # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
             log( "in.KeyboardInterrupt", 1 )
             terminate = 1
 
-    # The socket is opened here only for waking up the server thread
-    # in order to recognize the termination message
-    #TODO: exit REPL if this script is about to exit
-    cs = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-    try:
-        cs.connect( ( 'localhost', PORT ) )
-        cs.send( " " )
-    finally:
-        # We don't care if this above fails, we'll exit anyway
-        cs.close()
+        while not terminate:
+            l = 0
+            lstr = ''
+            # Read length first, it comes in 4 bytes
+            log( "sl.recv len", 1 )
+            try:
+                lstr = conn.recv(4)
+                if len( lstr ) <= 0:
+                    break
+            except:
+                break
+            if terminate:
+                break
+            l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
+            if l > 0:
+                # Valid length received, now wait for the message
+                log( "sl.recv data", 1 )
+                try:
+                    # Read the message itself
+                    received = conn.recv(l)
+                    if len( received ) < l:
+                        break
+                except:
+                    break
+
+                if received[0:15] == 'SLIMV_READOUT::':
+                    filename = received[15:]
+                    try:
+                        #file = open( filename, 'wt' )
+                        file = open( filename, 'at' )
+                        try:
+                            buffer.read_and_display( file )
+                        finally:
+                            file.close()
+                    except:
+                        break
+                else:
+                    # Fork here: write message to the stdin of REPL
+                    # and also write it to the display (display queue buffer)
+                    repl.stdin.write( received + '\n' )
+                    buffer.write( received + '\n' )
+
+        log( "sl.close", 1 )
+        conn.close()
 
     # Send exit command to child process and
     # wake output listener up at the same time
@@ -503,7 +445,7 @@ def usage():
     print '  -r PATH, --run=PATH           full command to run the server'
     print '  -p PORT, --port=PORT          port number to use by the server/client'
     print '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)'
-    print '  -s                            start server'
+    print '  -s FILENAME                   start server using FILENAME as the REPL output'
     print '  -f FILENAME, --file=FILENAME  start client and send contents of file'
     print '                                named FILENAME to server'
     print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
@@ -536,8 +478,8 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:o:', \
-                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug=', 'readout='] )
+        opts, args = getopt.getopt( sys.argv[1:], '?hcs:f:p:l:r:d:o:', \
+                                    ['help', 'client', 'server=', 'file=', 'port=', 'lisp=', 'run=', 'debug=', 'readout='] )
 
         # Process options
         for o, a in opts:
@@ -562,6 +504,7 @@ if __name__ == '__main__':
                     pass
             if o in ('-s', '--server'):
                 mode = SERVER
+                output_filename = a
             if o in ('-c', '--client'):
                 mode = CLIENT
                 input_filename = ''
@@ -578,7 +521,7 @@ if __name__ == '__main__':
 
     if mode == SERVER:
         # We are started in server mode
-        server( args )
+        server( output_filename )
 
     if mode == CLIENT:
         # We are started in client mode
@@ -592,7 +535,7 @@ if __name__ == '__main__':
         if input_filename != '':
             client_file( input_filename, output_filename )
         else:
-            client_args( args )
+            start_server( output_filename )
 
 #    if mode == READOUT:
 #        # We are started in readout mode
