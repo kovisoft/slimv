@@ -193,11 +193,12 @@ def client_file( input_filename, output_filename ):
 ###############################################################################
 
 class repl_buffer:
-    def __init__ ( self ):
+    def __init__ ( self, output_filename ):
 
         self.buffer = ''    # Text buffer (display queue) to collect socket input and REPL output
         self.buflen = 0     # Amount of text currently in the buffer
         self.sema   = BoundedSemaphore()
+        self.filename = output_filename
                             # Semaphore to synchronize access to the global display queue
 
     def read_and_display( self, output ):
@@ -221,7 +222,15 @@ class repl_buffer:
         """Write text into the global display queue buffer.
         """
         self.sema.acquire()
-        self.buffer = self.buffer + text
+        #self.buffer = self.buffer + text
+        try:
+            file = open( output_filename, 'at' )
+            try:
+                file.write( text )
+            finally:
+                file.close()
+        except:
+            pass
         self.sema.release()
 
 
@@ -324,7 +333,7 @@ def server( output_filename ):
     else:
         repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
-    buffer = repl_buffer()
+    buffer = repl_buffer( output_filename )
 
     # Create and start helper threads
     ol = output_listener( repl.stdout, buffer )
