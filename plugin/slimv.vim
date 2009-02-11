@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.1.1
-" Last Change:  04 Feb 2009
+" Version:      0.1.2
+" Last Change:  11 Feb 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -486,6 +486,7 @@ function! SlimvConnectServer()
     call SlimvEval([';;; Slimv client connected successfully'])
 endfunction
 
+" Get the last region (visual block)
 function! SlimvGetRegion() range
     if mode() == 'v' || mode() == 'V'
         let lines = getline( a:firstline, a:lastline )
