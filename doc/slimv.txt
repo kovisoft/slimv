@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 04 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 11 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.1.1
+                               Version 0.1.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -93,13 +93,13 @@ This is the complete command that is used to start the client. If not set
 by the user, this is automatically built from the variables above.
 
 The command format is the following:
-    <python> <slimv> -p <port> -r <server_cmd> -c <form_to_REPL>
+    <python> <slimv> -p <port> -r <server_cmd> -f <file_to_REPL>
 Where:
     <python>       is the command to start the Python interpreter
     <slimv>        is the path of Slimv.py
     <port>         is the port number to use (if other than default)
     <server_cmd>   is the command to start the server
-    <form_to_REPL> is the Lisp form to be sent to the REPL
+    <file_to_REPL> is the file containing Lisp forms to be sent to the REPL
 
 The format of <server_cmd> is the following:
     <python> <slimv> -l <lisp> -s
@@ -378,6 +378,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.1.2  - Windows users do not need pywin32 anymore.
+       - Display buffer is more thread safe.
 
 0.1.1  - Corrected memory fillup problem after a long REPL session.
 
