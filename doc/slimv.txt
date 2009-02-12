@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 11 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 12 Feb 2009
 
 Slimv                                                                  *slimv*
                                Version 0.1.2
@@ -25,7 +25,11 @@ This plugin is only available if 'compatible' is not set.
 ==============================================================================
 INSTALLATION                                              *slimv-installation*
 
-To install:
+Prerequisites:
+  - Lisp (any Common Lisp implementation should be OK) installed.
+  - Python 2.4 or later installed.
+
+To install the script:
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
@@ -40,6 +44,9 @@ To install:
   - Enter path definitions into your vimrc (if the default values are not
     valid for your Vim/Python/Lisp installation, which is highly probable).
     See |slimv-customization| below on how to do this.
+
+Upgrade from previous script versions:
+  No special upgrade actions are required.
 
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
