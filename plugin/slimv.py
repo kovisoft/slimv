@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.1.2
-# Last Change:  11 Feb 2009
+# Last Change:  13 Feb 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -35,6 +35,8 @@ lisp_path   = 'clisp.exe'   # Path of the Lisp interpreter (overridden via comma
 slimv_path  = 'slimv.py'    # Path of this script (determined later)
 run_cmd     = ''            # Complex server-run command (if given via command line args)
 
+newline     = '\n'
+
 # Are we running on Windows (otherwise assume Linux, sorry for other OS-es)
 mswindows = (sys.platform == 'win32')
 
@@ -52,15 +54,18 @@ def log( s, level ):
 #
 ###############################################################################
 
-def start_server():
+def start_server( filename ):
     """Spawn server. Does not check if the server is already running.
     """
     if run_cmd == '':
         # Complex run command not given, build it from the information available
         if mswindows:
-            cmd = [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
+            cmd = []
         else:
-            cmd = ['xterm', '-T', 'Slimv', '-e', python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
+            cmd = ['xterm', '-T', 'Slimv', '-e']
+        cmd = cmd + [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
+        if filename != '':
+            cmd = cmd + ['-o', filename]
     else:
         cmd = shlex.split(run_cmd)
 
@@ -77,7 +82,7 @@ def start_server():
     time.sleep( 2.0 )
 
 
-def connect_server():
+def connect_server( output_filename ):
     """Try to connect server, if server not found then spawn it.
        Return socket object on success, None on failure.
     """
@@ -89,7 +94,7 @@ def connect_server():
         if autoconnect:
             # We need to try to start the server automatically
             s.close()
-            start_server()
+            start_server( output_filename )
 
             # Open socket to the server
             s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -117,25 +122,17 @@ def send_line( server, line ):
                             #TODO: synchronize it correctly
 
 
-def translate_send_line( server, line ):
-    """Send a line to the server.
-       All backslash+n character-pairs are converted to newline.
-    """
-    line = line.replace( '\\n', '\n' )
-    send_line( server, line )
-
-
-def client_file( filename ):
+def client_file( input_filename, output_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
     """
-    s = connect_server()
+    s = connect_server( output_filename )
     if s is None:
         return
 
     try:
-        file = open( filename, 'rt' )
+        file = open( input_filename, 'rt' )
         try:
             # Send contents of the file to the server
             for line in file:
@@ -148,34 +145,6 @@ def client_file( filename ):
     s.close()
 
 
-def client_args( args ):
-    """Main client routine - command line argument version:
-       starts server if needed then send text to server.
-       Input is read from command line argument.
-    """
-    s = connect_server()
-    if s is None:
-        return
-
-    if len( args ) < 1:
-        # No command line arguments specified, read input from stdin
-        while 1:
-            try:
-                line = raw_input()
-                translate_send_line( s, line )
-            except ( EOFError, KeyboardInterrupt ):
-                log( 'breaking', 1 )
-                break
-
-    else:
-        # Send command line arguments to the server
-        print args
-        for line in args:
-            translate_send_line( s, line )
-
-    s.close()
-
-
 ###############################################################################
 #
 # Server part
@@ -183,12 +152,13 @@ def client_args( args ):
 ###############################################################################
 
 class repl_buffer:
-    def __init__ ( self ):
+    def __init__ ( self, output_filename ):
 
         self.buffer = ''    # Text buffer (display queue) to collect socket input and REPL output
         self.buflen = 0     # Amount of text currently in the buffer
         self.sema   = BoundedSemaphore()
                             # Semaphore to synchronize access to the global display queue
+        self.filename = output_filename
 
     def read_and_display( self, output ):
         """Read and display lines received in global display queue buffer.
@@ -211,6 +181,19 @@ class repl_buffer:
         """
         self.sema.acquire()
         self.buffer = self.buffer + text
+
+        if output_filename != '':
+            tries = 4
+            while tries > 0:
+                try:
+                    file = open( output_filename, 'at' )
+                    try:
+                        file.write( text )
+                    finally:
+                        file.close()
+                    tries = 0
+                except:
+                    tries = tries - 1
         self.sema.release()
 
 
@@ -264,8 +247,8 @@ class socket_listener( Thread ):
 
                     # Fork here: write message to the stdin of REPL
                     # and also write it to the display (display queue buffer)
-                    self.inp.write( received + '\n' )
-                    self.buffer.write( received + '\n' )
+                    self.inp.write( received + newline )
+                    self.buffer.write( received + newline )
 
             log( "sl.close", 1 )
             conn.close()
@@ -288,7 +271,7 @@ class input_listener( Thread ):
                 # Read input from the console and write it
                 # to the stdin of REPL
                 log( "il.raw_input", 1 )
-                self.inp.write( raw_input() + '\n' )
+                self.inp.write( raw_input() + newline )
             except EOFError:
                 # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
                 log( "il.EOFError", 1 )
@@ -318,13 +301,22 @@ class output_listener( Thread ):
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
                 c = self.out.read(1)
-                self.buffer.write( c )
+                if mswindows and ord( c ) == 0x0D:
+                    # Special handling of 0x0D+0x0A on Windows
+                    c2 = self.out.read(1)
+                    if ord( c2 ) == 0x0A:
+                        self.buffer.write( '\n' )
+                    else:
+                        self.buffer.write( c )
+                        self.buffer.write( c2 )
+                else:
+                    self.buffer.write( c )
             except:
                 #TODO: should we set terminate=1 here as well?
                 break
 
 
-def server():
+def server( output_filename ):
     """Main server routine: starts REPL and helper threads for
        sending and receiving data to/from REPL.
     """
@@ -354,7 +346,7 @@ def server():
     else:
         repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
-    buffer = repl_buffer()
+    buffer = repl_buffer( output_filename )
 
     # Create and start helper threads
     ol = output_listener( repl.stdout, buffer )
@@ -366,11 +358,11 @@ def server():
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     log( "in.start", 1 )
-    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + "\n" )
-    sys.stdout.write( ";;; Slimv is spawning REPL...\n" )
+    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
+    sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
     time.sleep(0.5)                         # wait for Lisp to start
     buffer.read_and_display( sys.stdout )   # read Lisp startup messages
-    sys.stdout.write( ";;; Slimv connection established\n" )
+    sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
     while not terminate:
@@ -434,7 +426,7 @@ def usage():
     """Displays program usage information.
     """
     progname = os.path.basename( sys.argv[0] )
-    print 'Usage: ', progname + ' [-d LEVEL] [-s] [-f FILENAME]'
+    print 'Usage: ', progname + ' [-d LEVEL] [-s] [-o OUTFILE] [-f INFILE]'
     print
     print 'Options:'
     print '  -?, -h, --help                show this help message and exit'
@@ -443,11 +435,9 @@ def usage():
     print '  -p PORT, --port=PORT          port number to use by the server/client'
     print '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)'
     print '  -s                            start server'
-    print '  -f FILENAME, --file=FILENAME  start client and send contents of file'
-    print '                                named FILENAME to server'
-    print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
-    print '                                (if present, this option must be the last one,'
-    print '                                mutually exclusive with the -f option)'
+    print '  -o OUTFILE                    write REPL output to OUTFILE'
+    print '  -f INFILE, --file=INFILE      start client and send contents of file'
+    print '                                named INFILE to server'
 
 
 ###############################################################################
@@ -462,6 +452,8 @@ if __name__ == '__main__':
     mode = EXIT
     slimv_path = sys.argv[0]
     python_path = sys.executable
+    input_filename = ''
+    output_filename = ''
 
     # Always this trouble with the path/filenames containing spaces:
     # enclose them in double quotes
@@ -470,8 +462,8 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
-                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
+        opts, args = getopt.getopt( sys.argv[1:], '?hcso:f:p:l:r:d:', \
+                                    ['help', 'client', 'server', 'output=', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
 
         # Process options
         for o, a in opts:
@@ -496,12 +488,13 @@ if __name__ == '__main__':
                     pass
             if o in ('-s', '--server'):
                 mode = SERVER
+            if o in ('-o', '--output'):
+                output_filename = a
             if o in ('-c', '--client'):
                 mode = CLIENT
-                client_filename = ''
             if o in ('-f', '--file'):
                 mode = CLIENT
-                client_filename = a
+                input_filename = a
 
     except getopt.GetoptError:
         # print help information and exit:
@@ -509,7 +502,7 @@ if __name__ == '__main__':
 
     if mode == SERVER:
         # We are started in server mode
-        server()
+        server( output_filename )
 
     if mode == CLIENT:
         # We are started in client mode
@@ -520,9 +513,9 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
-        if client_filename != '':
-            client_file( client_filename )
+        if input_filename != '':
+            client_file( input_filename, output_filename )
         else:
-            client_args( args )
+            start_server( output_filename )
 
 # --- END OF FILE ---
