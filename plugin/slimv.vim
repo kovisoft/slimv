@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.1.2
-" Last Change:  11 Feb 2009
+" Last Change:  13 Feb 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -155,21 +155,32 @@ function! SlimvClientCommand()
         " We don't have enough information to build client command
         return ''
     endif
-    if g:slimv_port == 5151
-        let port = ''
-    else
-        " Using port number other than default, must pass it to client
-        let port = ' -p ' . g:slimv_port
-    endif
+
+    " Start with the Python path
+    let cmd = g:slimv_python
+
+    " Add path of Slimv script, on Windows enclose in double quotes
     if g:slimv_windows
-        return g:slimv_python . ' "' . g:slimv_path . '"' . port  . ' -l ' . g:slimv_lisp
-        " This one can be used to start Lisp in a 'Console' window
-        " instead of the default DOS box
-        "return g:slimv_python . ' "' . g:slimv_path . '"' . port . ' -r ' .
-        "       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
+        let cmd = cmd . ' "' . g:slimv_path . '"'
     else
-        return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
+        let cmd = cmd . ' ' . g:slimv_path
     endif
+
+    " Add port number if different from default
+    if g:slimv_port != 5151
+        let cmd = cmd . ' -p ' . g:slimv_port
+    endif
+
+    " Add Lisp path
+    let cmd = cmd . ' -l ' . g:slimv_lisp
+
+    " Add output buffer name if given
+    if g:slimv_bufname != ''
+        let cmd = cmd . ' -o ' . g:slimv_bufname
+    endif
+
+    return cmd
+    
 endfunction
 
 " Find slimv.py in the Vim plugin directory (if not given in vimrc)
@@ -232,6 +243,11 @@ if !exists( 'g:slimv_lisp' )
     let g:slimv_lisp = SlimvAutodetectLisp()
 endif
 
+" Name of the REPL buffer inside Vim
+if !exists( 'g:slimv_bufname' )
+    let g:slimv_bufname = 'Slimv.REPL'
+endif
+
 " Build client command (if not given in vimrc)
 if !exists( 'g:slimv_client' )
     let g:slimv_client = SlimvClientCommand()
@@ -245,11 +261,6 @@ endif
 " Append Slimv menu to the global menu (0 = no menu)
 if !exists( 'g:slimv_menu' )
     let g:slimv_menu = 1
-endif
-
-" Name of the REPL buffer inside Vim
-if !exists( 'g:slimv_bufname' )
-    let g:slimv_bufname = 'Slimv.REPL'
 endif
 
 
@@ -425,59 +436,24 @@ function! SlimvEval( args )
         return
     endif
 
-    " Hardcoded to use temporary file for passing text to the client
-    let use_temp_file = 1
-    if use_temp_file
-        let tmp = tempname()
-        try
-            let ar = []
-            let i = 0
-            while i < len( a:args )
-                call extend( ar, split( a:args[i], '\n' ) )
-                let i = i + 1
-            endwhile
-            call SlimvLog( 1, a:args )
-            call writefile( ar, tmp )
-            if g:slimv_debug_client == 0
-                let result = system( g:slimv_client . ' -f ' . tmp )
-            else
-                execute '!' . g:slimv_client . ' -f ' . tmp
-            endif
-        finally
-            call delete(tmp)
-        endtry
-    else
-        " Send text to the client via command line arguments
-        " This is problematic due to command line argument size limitations
-        " So currently it is not used
-        let total = 0
+    let tmp = tempname()
+    try
+        let ar = []
         let i = 0
-        let j = 0
-        while j < len( a:args )
-            let l = len( a:args[j] )
-            if l >= 1000
-                " Check the length of each line
-                echo 'Line #' . j . ' too long'
-                break
-            endif
-            if total + l < 1000
-                " Limit also total length to be passed to the client
-                " in command line args
-                let total = total + l
-            else
-                " Total length would be too large, pass lines collected previously
-                " and start over collecting lines
-                call SlimvSendToClient( a:args[i : j-1] )
-                let i = j
-                let total = 0
-            endif
-            let j = j + 1
+        while i < len( a:args )
+            call extend( ar, split( a:args[i], '\n' ) )
+            let i = i + 1
         endwhile
-        if i < j
-            " There are some lines left unsent, send them now
-            call SlimvSendToClient( a:args[i : j-1] )
+        call SlimvLog( 1, a:args )
+        call writefile( ar, tmp )
+        if g:slimv_debug_client == 0
+            let result = system( g:slimv_client . ' -f ' . tmp )
+        else
+            execute '!' . g:slimv_client . ' -f ' . tmp
         endif
-    endif
+    finally
+        call delete(tmp)
+    endtry
 endfunction
 
 " Start and connect slimv server
