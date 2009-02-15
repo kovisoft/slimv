@@ -176,11 +176,12 @@ class repl_buffer:
         self.buflen = 0
         self.sema.release()
 
-    def write( self, text ):
+    def write( self, text, fileonly=False ):
         """Write text into the global display queue buffer.
         """
         self.sema.acquire()
-        self.buffer = self.buffer + text
+        if not fileonly:
+            self.buffer = self.buffer + text
 
         if output_filename != '':
             tries = 4
@@ -267,7 +268,7 @@ class input_listener( Thread ):
                 # to the stdin of REPL
                 text = raw_input()
                 self.inp.write   ( text + newline )
-                self.buffer.write( text + newline )
+                self.buffer.write( text + newline, True )
             except EOFError:
                 # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
                 terminate = 1
