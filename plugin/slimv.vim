@@ -363,6 +363,7 @@ function! SlimvEndOfReplBuffer( markit )
     if a:markit
         call setpos( "'s'", [0, line('$'), col('$'), 0] )
     endif
+    set nomodified
 endfunction
 
 function! SlimvRefreshReplBuffer()
@@ -564,6 +565,20 @@ function! SlimvEval( args )
     endif
 endfunction
 
+" Recall command from the command history at the marked position
+function! SlimvSetCommandLine( cmd )
+    normal `s
+    let line = getline( "." )
+    if len( line ) > col( "'s" )
+        "normal d$
+        let line = strpart( line, 0, col( "'s" ) - 1 )
+    endif
+    let i = 0
+    let line = line . a:cmd
+    call setline( ".", line )
+    call SlimvEndOfReplBuffer( 0 )
+endfunction
+
 " Add command list to the command history
 function! SlimvAddHistory( cmd )
     if !exists( 'g:slimv_cmdhistory' )
@@ -580,20 +595,11 @@ endfunction
 
 " Recall command from the command history at the marked position
 function! SlimvRecallHistory()
-    normal `s
-    let line = getline( "." )
-    if len( line ) > col( "'s" )
-        "normal d$
-        let line = strpart( line, 0, col( "'s" ) - 1 )
+    if g:slimv_cmdhistorypos >= 0 && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
+        call SlimvSetCommandLine( g:slimv_cmdhistory[g:slimv_cmdhistorypos] )
+    else
+        call SlimvSetCommandLine( "" )
     endif
-    let i = 0
-"    while i < len( g:slimv_cmdhistory[g:slimv_cmdhistorypos] )
-"        let line = line . g:slimv_cmdhistory[g:slimv_cmdhistorypos][i]
-"        let i = i + 1
-"    endwhile
-    let line = line . g:slimv_cmdhistory[g:slimv_cmdhistorypos]
-    call setline( ".", line )
-    call SlimvEndOfReplBuffer( 0 )
 endfunction
 
 " Handle insert mode 'Enter' keypress in the REPL buffer
@@ -630,8 +636,8 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
-    if line( "." ) == line( "'s" )
-        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
+    if exists( 'g:slimv_cmdhistory' ) && line( "." ) == line( "'s" )
+        if g:slimv_cmdhistorypos > 0
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
             call SlimvRecallHistory()
         endif
@@ -640,10 +646,12 @@ endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
-    if line( "." ) == line( "'s" )
-        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory ) - 1
+    if exists( 'g:slimv_cmdhistory' ) && line( "." ) == line( "'s" )
+        if g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
             call SlimvRecallHistory()
+        else
+            call SlimvSetCommandLine( "" )
         endif
     endif
 endfunction
@@ -889,6 +897,7 @@ if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
+    noremap <Leader>z  :call SlimvRefreshReplBuffer()<CR>
     
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
@@ -921,6 +930,7 @@ elseif g:slimv_keybindings == 2
 
     " Connection commands
     noremap <Leader>cs  :call SlimvConnectServer()<CR>
+    noremap <Leader>rr  :call SlimvRefreshReplBuffer()<CR>
     
     " Evaluation commands
     noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
