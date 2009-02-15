@@ -359,7 +359,7 @@ endif
 
 function! SlimvEndOfReplBuffer( markit )
     normal G$
-    startinsert!
+    "startinsert!
     if a:markit
         call setpos( "'s'", [0, line('$'), col('$'), 0] )
     endif
@@ -369,7 +369,13 @@ function! SlimvRefreshReplBuffer()
     "normal G$ms
     "normal G$
     "edit!
-    execute "edit! " . g:slimv_bufname
+    try
+        execute "edit! " . g:slimv_bufname
+    catch /.*/
+        " Oops, something went wrong, let's try again after a short pause
+        sleep 1
+        execute "edit! " . g:slimv_bufname
+    endtry
     "TODO: use :read instead and keep only the delta in the readout file
 "    setlocal endofline
     if &endofline == 1
@@ -444,14 +450,22 @@ function! SlimvOpenReplBuffer()
 "    setlocal autoread
 "    setlocal noeol
 "    setlocal eol
-    inoremap <buffer> <silent> <CR> <CR><C-O>:call SlimvHandleCR()<CR>
+    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvHandleCR()<CR>
     "inoremap <buffer> <silent> <BS> <C-O>:call SlimvHandleBS()<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
-    au FileChangedShell <buffer> nested :call SlimvRefreshReplBuffer()
+    inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
+    inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
+"    au FileChangedShell <buffer> nested :call SlimvRefreshReplBuffer()
     "au FileChangedShell g:slimv_bufname nested :call SlimvRefreshReplBuffer()
-    au FocusLost g:slimv_bufname :stopinsert
+"    au FocusLost g:slimv_bufname :stopinsert
     "au FocusGained <buffer> nested :call SlimvRefreshReplBuffer()
-    au FocusGained g:slimv_bufname nested :call SlimvRefreshReplBuffer()
+"    au FocusGained g:slimv_bufname nested :call SlimvRefreshReplBuffer()
+    "au FocusLost <buffer> :echo 'FocusLost ' . bufname('%') . ' ' .localtime()
+    "au FocusGained <buffer> :echo 'FocusGained ' . bufname('%') . ' ' .localtime()
+    "au FocusLost <buffer> :call SlimvRefreshReplBuffer()
+"    au FocusGained <buffer> :call SlimvRefreshReplBuffer()
+    execute "au FileChangedShell " . g:slimv_bufname . " :call SlimvRefreshReplBuffer()"
+    execute "au FocusGained "      . g:slimv_bufname . " :call SlimvRefreshReplBuffer()"
 
     call SlimvEndOfReplBuffer( 0 )
 endfunction
@@ -550,6 +564,39 @@ function! SlimvEval( args )
     endif
 endfunction
 
+" Add command list to the command history
+function! SlimvAddHistory( cmd )
+    if !exists( 'g:slimv_cmdhistory' )
+        let g:slimv_cmdhistory = []
+    endif
+    let i = 0
+    while i < len( a:cmd )
+        call add( g:slimv_cmdhistory, a:cmd[i] )
+        let i = i + 1
+    endwhile
+    "call add( g:slimv_cmdhistory, a:cmd )
+    let g:slimv_cmdhistorypos = len( g:slimv_cmdhistory )
+endfunction
+
+" Recall command from the command history at the marked position
+function! SlimvRecallHistory()
+    normal `s
+    let line = getline( "." )
+    if len( line ) > col( "'s" )
+        "normal d$
+        let line = strpart( line, 0, col( "'s" ) - 1 )
+    endif
+    let i = 0
+"    while i < len( g:slimv_cmdhistory[g:slimv_cmdhistorypos] )
+"        let line = line . g:slimv_cmdhistory[g:slimv_cmdhistorypos][i]
+"        let i = i + 1
+"    endwhile
+    let line = line . g:slimv_cmdhistory[g:slimv_cmdhistorypos]
+    call setline( ".", line )
+    call SlimvEndOfReplBuffer( 0 )
+endfunction
+
+" Handle insert mode 'Enter' keypress in the REPL buffer
 function! SlimvHandleCR()
     let lastline = line( "'s" )
     let lastcol  =  col( "'s" )
@@ -561,6 +608,7 @@ function! SlimvHandleCR()
                 call add( cmd, strpart( getline( l ), 0) )
                 let l = l + 1
             endwhile
+            call SlimvAddHistory( cmd )
             call SlimvEval( cmd )
         endif
     else
@@ -570,12 +618,33 @@ function! SlimvHandleCR()
     endif
 endfunction
 
+" Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
     if line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
         " No BS allowed before the previous EOF mark
         return ""
     else
         return "\<BS>"
+    endif
+endfunction
+
+" Handle insert mode 'Up' keypress in the REPL buffer
+function! SlimvHandleUp()
+    if line( "." ) == line( "'s" )
+        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
+            let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
+            call SlimvRecallHistory()
+        endif
+    endif
+endfunction
+
+" Handle insert mode 'Down' keypress in the REPL buffer
+function! SlimvHandleDown()
+    if line( "." ) == line( "'s" )
+        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory ) - 1
+            let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
+            call SlimvRecallHistory()
+        endif
     endif
 endfunction
 
