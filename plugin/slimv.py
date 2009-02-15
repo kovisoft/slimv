@@ -211,12 +211,10 @@ class socket_listener( Thread ):
 
         # Open server socket
         self.s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        log( "sl.bind " + str(PORT), 1 )
         self.s.bind( (HOST, PORT) )
 
         while not terminate:
             # Listen server socket
-            log( "sl.listen", 1 )
             self.s.listen( 1 )
             conn, addr = self.s.accept()
 
@@ -224,7 +222,6 @@ class socket_listener( Thread ):
                 l = 0
                 lstr = ''
                 # Read length first, it comes in 4 bytes
-                log( "sl.recv len", 1 )
                 try:
                     lstr = conn.recv(4)
                     if len( lstr ) <= 0:
@@ -236,7 +233,6 @@ class socket_listener( Thread ):
                 l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
                 if l > 0:
                     # Valid length received, now wait for the message
-                    log( "sl.recv data", 1 )
                     try:
                         # Read the message itself
                         received = conn.recv(l)
@@ -247,10 +243,9 @@ class socket_listener( Thread ):
 
                     # Fork here: write message to the stdin of REPL
                     # and also write it to the display (display queue buffer)
-                    self.inp.write( received + newline )
+                    self.inp.write   ( received + newline )
                     self.buffer.write( received + newline )
 
-            log( "sl.close", 1 )
             conn.close()
 
 
@@ -261,24 +256,23 @@ class input_listener( Thread ):
     def __init__ ( self, inp, buffer ):
         Thread.__init__( self )
         self.inp = inp
+        self.buffer = buffer
 
     def run( self ):
         global terminate
 
-        log( "il.start", 1 )
         while not terminate:
             try:
                 # Read input from the console and write it
                 # to the stdin of REPL
-                log( "il.raw_input", 1 )
-                self.inp.write( raw_input() + newline )
+                text = raw_input()
+                self.inp.write   ( text + newline )
+                self.buffer.write( text + newline )
             except EOFError:
                 # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-                log( "il.EOFError", 1 )
                 terminate = 1
             except KeyboardInterrupt:
                 # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-                log( "il.KeyboardInterrupt", 1 )
                 terminate = 1
 
 
@@ -294,9 +288,7 @@ class output_listener( Thread ):
     def run( self ):
         global terminate
 
-        log( "ol.start", 1 )
         while not terminate:
-            log( "ol.read", 1 )
             try:
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
@@ -357,7 +349,6 @@ def server( output_filename ):
     sl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
-    log( "in.start", 1 )
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
     sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
     time.sleep(0.5)                         # wait for Lisp to start
@@ -369,17 +360,14 @@ def server( output_filename ):
         try:
             # Constantly display messages in the display queue buffer
             #TODO: it would be better having some wakeup mechanism here
-            log( "in.step", 1 )
             time.sleep(0.01)
             buffer.read_and_display( sys.stdout )
 
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-            log( "in.EOFError", 1 )
             terminate = 1
         except KeyboardInterrupt:
             # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-            log( "in.KeyboardInterrupt", 1 )
             terminate = 1
 
     # The socket is opened here only for waking up the server thread
@@ -511,6 +499,7 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@p', escape_path( python_path ) )
             run_cmd = run_cmd.replace( '@s', escape_path( slimv_path ) )
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
+            run_cmd = run_cmd.replace( '@o', escape_path( output_filename ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
         if input_filename != '':
