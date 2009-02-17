@@ -1,10 +1,7 @@
 Description
-Slimv tries to mimic a subset of SLIME's (Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to the Lisp REPL is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
+Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to Lisp is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 Here follows a list of Slimv commands, for a more complete description with keybindings see the included documentation.
-
-Connection commands:
-    *  Connect to Server
 
 Evaluation commands:
     *  Eval Defun
@@ -37,13 +34,18 @@ Documentation commands:
     *  Describe Symbol
     *  Apropos 
 
-Place the cursor at any location inside an s-expression or on a name of a symbol then invoke a Slimv command in order to send the command operated on the given expression or symbol to the running Lisp.
+Place the cursor at any location inside an s-expression or on a name of a symbol then invoke a Slimv command in order to send the command operated on the given expression or symbol to the running Lisp REPL.
 
 For more information see the documentation coupled with the script.
  
 Installation details
 Extract the zip archive into your vimfiles or runtime directory. The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
-Slimv should work on Windows and on Linux. The script requires Lisp (any Common Lisp should be OK) and Python (at least v2.4) installed on your system. Slimv tries to autodetect your Lisp and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
+
+Slimv works on Windows and on Linux. The script requires
+    *  Lisp (any Common Lisp should be OK)
+    *  Python 2.4 or later
+installed on your system.
+Slimv tries to autodetect your Lisp and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
     let g:slimv_python = 'C:/MyPythonDir/python.exe'
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
 
@@ -52,7 +54,7 @@ See the included documentation for more complete installation and customization 
 
 ---------------------------------------------------------------------------------------------
 
-Lisp with Vim: Slimv, a script that tries to mimic a subset of SLIME's functionality inside Vim.
+Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 
 ---------------------------------------------------------------------------------------------
 
