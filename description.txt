@@ -56,6 +56,10 @@ Lisp with Vim: Slimv, a script that tries to mimic a subset of SLIME's functiona
 
 ---------------------------------------------------------------------------------------------
 
+0.1.3: Handle DOS and Unix style line endings on Windows, don't write logfile when debug level not set
+
+---------------------------------------------------------------------------------------------
+
 
 Differences to Limp
 
