@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.1.2
-# Last Change:  11 Feb 2009
+# Version:      0.1.3
+# Last Change:  17 Feb 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -34,6 +34,8 @@ python_path = 'python'      # Path of the Python interpreter (overridden via com
 lisp_path   = 'clisp.exe'   # Path of the Lisp interpreter (overridden via command line args)
 slimv_path  = 'slimv.py'    # Path of this script (determined later)
 run_cmd     = ''            # Complex server-run command (if given via command line args)
+
+newline     = '\n'
 
 # Are we running on Windows (otherwise assume Linux, sorry for other OS-es)
 mswindows = (sys.platform == 'win32')
@@ -117,15 +119,7 @@ def send_line( server, line ):
                             #TODO: synchronize it correctly
 
 
-def translate_send_line( server, line ):
-    """Send a line to the server.
-       All backslash+n character-pairs are converted to newline.
-    """
-    line = line.replace( '\\n', '\n' )
-    send_line( server, line )
-
-
-def client_file( filename ):
+def client_file( input_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
@@ -135,7 +129,7 @@ def client_file( filename ):
         return
 
     try:
-        file = open( filename, 'rt' )
+        file = open( input_filename, 'rt' )
         try:
             # Send contents of the file to the server
             for line in file:
@@ -144,34 +138,6 @@ def client_file( filename ):
             file.close()
     except:
         return
-
-    s.close()
-
-
-def client_args( args ):
-    """Main client routine - command line argument version:
-       starts server if needed then send text to server.
-       Input is read from command line argument.
-    """
-    s = connect_server()
-    if s is None:
-        return
-
-    if len( args ) < 1:
-        # No command line arguments specified, read input from stdin
-        while 1:
-            try:
-                line = raw_input()
-                translate_send_line( s, line )
-            except ( EOFError, KeyboardInterrupt ):
-                log( 'breaking', 1 )
-                break
-
-    else:
-        # Send command line arguments to the server
-        print args
-        for line in args:
-            translate_send_line( s, line )
 
     s.close()
 
@@ -228,12 +194,10 @@ class socket_listener( Thread ):
 
         # Open server socket
         self.s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        log( "sl.bind " + str(PORT), 1 )
         self.s.bind( (HOST, PORT) )
 
         while not terminate:
             # Listen server socket
-            log( "sl.listen", 1 )
             self.s.listen( 1 )
             conn, addr = self.s.accept()
 
@@ -241,7 +205,6 @@ class socket_listener( Thread ):
                 l = 0
                 lstr = ''
                 # Read length first, it comes in 4 bytes
-                log( "sl.recv len", 1 )
                 try:
                     lstr = conn.recv(4)
                     if len( lstr ) <= 0:
@@ -253,7 +216,6 @@ class socket_listener( Thread ):
                 l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
                 if l > 0:
                     # Valid length received, now wait for the message
-                    log( "sl.recv data", 1 )
                     try:
                         # Read the message itself
                         received = conn.recv(l)
@@ -264,10 +226,9 @@ class socket_listener( Thread ):
 
                     # Fork here: write message to the stdin of REPL
                     # and also write it to the display (display queue buffer)
-                    self.inp.write( received + '\n' )
-                    self.buffer.write( received + '\n' )
+                    self.inp.write   ( received + newline )
+                    self.buffer.write( received + newline )
 
-            log( "sl.close", 1 )
             conn.close()
 
 
@@ -278,24 +239,23 @@ class input_listener( Thread ):
     def __init__ ( self, inp, buffer ):
         Thread.__init__( self )
         self.inp = inp
+        self.buffer = buffer
 
     def run( self ):
         global terminate
 
-        log( "il.start", 1 )
         while not terminate:
             try:
                 # Read input from the console and write it
                 # to the stdin of REPL
-                log( "il.raw_input", 1 )
-                self.inp.write( raw_input() + '\n' )
+                text = raw_input()
+                self.inp.write   ( text + newline )
+
             except EOFError:
                 # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-                log( "il.EOFError", 1 )
                 terminate = 1
             except KeyboardInterrupt:
                 # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-                log( "il.KeyboardInterrupt", 1 )
                 terminate = 1
 
 
@@ -311,14 +271,21 @@ class output_listener( Thread ):
     def run( self ):
         global terminate
 
-        log( "ol.start", 1 )
         while not terminate:
-            log( "ol.read", 1 )
             try:
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
                 c = self.out.read(1)
-                self.buffer.write( c )
+                if mswindows and ord( c ) == 0x0D:
+                    # Special handling of 0x0D+0x0A on Windows
+                    c2 = self.out.read(1)
+                    if ord( c2 ) == 0x0A:
+                        self.buffer.write( '\n' )
+                    else:
+                        self.buffer.write( c )
+                        self.buffer.write( c2 )
+                else:
+                    self.buffer.write( c )
             except:
                 #TODO: should we set terminate=1 here as well?
                 break
@@ -365,29 +332,25 @@ def server():
     sl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
-    log( "in.start", 1 )
-    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + "\n" )
-    sys.stdout.write( ";;; Slimv is spawning REPL...\n" )
+    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
+    sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
     time.sleep(0.5)                         # wait for Lisp to start
     buffer.read_and_display( sys.stdout )   # read Lisp startup messages
-    sys.stdout.write( ";;; Slimv connection established\n" )
+    sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
     while not terminate:
         try:
             # Constantly display messages in the display queue buffer
             #TODO: it would be better having some wakeup mechanism here
-            log( "in.step", 1 )
             time.sleep(0.01)
             buffer.read_and_display( sys.stdout )
 
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-            log( "in.EOFError", 1 )
             terminate = 1
         except KeyboardInterrupt:
             # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-            log( "in.KeyboardInterrupt", 1 )
             terminate = 1
 
     # The socket is opened here only for waking up the server thread
@@ -445,9 +408,6 @@ def usage():
     print '  -s                            start server'
     print '  -f FILENAME, --file=FILENAME  start client and send contents of file'
     print '                                named FILENAME to server'
-    print '  -c LINE1 LINE2 ... LINEn      start client and send LINE1...LINEn to server'
-    print '                                (if present, this option must be the last one,'
-    print '                                mutually exclusive with the -f option)'
 
 
 ###############################################################################
@@ -462,6 +422,8 @@ if __name__ == '__main__':
     mode = EXIT
     slimv_path = sys.argv[0]
     python_path = sys.executable
+    input_filename = ''
+
 
     # Always this trouble with the path/filenames containing spaces:
     # enclose them in double quotes
@@ -498,10 +460,9 @@ if __name__ == '__main__':
                 mode = SERVER
             if o in ('-c', '--client'):
                 mode = CLIENT
-                client_filename = ''
             if o in ('-f', '--file'):
                 mode = CLIENT
-                client_filename = a
+                input_filename = a
 
     except getopt.GetoptError:
         # print help information and exit:
@@ -520,9 +481,9 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
-        if client_filename != '':
-            client_file( client_filename )
+        if input_filename != '':
+            client_file( input_filename )
         else:
-            client_args( args )
+            start_server()
 
 # --- END OF FILE ---
