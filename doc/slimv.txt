@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 12 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 17 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.1.2
+                               Version 0.1.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -385,6 +385,11 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.1.3  - Handle DOS and Unix style newlines produced by various
+         Lisp implementations on Windows.
+       - Do not write debug logfile when debug level is zero.
+       - Removed unused client command line argument: -c
 
 0.1.2  - Windows users do not need pywin32 anymore.
        - Display buffer is more thread safe.
