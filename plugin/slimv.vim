@@ -176,9 +176,6 @@ function! SlimvClientCommand()
 
     " Add output buffer name if given
     if g:slimv_bufname != ''
-        if tolower( g:slimv_bufname ) == 'temp'
-            let g:slimv_bufname = tempname()
-        endif
         let cmd = cmd . ' -o ' . g:slimv_bufname
     endif
 
