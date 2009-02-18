@@ -355,6 +355,8 @@ endif
 "  General utility functions
 " =====================================================================
 
+" Position the cursor at the end of the REPL buffer
+" Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer( markit )
     normal G$
     "startinsert!
@@ -364,6 +366,7 @@ function! SlimvEndOfReplBuffer( markit )
     set nomodified
 endfunction
 
+" Reload the contents of the REPL buffer from the output file
 function! SlimvRefreshReplBuffer()
     "normal G$ms
     "normal G$
@@ -390,33 +393,6 @@ endfunction
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
     "TODO: check if this works without 'set hidden'
-    "TODO: add option for split window
-"    let repl_buf = bufnr( g:slimv_bufname )
-"    if repl_buf == -1
-"        " Create a new REPL buffer
-"        if g:slimv_splitwindow
-"            execute "new " . g:slimv_bufname
-"        else
-"            execute "edit " . g:slimv_bufname
-"        endif
-"    else
-"        " REPL buffer is already created. Check if it is open in a window
-"        let repl_win = bufwinnr( repl_buf )
-"        if repl_win != -1
-"            " Switch to the REPL window
-"            if winnr() != repl_win
-"                execute repl_win . "wincmd w"
-"            endif
-"        else
-"            " Switch to the REPL buffer
-"            if g:slimv_splitwindow
-"                execute "split +buffer " . repl_buf
-"            else
-"                execute "buffer " . repl_buf
-"            endif
-"        endif
-"    endif
-    
     let repl_buf = bufnr( g:slimv_bufname )
     if repl_buf == -1
         " Create a new REPL buffer
@@ -450,19 +426,9 @@ function! SlimvOpenReplBuffer()
 "    setlocal noeol
 "    setlocal eol
     inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvHandleCR()<CR>
-    "inoremap <buffer> <silent> <BS> <C-O>:call SlimvHandleBS()<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
-"    au FileChangedShell <buffer> nested :call SlimvRefreshReplBuffer()
-    "au FileChangedShell g:slimv_bufname nested :call SlimvRefreshReplBuffer()
-"    au FocusLost g:slimv_bufname :stopinsert
-    "au FocusGained <buffer> nested :call SlimvRefreshReplBuffer()
-"    au FocusGained g:slimv_bufname nested :call SlimvRefreshReplBuffer()
-    "au FocusLost <buffer> :echo 'FocusLost ' . bufname('%') . ' ' .localtime()
-    "au FocusGained <buffer> :echo 'FocusGained ' . bufname('%') . ' ' .localtime()
-    "au FocusLost <buffer> :call SlimvRefreshReplBuffer()
-"    au FocusGained <buffer> :call SlimvRefreshReplBuffer()
     execute "au FileChangedShell " . g:slimv_bufname . " :call SlimvRefreshReplBuffer()"
     execute "au FocusGained "      . g:slimv_bufname . " :call SlimvRefreshReplBuffer()"
 
@@ -499,21 +465,6 @@ function! SlimvGetSelection()
     return getreg( '"s' )
 endfunction
 
-" Prepare argument list to be sent to the client
-function SlimvMakeArgs( args )
-    let ar = a:args
-    let i = 0
-    while i < len(ar)
-        let ar[i] = substitute( ar[i], '"',  '\\"', 'g' )
-        let i = i + 1
-    endwhile
-    let a = join( ar, '" "' )
-    "let a = substitute( a, '"',  '\\"', 'g' )
-    let a = substitute( a, '\n', '\\n', 'g' )
-    let a = '"' . a . '" '
-    return a
-endfunction
-
 " Send argument to Lisp server for evaluation
 function! SlimvEval( args )
     if g:slimv_client == ''
@@ -537,6 +488,7 @@ function! SlimvEval( args )
         call SlimvOpenReplBuffer()
     endif
 
+    "TODO: check if repl buffer really opened and switched to
     let tmp = tempname()
     try
         let ar = []
@@ -553,8 +505,22 @@ function! SlimvEval( args )
             execute '!' . client . ' -f ' . tmp
         endif
 
+        " Refresh REPL buffer for a while until no change is detected
         if g:slimv_bufopen
-            sleep 1
+            let lastline = line("$")
+            sleep 500m
+            call SlimvRefreshReplBuffer()
+            let wait = 50    " maximum number of 100ms cycles to wait for refreshing the REPL buffer
+            while line("$") > lastline && wait > 0
+                let lastline = line("$")
+                sleep 100m
+                call SlimvRefreshReplBuffer()
+                let wait = wait - 1
+            endwhile
+
+            if wait == 0
+                call append( '$', "Slimv warning: REPL is busy, press normal <Leader>z to refresh display" )
+            endif
         endif
     finally
         call delete(tmp)
