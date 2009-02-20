@@ -250,33 +250,6 @@ class socket_listener( Thread ):
             conn.close()
 
 
-class input_listener( Thread ):
-    """Server thread to receive input from console.
-    """
-
-    def __init__ ( self, inp, buffer ):
-        Thread.__init__( self )
-        self.inp = inp
-        self.buffer = buffer
-
-    def run( self ):
-        global terminate
-
-        while not terminate:
-            try:
-                # Read input from the console and write it
-                # to the stdin of REPL
-                text = raw_input()
-                self.inp.write   ( text + newline )
-                self.buffer.write( text + newline, True )
-            except EOFError:
-                # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-                terminate = 1
-            except KeyboardInterrupt:
-                # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-                terminate = 1
-
-
 class output_listener( Thread ):
     """Server thread to receive REPL output.
     """
@@ -309,6 +282,29 @@ class output_listener( Thread ):
                 break
 
 
+class buffer_listener( Thread ):
+    """Server thread to read and display contents of the output buffer.
+    """
+
+    def __init__ ( self, buffer ):
+        Thread.__init__( self )
+        self.buffer = buffer
+
+    def run( self ):
+        global terminate
+
+        while not terminate:
+            try:
+                # Constantly display messages in the display queue buffer
+                #TODO: it would be better having some wakeup mechanism here
+                time.sleep(0.01)
+                self.buffer.read_and_display( sys.stdout )
+
+            except:
+                # We just ignore any errors here
+                pass
+
+
 def server( output_filename ):
     """Main server routine: starts REPL and helper threads for
        sending and receiving data to/from REPL.
@@ -334,20 +330,21 @@ def server( output_filename ):
     # Start Lisp
     if mswindows:
         #from win32con import CREATE_NO_WINDOW
-        CREATE_NO_WINDOW = 134217728
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=CREATE_NO_WINDOW )
+        #CREATE_NO_WINDOW = 134217728
+        #repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=CREATE_NO_WINDOW )
+        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=0 )
     else:
         repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
     buffer = repl_buffer( output_filename )
 
     # Create and start helper threads
-    ol = output_listener( repl.stdout, buffer )
-    ol.start()
-    il = input_listener( repl.stdin, buffer )
-    il.start()
     sl = socket_listener( repl.stdin, buffer )
     sl.start()
+    ol = output_listener( repl.stdout, buffer )
+    ol.start()
+    bl = buffer_listener( buffer )
+    bl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
@@ -359,17 +356,18 @@ def server( output_filename ):
     # Main server loop
     while not terminate:
         try:
-            # Constantly display messages in the display queue buffer
-            #TODO: it would be better having some wakeup mechanism here
-            time.sleep(0.01)
-            buffer.read_and_display( sys.stdout )
-
+            # Read input from the console and write it
+            # to the stdin of REPL
+            text = raw_input()
+            repl.stdin.write( text + newline )
+            buffer.write( text + newline, True )
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
             terminate = 1
         except KeyboardInterrupt:
-            # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-            terminate = 1
+            # Interrupted from keyboard (Ctrl+C)?
+            # We just ignore it here, it will be propagated to the child anyway
+            pass
 
     # The socket is opened here only for waking up the server thread
     # in order to recognize the termination message
