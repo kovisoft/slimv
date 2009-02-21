@@ -72,7 +72,6 @@ def start_server( filename ):
     # Start server
     #TODO: put in try-block
     if mswindows:
-        #from win32process import CREATE_NEW_CONSOLE
         CREATE_NEW_CONSOLE = 16
         server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
     else:
@@ -168,7 +167,8 @@ class repl_buffer:
         while self.buflen < l:
             try:
                 # Write all lines in the buffer to the display
-                output.write( self.buffer[self.buflen] )
+                #output.write( self.buffer[self.buflen] )
+                os.write( output.fileno(), self.buffer[self.buflen] )
                 self.buflen = self.buflen + 1
             except:
                 break
@@ -189,7 +189,8 @@ class repl_buffer:
                 try:
                     file = open( output_filename, 'at' )
                     try:
-                        file.write( text )
+                        #file.write( text )
+                        os.write(file.fileno(), text )
                     finally:
                         file.close()
                     tries = 0
@@ -266,19 +267,29 @@ class output_listener( Thread ):
             try:
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
-                c = self.out.read(1)
-                if mswindows and ord( c ) == 0x0D:
-                    # Special handling of 0x0D+0x0A on Windows
-                    c2 = self.out.read(1)
-                    if ord( c2 ) == 0x0A:
-                        self.buffer.write( '\n' )
+                if mswindows:
+                    c = self.out.read( 1 )
+                    if ord( c ) == 0x0D:
+                        # Special handling of 0x0D+0x0A on Windows
+                        c2 = self.out.read( 1 )
+                        if ord( c2 ) == 0x0A:
+                            self.buffer.write( '\n' )
+                        else:
+                            self.buffer.write( c )
+                            self.buffer.write( c2 )
                     else:
                         self.buffer.write( c )
-                        self.buffer.write( c2 )
                 else:
-                    self.buffer.write( c )
+                    # On Linux set read mode to non blocking
+                    import fcntl, select
+                    flag = fcntl.fcntl(self.out.fileno(), fcntl.F_GETFL)
+                    fcntl.fcntl(self.out.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
+
+                    r = select.select([self.out.fileno()], [], [], 0)[0]
+                    if r:
+                        c = os.read( self.out.fileno(), 1 )
+                        self.buffer.write( c )
             except:
-                #TODO: should we set terminate=1 here as well?
                 break
 
 
@@ -328,13 +339,7 @@ def server( output_filename ):
     cmd = shlex.split( lisp_path.replace( '\\', '\\\\' ) )
 
     # Start Lisp
-    if mswindows:
-        #from win32con import CREATE_NO_WINDOW
-        #CREATE_NO_WINDOW = 134217728
-        #repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=CREATE_NO_WINDOW )
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=0 )
-    else:
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+    repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
     buffer = repl_buffer( output_filename )
 
