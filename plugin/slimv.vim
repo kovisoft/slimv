@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.1.3
-" Last Change:  17 Feb 2009
+" Version:      0.1.4
+" Last Change:  21 Feb 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -150,7 +150,7 @@ function! SlimvAutodetectLisp()
 endfunction
 
 " Build the command to start the client
-function! SlimvClientCommand()
+function! SlimvMakeClientCommand()
     if g:slimv_python == '' || g:slimv_lisp == ''
         " We don't have enough information to build client command
         return ''
@@ -169,6 +169,18 @@ function! SlimvClientCommand()
         "       \ '"console -w Slimv -r \"/k @p @s -l ' . g:slimv_lisp . ' -s\""'
     else
         return g:slimv_python . ' ' . g:slimv_path . port . ' -l ' . g:slimv_lisp
+endfunction
+
+function! SlimvClientCommand()
+    if g:slimv_client == ''
+        " No command to start client, we are clueless, ask user for assistance
+        if g:slimv_python == ''
+            let g:slimv_python = input( 'Enter Python path (or fill g:slimv_python in your vimrc): ', '', 'file' )
+        endif
+        if g:slimv_lisp == ''
+            let g:slimv_lisp = input( 'Enter Lisp path (or fill g:slimv_lisp in your vimrc): ', '', 'file' )
+        endif
+        let g:slimv_client = SlimvMakeClientCommand()
     endif
 endfunction
 
@@ -236,14 +248,14 @@ if !exists( 'g:slimv_lisp' )
 endif
 
 " Name of the REPL buffer inside Vim
-if !exists( 'g:slimv_bufname' )
-    let g:slimv_bufname = 'Slimv.REPL'
+if !exists( 'g:slimv_repl_name' )
+    let g:slimv_repl_name = 'Slimv.REPL'
 endif
 
 
 " Build client command (if not given in vimrc)
 if !exists( 'g:slimv_client' )
-    let g:slimv_client = SlimvClientCommand()
+    let g:slimv_client = SlimvMakeClientCommand()
 endif
 
 " Slimv keybinding set (0 = no keybindings)
@@ -336,10 +348,10 @@ endif
 function! SlimvOpenReplBuffer()
     "TODO: check if this works without 'set hidden'
     "TODO: add option for split window
-    let repl_buf = bufnr( g:slimv_bufname )
+    let repl_buf = bufnr( g:slimv_repl_name )
     if repl_buf == -1
         " Create a new REPL buffer
-        exe "edit " . g:slimv_bufname
+        exe "edit " . g:slimv_repl_name
     else
         " REPL buffer is already created. Check if it is open in a window
         let repl_win = bufwinnr( repl_buf )
@@ -388,43 +400,9 @@ function! SlimvGetSelection()
     return getreg( '"s' )
 endfunction
 
-" Prepare argument list to be sent to the client
-function SlimvMakeArgs( args )
-    let ar = a:args
-    let i = 0
-    while i < len(ar)
-        let ar[i] = substitute( ar[i], '"',  '\\"', 'g' )
-        let i = i + 1
-    endwhile
-    let a = join( ar, '" "' )
-    "let a = substitute( a, '"',  '\\"', 'g' )
-    let a = substitute( a, '\n', '\\n', 'g' )
-    let a = '"' . a . '" '
-    return a
-endfunction
-
-" Send text to the client
-function! SlimvSendToClient( args )
-    if g:slimv_debug_client == 0
-        let result = system( g:slimv_client . ' -c ' . SlimvMakeArgs(a:args) )
-    else
-        execute '!' . g:slimv_client . ' -c ' . SlimvMakeArgs(a:args)
-    endif
-endfunction
-
 " Send argument to Lisp server for evaluation
 function! SlimvEval( args )
-    if g:slimv_client == ''
-        " No command to start client, we are clueless, ask user for assistance
-        if g:slimv_python == ''
-            let g:slimv_python = input( 'Enter Python path (or fill g:slimv_python in your vimrc): ', '', 'file' )
-        endif
-        if g:slimv_lisp == ''
-            let g:slimv_lisp = input( 'Enter Lisp path (or fill g:slimv_lisp in your vimrc): ', '', 'file' )
-        endif
-        let g:slimv_client = SlimvClientCommand()
-    endif
-
+    call SlimvClientCommand()
     if g:slimv_client == ''
         return
     endif
