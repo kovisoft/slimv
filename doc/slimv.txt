@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 17 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 21 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.1.3
+                               Version 0.1.4
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -328,6 +328,14 @@ forms to the server/REPL for processing. That's it.
 All you need to know then is the list of possible Slimv commands, how to
 enter them and under what conditions.
 
+It is possible to interrupt a running Lisp program by pressing Ctrl+C,
+at least in some Lisp implementations, like CLISP (does not work for example
+with SBCL).
+
+To end the Lisp session press EOF (Ctrl+D on Linux, Ctrl+Z on Windows)
+in the Lisp REPL window. After exiting the REPL it is possible to open
+a new one from Vim the same way as before.
+
 
 ===============================================================================
 FAQ                                                                 *slimv-faq*
@@ -385,6 +393,11 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.1.4  - Corrected the delayed display of last line in REPL window on Linux.
+       - Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt
+         a running program. Does not work however with some Lisp
+         implementations (like SBCL).
 
 0.1.3  - Handle DOS and Unix style newlines produced by various
          Lisp implementations on Windows.
