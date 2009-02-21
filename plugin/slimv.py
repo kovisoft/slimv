@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.1.3
-# Last Change:  17 Feb 2009
+# Version:      0.1.4
+# Last Change:  21 Feb 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -69,7 +69,6 @@ def start_server():
     # Start server
     #TODO: put in try-block
     if mswindows:
-        #from win32process import CREATE_NEW_CONSOLE
         CREATE_NEW_CONSOLE = 16
         server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
     else:
@@ -164,7 +163,8 @@ class repl_buffer:
         while self.buflen < l:
             try:
                 # Write all lines in the buffer to the display
-                output.write( self.buffer[self.buflen] )
+                #output.write( self.buffer[self.buflen] )
+                os.write( output.fileno(), self.buffer[self.buflen] )
                 self.buflen = self.buflen + 1
             except:
                 break
@@ -232,33 +232,6 @@ class socket_listener( Thread ):
             conn.close()
 
 
-class input_listener( Thread ):
-    """Server thread to receive input from console.
-    """
-
-    def __init__ ( self, inp, buffer ):
-        Thread.__init__( self )
-        self.inp = inp
-        self.buffer = buffer
-
-    def run( self ):
-        global terminate
-
-        while not terminate:
-            try:
-                # Read input from the console and write it
-                # to the stdin of REPL
-                text = raw_input()
-                self.inp.write   ( text + newline )
-
-            except EOFError:
-                # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
-                terminate = 1
-            except KeyboardInterrupt:
-                # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-                terminate = 1
-
-
 class output_listener( Thread ):
     """Server thread to receive REPL output.
     """
@@ -275,20 +248,53 @@ class output_listener( Thread ):
             try:
                 # Read input from the stdout of REPL
                 # and write it to the display (display queue buffer)
-                c = self.out.read(1)
-                if mswindows and ord( c ) == 0x0D:
-                    # Special handling of 0x0D+0x0A on Windows
-                    c2 = self.out.read(1)
-                    if ord( c2 ) == 0x0A:
-                        self.buffer.write( '\n' )
+                if mswindows:
+                    c = self.out.read( 1 )
+                    if ord( c ) == 0x0D:
+                        # Special handling of 0x0D+0x0A on Windows
+                        c2 = self.out.read( 1 )
+                        if ord( c2 ) == 0x0A:
+                            self.buffer.write( '\n' )
+                        else:
+                            self.buffer.write( c )
+                            self.buffer.write( c2 )
                     else:
                         self.buffer.write( c )
-                        self.buffer.write( c2 )
                 else:
-                    self.buffer.write( c )
+                    # On Linux set read mode to non blocking
+                    import fcntl, select
+                    flag = fcntl.fcntl(self.out.fileno(), fcntl.F_GETFL)
+                    fcntl.fcntl(self.out.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
+
+                    r = select.select([self.out.fileno()], [], [], 0)[0]
+                    if r:
+                        c = os.read( self.out.fileno(), 1 )
+                        self.buffer.write( c )
             except:
-                #TODO: should we set terminate=1 here as well?
                 break
+
+
+class buffer_listener( Thread ):
+    """Server thread to read and display contents of the output buffer.
+    """
+
+    def __init__ ( self, buffer ):
+        Thread.__init__( self )
+        self.buffer = buffer
+
+    def run( self ):
+        global terminate
+
+        while not terminate:
+            try:
+                # Constantly display messages in the display queue buffer
+                #TODO: it would be better having some wakeup mechanism here
+                time.sleep(0.01)
+                self.buffer.read_and_display( sys.stdout )
+
+            except:
+                # We just ignore any errors here
+                pass
 
 
 def server():
@@ -314,22 +320,17 @@ def server():
     cmd = shlex.split( lisp_path.replace( '\\', '\\\\' ) )
 
     # Start Lisp
-    if mswindows:
-        #from win32con import CREATE_NO_WINDOW
-        CREATE_NO_WINDOW = 134217728
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT, creationflags=CREATE_NO_WINDOW )
-    else:
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+    repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
     buffer = repl_buffer()
 
     # Create and start helper threads
-    ol = output_listener( repl.stdout, buffer )
-    ol.start()
-    il = input_listener( repl.stdin, buffer )
-    il.start()
     sl = socket_listener( repl.stdin, buffer )
     sl.start()
+    ol = output_listener( repl.stdout, buffer )
+    ol.start()
+    bl = buffer_listener( buffer )
+    bl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
@@ -341,17 +342,18 @@ def server():
     # Main server loop
     while not terminate:
         try:
-            # Constantly display messages in the display queue buffer
-            #TODO: it would be better having some wakeup mechanism here
-            time.sleep(0.01)
-            buffer.read_and_display( sys.stdout )
-
+            # Read input from the console and write it
+            # to the stdin of REPL
+            text = raw_input()
+            repl.stdin.write( text + newline )
+            buffer.write( text + newline )
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
             terminate = 1
         except KeyboardInterrupt:
-            # Interrupted from keyboard (Ctrl+Break, Ctrl+C)?
-            terminate = 1
+            # Interrupted from keyboard (Ctrl+C)?
+            # We just ignore it here, it will be propagated to the child anyway
+            pass
 
     # The socket is opened here only for waking up the server thread
     # in order to recognize the termination message
