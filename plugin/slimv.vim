@@ -516,6 +516,8 @@ function! SlimvEval( args )
     call SlimvClientCommand()
     if g:slimv_client == ''
         return
+    endif
+
     let client = substitute( g:slimv_client, '@o', '-o ' . g:slimv_repl_name, 'g' )
 
     if g:slimv_repl_open
