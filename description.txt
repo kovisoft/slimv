@@ -62,6 +62,14 @@ Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 
 ---------------------------------------------------------------------------------------------
 
+Issues
+
+- REPL buffer refresh on Vim focus gain works only in gvim, not in console vim
+- REPL buffer refresh sometimes does not work first time after the server Lisp windows was just opened
+- Ctrl+C does not work from Vim REPL buffer
+- Ctrl+C works in server Lisp window (but only in Lisp implementations that support it, so not in SBCL)
+
+---------------------------------------------------------------------------------------------
 
 Differences to Limp
 
