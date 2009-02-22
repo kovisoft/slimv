@@ -153,36 +153,21 @@ def client_file( input_filename, output_filename ):
 class repl_buffer:
     def __init__ ( self, output_pipe, output_filename ):
 
-        self.buffer = ''    # Text buffer (display queue) to collect socket input and REPL output
-        self.buflen = 0     # Amount of text currently in the buffer
-        self.sema   = BoundedSemaphore()
-                            # Semaphore to synchronize access to the global display queue
-        self.output = output_pipe
+        self.output   = output_pipe
         self.filename = output_filename
-
-    def read_and_display( self ):
-        """Read and display lines received in global display queue buffer.
-        """
-        self.sema.acquire()
-        l = len( self.buffer )
-        while self.buflen < l:
-            try:
-                # Write all lines in the buffer to the display
-                #output.write( self.buffer[self.buflen] )
-                os.write( self.output.fileno(), self.buffer[self.buflen] )
-                self.buflen = self.buflen + 1
-            except:
-                break
-        self.buffer = ''
-        self.buflen = 0
-        self.sema.release()
+        self.sema     = BoundedSemaphore()
+                            # Semaphore to synchronize access to the global display queue
 
     def write( self, text, fileonly=False ):
         """Write text into the global display queue buffer.
         """
         self.sema.acquire()
         if not fileonly:
-            self.buffer = self.buffer + text
+            try:
+                # Write all lines to the display
+                os.write( self.output.fileno(), text )
+            except:
+                pass
 
         if output_filename != '':
             tries = 4
@@ -294,29 +279,6 @@ class output_listener( Thread ):
                 break
 
 
-class buffer_listener( Thread ):
-    """Server thread to read and display contents of the output buffer.
-    """
-
-    def __init__ ( self, buffer ):
-        Thread.__init__( self )
-        self.buffer = buffer
-
-    def run( self ):
-        global terminate
-
-        while not terminate:
-            try:
-                # Constantly display messages in the display queue buffer
-                #TODO: it would be better having some wakeup mechanism here
-                time.sleep(0.01)
-                self.buffer.read_and_display()
-
-            except:
-                # We just ignore any errors here
-                pass
-
-
 def server( output_filename ):
     """Main server routine: starts REPL and helper threads for
        sending and receiving data to/from REPL.
@@ -349,14 +311,11 @@ def server( output_filename ):
     sl.start()
     ol = output_listener( repl.stdout, buffer )
     ol.start()
-    bl = buffer_listener( buffer )
-    bl.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
     sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
     time.sleep(0.5)             # wait for Lisp to start
-    buffer.read_and_display()   # read Lisp startup messages
     sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
