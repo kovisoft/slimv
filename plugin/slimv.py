@@ -151,15 +151,16 @@ def client_file( input_filename, output_filename ):
 ###############################################################################
 
 class repl_buffer:
-    def __init__ ( self, output_filename ):
+    def __init__ ( self, output_pipe, output_filename ):
 
         self.buffer = ''    # Text buffer (display queue) to collect socket input and REPL output
         self.buflen = 0     # Amount of text currently in the buffer
         self.sema   = BoundedSemaphore()
                             # Semaphore to synchronize access to the global display queue
+        self.output = output_pipe
         self.filename = output_filename
 
-    def read_and_display( self, output ):
+    def read_and_display( self ):
         """Read and display lines received in global display queue buffer.
         """
         self.sema.acquire()
@@ -168,7 +169,7 @@ class repl_buffer:
             try:
                 # Write all lines in the buffer to the display
                 #output.write( self.buffer[self.buflen] )
-                os.write( output.fileno(), self.buffer[self.buflen] )
+                os.write( self.output.fileno(), self.buffer[self.buflen] )
                 self.buflen = self.buflen + 1
             except:
                 break
@@ -309,7 +310,7 @@ class buffer_listener( Thread ):
                 # Constantly display messages in the display queue buffer
                 #TODO: it would be better having some wakeup mechanism here
                 time.sleep(0.01)
-                self.buffer.read_and_display( sys.stdout )
+                self.buffer.read_and_display()
 
             except:
                 # We just ignore any errors here
@@ -341,7 +342,7 @@ def server( output_filename ):
     # Start Lisp
     repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
-    buffer = repl_buffer( output_filename )
+    buffer = repl_buffer( sys.stdout, output_filename )
 
     # Create and start helper threads
     sl = socket_listener( repl.stdin, buffer )
@@ -354,8 +355,8 @@ def server( output_filename ):
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
     sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
-    time.sleep(0.5)                         # wait for Lisp to start
-    buffer.read_and_display( sys.stdout )   # read Lisp startup messages
+    time.sleep(0.5)             # wait for Lisp to start
+    buffer.read_and_display()   # read Lisp startup messages
     sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
