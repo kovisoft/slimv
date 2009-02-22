@@ -640,6 +640,8 @@ function! SlimvHandleDown()
             call SlimvRecallHistory()
         else
             call SlimvSetCommandLine( "" )
+        endif
+    endif
 endfunction
 
 " Start and connect slimv server
