@@ -216,6 +216,8 @@ function! SlimvLogGlobals()
     call add( info,  printf( 'g:slimv_lisp          = %s',    g:slimv_lisp ) )
     call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
     call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
+    call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
+    call add( info,  printf( 'g:slimv_repl_file     = %s',    g:slimv_repl_file ) )
     call add( info,  printf( 'g:slimv_repl_name     = %s',    g:slimv_repl_name ) )
     call add( info,  printf( 'g:slimv_repl_split    = %d',    g:slimv_repl_split ) )
     call add( info,  printf( 'g:slimv_repl_wait     = %d',    g:slimv_repl_wait ) )
@@ -267,10 +269,22 @@ if !exists( 'g:slimv_repl_open' )
     let g:slimv_repl_open = 1
 endif
 
-" Name of the REPL buffer inside Vim
-if !exists( 'g:slimv_repl_name' )
-    let g:slimv_repl_name = 'Slimv.REPL'
+" Directory name for the REPL buffer file
+if !exists( 'g:slimv_repl_dir' )
+    if g:slimv_windows
+        let g:slimv_repl_dir = matchstr( tempname(), '.*\\' )
+    else
+        let g:slimv_repl_dir = '/tmp/'
+    endif
 endif
+
+" Filename for the REPL buffer file
+if !exists( 'g:slimv_repl_file' )
+    let g:slimv_repl_file = 'Slimv.REPL'
+endif
+
+" Name of the REPL buffer inside Vim
+let g:slimv_repl_name = g:slimv_repl_dir . g:slimv_repl_file
 
 " Shall we open REPL buffer in split window?
 if !exists( 'g:slimv_repl_split' )
@@ -416,6 +430,16 @@ function! SlimvRefreshWaitReplBuffer()
     call SlimvRefreshReplBuffer()
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
     while line("$") > lastline && wait > 0
+        if getchar(1)
+            let c = getchar(0)
+            "if nr2char(c) == "c" && ( getcharmod() == 4 || getcharmod() == 6 )
+            if nr2char(c) == "c"
+                " Ctrl+C or Alt+C pressed
+                call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+                let wait = g:slimv_repl_wait * 10
+            endif
+        endif
+        redraw
         let lastline = line("$")
         sleep 100m
         call SlimvRefreshReplBuffer()
@@ -475,8 +499,8 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
-    execute "au FileChangedShell " . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
-    execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
+    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
+    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
 
     call SlimvEndOfReplBuffer( 0 )
 endfunction
@@ -512,7 +536,7 @@ function! SlimvGetSelection()
 endfunction
 
 " Send argument to Lisp server for evaluation
-function! SlimvEval( args )
+function! SlimvSend( args, open_buffer )
     call SlimvClientCommand()
     if g:slimv_client == ''
         return
@@ -520,7 +544,7 @@ function! SlimvEval( args )
 
     let client = substitute( g:slimv_client, '@o', '-o ' . g:slimv_repl_name, 'g' )
 
-    if g:slimv_repl_open
+    if a:open_buffer
         call SlimvOpenReplBuffer()
     endif
 
@@ -541,16 +565,21 @@ function! SlimvEval( args )
             execute '!' . client . ' -f ' . tmp
         endif
 
-        if g:slimv_repl_open
+        if a:open_buffer
             call SlimvRefreshWaitReplBuffer()
         endif
     finally
         call delete(tmp)
     endtry
 
-"    if g:slimv_repl_open
+"    if a:open_buffer
 "        call SlimvEndOfReplBuffer( 0 )
 "    endif
+endfunction
+
+" Eval arguments in Lisp REPL
+function! SlimvEval( args )
+    call SlimvSend( a:args, g:slimv_repl_open )
 endfunction
 
 " Recall command from the command history at the marked position
