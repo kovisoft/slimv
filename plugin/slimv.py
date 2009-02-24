@@ -229,10 +229,16 @@ class socket_listener( Thread ):
                     except:
                         break
 
-                    # Fork here: write message to the stdin of REPL
-                    # and also write it to the display (display queue buffer)
-                    self.inp.write   ( received + newline )
-                    self.buffer.write( received + newline )
+                    if received[0:16] == 'SLIMV::INTERRUPT':
+                        if mswindows:
+                            import win32api
+                            CTRL_C_EVENT = 0
+                            win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
+                    else:
+                        # Fork here: write message to the stdin of REPL
+                        # and also write it to the display (display queue buffer)
+                        self.inp.write   ( received + newline )
+                        self.buffer.write( received + newline )
 
             conn.close()
 
