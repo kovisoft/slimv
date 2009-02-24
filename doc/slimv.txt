@@ -120,7 +120,6 @@ Where:
 You can also pass the following shortcuts in <server_cmd>:
     @p             equals <python>
     @s             equals <slimv>
-    @l             equals <lisp>
     @@             use it if you need to insert an @ character
     \"             use it to insert a " character
 So <server_cmd> can be rewritten in this shorter form:
@@ -136,7 +135,7 @@ Note: Remember to escape with a \ all " characters that are supposed to be
       inside a command line argument, otherwise the argument will be split
       by the shell.
 
-Example to start the Slimv server via Console:
+Example to start the Slimv server via Console on Windows:
 
   let g:slimv_client = 
   \ 'python slimv.py -p 5152 -r "console -r \"/k @p @s -l clisp -s\""'
@@ -145,7 +144,7 @@ So the server will be started as if we typed at the command line:
 
   console -r "/k python slimv.py -l clisp -s"
 
-The similar situation is if you want to use a terminal program other than
+A similar situation is if you want to use a terminal program other than
 xterm on Linux (e.g. Konsole). A typical g:slimv_client setup can be on
 Linux for xterm:
 
