@@ -158,6 +158,11 @@ class repl_buffer:
         self.sema     = BoundedSemaphore()
                             # Semaphore to synchronize access to the global display queue
 
+    def setfile( self, filename ):
+        self.sema.acquire()
+        self.filename = output_filename
+        self.sema.release()
+
     def write( self, text, fileonly=False ):
         """Write text into the global display queue buffer.
         """
@@ -169,11 +174,11 @@ class repl_buffer:
             except:
                 pass
 
-        if output_filename != '':
+        if self.filename != '':
             tries = 4
             while tries > 0:
                 try:
-                    file = open( output_filename, 'at' )
+                    file = open( self.filename, 'at' )
                     try:
                         #file.write( text )
                         os.write(file.fileno(), text )
@@ -189,10 +194,11 @@ class socket_listener( Thread ):
     """Server thread to receive text from the client via socket.
     """
 
-    def __init__ ( self, inp, buffer ):
+    def __init__ ( self, inp, buffer, pid ):
         Thread.__init__( self )
         self.inp = inp
         self.buffer = buffer
+        self.pid = pid
 
     def run( self ):
         global terminate
@@ -229,11 +235,21 @@ class socket_listener( Thread ):
                     except:
                         break
 
-                    if received[0:16] == 'SLIMV::INTERRUPT':
-                        if mswindows:
-                            import win32api
-                            CTRL_C_EVENT = 0
-                            win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
+                    if len(received) >= 7 and received[0:7] == 'SLIMV::':
+                        command = received[7:]
+                        if len(command) >= 9 and command[0:9] == 'INTERRUPT':
+                            if mswindows:
+                                import win32api
+                                #TODO: handle if win32api not found
+                                CTRL_C_EVENT = 0
+                                win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
+                            else:
+                                import signal
+                                #os.kill( self.pid, signal.SIGINT )
+                                os.kill( os.getpid(), signal.SIGINT )
+                        if len(command) >= 6 and command[0:6] == 'POLL::':
+                            output_filename = command[6:]
+                            self.buffer.setfile( output_filename )
                     else:
                         # Fork here: write message to the stdin of REPL
                         # and also write it to the display (display queue buffer)
@@ -313,7 +329,7 @@ def server( output_filename ):
     buffer = repl_buffer( sys.stdout, output_filename )
 
     # Create and start helper threads
-    sl = socket_listener( repl.stdin, buffer )
+    sl = socket_listener( repl.stdin, buffer, repl.pid )
     sl.start()
     ol = output_listener( repl.stdout, buffer )
     ol.start()
