@@ -433,8 +433,9 @@ function! SlimvRefreshWaitReplBuffer()
         if getchar(1)
             let c = getchar(0)
             "if nr2char(c) == "c" && ( getcharmod() == 4 || getcharmod() == 6 )
-            if nr2char(c) == "c"
-                " Ctrl+C or Alt+C pressed
+            "if nr2char(c) == "c"
+            if c == 2 || c == 3 || c == 24
+                " Ctrl+B or Ctrl+C or Ctrl+X pressed
                 call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
                 let wait = g:slimv_repl_wait * 10
             endif
@@ -502,6 +503,8 @@ function! SlimvOpenReplBuffer()
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
 
+    call SlimvSend( ['SLIMV::POLL::' . g:slimv_repl_name ], 0 )
+    
     call SlimvEndOfReplBuffer( 0 )
 endfunction
 
@@ -543,6 +546,7 @@ function! SlimvSend( args, open_buffer )
     endif
 
     let client = substitute( g:slimv_client, '@o', '-o ' . g:slimv_repl_name, 'g' )
+"    let client = g:slimv_client
 
     if a:open_buffer
         call SlimvOpenReplBuffer()
