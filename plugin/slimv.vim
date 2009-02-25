@@ -288,7 +288,7 @@ endif
 
 " How many seconds to wait for the REPL output to finish?
 if !exists( 'g:slimv_repl_wait' )
-    let g:slimv_repl_wait = 5
+    let g:slimv_repl_wait = 10
 endif
 
 " Build client command (if not given in vimrc)
@@ -424,7 +424,7 @@ function! SlimvRefreshWaitReplBuffer()
     sleep 500m
     call SlimvRefreshReplBuffer()
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-    while line("$") > lastline && wait > 0
+    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
         if getchar(1)
             let c = getchar(0)
             "if nr2char(c) == "c" && ( getcharmod() == 4 || getcharmod() == 6 )
@@ -433,6 +433,10 @@ function! SlimvRefreshWaitReplBuffer()
                 " Ctrl+B or Ctrl+C or Ctrl+X pressed
                 call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
                 let wait = g:slimv_repl_wait * 10
+            endif
+            if c == 27
+                let wait = 0
+                break
             endif
         endif
         redraw
@@ -912,8 +916,8 @@ if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
-    noremap <Leader>z  :call SlimvRefreshReplBuffer()<CR>
-    noremap <Leader>Z  :call SlimvRefreshWaitReplBuffer()<CR>
+    noremap <Leader>Z  :call SlimvRefreshReplBuffer()<CR>
+    noremap <Leader>z  :call SlimvRefreshWaitReplBuffer()<CR>
     
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
