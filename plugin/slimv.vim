@@ -174,11 +174,6 @@ function! SlimvMakeClientCommand()
     " Add Lisp path
     let cmd = cmd . ' -l ' . g:slimv_lisp
 
-    " Add output buffer name if given
-    if g:slimv_repl_name != ''
-        let cmd = cmd . ' -o ' . g:slimv_repl_name
-    endif
-
     return cmd
 endfunction
 
@@ -545,8 +540,7 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
-    let client = substitute( g:slimv_client, '@o', '-o ' . g:slimv_repl_name, 'g' )
-"    let client = g:slimv_client
+    let client = g:slimv_client
 
     if a:open_buffer
         call SlimvOpenReplBuffer()
