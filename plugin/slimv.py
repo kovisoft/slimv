@@ -54,7 +54,7 @@ def log( s, level ):
 #
 ###############################################################################
 
-def start_server( filename ):
+def start_server():
     """Spawn server. Does not check if the server is already running.
     """
     if run_cmd == '':
@@ -64,8 +64,6 @@ def start_server( filename ):
         else:
             cmd = ['xterm', '-T', 'Slimv', '-e']
         cmd = cmd + [python_path, slimv_path, '-p', str(PORT), '-l', lisp_path, '-s']
-        if filename != '':
-            cmd = cmd + ['-o', filename]
     else:
         cmd = shlex.split(run_cmd)
 
@@ -81,7 +79,7 @@ def start_server( filename ):
     time.sleep( 2.0 )
 
 
-def connect_server( output_filename ):
+def connect_server():
     """Try to connect server, if server not found then spawn it.
        Return socket object on success, None on failure.
     """
@@ -93,7 +91,7 @@ def connect_server( output_filename ):
         if autoconnect:
             # We need to try to start the server automatically
             s.close()
-            start_server( output_filename )
+            start_server()
 
             # Open socket to the server
             s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -121,12 +119,12 @@ def send_line( server, line ):
                             #TODO: synchronize it correctly
 
 
-def client_file( input_filename, output_filename ):
+def client_file( input_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
     """
-    s = connect_server( output_filename )
+    s = connect_server()
     if s is None:
         return
 
@@ -151,16 +149,16 @@ def client_file( input_filename, output_filename ):
 ###############################################################################
 
 class repl_buffer:
-    def __init__ ( self, output_pipe, output_filename ):
+    def __init__ ( self, output_pipe ):
 
         self.output   = output_pipe
-        self.filename = output_filename
+        self.filename = ''
         self.sema     = BoundedSemaphore()
                             # Semaphore to synchronize access to the global display queue
 
     def setfile( self, filename ):
         self.sema.acquire()
-        self.filename = output_filename
+        self.filename = filename
         self.sema.release()
 
     def write( self, text, fileonly=False ):
@@ -301,7 +299,7 @@ class output_listener( Thread ):
                 break
 
 
-def server( output_filename ):
+def server():
     """Main server routine: starts REPL and helper threads for
        sending and receiving data to/from REPL.
     """
@@ -326,7 +324,7 @@ def server( output_filename ):
     # Start Lisp
     repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
-    buffer = repl_buffer( sys.stdout, output_filename )
+    buffer = repl_buffer( sys.stdout )
 
     # Create and start helper threads
     sl = socket_listener( repl.stdin, buffer, repl.pid )
@@ -400,7 +398,7 @@ def usage():
     """Displays program usage information.
     """
     progname = os.path.basename( sys.argv[0] )
-    print 'Usage: ', progname + ' [-d LEVEL] [-s] [-o OUTFILE] [-f INFILE]'
+    print 'Usage: ', progname + ' [-d LEVEL] [-s] [-f INFILE]'
     print
     print 'Options:'
     print '  -?, -h, --help                show this help message and exit'
@@ -409,9 +407,8 @@ def usage():
     print '  -p PORT, --port=PORT          port number to use by the server/client'
     print '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)'
     print '  -s                            start server'
-    print '  -o OUTFILE                    write REPL output to OUTFILE'
-    print '  -f INFILE, --file=INFILE      start client and send contents of file'
-    print '                                named INFILE to server'
+    print '  -f FILENAME, --file=FILENAME  start client and send contents of file'
+    print '                                named FILENAME to server'
 
 
 ###############################################################################
@@ -427,7 +424,6 @@ if __name__ == '__main__':
     slimv_path = sys.argv[0]
     python_path = sys.executable
     input_filename = ''
-    output_filename = ''
 
     # Always this trouble with the path/filenames containing spaces:
     # enclose them in double quotes
@@ -436,8 +432,8 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcso:f:p:l:r:d:', \
-                                    ['help', 'client', 'server', 'output=', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
+        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
+                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
 
         # Process options
         for o, a in opts:
@@ -462,8 +458,6 @@ if __name__ == '__main__':
                     pass
             if o in ('-s', '--server'):
                 mode = SERVER
-            if o in ('-o', '--output'):
-                output_filename = a
             if o in ('-c', '--client'):
                 mode = CLIENT
             if o in ('-f', '--file'):
@@ -476,7 +470,7 @@ if __name__ == '__main__':
 
     if mode == SERVER:
         # We are started in server mode
-        server( output_filename )
+        server()
 
     if mode == CLIENT:
         # We are started in client mode
@@ -485,12 +479,11 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@p', escape_path( python_path ) )
             run_cmd = run_cmd.replace( '@s', escape_path( slimv_path ) )
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
-            run_cmd = run_cmd.replace( '@o', escape_path( output_filename ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
         if input_filename != '':
-            client_file( input_filename, output_filename )
+            client_file( input_filename )
         else:
-            start_server( output_filename )
+            start_server()
 
 # --- END OF FILE ---
