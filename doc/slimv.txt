@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 26 Feb 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.1.4
+                               Version 0.2.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -10,6 +10,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-installation|         Installation
 |slimv-customization|        Customization
 |slimv-usage|                Usage
+|slimv-repl|                 Lisp REPL inside Vim
 |slimv-functions|            Function Reference
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
@@ -22,8 +23,8 @@ This plugin is only available if 'compatible' is not set.
 
 {Vi does not have any of this}
 
-==============================================================================
-INSTALLATION                                              *slimv-installation*
+===============================================================================
+INSTALLATION                                               *slimv-installation*
 
 Prerequisites:
   - Lisp (any Common Lisp implementation should be OK) installed.
@@ -57,6 +58,33 @@ CUSTOMIZATION                                             *slimv-customization*
 
 -------------------------------------------------------------------------------
                                                                 *slimv_options*
+
+The list below contains an alphabetical list of Slimv options.
+Below that list follows the detailed explanation on each option.
+
+|g:slimv_client|             The whole OS command to start the Slimv client.
+                             Used for advanced customization, like changing
+                             the terminal emulator to use for the Lisp REPL.
+
+|g:slimv_debug|              Debug log level. Set zero for no debug messages.
+
+|g:slimv_debug_client|       Display the command to start client.
+
+|g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
+                             1 = set #1, 2 = set #2, other = no keybindings
+
+|g:slimv_lisp|               Path for the Lisp interpreter.
+
+|g:slimv_logfile|            Name of the logfile to use for debug messages.
+                             Also see |g:slimv_debug|.
+
+|g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu
+
+|g:slimv_port|               TCP/IP port number to use in the Slimv client-
+                             server communication.
+
+|g:slimv_python|             Path for the Python interpreter.
+
 
 Note: Most options below require to restart the Vim session when modified.
 
@@ -175,9 +203,10 @@ Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
 Value 1 defines the short keybinding with one-key bindings (after <Leader>).
 Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
 Other values mean no predefined keybinding is wanted.
+The <Leader> is set to ',' by default. 
 
                                                                  *g:slimv_menu*
-If nonzero then the Slimv menu us added to the end of the global menu.
+If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
 
@@ -334,8 +363,8 @@ There is another easy to remember built in keybinding set
     ,da  Apropos
 
 
-==============================================================================
-USAGE                                                            *slimv-usage*
+===============================================================================
+USAGE                                                             *slimv-usage*
 
 After proper installation start Vim and load a *.lisp source file into a
 buffer. When the first Slimv command is entered (either from the menu or
@@ -354,6 +383,18 @@ with SBCL).
 To end the Lisp session press EOF (Ctrl+D on Linux, Ctrl+Z on Windows)
 in the Lisp REPL window. After exiting the REPL it is possible to open
 a new one from Vim the same way as before.
+
+
+===============================================================================
+LISP REPL                                                          *slimv-repl*
+
+
+
+
+===============================================================================
+FUNCTIONS                                                     *slimv-functions*
+
+
 
 
 ===============================================================================
@@ -421,6 +462,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.2.0  - Major update: Lisp REPL added to a Vim buffer.
 
 0.1.4  - Corrected the delayed display of last line in REPL window on Linux.
        - Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt
