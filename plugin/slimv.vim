@@ -213,7 +213,6 @@ function! SlimvLogGlobals()
     call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
     call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
     call add( info,  printf( 'g:slimv_repl_file     = %s',    g:slimv_repl_file ) )
-    call add( info,  printf( 'g:slimv_repl_name     = %s',    g:slimv_repl_name ) )
     call add( info,  printf( 'g:slimv_repl_split    = %d',    g:slimv_repl_split ) )
     call add( info,  printf( 'g:slimv_repl_wait     = %d',    g:slimv_repl_wait ) )
     call add( info,  printf( 'g:slimv_keybindings   = %d',    g:slimv_keybindings ) )
@@ -277,9 +276,6 @@ endif
 if !exists( 'g:slimv_repl_file' )
     let g:slimv_repl_file = 'Slimv.REPL'
 endif
-
-" Name of the REPL buffer inside Vim
-let g:slimv_repl_name = g:slimv_repl_dir . g:slimv_repl_file
 
 " Shall we open REPL buffer in split window?
 if !exists( 'g:slimv_repl_split' )
@@ -379,6 +375,17 @@ endif
 
 
 " =====================================================================
+"  Other non-global script variables
+" =====================================================================
+
+" Name of the REPL buffer inside Vim
+let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file
+
+" Lisp prompt in the last line
+let s:prompt = ''
+
+
+" =====================================================================
 "  General utility functions
 " =====================================================================
 
@@ -392,7 +399,10 @@ function! SlimvEndOfReplBuffer( markit )
     normal G$
     "startinsert!
     if a:markit
+        " Remember the end of the buffer: user may enter commands here
+        " Also remember the prompt, because the user may overwrite it
         call setpos( "'s'", [0, line('$'), col('$'), 0] )
+        let s:prompt = getline( "'s'" )
     endif
     set nomodified
 endfunction
@@ -403,16 +413,14 @@ function! SlimvRefreshReplBuffer()
 	" User does not want to display REPL in Vim
 	return
     endif
-    "normal G$ms
-    "normal G$
-    "edit!
+
     "TODO: on error do this in a loop a couple of times
     try
-        execute "silent edit! " . g:slimv_repl_name
+        execute "silent edit! " . s:repl_name
     catch /.*/
         " Oops, something went wrong, let's try again after a short pause
         sleep 1
-        execute "silent edit! " . g:slimv_repl_name
+        execute "silent edit! " . s:repl_name
     endtry
     "TODO: use :read instead and keep only the delta in the readout file
 "    setlocal endofline
@@ -422,8 +430,6 @@ function! SlimvRefreshReplBuffer()
         call append( '$', "" )
     endif
     call SlimvEndOfReplBuffer( 1 )
-"    let lastline = line("'s")
-"    let lastcol = col("'s")
 endfunction
 
 " Refresh REPL buffer for a while until no change is detected
@@ -439,16 +445,16 @@ function! SlimvRefreshWaitReplBuffer()
     call SlimvRefreshReplBuffer()
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
     while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
+        "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
         if getchar(1)
             let c = getchar(0)
-            "if nr2char(c) == "c" && ( getcharmod() == 4 || getcharmod() == 6 )
-            "if nr2char(c) == "c"
-            if c == 2 || c == 3 || c == 24
-                " Ctrl+B or Ctrl+C or Ctrl+X pressed
+            if c == 2 || c == 3 || c == 24 || c == 25
+                " Ctrl+B or Ctrl+C or Ctrl+X or Ctrl+Y pressed
                 call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
                 let wait = g:slimv_repl_wait * 10
             endif
             if c == 27
+                " ESC pressed
                 let wait = 0
                 break
             endif
@@ -461,7 +467,8 @@ function! SlimvRefreshWaitReplBuffer()
     endwhile
 
     if wait == 0
-        " Inform user about non-blocking and blocking refresh keys
+        " Time is up and Lisp REPL still did not finish output
+        " Inform user about this and about the non-blocking and blocking refresh keys
         if g:slimv_keybindings == 1
             let refresh = "<Leader>z or <Leader>Z"
         elseif g:slimv_keybindings == 2
@@ -477,13 +484,13 @@ endfunction
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
     "TODO: check if this works without 'set hidden'
-    let repl_buf = bufnr( g:slimv_repl_name )
+    let repl_buf = bufnr( s:repl_name )
     if repl_buf == -1
         " Create a new REPL buffer
         if g:slimv_repl_split
-            execute "split " . g:slimv_repl_name
+            execute "split " . s:repl_name
         else
-            execute "edit " . g:slimv_repl_name
+            execute "edit " . s:repl_name
         endif
     else
         if g:slimv_repl_split
@@ -515,12 +522,10 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
-"    execute "au FocusGained "      . g:slimv_repl_file . " :echo localtime()"
 
     redraw
 
-    call SlimvSend( ['SLIMV::OUTPUT::' . g:slimv_repl_name ], 0 )
-    
+    call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
     call SlimvEndOfReplBuffer( 0 )
 endfunction
 
@@ -561,15 +566,13 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
-    let client = g:slimv_client
-
     if a:open_buffer
         call SlimvOpenReplBuffer()
     endif
 
-    "TODO: check if repl buffer really opened and switched to
     let tmp = tempname()
     try
+        " Build a temporary file from the form to be evaluated
         let ar = []
         let i = 0
         while i < len( a:args )
@@ -578,10 +581,12 @@ function! SlimvSend( args, open_buffer )
         endwhile
         call SlimvLog( 2, a:args )
         call writefile( ar, tmp )
+
+        " Send the file to the client for evaluation
         if g:slimv_debug_client == 0
-            let result = system( client . ' -f ' . tmp )
+            let result = system( g:slimv_client . ' -f ' . tmp )
         else
-            execute '!' . client . ' -f ' . tmp
+            execute '!' . g:slimv_client . ' -f ' . tmp
         endif
 
         if a:open_buffer
@@ -606,7 +611,6 @@ function! SlimvSetCommandLine( cmd )
     normal `s
     let line = getline( "." )
     if len( line ) > col( "'s" )
-        "normal d$
         let line = strpart( line, 0, col( "'s" ) - 1 )
     endif
     let i = 0
@@ -625,7 +629,6 @@ function! SlimvAddHistory( cmd )
         call add( g:slimv_cmdhistory, a:cmd[i] )
         let i = i + 1
     endwhile
-    "call add( g:slimv_cmdhistory, a:cmd )
     let g:slimv_cmdhistorypos = len( g:slimv_cmdhistory )
 endfunction
 
@@ -644,12 +647,23 @@ function! SlimvHandleCR()
     let lastcol  =  col( "'s" )
     if lastline > 0
         if line( "." ) >= lastline
-            let cmd = [ strpart( getline( lastline ), lastcol-1) ]
+            " Trim the prompt from the beginning of the command line
+            " The user might have overwritten some parts of the prompt
+            let cmdline = getline( lastline )
+            let c = 0
+            while c < lastcol - 1 && cmdline[c] == s:prompt[c]
+                let c = c + 1
+            endwhile
+            let cmd = [ strpart( getline( lastline ), c ) ]
+
+            " Build a possible multi-line command
             let l = lastline + 1
             while l <= line("$") - 1
                 call add( cmd, strpart( getline( l ), 0) )
                 let l = l + 1
             endwhile
+
+            " Evaluate the command
             call SlimvAddHistory( cmd )
             call SlimvEval( cmd )
         endif
