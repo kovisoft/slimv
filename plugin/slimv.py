@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.1.4
-# Last Change:  21 Feb 2009
+# Version:      0.2.0
+# Last Change:  26 Feb 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -243,10 +243,9 @@ class socket_listener( Thread ):
                                 win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
                             else:
                                 import signal
-                                #os.kill( self.pid, signal.SIGINT )
-                                os.kill( os.getpid(), signal.SIGINT )
-                        if len(command) >= 6 and command[0:6] == 'POLL::':
-                            output_filename = command[6:]
+                                os.kill( self.pid, signal.SIGINT )
+                        if len(command) >= 8 and command[0:8] == 'OUTPUT::':
+                            output_filename = command[8:]
                             self.buffer.setfile( output_filename )
                     else:
                         # Fork here: write message to the stdin of REPL
