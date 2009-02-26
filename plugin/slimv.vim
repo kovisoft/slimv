@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.1.4
-" Last Change:  21 Feb 2009
+" Version:      0.2.0
+" Last Change:  26 Feb 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -385,6 +385,10 @@ endif
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer( markit )
+    if !g:slimv_repl_open
+	" User does not want to display REPL in Vim
+	return
+    endif
     normal G$
     "startinsert!
     if a:markit
@@ -395,15 +399,20 @@ endfunction
 
 " Reload the contents of the REPL buffer from the output file
 function! SlimvRefreshReplBuffer()
+    if !g:slimv_repl_open
+	" User does not want to display REPL in Vim
+	return
+    endif
     "normal G$ms
     "normal G$
     "edit!
+    "TODO: on error do this in a loop a couple of times
     try
-        execute "edit! " . g:slimv_repl_name
+        execute "silent edit! " . g:slimv_repl_name
     catch /.*/
         " Oops, something went wrong, let's try again after a short pause
         sleep 1
-        execute "edit! " . g:slimv_repl_name
+        execute "silent edit! " . g:slimv_repl_name
     endtry
     "TODO: use :read instead and keep only the delta in the readout file
 "    setlocal endofline
@@ -419,6 +428,11 @@ endfunction
 
 " Refresh REPL buffer for a while until no change is detected
 function! SlimvRefreshWaitReplBuffer()
+    if !g:slimv_repl_open
+	" User does not want to display REPL in Vim
+	return
+    endif
+
     " Refresh REPL buffer for a while until no change is detected
     let lastline = line("$")
     sleep 500m
@@ -451,7 +465,7 @@ function! SlimvRefreshWaitReplBuffer()
         if g:slimv_keybindings == 1
             let refresh = "<Leader>z or <Leader>Z"
         elseif g:slimv_keybindings == 2
-            let refresh = "<Leader>rr or <Leader>rw"
+            let refresh = "<Leader>rw or <Leader>rr"
         else
             let refresh = ":call SlimvRefreshReplBuffer()"
         endif
@@ -501,8 +515,11 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
+"    execute "au FocusGained "      . g:slimv_repl_file . " :echo localtime()"
 
-    call SlimvSend( ['SLIMV::POLL::' . g:slimv_repl_name ], 0 )
+    redraw
+
+    call SlimvSend( ['SLIMV::OUTPUT::' . g:slimv_repl_name ], 0 )
     
     call SlimvEndOfReplBuffer( 0 )
 endfunction
