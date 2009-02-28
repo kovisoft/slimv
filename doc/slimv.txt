@@ -596,7 +596,6 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
   (like IDLE).
 - Sometimes a Python exception happens after a Ctrl-C followed by an EOF
   (Ctrl-Z or Ctrl-D).
-- The Lisp startup text is not displayed in the Vim buffer.
 
 ===============================================================================
 TODO                                                               *slimv-todo*
