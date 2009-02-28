@@ -59,7 +59,7 @@ CUSTOMIZATION                                             *slimv-customization*
 -------------------------------------------------------------------------------
                                                                 *slimv_options*
 
-The list below contains an alphabetical list of Slimv options.
+The list below contains an alphabetical collection of Slimv options.
 Below that list follows the detailed explanation on each option.
 
 |g:slimv_client|             The whole OS command to start the Slimv client.
@@ -99,7 +99,7 @@ Below that list follows the detailed explanation on each option.
                              to finish. Zero means inifinity.
 
 
-Note: Most options below require to restart the Vim session when modified.
+Note: Most options require to restart the Vim session when modified.
 
 Slimv tries to autodetect the Python and Lisp installation directories,
 however the algorithm is not very sophisticated.
@@ -460,7 +460,7 @@ Other areas of the REPL buffer can be used to eval Lisp forms, just like
 from the .lisp source code. So it is possible to move the cursor inside a form
 that was previously eval-ed, make some changes, then eval it again.
 Please note, that after evaluation the REPL buffer is refreshed, so the
-changes made to the form are restored at that point, but the changed form
+changes made to the form are restored at that location, but the changed form
 will be evaluated at the end of the REPL buffer.
 
 Another modified functionality is the command line history, which can be
@@ -494,7 +494,6 @@ While waiting for REPL output:
                    buffer. <C-C> does not seem to work inside Vim.
 
     <ESC>          Stops waiting for REPL output, returns to regular Vim mode.
-
 
 
 ===============================================================================
@@ -596,6 +595,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
   (like IDLE).
 - Sometimes a Python exception happens after a Ctrl-C followed by an EOF
   (Ctrl-Z or Ctrl-D).
+- REPL buffer refresh on Vim focus gain works only in gvim, not in console vim.
+- REPL buffer refresh sometimes skipped first time after the server Lisp window
+  was just opened.
+- Interruption (Ctrl+C or Ctrl+X) does not work with all Lisp implementations.
 
 ===============================================================================
 TODO                                                               *slimv-todo*
