@@ -153,6 +153,7 @@ class repl_buffer:
 
         self.output   = output_pipe
         self.filename = ''
+        self.buffer   = ''
         self.sema     = BoundedSemaphore()
                             # Semaphore to synchronize access to the global display queue
 
@@ -179,12 +180,20 @@ class repl_buffer:
                     file = open( self.filename, 'at' )
                     try:
                         #file.write( text )
+                        if self.buffer != '':
+                            # There is output pending
+                            os.write(file.fileno(), self.buffer )
+                            self.buffer = ''
                         os.write(file.fileno(), text )
                     finally:
                         file.close()
                     tries = 0
                 except:
                     tries = tries - 1
+        elif len( self.buffer ) < 2000:
+            # No filename supplied, collect output info a buffer until filename is given
+            # We collect only some bytes, then probably no filename will be given at all
+            self.buffer = self.buffer + text
         self.sema.release()
 
 
