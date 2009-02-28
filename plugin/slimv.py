@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.2.0
-# Last Change:  26 Feb 2009
+# Last Change:  28 Feb 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -236,14 +236,18 @@ class socket_listener( Thread ):
                     if len(received) >= 7 and received[0:7] == 'SLIMV::':
                         command = received[7:]
                         if len(command) >= 9 and command[0:9] == 'INTERRUPT':
-                            if mswindows:
-                                import win32api
-                                #TODO: handle if win32api not found
-                                CTRL_C_EVENT = 0
-                                win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
-                            else:
-                                import signal
-                                os.kill( self.pid, signal.SIGINT )
+                            try:
+                                if mswindows:
+                                    import win32api
+                                    CTRL_C_EVENT = 0
+                                    win32api.GenerateConsoleCtrlEvent( CTRL_C_EVENT, 0 )
+                                else:
+                                    import signal
+                                    os.kill( self.pid, signal.SIGINT )
+                            except:
+                                # OK, at least we tried
+                                # Go on without interruption
+                                pass
                         if len(command) >= 8 and command[0:8] == 'OUTPUT::':
                             output_filename = command[8:]
                             self.buffer.setfile( output_filename )
