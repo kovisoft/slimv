@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.2.0
-" Last Change:  26 Feb 2009
+" Last Change:  28 Feb 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -397,7 +397,6 @@ function! SlimvEndOfReplBuffer( markit )
 	return
     endif
     normal G$
-    "startinsert!
     if a:markit
         " Remember the end of the buffer: user may enter commands here
         " Also remember the prompt, because the user may overwrite it
@@ -423,7 +422,6 @@ function! SlimvRefreshReplBuffer()
         execute "silent edit! " . s:repl_name
     endtry
     "TODO: use :read instead and keep only the delta in the readout file
-"    setlocal endofline
     if &endofline == 1
         " Handle the situation when the last line is an empty line in REPL
         " but Vim rejects to handle it as a separate line
@@ -448,7 +446,7 @@ function! SlimvRefreshWaitReplBuffer()
         "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
         if getchar(1)
             let c = getchar(0)
-            if c == 2 || c == 3 || c == 24 || c == 25
+            if c == 24
                 " Ctrl+B or Ctrl+C or Ctrl+X or Ctrl+Y pressed
                 call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
                 let wait = g:slimv_repl_wait * 10
@@ -461,6 +459,7 @@ function! SlimvRefreshWaitReplBuffer()
         endif
         redraw
         let lastline = line("$")
+        "TODO: customize the delay
         sleep 100m
         call SlimvRefreshReplBuffer()
         let wait = wait - 1
@@ -511,15 +510,12 @@ function! SlimvOpenReplBuffer()
     endif
 
     " This buffer will not have an associated file
-"    set buftype=nofile
-"    set buftype=nowrite
-"    setlocal autoread
-"    setlocal noeol
-"    setlocal eol
     inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvHandleCR()<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
+    noremap  <buffer> <silent> <C-X> :call SlimvHandleInterrupt()<CR>
+    inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt()<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
 
@@ -704,6 +700,12 @@ function! SlimvHandleDown()
             call SlimvSetCommandLine( "" )
         endif
     endif
+endfunction
+
+" Handle insert mode 'Down' keypress in the REPL buffer
+function! SlimvHandleInterrupt()
+    call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+    call SlimvRefreshWaitReplBuffer()
 endfunction
 
 " Start and connect slimv server
