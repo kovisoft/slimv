@@ -339,7 +339,7 @@ def server():
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
     sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
     time.sleep(0.5)             # wait for Lisp to start
-    sys.stdout.write( ";;; Slimv connection established" + newline )
+    #sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
     while not terminate:
