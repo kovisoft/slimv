@@ -345,10 +345,6 @@ The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
 
     ,,  Slimv Menu
 
-    ,S  Connect to Server
-    ,z  Refresh REPL Buffer
-    ,Z  Immediate Refresh REPL
-
     ,d  Eval Defun
     ,e  Eval Last Expression
     ,E  Pprint Eval Last Expression
@@ -375,15 +371,14 @@ The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
     ,s  Describe Symbol
     ,a  Apropos
 
+    ,S  Connect to Server
+    ,z  Refresh REPL Buffer
+    ,Z  Refresh REPL Now
+
 There is another easy to remember built in keybinding set
 (g:slimv_keybindings=2):
  
     ,,  Slimv Menu
-
-    REPL commands:
-    ,cs  Connect to Server
-    ,rw  Refresh REPL Buffer
-    ,rr  Immediate Refresh REPL
 
     Evaluation commands:
     ,ed  Eval Defun
@@ -415,6 +410,11 @@ There is another easy to remember built in keybinding set
     Documentation commands:
     ,ds  Describe Symbol
     ,da  Apropos
+
+    REPL commands:
+    ,rc  Connect to Server
+    ,rr  Refresh REPL Buffer
+    ,rn  Refresh REPL Now
 
 
 ===============================================================================
