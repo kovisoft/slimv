@@ -566,15 +566,16 @@ function! SlimvSend( args, open_buffer )
         call SlimvOpenReplBuffer()
     endif
 
+    " Build a temporary file from the form to be evaluated
+    let ar = []
+    let i = 0
+    while i < len( a:args )
+        call extend( ar, split( a:args[i], '\n' ) )
+        let i = i + 1
+    endwhile
+
     let tmp = tempname()
     try
-        " Build a temporary file from the form to be evaluated
-        let ar = []
-        let i = 0
-        while i < len( a:args )
-            call extend( ar, split( a:args[i], '\n' ) )
-            let i = i + 1
-        endwhile
         call SlimvLog( 2, a:args )
         call writefile( ar, tmp )
 
@@ -584,17 +585,13 @@ function! SlimvSend( args, open_buffer )
         else
             execute '!' . g:slimv_client . ' -f ' . tmp
         endif
-
-        if a:open_buffer
-            call SlimvRefreshReplBuffer()
-        endif
     finally
         call delete(tmp)
     endtry
 
-"    if a:open_buffer
-"        call SlimvEndOfReplBuffer( 0 )
-"    endif
+    if a:open_buffer
+        call SlimvRefreshReplBuffer()
+    endif
 endfunction
 
 " Eval arguments in Lisp REPL
@@ -709,9 +706,9 @@ function! SlimvHandleInterrupt()
 endfunction
 
 " Start and connect slimv server
-" This is a quite dummy function that just evaluates an empty string
+" This is a quite dummy function that just evaluates a comment
 function! SlimvConnectServer()
-    call SlimvEval( [''] )
+    call SlimvEval( [';;; Slimv client connected successfully'] )
 endfunction
 
 " Refresh REPL buffer continuously
