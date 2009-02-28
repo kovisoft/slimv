@@ -1,6 +1,8 @@
 Description
 Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to Lisp is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
+Slimv can also open a Lisp REPL buffer inside Vim.
+
 Here follows a list of Slimv commands, for a more complete description with keybindings see the included documentation.
 
 Evaluation commands:
@@ -41,13 +43,17 @@ For more information see the documentation coupled with the script.
 Installation details
 Extract the zip archive into your vimfiles or runtime directory. The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
 
-Slimv works on Windows and on Linux. The script requires
+Slimv works on Windows and on Linux. The script requires the following programs installed on your system:
     *  Lisp (any Common Lisp should be OK)
     *  Python 2.4 or later
-installed on your system.
+    *  Pywin32 is recommended on Windows
 Slimv tries to autodetect your Lisp and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
     let g:slimv_python = 'C:/MyPythonDir/python.exe'
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
+
+Linux users having terminal emulator other than xterm should define the complete command to run the Slimv client + server. Here follows an example with konsole and clisp:
+
+let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"' 
 
 See the included documentation for more complete installation and customization instructions.
 
@@ -57,6 +63,8 @@ See the included documentation for more complete installation and customization 
 Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 
 ---------------------------------------------------------------------------------------------
+
+0.2.0: Major update: Lisp REPL inside a Vim buffer.
 
 0.1.4: Corrected the delayed display of last line in REPL window on Linux.
        Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt a running program.
