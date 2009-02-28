@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 26 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 28 Feb 2009
 
 Slimv                                                                  *slimv*
                                Version 0.2.0
@@ -11,7 +11,6 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-customization|        Customization
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
-|slimv-functions|            Function Reference
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
 |slimv-issues|               Known Issues
@@ -296,6 +295,8 @@ The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
     ,,  Slimv Menu
 
     ,S  Connect to Server
+    ,z  Refresh REPL Buffer
+    ,Z  Immediate Refresh REPL
 
     ,d  Eval Defun
     ,e  Eval Last Expression
@@ -328,8 +329,10 @@ There is another easy to remember built in keybinding set
  
     ,,  Slimv Menu
 
-    Connection commands:
+    REPL commands:
     ,cs  Connect to Server
+    ,rw  Refresh REPL Buffer
+    ,rr  Immediate Refresh REPL
 
     Evaluation commands:
     ,ed  Eval Defun
@@ -388,12 +391,48 @@ a new one from Vim the same way as before.
 ===============================================================================
 LISP REPL                                                          *slimv-repl*
 
+The Lisp REPL is displayed inside a Vim buffer. The Lisp REPL buffer is opened
+when the Slimv server is started.
+The Lisp REPL buffer is a more or less regular Vim buffer, all Vim keybindings
+and commands can be used here as well.
+There are however some subtle differences. The main idea is that the last line
+in the REPL buffer is a "command line", just like in any REPL. The command
+line usually begins with a prompt, like "[1] > ". The user types the command
+after the prompt. Then Enter (<CR>) is pressed, the contents of the command
+line (which can actually be multiple lines, when pasted) is sent to the Lisp
+REPL for evaluation. It is not allowed to backspace before the end of the
+command line prompt.
+Another modified functionality is the command line history, which can be
+activated by pressing <Up> or <Down> in the command line.
 
+The keys with modified meanings in the Lisp REPL buffer are listed below:
 
+Insert Mode:
 
-===============================================================================
-FUNCTIONS                                                     *slimv-functions*
+    <CR>           Sends the command typed in the last line to the Lisp REPL
+                   for evaluation.
 
+    <BS>           In the last line it deletes characters only until the
+                   end of the Lisp prompt reached.
+
+    <Up>           Brings up the previous command typed and sent to the Lisp
+                   REPL.
+
+    <Down>         Brings up the next command typed and sent to the Lisp REPL.
+
+    <C-X><C-X>     Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
+
+Normal Mode:
+
+    <C-X>          Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
+
+While waiting for REPL output:
+
+    <C-X>          Sends a Ctrl+C (SIGINT) signal to the Lisp REPL. Useful for
+                   interrupting a runaway Lisp program from the Lisp REPL
+                   buffer. <C-C> does not seem to work inside Vim.
+
+    <ESC>          Stops waiting for REPL output, returns to regular Vim mode.
 
 
 
@@ -463,7 +502,7 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.2.0  - Major update: Lisp REPL added to a Vim buffer.
+0.2.0  - Major update: Lisp REPL displayed in a Vim buffer.
 
 0.1.4  - Corrected the delayed display of last line in REPL window on Linux.
        - Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt
@@ -492,6 +531,8 @@ KNOWN ISSUES                                                     *slimv-issues*
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
   (like IDLE).
+- Sometimes a Python exception happens after a Ctrl-C followed by a Ctrl-Z
+  or Ctrl-D.
 
 ===============================================================================
 TODO                                                               *slimv-todo*
@@ -503,12 +544,11 @@ TODO                                                               *slimv-todo*
 - Add Cross Reference functions.
 - Add Profile functions.
 - Handle specific REPL output in Vim (like compilation notes).
-- Use a Vim buffer for the REPL.
-- Use asynchronous update for the REPL buffer inside Vim.
-  This does not look possible with the current state of Vim,
-  or at least I can not see any easy way to do it.
-- Interrupt running Lisp programs from Vim by passing Ctrl+C to the REPL.
+- Implement an own main loop in Vim for the REPL buffer, poll REPL output
+  regularly, handle all Vim keypresses and commands inside the main loop.
 - Rewrite client/server in Lisp, so that no Python would be needed.
+- Or put the (Python) client part back into the .vim script, rewrite only the
+  server part in Lisp.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
