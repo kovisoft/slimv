@@ -406,8 +406,8 @@ function! SlimvEndOfReplBuffer( markit )
     set nomodified
 endfunction
 
-" Reload the contents of the REPL buffer from the output file
-function! SlimvRefreshReplBuffer()
+" Reload the contents of the REPL buffer from the output file immediately
+function! SlimvRefreshReplBufferNow()
     if !g:slimv_repl_open
 	" User does not want to display REPL in Vim
 	return
@@ -430,8 +430,8 @@ function! SlimvRefreshReplBuffer()
     call SlimvEndOfReplBuffer( 1 )
 endfunction
 
-" Refresh REPL buffer for a while until no change is detected
-function! SlimvRefreshWaitReplBuffer()
+" Refresh REPL buffer continuously until no change is detected
+function! SlimvRefreshReplBuffer()
     if !g:slimv_repl_open
 	" User does not want to display REPL in Vim
 	return
@@ -440,7 +440,7 @@ function! SlimvRefreshWaitReplBuffer()
     " Refresh REPL buffer for a while until no change is detected
     let lastline = line("$")
     sleep 500m
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshReplBufferNow()
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
     while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
         "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
@@ -461,7 +461,7 @@ function! SlimvRefreshWaitReplBuffer()
         let lastline = line("$")
         "TODO: customize the delay
         sleep 100m
-        call SlimvRefreshReplBuffer()
+        call SlimvRefreshReplBufferNow()
         let wait = wait - 1
     endwhile
 
@@ -516,8 +516,8 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
     noremap  <buffer> <silent> <C-X> :call SlimvHandleInterrupt()<CR>
     inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt()<CR>
-    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
-    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
+    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
+    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
 
     redraw
 
@@ -586,7 +586,7 @@ function! SlimvSend( args, open_buffer )
         endif
 
         if a:open_buffer
-            call SlimvRefreshWaitReplBuffer()
+            call SlimvRefreshReplBuffer()
         endif
     finally
         call delete(tmp)
@@ -705,13 +705,39 @@ endfunction
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-    call SlimvRefreshWaitReplBuffer()
+    call SlimvRefreshReplBuffer()
 endfunction
 
 " Start and connect slimv server
-" This is a quite dummy function that just evaluates a comment
+" This is a quite dummy function that just evaluates an empty string
 function! SlimvConnectServer()
-    call SlimvEval([';;; Slimv client connected successfully'])
+    call SlimvEval( [''] )
+endfunction
+
+" Refresh REPL buffer continuously
+function! SlimvRefresh()
+    if bufnr( s:repl_name ) == -1
+        " REPL not opened, no need to refresh
+        return
+    endif
+    if bufnr( s:repl_name ) != bufnr( "%" )
+        " REPL is not the current window, activate it
+        call SlimvOpenReplBuffer()
+    endif
+    call SlimvRefreshReplBuffer()
+endfunction
+
+" Refresh REPL buffer continuously
+function! SlimvRefreshNow()
+    if bufnr( s:repl_name ) == -1
+        " REPL not opened, no need to refresh
+        return
+    endif
+    if bufnr( s:repl_name ) != bufnr( "%" )
+        " REPL is not the current window, activate it
+        call SlimvOpenReplBuffer()
+    endif
+    call SlimvRefreshReplBufferNow()
 endfunction
 
 " Get the last region (visual block)
@@ -948,10 +974,6 @@ endfunction
 if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
-    noremap <Leader>S  :call SlimvConnectServer()<CR>
-    noremap <Leader>Z  :call SlimvRefreshReplBuffer()<CR>
-    noremap <Leader>z  :call SlimvRefreshWaitReplBuffer()<CR>
-    
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
     noremap <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
@@ -978,14 +1000,13 @@ if g:slimv_keybindings == 1
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
 
+    noremap <Leader>S  :call SlimvConnectServer()<CR>
+    noremap <Leader>z  :call SlimvRefresh()<CR>
+    noremap <Leader>Z  :call SlimvRefreshNow()<CR>
+    
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
 
-    " Connection commands
-    noremap <Leader>cs  :call SlimvConnectServer()<CR>
-    noremap <Leader>rr  :call SlimvRefreshReplBuffer()<CR>
-    noremap <Leader>rw  :call SlimvRefreshWaitReplBuffer()<CR>
-    
     " Evaluation commands
     noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>ee  :<C-U>call SlimvEvalLastExp()<CR>
@@ -1017,6 +1038,11 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>da  :call SlimvApropos()<CR>
 
+    " REPL commands
+    noremap <Leader>rc  :call SlimvConnectServer()<CR>
+    noremap <Leader>rr  :call SlimvRefresh()<CR>
+    noremap <Leader>rn  :call SlimvRefreshNow()<CR>
+    
 endif
 
 " =====================================================================
@@ -1058,5 +1084,9 @@ if g:slimv_menu == 1
     
     menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
     menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
+    
+    menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
+    menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
+    menu &Slimv.&REPL.&Refresh-Now                     :call SlimvRefreshNow()<CR>
 endif
 
