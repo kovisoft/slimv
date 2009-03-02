@@ -227,7 +227,7 @@ Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 Directory path for the Lisp REPL buffer file. By default this is a directory
 for temporary files, something like /tmp/ on Linux or
 "C:\Documents and Settings\Username\Local Settings\Temp\" on Windows.
-The directory name must end with the pathname separator (/ or |).
+The directory name must end with the pathname separator (/ or \).
 See also |g:slimv_repl_file|.
 
                                                             *g:slimv_repl_file*
@@ -444,16 +444,16 @@ LISP REPL                                                          *slimv-repl*
 
 The Lisp REPL is displayed as a separate terminal window and also inside a
 Vim buffer. The Lisp REPL buffer is opened when the Slimv server is started.
-The Lisp REPL buffer is a more or less regular Vim buffer, all Vim keybindings
-and commands can be used here as well.
+The REPL buffer is a more or less regular Vim buffer, all Vim keybindings and
+commands can be used here as well.
 
 There are however some subtle differences. The main idea is that the last line
 in the REPL buffer is a "command line", just like in any REPL. The command
-line usually begins with a prompt, like "[1] > ". The user types the command
-after the prompt. When Enter (<CR>) is pressed, the contents of the command
-line (which can actually be multiple lines, when pasted) is sent to the Lisp
-REPL for evaluation. It is not allowed to backspace before the end of the
-command line prompt.
+line usually begins with a prompt, something like "[1] > ". The user types the
+command after the prompt in Insert mode. When Enter (<CR>) is pressed, the
+contents of the command line (which can actually be multiple lines, when
+pasted) is sent to the Lisp REPL for evaluation. It is not allowed to
+backspace before the end of the command line prompt.
 Please remember that this evaluation style is working only in Insert mode,
 in Normal mode the function of <CR> is left unchanged.
 Other areas of the REPL buffer can be used to eval Lisp forms, just like
@@ -463,8 +463,8 @@ Please note, that after evaluation the REPL buffer is refreshed, so the
 changes made to the form are restored at that location, but the changed form
 will be evaluated at the end of the REPL buffer.
 
-Another modified functionality is the command line history, which can be
-activated by pressing <Up> or <Down> in the command line.
+Another difference is the command line history, which can be activated by
+pressing <Up> or <Down> in the command line (also only in Insert mode).
 
 The keys with modified meanings in the Lisp REPL buffer are listed below:
 
@@ -473,8 +473,8 @@ Insert Mode:
     <CR>           Sends the command typed in the last line to the Lisp REPL
                    for evaluation.
 
-    <BS>           In the last line it deletes characters only until the
-                   end of the Lisp prompt reached.
+    <BS>           In the last line it deletes characters to the left only
+                   until the end of the Lisp prompt reached.
 
     <Up>           Brings up the previous command typed and sent to the Lisp
                    REPL.
@@ -491,9 +491,12 @@ While waiting for REPL output:
 
     <C-X>          Sends a Ctrl+C (SIGINT) signal to the Lisp REPL. Useful for
                    interrupting a runaway Lisp program from the Lisp REPL
-                   buffer. <C-C> does not seem to work inside Vim.
+                   buffer. <C-C> key combination does not seem to work inside
+                   Vim, that is why <C-X> has been choosen.
 
     <ESC>          Stops waiting for REPL output, returns to regular Vim mode.
+                   It is possible to return to the continuous refresh mode
+                   by selecting the "Refresh REPL Buffer" command.
 
 
 ===============================================================================
@@ -530,7 +533,7 @@ FAQ                                                                 *slimv-faq*
      So the dataflow is like this:
      Vim -> Vim plugin -> Slimv client -> Slimv server -> Lisp REPL
      The plugin resides in 'slimv.vim', the client and the server both
-     reside in 'slimv.py'.
+     located in 'slimv.py'.
 
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: There are two possible reasons:
@@ -599,6 +602,7 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - REPL buffer refresh sometimes skipped first time after the server Lisp window
   was just opened.
 - Interruption (Ctrl+C or Ctrl+X) does not work with all Lisp implementations.
+  For example SBCL exits on Windows when receiving Ctrl+C.
 
 ===============================================================================
 TODO                                                               *slimv-todo*
