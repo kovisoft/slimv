@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 28 Feb 2009
+*slimv.txt*                    Slimv                 Last Change: 02 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.2.0
+                               Version 0.2.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -11,6 +11,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-customization|        Customization
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
+|slimv-clojure|              Clojure support
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
 |slimv-issues|               Known Issues
@@ -65,6 +66,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_client|             The whole OS command to start the Slimv client.
                              Used for advanced customization, like changing
                              the terminal emulator to use for the Lisp REPL.
+
+|g:slimv_clojure|            Nonzero means the Clojure dialect of Lisp is used.
 
 |g:slimv_debug|              Debug log level. Set zero for no debug messages.
 
@@ -124,6 +127,11 @@ Example:
 This is the installation path of the Lisp interpreter.
 Example:
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
+
+                                                              *g:slimv_clojure*
+Nonzero means the Clojure dialect of Lisp is used. |g:slimv_lisp| also needs
+to be defined to the command that starts the Clojure REPL.
+See |g:slimv-clojure| for details.
 
                                                                  *g:slimv_port*
 The default port used by Slimv is 5151. If this port is used by another
@@ -500,6 +508,18 @@ While waiting for REPL output:
 
 
 ===============================================================================
+CLOJURE SUPPORT                                                 *slimv-clojure*
+
+A basic Clojure support has been introduced in the latest Slimv version.
+In order to launch the Clojure REPL the variable |g:slimv_lisp| must be
+properly set up. Here follows an example, which starts c:\Clojure\clojure.jar
+on Windows. Please note that backslashes must be escaped and the whole
+expression needs to be enclosed in double quotes.
+
+  let g:slimv_lisp = '"java -cp c:\\Clojure\\clojure.jar clojure.lang.Repl"'
+
+
+===============================================================================
 FAQ                                                                 *slimv-faq*
 
 - Q: Why is this plugin called 'Slimv'?
@@ -564,6 +584,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.2.1  - Added basic Clojure support.
+       - Corrected macroexpand problems.
 
 0.2.0  - Major update: Lisp REPL displayed in a Vim buffer.
 
