@@ -439,6 +439,11 @@ function! SlimvRefreshReplBufferNow()
 	return
     endif
 
+    if bufnr( s:repl_name ) != bufnr( "%" )
+        " REPL is not the actual buffer
+        return
+    endif
+
     "TODO: on error do this in a loop a couple of times
     try
         execute "silent edit! " . s:repl_name
@@ -544,6 +549,7 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt()<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
+    execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
 
     redraw
 
