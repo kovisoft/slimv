@@ -67,11 +67,12 @@ Below that list follows the detailed explanation on each option.
                              Used for advanced customization, like changing
                              the terminal emulator to use for the Lisp REPL.
 
-|g:slimv_clojure|            Nonzero means the Clojure dialect of Lisp is used.
-
 |g:slimv_debug|              Debug log level. Set zero for no debug messages.
 
 |g:slimv_debug_client|       Display the command to start client.
+
+|g:slimv_filetype|           Filetype for Slimv. Not necessarily the same as
+                             the Vim filetype.
 
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
                              1 = set #1, 2 = set #2, other = no keybindings
@@ -128,9 +129,14 @@ This is the installation path of the Lisp interpreter.
 Example:
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
 
-                                                              *g:slimv_clojure*
-Nonzero means the Clojure dialect of Lisp is used. |g:slimv_lisp| also needs
-to be defined to the command that starts the Clojure REPL.
+                                                             *g:slimv_filetype*
+Defines the filetype for Slimv. This is not necessarily the same as the Vim
+filetype. It is possible that one is using the 'lisp' Vim filetype for Clojure
+or Scheme files for syntax and indenting, but in Slimv the Lisp dialect should
+be explicitly set to the language used.
+Possible values are: 'lisp' or 'clojure'.
+When 'clojure' is used, |g:slimv_lisp| also needs to be defined to the command
+that starts the Clojure REPL.
 See |g:slimv-clojure| for details.
 
                                                                  *g:slimv_port*
@@ -512,11 +518,28 @@ CLOJURE SUPPORT                                                 *slimv-clojure*
 
 A basic Clojure support has been introduced in the latest Slimv version.
 In order to launch the Clojure REPL the variable |g:slimv_lisp| must be
-properly set up. Here follows an example, which starts c:\Clojure\clojure.jar
-on Windows. Please note that backslashes must be escaped and the whole
-expression needs to be enclosed in double quotes.
+properly set up.
+The simplest definition is something like this, which assumes that the
+directory for clojure.jar is in the PATH. Please note that the whole expression
+needs to be enclosed in double quotes, as it will be passed to the server in
+one single command line argument:
+
+  let g:slimv_lisp = '"java -cp clojure.jar clojure.lang.Repl"'
+
+Here follows an example, which starts c:\Clojure\clojure.jar on Windows.
+Remember to escape the backslashes:
 
   let g:slimv_lisp = '"java -cp c:\\Clojure\\clojure.jar clojure.lang.Repl"'
+
+If Slimv finds the string 'clojure' in |g:slimv_lisp|, then |g:slimv_filetype|
+is automatically set to 'clojure'. If it fails to do so, you need to set
+|g:slimv_filetype| explicitly.
+
+I strongly recommend to download and install Vim plugin(s) specifically made
+for Clojure. Another option is to use the 'lisp' filetype for 'Clojure' files,
+which can be set up this way:
+
+  au BufNewFile,BufRead *.clj setf lisp
 
 
 ===============================================================================
@@ -587,6 +610,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.2.1  - Added basic Clojure support.
        - Corrected macroexpand problems.
+       - Fixed a REPL buffer refresh bug.
 
 0.2.0  - Major update: Lisp REPL displayed in a Vim buffer.
 
@@ -626,6 +650,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
   was just opened.
 - Interruption (Ctrl+C or Ctrl+X) does not work with all Lisp implementations.
   For example SBCL exits on Windows when receiving Ctrl+C.
+  It does not work in Clojure.
+- There are some functions that are not compatible or simply not working for
+  Clojure.
+
 
 ===============================================================================
 TODO                                                               *slimv-todo*
