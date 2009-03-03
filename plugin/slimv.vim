@@ -209,7 +209,7 @@ function! SlimvLogGlobals()
     call add( info,  printf( 'g:slimv_port          = %d',    g:slimv_port ) )
     call add( info,  printf( 'g:slimv_python        = %s',    g:slimv_python ) )
     call add( info,  printf( 'g:slimv_lisp          = %s',    g:slimv_lisp ) )
-    call add( info,  printf( 'g:slimv_clojure       = %s',    g:slimv_clojure ) )
+    call add( info,  printf( 'g:slimv_filetype      = %s',    g:slimv_filetype ) )
     call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
     call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
     call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
@@ -260,11 +260,12 @@ if !exists( 'g:slimv_lisp' )
 endif
 
 " Try to find out if the Lisp dialect used is actually Clojure
-if !exists( 'g:slimv_clojure' )
+if !exists( 'g:slimv_filetype' )
     if match( g:slimv_lisp, 'clojure' ) >= 0
-        let g:slimv_clojure = 1
+        let g:slimv_filetype = 'clojure'
     else
-        let g:slimv_clojure = 0
+        " &ft cannot be used here, we don't have a filetype at startup
+        let g:slimv_filetype = 'lisp'
     endif
 endif
 
@@ -318,7 +319,7 @@ endif
 " =====================================================================
 
 if !exists( 'g:slimv_template_pprint' )
-    if g:slimv_clojure
+    if g:slimv_filetype == 'clojure'
         let g:slimv_template_pprint = '(doseq [o %1] (println o))'
     else
         let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
@@ -326,7 +327,11 @@ if !exists( 'g:slimv_template_pprint' )
 endif
 
 if !exists( 'g:slimv_template_undefine' )
-    let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
+    if g:slimv_filetype == 'clojure'
+        let g:slimv_template_undefine = "(ns-unmap 'user '" . "%1)"
+    else
+        let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
+    endif
 endif
 
 if !exists( 'g:slimv_template_describe' )
@@ -356,11 +361,15 @@ if !exists( 'g:slimv_template_disassemble' )
 endif
 
 if !exists( 'g:slimv_template_inspect' )
-    let g:slimv_template_inspect = '(inspect %1)'
+    if g:slimv_filetype == 'clojure'
+        let g:slimv_template_inspect = "(print-doc #'" . "%1)"
+    else
+        let g:slimv_template_inspect = '(inspect %1)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_apropos' )
-    if g:slimv_clojure
+    if g:slimv_filetype == 'clojure'
         let g:slimv_template_apropos = '(find-doc "%1")'
     else
         let g:slimv_template_apropos = '(apropos "%1")'
@@ -368,7 +377,7 @@ if !exists( 'g:slimv_template_apropos' )
 endif
 
 if !exists( 'g:slimv_template_macroexpand' )
-    if g:slimv_clojure
+    if g:slimv_filetype == 'clojure'
         let g:slimv_template_macroexpand = '%1'
     else
         let g:slimv_template_macroexpand = '(pprint %1)'
@@ -376,7 +385,7 @@ if !exists( 'g:slimv_template_macroexpand' )
 endif
 
 if !exists( 'g:slimv_template_macroexpand_all' )
-    if g:slimv_clojure
+    if g:slimv_filetype == 'clojure'
         let g:slimv_template_macroexpand_all = '%1'
     else
         let g:slimv_template_macroexpand_all = '(pprint %1)'
@@ -887,14 +896,14 @@ function! SlimvMacroexpandGeneral( command )
         let m = "(" . a:command . " '" . SlimvGetSelection() . ")"
     else
         " The form is a 'defmacro', so do a macroexpand from the macro parameters
-        if g:slimv_clojure
+        if g:slimv_filetype == 'clojure'
             normal vt[%"sy
         else
             normal vt(%"sy
         endif
         let m = SlimvGetSelection() . '))'
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
-        if g:slimv_clojure
+        if g:slimv_filetype == 'clojure'
             " Remove brackets from the parameter list
             let m = substitute( m, "\\[\\(.*\\)\\]", "\\1", 'g' )
         endif
