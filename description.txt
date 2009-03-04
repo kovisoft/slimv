@@ -1,7 +1,9 @@
+Lisp and Clojure REPL inside Vim: a script that tries to mimic SLIME.
+
 Description
 Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to Lisp is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
-The Lisp REPL buffer can also be opened inside Vim as a Vim buffer. The script also has a basic support for Clojure REPL.
+The Lisp REPL buffer can also be opened inside Vim as a Vim buffer. The script has a basic support for Clojure REPL.
 
 Here follows a list of Slimv commands, for a more complete description with keybindings see the included documentation.
 
