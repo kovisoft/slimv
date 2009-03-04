@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 04 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.2.1
@@ -72,7 +72,7 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_debug_client|       Display the command to start client.
 
 |g:slimv_filetype|           Filetype for Slimv. Not necessarily the same as
-                             the Vim filetype.
+                             the Vim filetype. Defaults to 'lisp'.
 
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
                              1 = set #1, 2 = set #2, other = no keybindings
@@ -131,9 +131,10 @@ Example:
 
                                                              *g:slimv_filetype*
 Defines the filetype for Slimv. This is not necessarily the same as the Vim
-filetype. It is possible that one is using the 'lisp' Vim filetype for Clojure
+filetype. It is possible that one is using the 'lisp' Vim filetype with Clojure
 or Scheme files for syntax and indenting, but in Slimv the Lisp dialect should
 be explicitly set to the language used.
+Slimv tries to autodetect this value from the Vim filetype and |g:slimv_lisp|.
 Possible values are: 'lisp' or 'clojure'.
 When 'clojure' is used, |g:slimv_lisp| also needs to be defined to the command
 that starts the Clojure REPL.
@@ -595,6 +596,12 @@ FAQ                                                                 *slimv-faq*
      scripting. And I'm not a Python expert either, however (at the moment)
      I have more experience with Python than with Lisp.
 
+- Q: What about Clojure?
+- A: I have even less experience with Clojure than with Lisp.
+     But it looks like the Slimv functions can be easily ported for Clojure,
+     and as there are not many (yet) Vim scripts written for Clojure, I gave
+     it a try.
+
 - Q: Why using Python for the client/server code? Why not Lisp?
 - A: This is for historical reasons and may change in the future.
      Preliminary versions used Vim's built-in Python support.
@@ -609,7 +616,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.2.1  - Added basic Clojure support.
-       - Corrected macroexpand problems.
+       - Corrected some macroexpand problems.
        - Fixed a REPL buffer refresh bug.
 
 0.2.0  - Major update: Lisp REPL displayed in a Vim buffer.
