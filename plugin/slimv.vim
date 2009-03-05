@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.2.1
-" Last Change:  04 Mar 2009
+" Version:      0.2.2
+" Last Change:  05 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -319,7 +319,7 @@ endif
 
 " How many seconds to wait for the REPL output to finish?
 if !exists( 'g:slimv_repl_wait' )
-    let g:slimv_repl_wait = 10
+    let g:slimv_repl_wait = 0
 endif
 
 " Build client command (if not given in vimrc)
@@ -494,6 +494,10 @@ function! SlimvRefreshReplBufferNow()
     call SlimvEndOfReplBuffer( 1 )
 endfunction
 
+function! SlimvInterrupt()
+    call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+endfunction
+
 " Refresh REPL buffer continuously until no change is detected
 function! SlimvRefreshReplBuffer()
     if !g:slimv_repl_open
@@ -503,24 +507,29 @@ function! SlimvRefreshReplBuffer()
 
     " Refresh REPL buffer for a while until no change is detected
     let lastline = line("$")
-    sleep 500m
+    sleep 200m
+    noremap <C-X> :call slimvInterrupt()<CR>
+    inoremap <C-X><C-X> <C-O>:call slimvInterrupt()<CR>
     call SlimvRefreshReplBufferNow()
+    if mode() == 'i'
+        echon '-- INSERT --'
+    endif
+    if mode() == 'n'
+        echon '-- NORMAL --'
+    endif
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
+"    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
+    while wait > 0 || g:slimv_repl_wait == 0
         "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
         if getchar(1)
-            let c = getchar(0)
-            if c == 24
-                " Ctrl+B or Ctrl+C or Ctrl+X or Ctrl+Y pressed
-                call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-                let wait = g:slimv_repl_wait * 10
-            endif
-            if c == 27
-                " ESC pressed
-                let wait = 0
-                break
-            endif
+	    break
+	endif
+        if mode() == 'i'
+            let m = '/\%' . col('.')+1 . 'c\%' . line('.') . 'l/'
+        else
+            let m = '/\%' . col('.')   . 'c\%' . line('.') . 'l/'
         endif
+        silent! execute 'match Cursor ' . m
         redraw
         let lastline = line("$")
         "TODO: customize the delay
@@ -529,7 +538,12 @@ function! SlimvRefreshReplBuffer()
         let wait = wait - 1
     endwhile
 
-    if wait == 0
+    silent! execute 'match None ' . m
+    echon '            '
+
+"    if wait == 0
+"    if line("$") > lastline
+    if 0
         " Time is up and Lisp REPL still did not finish output
         " Inform user about this and about the non-blocking and blocking refresh keys
         if g:slimv_keybindings == 1
@@ -921,17 +935,12 @@ function! SlimvMacroexpandGeneral( command )
     else
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
         if SlimvGetFiletype() == 'clojure'
-            normal vt[%"sy
+	    " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
+            normal vt[%ht]"sy
         else
-            normal vt(%"sy
+            normal vt(])"sy
         endif
-        let m = SlimvGetSelection()
-        if m[ len(m) - 1 ] == ']' || m[ len(m) - 1 ] == ')'
-            " Some Vim configs include the trailing ']' here, others don't
-            " TODO: check out why
-            let m = strpart( m, 0, len(m) - 1 )
-        endif
-        let m = m . '))'
+        let m = SlimvGetSelection() . '))'
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
         if SlimvGetFiletype() == 'clojure'
             " Remove opening bracket from the parameter list
