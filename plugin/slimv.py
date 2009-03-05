@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.2.1
-# Last Change:  04 Mar 2009
+# Version:      0.2.2
+# Last Change:  05 Mar 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -158,14 +158,26 @@ class repl_buffer:
                             # Semaphore to synchronize access to the global display queue
 
     def setfile( self, filename ):
+        """Set output filename
+        """
         self.sema.acquire()
         self.filename = filename
         self.sema.release()
 
-    def write( self, text, fileonly=False ):
-        """Write text into the global display queue buffer.
+    def writebegin( self ):
+        """Begin the writing process. The process is protected by a semaphore.
         """
         self.sema.acquire()
+
+    def writeend( self ):
+        """Finish the writing process. Release semaphore
+        """
+        self.sema.release()
+
+    def write_nolock( self, text, fileonly=False ):
+        """Write text into the global display queue buffer.
+           The writing process is not protected.
+        """
         if not fileonly:
             try:
                 # Write all lines to the display
@@ -194,7 +206,14 @@ class repl_buffer:
             # No filename supplied, collect output info a buffer until filename is given
             # We collect only some bytes, then probably no filename will be given at all
             self.buffer = self.buffer + text
-        self.sema.release()
+
+    def write( self, text, fileonly=False ):
+        """Write text into the global display queue buffer.
+           The writing process is protected by a semaphome.
+        """
+        self.writebegin()
+        self.write_nolock( text, fileonly )
+        self.writeend()
 
 
 class socket_listener( Thread ):
@@ -263,8 +282,10 @@ class socket_listener( Thread ):
                     else:
                         # Fork here: write message to the stdin of REPL
                         # and also write it to the display (display queue buffer)
-                        self.inp.write   ( received + newline )
-                        self.buffer.write( received + newline )
+                        self.buffer.writebegin()
+                        self.inp.write( received + newline )
+                        self.buffer.write_nolock( received + newline )
+                        self.buffer.writeend()
 
             conn.close()
 
