@@ -19,6 +19,7 @@ import getopt
 import time
 import shlex
 import socket
+import traceback
 from subprocess import Popen, PIPE, STDOUT
 from threading import Thread, BoundedSemaphore
 
@@ -115,9 +116,6 @@ def send_line( server, line ):
     server.send( lstr )     # send message length first
     server.send( line )     # then the message itself
 
-    time.sleep(0.01)        # give a little chance to receive some output from the REPL before the next query
-                            #TODO: synchronize it correctly
-
 
 def client_file( input_filename ):
     """Main client routine - input file version:
@@ -132,8 +130,10 @@ def client_file( input_filename ):
         file = open( input_filename, 'rt' )
         try:
             # Send contents of the file to the server
+            lines = ''
             for line in file:
-                send_line( s, line.rstrip( '\n' ) )
+                lines = lines + line
+            send_line( s, lines )
         finally:
             file.close()
     except:
@@ -201,6 +201,7 @@ class repl_buffer:
                         file.close()
                     tries = 0
                 except:
+                    #traceback.print_exc()
                     tries = tries - 1
         elif len( self.buffer ) < 2000:
             # No filename supplied, collect output info a buffer until filename is given
@@ -277,14 +278,16 @@ class socket_listener( Thread ):
                                 # Go on without interruption
                                 pass
                         if len(command) >= 8 and command[0:8] == 'OUTPUT::':
-                            output_filename = command[8:]
+                            output_filename = command[8:].rstrip( '\n' )
                             self.buffer.setfile( output_filename )
                     else:
                         # Fork here: write message to the stdin of REPL
                         # and also write it to the display (display queue buffer)
                         self.buffer.writebegin()
-                        self.inp.write( received + newline )
-                        self.buffer.write_nolock( received + newline )
+#                        self.buffer.write_nolock( received + newline )
+#                        self.inp.write( received + newline )
+                        self.buffer.write_nolock( received )
+                        self.inp.write( received )
                         self.buffer.writeend()
 
             conn.close()
