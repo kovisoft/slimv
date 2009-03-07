@@ -758,6 +758,10 @@ function! s:GetParenCount( lines )
                 endif
                 if a:lines[i][j] == ')' || a:lines[i][j] == ']'
                     let paren = paren - 1
+                    if paren < 0
+                        " Oops, too many closing parens in the middle
+                        return paren
+                    endif
                 endif
             endif
             let j = j + 1
