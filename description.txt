@@ -71,6 +71,8 @@ Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
 
+0.2.2: Fixed REPL input and output mix-up problems, evaluation performance enhancement, corrected some more macroexpand problems. 
+
 0.2.1: Added basic Clojure support, fixed some macroexpand and REPL refresh problems.
 
 0.2.0: Major update: Lisp REPL inside a Vim buffer.
