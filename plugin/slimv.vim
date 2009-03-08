@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.2.1
-" Last Change:  04 Mar 2009
+" Version:      0.2.2
+" Last Change:  08 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -443,6 +443,9 @@ let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file
 " Lisp prompt in the last line
 let s:prompt = ''
 
+" The current mode when REPL refresh was started
+let s:insertmode = 0
+
 
 " =====================================================================
 "  General utility functions
@@ -664,7 +667,7 @@ function! SlimvEval( args )
     call SlimvSend( a:args, g:slimv_repl_open )
 endfunction
 
-" Recall command from the command history at the marked position
+" Set command line after the prompt
 function! SlimvSetCommandLine( cmd )
     normal `s
     let line = getline( "." )
@@ -921,17 +924,12 @@ function! SlimvMacroexpandGeneral( command )
     else
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
         if SlimvGetFiletype() == 'clojure'
-            normal vt[%"sy
+	    " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
+            normal vt[%ht]"sy
         else
-            normal vt(%"sy
+            normal vt(])"sy
         endif
-        let m = SlimvGetSelection()
-        if m[ len(m) - 1 ] == ']' || m[ len(m) - 1 ] == ')'
-            " Some Vim configs include the trailing ']' here, others don't
-            " TODO: check out why
-            let m = strpart( m, 0, len(m) - 1 )
-        endif
-        let m = m . '))'
+        let m = SlimvGetSelection() . '))'
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
         if SlimvGetFiletype() == 'clojure'
             " Remove opening bracket from the parameter list
