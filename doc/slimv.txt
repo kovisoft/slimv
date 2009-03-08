@@ -615,8 +615,8 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.2.2  - Fixed REPL input and output mix-up problems
-       - Evaluation performance enhancement
+0.2.2  - Fixed REPL input and output mix-up problems.
+       - Evaluation performance enhancement.
        - Corrected some more macroexpand problems.
 
 0.2.1  - Added basic Clojure support.
