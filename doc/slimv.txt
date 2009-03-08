@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 04 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 08 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.2.1
+                               Version 0.2.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -27,7 +27,7 @@ This plugin is only available if 'compatible' is not set.
 INSTALLATION                                               *slimv-installation*
 
 Prerequisites:
-  - Lisp (any Common Lisp implementation should be OK) installed.
+  - Lisp (any Common Lisp implementation should be OK) or Clojure installed.
   - Python 2.4 or later installed.
   - The interrupt functionality needs the pywin32 extension on Windows.
 
@@ -614,6 +614,10 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.2.2  - Fixed REPL input and output mix-up problems
+       - Evaluation performance enhancement
+       - Corrected some more macroexpand problems.
 
 0.2.1  - Added basic Clojure support.
        - Corrected some macroexpand problems.
