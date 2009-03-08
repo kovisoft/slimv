@@ -1,7 +1,7 @@
 *slimv.txt*                    Slimv                 Last Change: 04 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.2.1
+                               Version 0.2.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -27,11 +27,13 @@ This plugin is only available if 'compatible' is not set.
 INSTALLATION                                               *slimv-installation*
 
 Prerequisites:
-  - Lisp (any Common Lisp implementation should be OK) installed.
+
+  - Lisp (any Common Lisp implementation should be OK) or Clojure installed.
   - Python 2.4 or later installed.
   - The interrupt functionality needs the pywin32 extension on Windows.
 
 To install the script:
+
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
@@ -48,7 +50,12 @@ To install the script:
     See |slimv-customization| below on how to do this.
 
 Upgrade from previous script versions:
-  No special upgrade actions are required.
+
+0.1   - 0.2.1    Users having a custom |g:slimv_repl_file| setting should
+                 consider attaching the .lisp or .clj extension to the name
+                 of the REPL buffer, in order to have syntax highlighting
+                 and autoindenting in the REPL buffer.
+                 Users who already have done this are smarter than me :)
 
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
@@ -610,7 +617,7 @@ FAQ                                                                 *slimv-faq*
      distributions contain a Python interpreter with high enough version.
      On Windows this means, you need to install Python, if you don't have
      one (at least version 2.4). Anyway, Python is a nice language and
-     also a perfect replacement for calculator.exe :-)
+     also a perfect replacement for calculator.exe :)
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
@@ -689,7 +696,7 @@ the world's (one of the) best editor.
 Also special thanks to Eric Marsden and all the Emacs/SLIME developers for
 making SLIME.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
-hey, this is a female name in Hungary :-) for her support and patience.
+hey, this is a female name in Hungary :) for her support and patience.
 
 ===============================================================================
 vim:tw=78:noet:wrap:ts=8:ft=help:norl:
