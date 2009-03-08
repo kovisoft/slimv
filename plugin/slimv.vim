@@ -309,7 +309,11 @@ endif
 
 " Filename for the REPL buffer file
 if !exists( 'g:slimv_repl_file' )
-    let g:slimv_repl_file = 'Slimv.REPL'
+    if SlimvGetFiletype() == 'clojure'
+        let g:slimv_repl_file = 'Slimv.REPL.clj'
+    else
+        let g:slimv_repl_file = 'Slimv.REPL.lisp'
+    endif
 endif
 
 " Shall we open REPL buffer in split window?
@@ -319,7 +323,7 @@ endif
 
 " How many seconds to wait for the REPL output to finish?
 if !exists( 'g:slimv_repl_wait' )
-    let g:slimv_repl_wait = 10
+    let g:slimv_repl_wait = 0
 endif
 
 " Build client command (if not given in vimrc)
@@ -464,6 +468,11 @@ function! SlimvEndOfReplBuffer( markit )
         " Also remember the prompt, because the user may overwrite it
         call setpos( "'s'", [0, line('$'), col('$'), 0] )
         let s:prompt = getline( "'s'" )
+        if s:insertmode
+            " Hacking: we add a space at the end of the last line
+            " so that the cursor remains in correct position after insertmode eval
+            call setline( "'s", s:prompt . " " )
+        endif
     endif
     set nomodified
 endfunction
@@ -488,6 +497,7 @@ function! SlimvRefreshReplBufferNow()
         sleep 1
         execute "silent edit! " . s:repl_name
     endtry
+    filetype detect
     "TODO: use :read instead and keep only the delta in the readout file
     if &endofline == 1
         " Handle the situation when the last line is an empty line in REPL
@@ -495,6 +505,10 @@ function! SlimvRefreshReplBufferNow()
         call append( '$', "" )
     endif
     call SlimvEndOfReplBuffer( 1 )
+endfunction
+
+function! SlimvInterrupt()
+    call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
 endfunction
 
 " Refresh REPL buffer continuously until no change is detected
@@ -505,25 +519,25 @@ function! SlimvRefreshReplBuffer()
     endif
 
     " Refresh REPL buffer for a while until no change is detected
-    let lastline = line("$")
-    sleep 500m
+"    let lastline = line("$")
+    sleep 200m
+    noremap <C-X> :call slimvInterrupt()<CR>
+    inoremap <C-X><C-X> <C-O>:call slimvInterrupt()<CR>
     call SlimvRefreshReplBufferNow()
+    if s:insertmode
+        echon '-- INSERT --'
+    else
+        echon '-- RUNNING --'
+    endif
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
+"    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
+    while wait > 0 || g:slimv_repl_wait == 0
         "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
         if getchar(1)
-            let c = getchar(0)
-            if c == 24
-                " Ctrl+B or Ctrl+C or Ctrl+X or Ctrl+Y pressed
-                call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-                let wait = g:slimv_repl_wait * 10
-            endif
-            if c == 27
-                " ESC pressed
-                let wait = 0
-                break
-            endif
-        endif
+	    break
+	endif
+        let m = '/\%' . col('.') . 'c\%' . line('.') . 'l/'
+        silent! execute 'match Cursor ' . m
         redraw
         let lastline = line("$")
         "TODO: customize the delay
@@ -532,7 +546,13 @@ function! SlimvRefreshReplBuffer()
         let wait = wait - 1
     endwhile
 
-    if wait == 0
+    silent! execute 'match None ' . m
+    let s:insertmode = 0
+    echon '            '
+
+"    if wait == 0
+"    if line("$") > lastline
+    if 0
         " Time is up and Lisp REPL still did not finish output
         " Inform user about this and about the non-blocking and blocking refresh keys
         if g:slimv_keybindings == 1
@@ -587,6 +607,7 @@ function! SlimvOpenReplBuffer()
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
 
+    filetype on
     redraw
 
     call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
@@ -669,12 +690,16 @@ endfunction
 
 " Set command line after the prompt
 function! SlimvSetCommandLine( cmd )
-    normal `s
     let line = getline( "." )
-    if len( line ) > col( "'s" )
-        let line = strpart( line, 0, col( "'s" ) - 1 )
+    if line( "." ) == line( "'s" )
+        " The prompt is in the line marked with 's
+        let promptlen = len( s:prompt )
+    else
+        let promptlen = 0
     endif
-    let i = 0
+    if len( line ) > promptlen
+        let line = strpart( line, 0, promptlen - 1 )
+    endif
     let line = line . a:cmd
     call setline( ".", line )
     call SlimvEndOfReplBuffer( 0 )
@@ -687,7 +712,9 @@ function! SlimvAddHistory( cmd )
     endif
     let i = 0
     while i < len( a:cmd )
-        call add( g:slimv_cmdhistory, a:cmd[i] )
+        " Trim trailing whitespaces from the command
+        let command = substitute( a:cmd[i], "\\(.*[^ ]\\)\\s*", "\\1", "g" )
+        call add( g:slimv_cmdhistory, command )
         let i = i + 1
     endwhile
     let g:slimv_cmdhistorypos = len( g:slimv_cmdhistory )
@@ -700,6 +727,48 @@ function! SlimvRecallHistory()
     else
         call SlimvSetCommandLine( "" )
     endif
+endfunction
+
+" Count the opening and closing parens or brackets to determine if they match
+function! s:GetParenCount( lines )
+    let paren = 0
+    let inside_string = 0
+    let i = 0
+    while i < len( a:lines )
+        let inside_comment = 0
+        let j = 0
+        while j < len( a:lines[i] )
+            if inside_string
+                " We are inside a string, skip parens, wait for closing '"'
+                if a:lines[i][j] == '"'
+                    let inside_string = 0
+                endif
+            elseif inside_comment
+                " We are inside a comment, skip parens, wait for end of line
+            else
+                " We are outside of strings and comments, now we shall count parens
+                if a:lines[i][j] == '"'
+                    let inside_string = 1
+                endif
+                if a:lines[i][j] == ';'
+                    let inside_comment = 1
+                endif
+                if a:lines[i][j] == '(' || a:lines[i][j] == '['
+                    let paren = paren + 1
+                endif
+                if a:lines[i][j] == ')' || a:lines[i][j] == ']'
+                    let paren = paren - 1
+                    if paren < 0
+                        " Oops, too many closing parens in the middle
+                        return paren
+                    endif
+                endif
+            endif
+            let j = j + 1
+        endwhile
+        let i = i + 1
+    endwhile
+    return paren
 endfunction
 
 " Handle insert mode 'Enter' keypress in the REPL buffer
@@ -724,9 +793,29 @@ function! SlimvHandleCR()
                 let l = l + 1
             endwhile
 
-            " Evaluate the command
-            call SlimvAddHistory( cmd )
-            call SlimvEval( cmd )
+            " Count the number of opening and closing braces
+            let paren = s:GetParenCount( cmd )
+            if paren == 0
+                " Expression finished, let's evaluate it
+                " but first add it to the history
+	        let s:insertmode = 1
+                call SlimvAddHistory( cmd )
+                call SlimvEval( cmd )
+            elseif paren < 0
+                " Too many closing braces
+                let dummy = input( "Too many closing parens found. Press ENTER to continue." )
+            else
+                " Expression is not finished yet, indent properly and wait for completion
+                " Indentation works only if lisp indentation is switched on
+                let indent = ''
+                let i = lispindent( '.' )
+                while i > 0
+                    let indent = indent . ' '
+                    let i = i - 1
+                endwhile
+                call setline( ".", indent )
+                call SlimvEndOfReplBuffer( 0 )
+            endif
         endif
     else
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
@@ -747,7 +836,7 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
-    if exists( 'g:slimv_cmdhistory' ) && line( "." ) == line( "'s" )
+    if exists( 'g:slimv_cmdhistory' ) && line( "." ) >= line( "'s" )
         if g:slimv_cmdhistorypos > 0
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
             call SlimvRecallHistory()
@@ -757,7 +846,7 @@ endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
-    if exists( 'g:slimv_cmdhistory' ) && line( "." ) == line( "'s" )
+    if exists( 'g:slimv_cmdhistory' ) && line( "." ) >= line( "'s" )
         if g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
             call SlimvRecallHistory()
