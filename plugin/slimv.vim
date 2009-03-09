@@ -497,7 +497,7 @@ function! SlimvRefreshReplBufferNow()
         sleep 1
         execute "silent edit! " . s:repl_name
     endtry
-    filetype detect
+    syntax on
     "TODO: use :read instead and keep only the delta in the readout file
     if &endofline == 1
         " Handle the situation when the last line is an empty line in REPL
@@ -520,6 +520,8 @@ function! SlimvRefreshReplBuffer()
 
     " Refresh REPL buffer for a while until no change is detected
 "    let lastline = line("$")
+    let lastline = 0
+    let lasttime = localtime()
     sleep 200m
     noremap <C-X> :call slimvInterrupt()<CR>
     inoremap <C-X><C-X> <C-O>:call slimvInterrupt()<CR>
@@ -529,20 +531,51 @@ function! SlimvRefreshReplBuffer()
     else
         echon '-- RUNNING --'
     endif
+    let idle = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
 "    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
     while wait > 0 || g:slimv_repl_wait == 0
-        "TODO: Implement a custom main loop here, handling all Vim keypresses and commands
-        if getchar(1)
-	    break
-	endif
+"        let m = '/\%' . col('.') . 'c\%' . line('.') . 'l/'
         let m = '/\%' . col('.') . 'c\%' . line('.') . 'l/'
         silent! execute 'match Cursor ' . m
         redraw
-        let lastline = line("$")
-        "TODO: customize the delay
-        sleep 100m
+"        let lastline = line("$")
+	if idle && localtime()-lasttime > 5
+	    if getchar(1)
+		break
+	    endif
+	    sleep 200m
+	    if getchar(1)
+		break
+	    endif
+	    sleep 200m
+	    if getchar(1)
+		break
+	    endif
+	    sleep 200m
+	    if getchar(1)
+		break
+	    endif
+	    sleep 200m
+	    if getchar(1)
+		break
+	    endif
+	    sleep 200m
+	else
+	    if getchar(1)
+		break
+	    endif
+	    sleep 100m
+	endif
         call SlimvRefreshReplBufferNow()
+	if line("$") > lastline
+	    " REPL buffer file changed
+	    let idle = 0
+	    let lastline = line("$")
+	    let lasttime = localtime()
+	else
+	    let idle = 1
+	endif
         let wait = wait - 1
     endwhile
 
