@@ -161,7 +161,11 @@ class repl_buffer:
         """Set output filename
         """
         self.sema.acquire()
+        oldname = self.filename
         self.filename = filename
+        if oldname == '':
+            self.write_nolock( newline + ";;; Slimv client is connected to REPL on port " + str(PORT) + newline, True )
+            self.write_nolock( ';;; Quote from SLIME: "This could be the start of a beautiful program."' + newline + newline, True )
         self.sema.release()
 
     def writebegin( self ):
@@ -370,7 +374,7 @@ def server():
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
-    sys.stdout.write( ";;; Slimv is spawning REPL..." + newline )
+    sys.stdout.write( ";;; Slimv is spawning REPL..." + newline + newline )
     time.sleep(0.5)             # wait for Lisp to start
     #sys.stdout.write( ";;; Slimv connection established" + newline )
 
