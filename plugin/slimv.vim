@@ -471,7 +471,7 @@ function! SlimvEndOfReplBuffer( markit )
         if s:insertmode
             " Hacking: we add a space at the end of the last line
             " so that the cursor remains in correct position after insertmode eval
-            call setline( "'s", s:prompt . " " )
+            "call setline( "'s", s:prompt . " " )
         endif
     endif
     set nomodified
@@ -494,8 +494,8 @@ function! SlimvRefreshReplBufferNow()
         execute "silent edit! " . s:repl_name
     catch /.*/
         " Oops, something went wrong, let's try again after a short pause
-        sleep 1
-        execute "silent edit! " . s:repl_name
+"        sleep 1
+"        execute "silent edit! " . s:repl_name
     endtry
     syntax on
     "TODO: use :read instead and keep only the delta in the readout file
@@ -507,6 +507,7 @@ function! SlimvRefreshReplBufferNow()
     call SlimvEndOfReplBuffer( 1 )
 endfunction
 
+" Send interrupt command to REPL
 function! SlimvInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
 endfunction
@@ -521,7 +522,7 @@ function! SlimvRefreshReplBuffer()
     " Refresh REPL buffer for a while until no change is detected
 "    let lastline = line("$")
     let lastline = 0
-    let lasttime = localtime()
+    let lastftime = getftime( s:repl_name )
     sleep 200m
     noremap <C-X> :call slimvInterrupt()<CR>
     inoremap <C-X><C-X> <C-O>:call slimvInterrupt()<CR>
@@ -531,7 +532,6 @@ function! SlimvRefreshReplBuffer()
     else
         echon '-- RUNNING --'
     endif
-    let idle = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
 "    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
     while wait > 0 || g:slimv_repl_wait == 0
@@ -540,42 +540,15 @@ function! SlimvRefreshReplBuffer()
         silent! execute 'match Cursor ' . m
         redraw
 "        let lastline = line("$")
-	if idle && localtime()-lasttime > 5
-	    if getchar(1)
-		break
-	    endif
-	    sleep 200m
-	    if getchar(1)
-		break
-	    endif
-	    sleep 200m
-	    if getchar(1)
-		break
-	    endif
-	    sleep 200m
-	    if getchar(1)
-		break
-	    endif
-	    sleep 200m
-	    if getchar(1)
-		break
-	    endif
-	    sleep 200m
-	else
-	    if getchar(1)
-		break
-	    endif
-	    sleep 100m
+	if getchar(1)
+	    break
 	endif
-        call SlimvRefreshReplBufferNow()
-	if line("$") > lastline
-	    " REPL buffer file changed
-	    let idle = 0
-	    let lastline = line("$")
-	    let lasttime = localtime()
-	else
-	    let idle = 1
-	endif
+	sleep 100m
+        let ftime = getftime( s:repl_name )
+        if ftime != lastftime
+            call SlimvRefreshReplBufferNow()
+            let lastftime = ftime
+        endif
         let wait = wait - 1
     endwhile
 
@@ -731,7 +704,8 @@ function! SlimvSetCommandLine( cmd )
         let promptlen = 0
     endif
     if len( line ) > promptlen
-        let line = strpart( line, 0, promptlen - 1 )
+        "let line = strpart( line, 0, promptlen - 1 )
+        let line = strpart( line, 0, promptlen )
     endif
     let line = line . a:cmd
     call setline( ".", line )
