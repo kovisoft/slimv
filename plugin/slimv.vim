@@ -323,7 +323,7 @@ endif
 
 " How many seconds to wait for the REPL output to finish?
 if !exists( 'g:slimv_repl_wait' )
-    let g:slimv_repl_wait = 0
+    let g:slimv_repl_wait = 10
 endif
 
 " Build client command (if not given in vimrc)
@@ -520,45 +520,49 @@ function! SlimvRefreshReplBuffer()
     endif
 
     " Refresh REPL buffer for a while until no change is detected
-"    let lastline = line("$")
-    let lastline = 0
-    let lastftime = getftime( s:repl_name )
+    let ftime = getftime( s:repl_name )
+    let lastftime = ftime
     sleep 200m
-    noremap <C-X> :call slimvInterrupt()<CR>
-    inoremap <C-X><C-X> <C-O>:call slimvInterrupt()<CR>
     call SlimvRefreshReplBufferNow()
+
+    let save_ve = &ve
     if s:insertmode
+        " We are in insert mode, let's fake a movement to the right
+        " For this we need to set the virtualedit=all option temporarily
         echon '-- INSERT --'
+        set ve=all
+        normal l
     else
         echon '-- RUNNING --'
     endif
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-"    while line("$") > lastline && ( wait > 0 || g:slimv_repl_wait == 0 )
     while wait > 0 || g:slimv_repl_wait == 0
-"        let m = '/\%' . col('.') . 'c\%' . line('.') . 'l/'
-        let m = '/\%' . col('.') . 'c\%' . line('.') . 'l/'
+        let m = '/\%#/'
         silent! execute 'match Cursor ' . m
+        match Cursor /\%#/
         redraw
-"        let lastline = line("$")
 	if getchar(1)
 	    break
 	endif
 	sleep 100m
+        let lastftime = ftime
         let ftime = getftime( s:repl_name )
         if ftime != lastftime
+            " REPL buffer file changed, reload it
             call SlimvRefreshReplBufferNow()
-            let lastftime = ftime
         endif
-        let wait = wait - 1
+        if g:slimv_repl_wait != 0
+            let wait = wait - 1
+        endif
     endwhile
 
+    " Restore everything
     silent! execute 'match None ' . m
     let s:insertmode = 0
     echon '            '
+    let &ve = save_ve
 
-"    if wait == 0
-"    if line("$") > lastline
-    if 0
+    if wait == 0 && ftime != lastftime
         " Time is up and Lisp REPL still did not finish output
         " Inform user about this and about the non-blocking and blocking refresh keys
         if g:slimv_keybindings == 1
@@ -607,8 +611,8 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
-    noremap  <buffer> <silent> <C-X> :call SlimvHandleInterrupt()<CR>
-    inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt()<CR>
+    noremap  <buffer> <silent> <C-X> :call SlimvHandleInterrupt(0)<CR>
+    inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt(1)<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
@@ -843,28 +847,33 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
-    if exists( 'g:slimv_cmdhistory' ) && line( "." ) >= line( "'s" )
-        if g:slimv_cmdhistorypos > 0
+    if line( "." ) >= line( "'s" )
+        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
             call SlimvRecallHistory()
         endif
+    else
+        normal k
     endif
 endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
-    if exists( 'g:slimv_cmdhistory' ) && line( "." ) >= line( "'s" )
-        if g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
+    if line( "." ) >= line( "'s" )
+        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
             let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
             call SlimvRecallHistory()
         else
             call SlimvSetCommandLine( "" )
         endif
+    else
+        normal j
     endif
 endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
-function! SlimvHandleInterrupt()
+function! SlimvHandleInterrupt( mode )
+    let s:insertmode = a:mode
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
     call SlimvRefreshReplBuffer()
 endfunction
