@@ -204,8 +204,10 @@ class repl_buffer:
                     finally:
                         file.close()
                     tries = 0
+                except IOError:
+                    traceback.print_exc()
+                    tries = 0
                 except:
-                    #traceback.print_exc()
                     tries = tries - 1
         elif len( self.buffer ) < 2000:
             # No filename supplied, collect output info a buffer until filename is given
@@ -288,8 +290,6 @@ class socket_listener( Thread ):
                         # Fork here: write message to the stdin of REPL
                         # and also write it to the display (display queue buffer)
                         self.buffer.writebegin()
-#                        self.buffer.write_nolock( received + newline )
-#                        self.inp.write( received + newline )
                         self.buffer.write_nolock( received )
                         self.inp.write( received )
                         self.buffer.writeend()
@@ -336,7 +336,7 @@ class output_listener( Thread ):
                         c = os.read( self.out.fileno(), 1 )
                         self.buffer.write( c )
             except:
-                break
+                terminate = 1
 
 
 def server():
