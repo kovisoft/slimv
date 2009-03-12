@@ -12,6 +12,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
 |slimv-clojure|              Clojure support
+|slimv-external|             External utilities
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
 |slimv-issues|               Known Issues
@@ -51,7 +52,7 @@ To install the script:
 
 Upgrade from previous script versions:
 
-0.1   - 0.2.2    Users having a custom |g:slimv_repl_file| setting should
+0.1   - 0.2.x    Users having a custom |g:slimv_repl_file| setting should
                  consider attaching the .lisp or .clj extension to the name
                  of the REPL buffer, in order to have syntax highlighting
                  and autoindenting in the REPL buffer.
@@ -503,18 +504,18 @@ Insert Mode:
 
     <Down>         Brings up the next command typed and sent to the Lisp REPL.
 
-    <C-X><C-X>     Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
+    CTRL-X CTRL-X  Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
 
 Normal Mode:
 
-    <C-X>          Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
+    CTRL-X         Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
 
 While waiting for REPL output:
 
-    <C-X>          Sends a Ctrl+C (SIGINT) signal to the Lisp REPL. Useful for
+    CTRL-X         Sends a Ctrl+C (SIGINT) signal to the Lisp REPL. Useful for
                    interrupting a runaway Lisp program from the Lisp REPL
-                   buffer. <C-C> key combination does not seem to work inside
-                   Vim, that is why <C-X> has been choosen.
+                   buffer. CTRL-C key combination does not seem to work inside
+                   Vim, that is why CTRL-X has been choosen.
 
     <ESC>          Stops waiting for REPL output, returns to regular Vim mode.
                    It is possible to return to the continuous refresh mode
@@ -548,6 +549,101 @@ for Clojure. Another option is to use the 'lisp' filetype for 'Clojure' files,
 which can be set up this way:
 
   au BufNewFile,BufRead *.clj setf lisp
+
+
+===============================================================================
+EXTERNAL UTILITIES                                             *slimv-external*
+
+This section is about utilities, settings, etc., not related strongly to Slimv,
+but may be used to aim Lisp development. These are mostly built-in Vim features
+or options, and sometimes external Vim plugins.
+Slimv does not want to copy these functionalities, if they exist and work well.
+
+
+1. Syntax highlighting
+
+The syntax highlighting is done via the default lisp.vim syntax plugin.
+For Clojure files one has two options:
+a. use the Lisp filetype also for Clojure files (that approach is used by Slimv
+   for the REPL buffer if no other filetype is set)
+b. install a Clojure Vim syntax plugin, like VimClojure.
+
+
+2. Indentation
+
+The indentation is also done via the default lisp.vim indent plugin, or an
+optionally installed Clojure indent plugin, just like for the syntax
+highlighting.
+There are some built-in Vim reindentation commands that may come very handy
+when editing Lisp files. One can define a custom key mapping for any of them,
+such mappings are not defined by Slimv.
+
+    =                       Reindent selection, after a text has been selected.
+
+    ==                      Reindent current line.
+
+    [(v%=                   Select current form and reindent it.
+
+    99[(v%=                 Select top level form and reindent it.
+
+
+3. Parenthesis handling
+
+Vim obtains many tools to aid working with parentheses. This is a very important
+topic for a Lisp programmer.
+
+    :inoremap ( ()<Esc>i    Automatically insert closing paren when an opening
+                            one is inserted.
+
+    :inoremap [ []<Esc>i    Same as above but for brackets.
+
+    :set showmatch          Briefly jump with the cursor to the matching paren
+                            or bracket when a closing pair is inserted.
+
+    %                       Go to the matching paren or bracket.
+
+    :source $VIMRUNTIME/macros/matchit.vim
+                            Adds extended matching with "%" to Vim.
+
+    [(v                     Select current form.
+
+    99[(v                   Select top level form.
+
+    g:lisp_rainbow          Colorize differing levels of parenthesization with
+                            different highlighting. Currently works only for
+                            the 'lisp' filetype, hopefully it will be added
+                            soon to the Clojure plugins as well.
+
+
+4. Completion
+
+    CTRL-N                  The built-in Vim keyword completion is a very handy
+    CTRL-P                  feature. You start typing a word, and when CTRL-P
+                            or CTRL-N is pressed, then Vim looks up the keyword
+                            starting with the same letters as typed in up or
+                            down direction.
+
+    set complete            The |'complete'| option controls how keyword
+                            completion works.
+
+
+5. Tag lookup
+
+    |ctags|                 "Exuberant ctags" is a powerful utility for
+                            generating tag database for different kind of
+			    programming languages, including Lisp. Tag lookup
+                            is then done via the CTRL-] (or :tag) command,
+                            return to the previous positon with CTRL-T.
+
+    ctags --language-force=lisp *.lisp *.clj
+                            This or a similar command may be used to generate
+                            tags file from .lisp and .clj files in a directory.
+
+    :execute '!ctags --language-force=lisp *.lisp *.clj'
+                            This is the same command as the previous one, but
+                            started from inside Vim, rather than from the OS
+                            command prompt, assuming that ctags.exe is stored
+                            in the PATH.
 
 
 ===============================================================================
@@ -597,6 +693,12 @@ FAQ                                                                 *slimv-faq*
 
 - Q: Why is the default port number 5151?
 - A: Hint: what roman numerals are 5,1,5,1? Bingo: VI, doubled.
+
+- Q: What is the version numbering concept?
+- A: <major version>.<minor version>.<bugfix release>, where:
+     major  version: Let's talk about it when it reaches 1...
+     minor  version: New functionalities added, that are worth mentioning.
+     bugfix release: Only bugfixes or tiny additions.
 
 - Q: Are you a Lisp expert?
 - A: No, not at all. I'm just learning Lisp. Also just learning Vim
@@ -661,8 +763,8 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
   (like IDLE).
-- Sometimes a Python exception happens after a Ctrl-C followed by an EOF
-  (Ctrl-Z or Ctrl-D).
+- Sometimes a Python exception happens after a CTRL-C followed by an EOF
+  (CTRL-Z or CTRL-D).
 - REPL buffer refresh on Vim focus gain works only in gvim, not in console vim.
 - REPL buffer refresh sometimes skipped first time after the server Lisp window
   was just opened.
