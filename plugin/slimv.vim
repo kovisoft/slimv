@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.2.2
-" Last Change:  08 Mar 2009
+" Version:      0.3.0
+" Last Change:  13 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -154,7 +154,7 @@ function! SlimvAutodetectLisp()
         " Try to find Clojure on the standard installation places
         let lisps = split( globpath( 'c:/*clojure*', 'clojure.jar' ), '\n' )
         if len( lisps ) > 0
-	    return '"java -cp ' . lisps[0] . ' clojure.lang.Repl"'
+            return '"java -cp ' . lisps[0] . ' clojure.lang.Repl"'
         endif
     endif
 
@@ -215,13 +215,13 @@ endif
 " Get the filetype (Lisp dialect) used by Slimv
 function! SlimvGetFiletype()
     if exists( 'g:slimv_filetype' )
-	" Return Slimv filetype if defined
-	return g:slimv_filetype
+        " Return Slimv filetype if defined
+        return g:slimv_filetype
     endif
 
     if &ft != ''
-	" Return Vim filetype if defined
-	return &ft
+        " Return Vim filetype if defined
+        return &ft
     endif
 
     " We have no clue, guess its lisp
@@ -459,8 +459,8 @@ let s:insertmode = 0
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer( markit )
     if !g:slimv_repl_open
-	" User does not want to display REPL in Vim
-	return
+        " User does not want to display REPL in Vim
+        return
     endif
     normal G$
     if a:markit
@@ -480,8 +480,8 @@ endfunction
 " Reload the contents of the REPL buffer from the output file immediately
 function! SlimvRefreshReplBufferNow()
     if !g:slimv_repl_open
-	" User does not want to display REPL in Vim
-	return
+        " User does not want to display REPL in Vim
+        return
     endif
 
     if bufnr( s:repl_name ) != bufnr( "%" )
@@ -489,20 +489,22 @@ function! SlimvRefreshReplBufferNow()
         return
     endif
 
-    "TODO: on error do this in a loop a couple of times
     try
         execute "silent edit! " . s:repl_name
     catch /.*/
-        " Oops, something went wrong, let's try again after a short pause
-"        sleep 1
-"        execute "silent edit! " . s:repl_name
+        " Oops, something went wrong, the buffer will not be refreshed this time
     endtry
     syntax on
     "TODO: use :read instead and keep only the delta in the readout file
     if &endofline == 1
         " Handle the situation when the last line is an empty line in REPL
         " but Vim rejects to handle it as a separate line
-        call append( '$', "" )
+        try
+            call append( '$', "" )
+        catch /.*/
+            " OK, we cannot append right now, the server is probably busy with
+            " updating the REPL file. Just go on, it's not that important.
+        endtry
     endif
     call SlimvEndOfReplBuffer( 1 )
 endfunction
@@ -515,8 +517,8 @@ endfunction
 " Refresh REPL buffer continuously until no change is detected
 function! SlimvRefreshReplBuffer()
     if !g:slimv_repl_open
-	" User does not want to display REPL in Vim
-	return
+        " User does not want to display REPL in Vim
+        return
     endif
 
     " Refresh REPL buffer for a while until no change is detected
@@ -528,37 +530,54 @@ function! SlimvRefreshReplBuffer()
     let save_ve = &ve
     if s:insertmode
         " We are in insert mode, let's fake a movement to the right
+        " in order to display the cursor at the right place.
         " For this we need to set the virtualedit=all option temporarily
         echon '-- INSERT --'
         set ve=all
         normal l
     else
+        " Inform user that we are in running mode (waiting for REPL output)
         echon '-- RUNNING --'
     endif
+    let interrupt = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-    while wait > 0 || g:slimv_repl_wait == 0
-        let m = '/\%#/'
-        silent! execute 'match Cursor ' . m
-        match Cursor /\%#/
-        redraw
-	if getchar(1)
-	    break
-	endif
-	sleep 100m
-        let lastftime = ftime
-        let ftime = getftime( s:repl_name )
-        if ftime != lastftime
-            " REPL buffer file changed, reload it
-            call SlimvRefreshReplBufferNow()
+    try
+        while wait > 0 || g:slimv_repl_wait == 0
+            let m = '/\%#/'
+            silent! execute 'match Cursor ' . m
+            match Cursor /\%#/
+            redraw
+            if getchar(1)
+                break
+            endif
+            sleep 100m
+            let lastftime = ftime
+            let ftime = getftime( s:repl_name )
+            if ftime != lastftime || ftime == localtime()
+                " REPL buffer file changed recently, reload it
+                call SlimvRefreshReplBufferNow()
+            endif
+            if g:slimv_repl_wait != 0
+                let wait = wait - 1
+            endif
+        endwhile
+    catch /^Vim:Interrupt$/
+        if getchar(1)
+            " Swallow interrupt key
+            let c = getchar(0)
+            if c == 3
+                " Yes, this was the Ctrl-C, propagate it to the server
+                let interrupt = 1
+                call SlimvHandleInterrupt()
+            endif
         endif
-        if g:slimv_repl_wait != 0
-            let wait = wait - 1
-        endif
-    endwhile
+    endtry
 
     " Restore everything
     silent! execute 'match None ' . m
-    let s:insertmode = 0
+    if !interrupt
+        let s:insertmode = 0
+    endif
     echon '            '
     let &ve = save_ve
 
@@ -611,8 +630,6 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
-    noremap  <buffer> <silent> <C-X> :call SlimvHandleInterrupt(0)<CR>
-    inoremap <buffer> <silent> <C-X><C-X> <C-O>:call SlimvHandleInterrupt(1)<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
@@ -708,7 +725,6 @@ function! SlimvSetCommandLine( cmd )
         let promptlen = 0
     endif
     if len( line ) > promptlen
-        "let line = strpart( line, 0, promptlen - 1 )
         let line = strpart( line, 0, promptlen )
     endif
     let line = line . a:cmd
@@ -809,7 +825,7 @@ function! SlimvHandleCR()
             if paren == 0
                 " Expression finished, let's evaluate it
                 " but first add it to the history
-	        let s:insertmode = 1
+                let s:insertmode = 1
                 call SlimvAddHistory( cmd )
                 call SlimvEval( cmd )
             elseif paren < 0
@@ -872,8 +888,7 @@ function! SlimvHandleDown()
 endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
-function! SlimvHandleInterrupt( mode )
-    let s:insertmode = a:mode
+function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
     call SlimvRefreshReplBuffer()
 endfunction
@@ -1029,7 +1044,7 @@ function! SlimvMacroexpandGeneral( command )
     else
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
         if SlimvGetFiletype() == 'clojure'
-	    " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
+            " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
             normal vt[%ht]"sy
         else
             normal vt(])"sy
@@ -1038,13 +1053,13 @@ function! SlimvMacroexpandGeneral( command )
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
         if SlimvGetFiletype() == 'clojure'
             " Remove opening bracket from the parameter list
-	    " TODO: fix this for multi-line macro header
+            " TODO: fix this for multi-line macro header
             let m = substitute( m, "\\[\\(.*\\)", "\\1", 'g' )
-	else
+        else
             " Remove opening brace from the parameter list
-	    " The nice regular expression below says: remove the third '('
-	    " ( + something + ( + something + ( + something -> ( + something + ( + something + something
-	    " TODO: fix this for multi-line macro header
+            " The nice regular expression below says: remove the third '('
+            " ( + something + ( + something + ( + something -> ( + something + ( + something + something
+            " TODO: fix this for multi-line macro header
             let m = substitute( m, "\\(([^()]*([^()]*\\)(\\(.*\\)", "\\1\\2", 'g' )
         endif
     endif
@@ -1180,29 +1195,29 @@ if g:slimv_keybindings == 1
     noremap <Leader>b  :<C-U>call SlimvEvalBuffer()<CR>
     noremap <Leader>v  :call SlimvInteractiveEval()<CR>
     noremap <Leader>u  :call SlimvUndefineFunction()<CR>
-    
+
     noremap <Leader>1  :<C-U>call SlimvMacroexpand()<CR>
     noremap <Leader>m  :<C-U>call SlimvMacroexpandAll()<CR>
     noremap <Leader>t  :call SlimvTrace()<CR>
     noremap <Leader>T  :call SlimvUntrace()<CR>
     noremap <Leader>l  :call SlimvDisassemble()<CR>
     noremap <Leader>i  :call SlimvInspect()<CR>
-    
+
     noremap <Leader>D  :<C-U>call SlimvCompileDefun()<CR>
     noremap <Leader>L  :<C-U>call SlimvCompileLoadFile()<CR>
     noremap <Leader>F  :<C-U>call SlimvCompileFile()<CR>
     noremap <Leader>R  :call SlimvCompileRegion()<CR>
-    
+
     noremap <Leader>p  :call SlimvProfile()<CR>
     noremap <Leader>P  :call SlimvUnprofile()<CR>
-    
+
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
     noremap <Leader>z  :call SlimvRefresh()<CR>
     noremap <Leader>Z  :call SlimvRefreshNow()<CR>
-    
+
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
 
@@ -1214,7 +1229,7 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>eb  :<C-U>call SlimvEvalBuffer()<CR>
     noremap <Leader>ei  :call SlimvInteractiveEval()<CR>
     noremap <Leader>eu  :call SlimvUndefineFunction()<CR>
-    
+
     " Debug commands
     noremap <Leader>m1  :<C-U>call SlimvMacroexpand()<CR>
     noremap <Leader>ma  :<C-U>call SlimvMacroexpandAll()<CR>
@@ -1222,17 +1237,17 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>du  :call SlimvUntrace()<CR>
     noremap <Leader>dd  :call SlimvDisassemble()<CR>
     noremap <Leader>di  :call SlimvInspect()<CR>
-    
+
     " Compile commands
     noremap <Leader>cd  :<C-U>call SlimvCompileDefun()<CR>
     noremap <Leader>cl  :<C-U>call SlimvCompileLoadFile()<CR>
     noremap <Leader>cf  :<C-U>call SlimvCompileFile()<CR>
     noremap <Leader>cr  :call SlimvCompileRegion()<CR>
-    
+
     " Profile commands
     noremap <Leader>pp  :call SlimvProfile()<CR>
     noremap <Leader>pu  :call SlimvUnprofile()<CR>
-    
+
     " Documentation commands
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>da  :call SlimvApropos()<CR>
@@ -1241,7 +1256,7 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>rc  :call SlimvConnectServer()<CR>
     noremap <Leader>rr  :call SlimvRefresh()<CR>
     noremap <Leader>rn  :call SlimvRefreshNow()<CR>
-    
+
 endif
 
 " =====================================================================
@@ -1265,25 +1280,25 @@ if g:slimv_menu == 1
     menu &Slimv.&Evaluation.Eval-&Buffer               :<C-U>call SlimvEvalBuffer()<CR>
     menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
     menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
-    
+
     menu &Slimv.De&bugging.Macroexpand-&1              :<C-U>call SlimvMacroexpand()<CR>
     menu &Slimv.De&bugging.&Macroexpand-All            :<C-U>call SlimvMacroexpandAll()<CR>
     menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
     menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
     menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
     menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
-    
+
     menu &Slimv.&Compilation.Compile-&Defun            :<C-U>call SlimvCompileDefun()<CR>
     menu &Slimv.&Compilation.Compile-&Load-File        :<C-U>call SlimvCompileLoadFile()<CR>
     menu &Slimv.&Compilation.Compile-&File             :<C-U>call SlimvCompileFile()<CR>
     menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
-    
+
     menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
     menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
-    
+
     menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
     menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
-    
+
     menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
     menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
     menu &Slimv.&REPL.&Refresh-Now                     :call SlimvRefreshNow()<CR>
