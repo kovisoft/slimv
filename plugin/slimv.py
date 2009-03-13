@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.2.2
-# Last Change:  08 Mar 2009
+# Version:      0.3.0
+# Last Change:  13 Mar 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -326,15 +326,8 @@ class output_listener( Thread ):
                     else:
                         self.buffer.write( c )
                 else:
-                    # On Linux set read mode to non blocking
-                    import fcntl, select
-                    flag = fcntl.fcntl(self.out.fileno(), fcntl.F_GETFL)
-                    fcntl.fcntl(self.out.fileno(), fcntl.F_SETFL, flag | os.O_NONBLOCK)
-
-                    r = select.select([self.out.fileno()], [], [], 0)[0]
-                    if r:
-                        c = os.read( self.out.fileno(), 1 )
-                        self.buffer.write( c )
+                    c = self.out.read( 1 )
+                    self.buffer.write( c )
             except:
                 terminate = 1
 
