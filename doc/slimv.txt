@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 08 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 13 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.2.2
+                               Version 0.3.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -453,11 +453,11 @@ forms to the server/REPL for processing. That's it.
 All you need to know then is the list of possible Slimv commands, how to
 enter them and under what conditions.
 
-It is possible to interrupt a running Lisp program by pressing Ctrl+C,
+It is possible to interrupt a running Lisp program by pressing Ctrl-C,
 at least in some Lisp implementations, like CLISP (does not work for example
 with SBCL).
 
-To end the Lisp session press EOF (Ctrl+D on Linux, Ctrl+Z on Windows)
+To end the Lisp session press EOF (Ctrl-D on Linux, Ctrl-Z on Windows)
 in the Lisp REPL window. After exiting the REPL it is possible to open
 a new one from Vim the same way as before.
 
@@ -504,20 +504,15 @@ Insert Mode:
 
     <Down>         Brings up the next command typed and sent to the Lisp REPL.
 
-    CTRL-X CTRL-X  Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
-
-Normal Mode:
-
-    CTRL-X         Sends a Ctrl+C (SIGINT) signal to the Lisp REPL (see below).
-
 While waiting for REPL output:
 
-    CTRL-X         Sends a Ctrl+C (SIGINT) signal to the Lisp REPL. Useful for
+    CTRL-C         Sends a Ctrl-C (SIGINT) signal to the Lisp REPL. Useful for
                    interrupting a runaway Lisp program from the Lisp REPL
-                   buffer. CTRL-C key combination does not seem to work inside
-                   Vim, that is why CTRL-X has been choosen.
+                   buffer.
 
-    <ESC>          Stops waiting for REPL output, returns to regular Vim mode.
+    any other key  Stops waiting for REPL output, returns to regular Vim mode.
+                   The key that was pressed is translated and processed by Vim,
+                   according to current the Vim mode.
                    It is possible to return to the continuous refresh mode
                    by selecting the "Refresh REPL Buffer" command.
 
@@ -667,6 +662,7 @@ FAQ                                                                 *slimv-faq*
      contain all the functionalities of SLIME (nor does Slimv, to tell the
      truth). There is room for improvement, so let's keep on working, and
      then we'll see, which Vim plugin gets the closest to SLIME.
+     It would be nice to make Vim as usable as Emacs for Lisp programming.
      In my opinion the main barrier is the lack of asynchronous buffer update
      in Vim, but this may change in the future.
 
@@ -724,6 +720,16 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.3.0  - Added syntax highlighting and automatic indentation for the REPL
+         buffer (needs lisp and/or clojure Vim plugins).
+       - It is possible to enter a multi-line command in the REPL buffer,
+         until the opening and closing parens match.
+       - Up and Down keys are not consumed outside of the current command line
+         in Insert mode.
+       - Ctrl-C is working inside the REPL buffer (while waiting for output),
+         so Ctrl-X keybinding is removed.
+       - REPL window performance enhancement on Linux.
+
 0.2.2  - Fixed REPL input and output mix-up problems.
        - Evaluation performance enhancement.
        - Corrected some more macroexpand problems.
@@ -735,7 +741,7 @@ CHANGE LOG                                                    *slimv-changelog*
 0.2.0  - Major update: Lisp REPL displayed in a Vim buffer.
 
 0.1.4  - Corrected the delayed display of last line in REPL window on Linux.
-       - Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt
+       - Ctrl-C is propagated to Lisp REPL, so it is possible to interrupt
          a running program. Does not work however with some Lisp
          implementations (like SBCL).
 
@@ -763,13 +769,11 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
   (like IDLE).
-- Sometimes a Python exception happens after a CTRL-C followed by an EOF
-  (CTRL-Z or CTRL-D).
+- Sometimes a Python exception happens after a CTRL-C inside the REPL buffer
+  followed by an EOF (CTRL-Z or CTRL-D) in the external REPL window.
 - REPL buffer refresh on Vim focus gain works only in gvim, not in console vim.
-- REPL buffer refresh sometimes skipped first time after the server Lisp window
-  was just opened.
-- Interruption (Ctrl+C or Ctrl+X) does not work with all Lisp implementations.
-  For example SBCL exits on Windows when receiving Ctrl+C.
+- Interruption (Ctrl-C) does not work with all Lisp implementations.
+  For example SBCL exits on Windows when receiving Ctrl-C.
   It does not work in Clojure.
 - There are some functions that are not compatible or simply not working for
   Clojure.
@@ -778,7 +782,7 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Make the script a lisp filetype plugin.
+- Make the script a lisp+clojure filetype plugin.
 - Start client and server separately having two simpler commands for client
   and server startup, instead of the existing g:slimv_client solution.
 - Implement an own main loop in Vim for the REPL buffer, poll REPL output
