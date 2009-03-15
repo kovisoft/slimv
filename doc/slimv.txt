@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 15 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.3.0
@@ -724,7 +724,7 @@ CHANGE LOG                                                    *slimv-changelog*
          buffer (needs lisp and/or clojure Vim plugins).
        - It is possible to enter a multi-line command in the REPL buffer,
          until the opening and closing parens match.
-       - Up and Down keys are not consumed outside of the current command line
+       - Up and Down keys move cursor when outside of the REPL command line
          in Insert mode.
        - Ctrl-C is working inside the REPL buffer (while waiting for output),
          so Ctrl-X keybinding is removed.
