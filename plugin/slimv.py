@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.3.0
-# Last Change:  13 Mar 2009
+# Last Change:  15 Mar 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -158,14 +158,22 @@ class repl_buffer:
                             # Semaphore to synchronize access to the global display queue
 
     def setfile( self, filename ):
-        """Set output filename
+        """Set output filename. Greet user if this is the first time.
         """
         self.sema.acquire()
         oldname = self.filename
         self.filename = filename
         if oldname == '':
-            self.write_nolock( newline + ";;; Slimv client is connected to REPL on port " + str(PORT) + newline, True )
-            self.write_nolock( ';;; Quote from SLIME: "This could be the start of a beautiful program."' + newline + newline, True )
+            self.write_nolock( newline + ';;; Slimv client is connected to REPL on port ' + str(PORT) + '.' + newline, True )
+            user = None
+            if mswindows:
+                user = os.getenv('USERNAME')
+            else:
+                user = os.getenv('USER')
+            if not user:
+                self.write_nolock( ';;; This could be the start of a beautiful program.' + newline + newline, True )
+            else:
+                self.write_nolock( ';;; ' + user + ', this could be the start of a beautiful program.' + newline + newline, True )
         self.sema.release()
 
     def writebegin( self ):
