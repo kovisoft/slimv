@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.3.0
-# Last Change:  15 Mar 2009
+# Last Change:  16 Mar 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -213,8 +213,8 @@ class repl_buffer:
                         file.close()
                     tries = 0
                 except IOError:
-                    traceback.print_exc()
-                    tries = 0
+                    if tries == 0:
+                        traceback.print_exc()
                 except:
                     tries = tries - 1
         elif len( self.buffer ) < 2000:
