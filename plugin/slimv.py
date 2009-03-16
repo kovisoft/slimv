@@ -213,6 +213,7 @@ class repl_buffer:
                         file.close()
                     tries = 0
                 except IOError:
+                    tries = tries - 1
                     if tries == 0:
                         traceback.print_exc()
                 except:
