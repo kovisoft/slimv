@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 15 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 16 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.3.0
@@ -90,7 +90,7 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_logfile|            Name of the logfile to use for debug messages.
                              Also see |g:slimv_debug|.
 
-|g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu
+|g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
 
 |g:slimv_port|               TCP/IP port number to use in the Slimv client-
                              server communication.
@@ -488,6 +488,8 @@ will be evaluated at the end of the REPL buffer.
 
 Another difference is the command line history, which can be activated by
 pressing <Up> or <Down> in the command line (also only in Insert mode).
+Outside of the command line the <Up> and <Down> keys move the cursor,
+as usual.
 
 The keys with modified meanings in the Lisp REPL buffer are listed below:
 
@@ -500,9 +502,10 @@ Insert Mode:
                    until the end of the Lisp prompt reached.
 
     <Up>           Brings up the previous command typed and sent to the Lisp
-                   REPL.
+                   REPL when in the command line.
 
-    <Down>         Brings up the next command typed and sent to the Lisp REPL.
+    <Down>         Brings up the next command typed and sent to the Lisp REPL
+                   when in the command line.
 
 While waiting for REPL output:
 
@@ -660,8 +663,7 @@ FAQ                                                                 *slimv-faq*
      SLIMxxx for Vim?
 - A: To my knowledge, none of the above mentioned Vim scripts/extensions
      contain all the functionalities of SLIME (nor does Slimv, to tell the
-     truth). There is room for improvement, so let's keep on working, and
-     then we'll see, which Vim plugin gets the closest to SLIME.
+     truth). There is definitely room for improvement.
      It would be nice to make Vim as usable as Emacs for Lisp programming.
      In my opinion the main barrier is the lack of asynchronous buffer update
      in Vim, but this may change in the future.
@@ -724,10 +726,10 @@ CHANGE LOG                                                    *slimv-changelog*
          buffer (needs lisp and/or clojure Vim plugins).
        - It is possible to enter a multi-line command in the REPL buffer,
          until the opening and closing parens match.
-       - Up and Down keys move cursor when outside of the REPL command line
-         in Insert mode.
+       - Insert mode Up and Down keys move cursor when outside of the REPL
+         command line.
        - Ctrl-C is working inside the REPL buffer (while waiting for output),
-         so Ctrl-X keybinding is removed.
+         so Ctrl-X and Ctrl-X Ctrl-X keybindings are removed.
        - REPL window performance enhancement on Linux.
 
 0.2.2  - Fixed REPL input and output mix-up problems.
