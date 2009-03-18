@@ -231,20 +231,50 @@ endfunction
 " Log global variables to logfile (if debug log set)
 function! SlimvLogGlobals()
     let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
-    call add( info,  printf( 'g:slimv_debug         = %d',    g:slimv_debug ) )
-    call add( info,  printf( 'g:slimv_debug_client  = %d',    g:slimv_debug_client ) )
-    call add( info,  printf( 'g:slimv_logfile       = %s',    g:slimv_logfile ) )
-    call add( info,  printf( 'g:slimv_port          = %d',    g:slimv_port ) )
-    call add( info,  printf( 'g:slimv_python        = %s',    g:slimv_python ) )
-    call add( info,  printf( 'g:slimv_lisp          = %s',    g:slimv_lisp ) )
-    call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
-    call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
-    call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
-    call add( info,  printf( 'g:slimv_repl_file     = %s',    g:slimv_repl_file ) )
-    call add( info,  printf( 'g:slimv_repl_split    = %d',    g:slimv_repl_split ) )
-    call add( info,  printf( 'g:slimv_repl_wait     = %d',    g:slimv_repl_wait ) )
-    call add( info,  printf( 'g:slimv_keybindings   = %d',    g:slimv_keybindings ) )
-    call add( info,  printf( 'g:slimv_menu          = %d',    g:slimv_menu ) )
+    if exists( 'g:slimv_debug' )
+        call add( info,  printf( 'g:slimv_debug         = %d',    g:slimv_debug ) )
+    endif
+    if exists( 'g:slimv_debug_client' )
+        call add( info,  printf( 'g:slimv_debug_client  = %d',    g:slimv_debug_client ) )
+    endif
+    if exists( 'g:slimv_logfile' )
+        call add( info,  printf( 'g:slimv_logfile       = %s',    g:slimv_logfile ) )
+    endif
+    if exists( 'g:slimv_port' )
+        call add( info,  printf( 'g:slimv_port          = %d',    g:slimv_port ) )
+    endif
+    if exists( 'g:slimv_python' )
+        call add( info,  printf( 'g:slimv_python        = %s',    g:slimv_python ) )
+    endif
+    if exists( 'g:slimv_lisp' )
+        call add( info,  printf( 'g:slimv_lisp          = %s',    g:slimv_lisp ) )
+    endif
+    if exists( 'g:slimv_client' )
+        call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
+    endif
+    if exists( 'g:slimv_repl_open' )
+        call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
+    endif
+    if exists( 'g:slimv_repl_dir' )
+        call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
+    endif
+    if exists( 'g:slimv_repl_file' )
+        call add( info,  printf( 'g:slimv_repl_file     = %s',    g:slimv_repl_file ) )
+    endif
+    if exists( 'g:slimv_repl_split' )
+        call add( info,  printf( 'g:slimv_repl_split    = %d',    g:slimv_repl_split ) )
+    endif
+    if exists( 'g:slimv_repl_wait' )
+        call add( info,  printf( 'g:slimv_repl_wait     = %d',    g:slimv_repl_wait ) )
+    endif
+    if exists( 'g:slimv_keybindings' )
+        call add( info,  printf( 'g:slimv_keybindings   = %d',    g:slimv_keybindings ) )
+    endif
+    if exists( 'g:slimv_menu' )
+        call add( info,  printf( 'g:slimv_menu          = %d',    g:slimv_menu ) )
+    endif
+    if exists( 'g:slimv_ctags' )
+        call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
     call SlimvLog( 1, info )
 endfunction
 
@@ -339,6 +369,16 @@ endif
 " Append Slimv menu to the global menu (0 = no menu)
 if !exists( 'g:slimv_menu' )
     let g:slimv_menu = 1
+endif
+
+" Build the ctags command capable of generating lisp tags file
+" The command can be run with execute 'silent !' . g:slimv_ctags
+if !exists( 'g:slimv_ctags' )
+    let ctags = split( globpath( '$vim,$vimruntime', 'ctags.exe' ), '\n' )
+    if len( ctags ) > 0
+        " Remove -a option to regenerate every time
+        let g:slimv_ctags = '"' . ctags[0] . '" -a --language-force=lisp *.lisp *.clj'
+    endif
 endif
 
 
@@ -1163,18 +1203,27 @@ function! SlimvCompileRegion() range
     call SlimvEvalForm1( g:slimv_template_compile_string, region )
 endfunction
 
+" ---------------------------------------------------------------------
+
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
 endfunction
 
-" ---------------------------------------------------------------------
-
 " Apropos of the selected symbol
 function! SlimvApropos()
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_apropos, SlimvGetSelection() )
+endfunction
+
+" Generate tags file using ctags
+function! SlimvGenerateTags()
+    if exists( 'g:slimv_ctags' ) && g:slimv_ctags != ''
+        execute 'silent !' . g:slimv_ctags
+    else
+        let dummy = input( "Copy ctags to the Vim path or define g:slimv_ctags. Press ENTER to continue." )
+    endif
 endfunction
 
 " =====================================================================
@@ -1213,6 +1262,7 @@ if g:slimv_keybindings == 1
 
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
+    noremap <Leader>]  :call SlimvGenerateTags()<CR>
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
     noremap <Leader>z  :call SlimvRefresh()<CR>
@@ -1251,6 +1301,7 @@ elseif g:slimv_keybindings == 2
     " Documentation commands
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>da  :call SlimvApropos()<CR>
+    noremap <Leader>dt  :call SlimvGenerateTags()<CR>
 
     " REPL commands
     noremap <Leader>rc  :call SlimvConnectServer()<CR>
@@ -1298,6 +1349,7 @@ if g:slimv_menu == 1
 
     menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
     menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
+    menu &Slimv.&Documentation.Generate-&Tags          :call SlimvGenerateTags()<CR>
 
     menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
     menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
