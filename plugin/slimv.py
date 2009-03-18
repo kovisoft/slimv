@@ -164,6 +164,12 @@ class repl_buffer:
         oldname = self.filename
         self.filename = filename
         if oldname == '':
+            try:
+                # Delete old file creted at a previous run
+                os.remove( self.filename )
+            except IOError:
+                # OK, at least we tried
+                pass
             self.write_nolock( newline + ';;; Slimv client is connected to REPL on port ' + str(PORT) + '.' + newline, True )
             user = None
             if mswindows:
