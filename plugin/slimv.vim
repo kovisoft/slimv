@@ -275,6 +275,7 @@ function! SlimvLogGlobals()
     endif
     if exists( 'g:slimv_ctags' )
         call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
+    endif
     call SlimvLog( 1, info )
 endfunction
 
@@ -422,6 +423,21 @@ endif
 if !exists( 'g:slimv_template_unprofile' )
     "TODO: support different Lisp implementations
     let g:slimv_template_unprofile = '(mon:unmonitor %1)'
+endif
+
+if !exists( 'g:slimv_template_unprofile_all' )
+    "TODO: support different Lisp implementations
+    let g:slimv_template_unprofile_all = '(mon:unmonitor)'
+endif
+
+if !exists( 'g:slimv_template_profile_report' )
+    "TODO: support different Lisp implementations
+    let g:slimv_template_profile_report = '(mon:report-monitoring)'
+endif
+
+if !exists( 'g:slimv_template_profile_reset' )
+    "TODO: support different Lisp implementations
+    let g:slimv_template_profile_reset = '(mon:reset-all-monitoring)'
 endif
 
 if !exists( 'g:slimv_template_disassemble' )
@@ -1008,7 +1024,6 @@ endfunction
 " %1 string is substituted with par1
 function! SlimvEvalForm1( template, par1 )
     let p1 = escape( a:par1, '&' )
-    "let p1 = escape( p1, '\\' )
     let temp1 = substitute( a:template, '%1', p1, 'g' )
     let lines = [temp1]
     call SlimvEval( lines )
@@ -1020,8 +1035,6 @@ endfunction
 function! SlimvEvalForm2( template, par1, par2 )
     let p1 = escape( a:par1, '&' )
     let p2 = escape( a:par2, '&' )
-    "let p1 = escape( p1, '\\' )
-    "let p2 = escape( p2, '\\' )
     let temp1 = substitute( a:template, '%1', p1, 'g' )
     let temp2 = substitute( temp1,      '%2', p2, 'g' )
     let lines = [temp2]
@@ -1165,12 +1178,27 @@ function! SlimvProfile()
 endfunction
 
 " Switch profiling off for the selected function
-function! SlimvUnProfile()
+function! SlimvUnprofile()
     call SlimvSelectSymbol()
     let s = input( 'Unprofile: ', SlimvGetSelection() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_unprofile, s )
     endif
+endfunction
+
+" Switch profiling completely off
+function! SlimvUnprofileAll()
+    call SlimvEvalForm( g:slimv_template_unprofile_all )
+endfunction
+
+" Report profiling results
+function! SlimvProfileReport()
+    call SlimvEvalForm( g:slimv_template_profile_report )
+endfunction
+
+" Reset profiling counters
+function! SlimvProfileReset()
+    call SlimvEvalForm( g:slimv_template_profile_reset )
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1185,14 +1213,14 @@ endfunction
 " Compile and load whole file
 function! SlimvCompileLoadFile()
     let filename = fnamemodify( bufname(''), ':p' )
-    let filename = escape( filename, '\\' )
+    let filename = substitute( filename, '\\', '/', 'g' )
     call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
 endfunction
 
 " Compile whole file
 function! SlimvCompileFile()
     let filename = fnamemodify( bufname(''), ':p' )
-    let filename = escape( filename, '\\' )
+    let filename = substitute( filename, '\\', '/', 'g' )
     call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'NIL' )
 endfunction
 
@@ -1259,6 +1287,9 @@ if g:slimv_keybindings == 1
 
     noremap <Leader>p  :call SlimvProfile()<CR>
     noremap <Leader>P  :call SlimvUnprofile()<CR>
+    noremap <Leader>U  :call SlimvUnprofileAll()<CR>
+    noremap <Leader>o  :call SlimvProfileReport()<CR>
+    noremap <Leader>x  :call SlimvProfileReset()<CR>
 
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
@@ -1297,6 +1328,9 @@ elseif g:slimv_keybindings == 2
     " Profile commands
     noremap <Leader>pp  :call SlimvProfile()<CR>
     noremap <Leader>pu  :call SlimvUnprofile()<CR>
+    noremap <Leader>pa  :call SlimvUnprofileAll()<CR>
+    noremap <Leader>pr  :call SlimvProfileReport()<CR>
+    noremap <Leader>px  :call SlimvProfileReset()<CR>
 
     " Documentation commands
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
@@ -1346,6 +1380,9 @@ if g:slimv_menu == 1
 
     menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
     menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
+    menu &Slimv.&Profiling.Unprofile-&All              :call SlimvUnprofileAll()<CR>
+    menu &Slimv.&Profiling.Profile-Rep&ort             :call SlimvProfileReport()<CR>
+    menu &Slimv.&Profiling.Profile-&Reset              :call SlimvProfileReset()<CR>
 
     menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
     menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
