@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 16 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 19 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.3.0
+                               Version 0.3.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -12,6 +12,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
 |slimv-clojure|              Clojure support
+|slimv-profiling|            Profiling
 |slimv-external|             External utilities
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
@@ -32,6 +33,7 @@ Prerequisites:
   - Lisp (any Common Lisp implementation should be OK) or Clojure installed.
   - Python 2.4 or later installed.
   - The interrupt functionality needs the pywin32 extension on Windows.
+  - The profiling facility needs metering.lisp from SLIME. See |slimv-profiling|.
 
 To install the script:
 
@@ -547,6 +549,34 @@ for Clojure. Another option is to use the 'lisp' filetype for 'Clojure' files,
 which can be set up this way:
 
   au BufNewFile,BufRead *.clj setf lisp
+
+
+===============================================================================
+PROFILING                                                     *slimv-profiling*
+
+Slimv is capable of utilizing the same monitoring/profiling package that is
+used by SLIME, at least for CLISP and maybe for some other Common Lisp
+implementations. In order to enable profiling you need to download, extract,
+and compile monitor.lisp from SLIME. The metering package can also be found
+separately, just search for it via our friend, Google.
+There are some metering.lisp variations specialized for other Lisp
+implementations, try to search for them if using something other than CLISP.
+
+Follow these steps to install the profiling system:
+
+1. Obtain a copy of metering.lisp.
+
+2. Compile and load metering.lisp into a running REPL:
+   Open metering.lisp in a Vim buffer and select Compilation/Compile-Load-File
+   from the Slimv menu.
+
+Now Slimv is ready to profile. Use the Profile command to select functions
+for profiling, use Profile-Report to display profiling results.
+Reset profiling counters with Profile-Reset.
+
+When the REPL is restarted, then step 2. needs to be repeated, or simply just
+load the compiled profiler:
+    (load "metering.fas")
 
 
 ===============================================================================
