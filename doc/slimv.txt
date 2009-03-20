@@ -36,8 +36,6 @@ Prerequisites:
 
   Optional components:
   - The interrupt functionality needs the pywin32 extension on Windows.
-  - The profiling facility needs metering.lisp from SLIME.
-    See |slimv-profiling|.
   - "Exuberant ctags" for tags file generation (if not bundled with Vim
     already). See |slimv-ctags|.
 
@@ -46,7 +44,8 @@ To install the script:
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
-    The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
+    The archive contains plugin/slimv.vim, plugin/slimv.py,
+    plugin/metering.lisp and doc/slimv.txt.
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
@@ -69,8 +68,9 @@ Upgrade from previous script versions:
 Uninstallation:
 
   - Exit all Vim instances and exit from the REPL server terminal window.
-  - Delete plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt from the
-    vimfiles directory, where these files were copied during installation.
+  - Delete plugin/slimv.vim, plugin/slimv.py, plugin/metering.lisp and
+    doc/slimv.txt from the vimfiles directory, where these files were copied
+    during installation.
 
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
@@ -184,7 +184,7 @@ The command format is the following (items in [] are optional):
     <python> <slimv> [-p <port>] -r "<server_cmd>"
 Where:
     <python>       is the command to start the Python interpreter
-    <slimv>        is the path of Slimv.py
+    <slimv>        is the path of slimv.py
     <port>         is the port number to use (if other than default)
     <server_cmd>   is the command to start the server
 
@@ -195,7 +195,7 @@ to the client):
 Where:
     <terminal>     is the command to open a new terminal window
     <python>       is the command to start the Python interpreter
-    <slimv>        is the path of Slimv.py
+    <slimv>        is the path of slimv.py
     <lisp>         is the command to start the Lisp REPL
 You can also pass the following shortcuts in <server_cmd>:
     @p             equals <python>
@@ -604,11 +604,14 @@ PROFILING                                                     *slimv-profiling*
 Slimv is capable of utilizing the same monitoring/profiling package that is
 used by SLIME, at least for CLISP and maybe for some other Common Lisp
 implementations. In order to enable profiling you need to download, extract,
-and compile monitor.lisp from SLIME: http://common-lisp.net/project/slime/
+and compile metering.lisp from SLIME: http://common-lisp.net/project/slime/
+Fortunately metering.lisp is in public domain, so the its current version
+(at the time of writing this document) is also included in Slimv.
+
 
 Follow these steps to install the profiling system:
 
-1. Obtain a copy of metering.lisp.
+1. Obtain a copy of metering.lisp or use the version that came with Slimv.
 
 2. Compile and load metering.lisp into a running REPL:
    Open metering.lisp in a Vim buffer and select Compilation/Compile-Load-File
