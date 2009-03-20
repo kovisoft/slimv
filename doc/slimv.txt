@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 20 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.3.1
@@ -30,10 +30,16 @@ INSTALLATION                                               *slimv-installation*
 
 Prerequisites:
 
+  Required components:
   - Lisp (any Common Lisp implementation should be OK) or Clojure installed.
   - Python 2.4 or later installed.
+
+  Optional components:
   - The interrupt functionality needs the pywin32 extension on Windows.
-  - The profiling facility needs metering.lisp from SLIME. See |slimv-profiling|.
+  - The profiling facility needs metering.lisp from SLIME.
+    See |slimv-profiling|.
+  - "Exuberant ctags" for tags file generation (if not bundled with Vim
+    already). See |slimv-ctags|.
 
 To install the script:
 
@@ -60,6 +66,12 @@ Upgrade from previous script versions:
                  and autoindenting in the REPL buffer.
                  Users who already have done this are smarter than me :)
 
+Uninstallation:
+
+  - Exit all Vim instances and exit from the REPL server terminal window.
+  - Delete plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt from the
+    vimfiles directory, where these files were copied during installation.
+
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
 
@@ -76,6 +88,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_client|             The whole OS command to start the Slimv client.
                              Used for advanced customization, like changing
                              the terminal emulator to use for the Lisp REPL.
+
+|g:slimv_ctags|              OS command to generate tags file.
 
 |g:slimv_debug|              Debug log level. Set zero for no debug messages.
 
@@ -236,6 +250,16 @@ when setting up a custom |g:slimv_client| command.
 Name of the Slimv logfile. Defaults to slimv.log.
 Used only when |g:slimv_debug| level is nonzero.
 
+                                                                *g:slimv_ctags*
+It is possible to generate tags file from within Vim. By default Slimv assumes
+that ctags.exe is stored somewhere along with the standard Vim path designated
+by $vim or $vimruntime. The command for generating tags file is then
+automatically built at script startup.
+If ctags.exe is stored somewhere else, or the default ctags options are
+unsatisfactory, then override this option with the desired command.
+The default ctags command is:
+  "ctags.exe -a --language-force=lisp *.lisp *.clj"
+
                                                           *g:slimv_keybindings*
 Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
 Value 1 defines the short keybinding with one-key bindings (after <Leader>).
@@ -296,39 +320,54 @@ symbol's name or the selected form.
 Here follows a list of the templates defined in Slimv.
 
                                                       *g:slimv_template_pprint*
-Lisp form built when issuing the 'pprint' command.
+Lisp form built when issuing the 'Pprint' command.
 Example:
     let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
 
                                                     *g:slimv_template_undefine*
-Lisp form built when issuing the 'undefine' command.
+Lisp form built when issuing the 'Undefine' command.
 Example:
     let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
 
                                                     *g:slimv_template_describe*
-Lisp form built when issuing the 'describe' command.
+Lisp form built when issuing the 'Describe' command.
 Example:
     let g:slimv_template_describe = '(describe (read-from-string "%1"))'
 
                                                        *g:slimv_template_trace*
-Lisp form built when issuing the 'trace' command.
+Lisp form built when issuing the 'Trace' command.
 Example:
     let g:slimv_template_trace = "(trace %1)"
 
                                                      *g:slimv_template_untrace*
-Lisp form built when issuing the 'untrace' command.
+Lisp form built when issuing the 'Untrace' command.
 Example:
     let g:slimv_template_untrace = "(untrace %1)"
 
                                                      *g:slimv_template_profile*
-Lisp form built when issuing the 'profile' command.
+Lisp form built when issuing the 'Profile' command.
 Example:
     let g:slimv_template_profile = "(mon:monitor %1)"
 
                                                    *g:slimv_template_unprofile*
-Lisp form built when issuing the 'unprofile' command.
+Lisp form built when issuing the 'Unprofile' command.
 Example:
     let g:slimv_template_unprofile = "(mon:unmonitor %1)"
+
+                                               *g:slimv_template_unprofile_all*
+Lisp form built when issuing the 'Unprofile All' command.
+Example:
+    let g:slimv_template_unprofile_all = "(mon:unmonitor)"
+
+                                              *g:slimv_template_profile_report*
+Lisp form built when issuing the 'Profile Report' command.
+Example:
+    let g:slimv_template_profile_report = "(mon:report-monitoring)"
+
+                                               *g:slimv_template_profile_reset*
+Lisp form built when issuing the 'Profile Reset' command.
+Example:
+    let g:slimv_template_profile_reset = "(mon:reset-all-monitoring)"
 
                                                  *g:slimv_template_disassemble*
 Lisp form built when issuing the 'disassemble' command.
@@ -366,7 +405,7 @@ Example:
 -------------------------------------------------------------------------------
                                                                *slimv_keyboard*
 
-The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
+The default keybindings (|g:slimv_keybindings| = 1) for Slimv are the following:
 
     ,,  Slimv Menu
 
@@ -392,16 +431,20 @@ The default keybindings (g:slimv_keybindings=1) for Slimv are the following:
 
     ,p  Profile
     ,P  Unprofile
+    ,U  Unprofile All
+    ,o  Profile Report
+    ,x  Profile Reset
 
     ,s  Describe Symbol
     ,a  Apropos
+    ,]  Generate Tags
 
     ,S  Connect to Server
     ,z  Refresh REPL Buffer
     ,Z  Refresh REPL Now
 
 There is another easy to remember built in keybinding set
-(g:slimv_keybindings=2):
+(|g:slimv_keybindings| = 2):
  
     ,,  Slimv Menu
 
@@ -431,10 +474,14 @@ There is another easy to remember built in keybinding set
     Profile commands:
     ,pp  Profile
     ,pu  Unprofile
+    ,pa  Unprofile All
+    ,pr  Profile Report
+    ,px  Profile Reset
 
     Documentation commands:
     ,ds  Describe Symbol
     ,da  Apropos
+    ,dt  Generate Tags
 
     REPL commands:
     ,rc  Connect to Server
@@ -557,10 +604,7 @@ PROFILING                                                     *slimv-profiling*
 Slimv is capable of utilizing the same monitoring/profiling package that is
 used by SLIME, at least for CLISP and maybe for some other Common Lisp
 implementations. In order to enable profiling you need to download, extract,
-and compile monitor.lisp from SLIME. The metering package can also be found
-separately, just search for it via our friend, Google.
-There are some metering.lisp variations specialized for other Lisp
-implementations, try to search for them if using something other than CLISP.
+and compile monitor.lisp from SLIME: http://common-lisp.net/project/slime/
 
 Follow these steps to install the profiling system:
 
@@ -574,9 +618,18 @@ Now Slimv is ready to profile. Use the Profile command to select functions
 for profiling, use Profile-Report to display profiling results.
 Reset profiling counters with Profile-Reset.
 
-When the REPL is restarted, then step 2. needs to be repeated, or simply just
+When the REPL is restarted, then step 2. needs to be repeated, or better just
 load the compiled profiler:
     (load "metering.fas")
+
+It is possible to override the default profile commands via the following
+templates (see |slimv_templates|):
+
+    |g:slimv_template_profile|
+    |g:slimv_template_unprofile|
+    |g:slimv_template_unprofile_all|
+    |g:slimv_template_profile_report|
+    |g:slimv_template_profile_reset|
 
 
 ===============================================================================
@@ -657,6 +710,8 @@ topic for a Lisp programmer.
 
 5. Tag lookup
 
+Also see Slimv option |g:slimv_ctags|.
+
     |ctags|                 "Exuberant ctags" is a powerful utility for
                             generating tag database for different kind of
 			    programming languages, including Lisp. Tag lookup
@@ -666,12 +721,6 @@ topic for a Lisp programmer.
     ctags --language-force=lisp *.lisp *.clj
                             This or a similar command may be used to generate
                             tags file from .lisp and .clj files in a directory.
-
-    :execute '!ctags --language-force=lisp *.lisp *.clj'
-                            This is the same command as the previous one, but
-                            started from inside Vim, rather than from the OS
-                            command prompt, assuming that ctags.exe is stored
-                            in the PATH.
 
 
 ===============================================================================
@@ -752,6 +801,9 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.3.1  - Added support for SLIME's profiling tool.
+       - Added option and command to generate tags file.
+
 0.3.0  - Added syntax highlighting and automatic indentation for the REPL
          buffer (needs lisp and/or clojure Vim plugins).
        - It is possible to enter a multi-line command in the REPL buffer,
@@ -797,7 +849,7 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
   destroyed.
 - Vim mark 's' is used to mark the end of the REPL buffer, i.e. the beginning
   of the "command line".
-- (un)profile does not work
+- Limited profiling support: does not work for all Lisp implementations.
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Works only via the Python interpreter, does not work using a Python IDE
   (like IDLE).
@@ -826,7 +878,7 @@ TODO                                                               *slimv-todo*
 - Handle specific REPL output in Vim (like compilation notes).
 - Add Compile System.
 - Add Cross Reference functions.
-- Add Profile functions.
+- Extend profile support.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
