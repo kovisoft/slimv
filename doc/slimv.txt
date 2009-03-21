@@ -405,90 +405,53 @@ Example:
 -------------------------------------------------------------------------------
                                                                *slimv_keyboard*
 
-The default keybindings (|g:slimv_keybindings| = 1) for Slimv are the following:
+The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
+built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
 
-    ,,  Slimv Menu
-
-    ,d  Eval Defun
-    ,e  Eval Last Expression
-    ,E  Pprint Eval Last Expression
-    ,r  Eval Region
-    ,b  Eval Buffer
-    ,v  Interactive Eval
-    ,u  Undefine Function
-
-    ,1  Macroexpand-1
-    ,m  Macroexpand
-    ,t  Trace
-    ,T  Untrace
-    ,l  Disassemble
-    ,i  Inspect
-
-    ,D  Compile Defun
-    ,L  Compile and Load File
-    ,F  Compile File
-    ,R  Compile Region
-
-    ,O  Load Profiler
-    ,p  Profile
-    ,P  Unprofile
-    ,U  Unprofile All
-    ,o  Profile Report
-    ,x  Profile Reset
-
-    ,s  Describe Symbol
-    ,a  Apropos
-    ,]  Generate Tags
-
-    ,S  Connect to Server
-    ,z  Refresh REPL Buffer
-    ,Z  Refresh REPL Now
-
-There is another easy to remember built in keybinding set
-(|g:slimv_keybindings| = 2):
- 
-    ,,  Slimv Menu
+    Set#1   Set#2    Command
+    ---------------------------------------------------
+    ,,      ,,       Slimv Menu
 
     Evaluation commands:
-    ,ed  Eval Defun
-    ,ee  Eval Last Expression
-    ,ep  Pprint Eval Last Expression
-    ,er  Eval Region
-    ,eb  Eval Buffer
-    ,ei  Interactive Eval
-    ,eu  Undefine Function
+    ,d      ,ed      Eval Defun
+    ,e      ,ee      Eval Last Expression
+    ,E      ,ep      Pprint Eval Last Expression
+    ,r      ,er      Eval Region
+    ,b      ,eb      Eval Buffer
+    ,v      ,ei      Interactive Eval
+    ,u      ,eu      Undefine Function
 
     Debug commands:
-    ,m1  Macroexpand-1
-    ,ma  Macroexpand
-    ,dt  Trace
-    ,du  Untrace
-    ,dd  Disassemble
-    ,di  Inspect
+    ,1      ,m1      Macroexpand-1
+    ,m      ,ma      Macroexpand
+    ,t      ,dt      Trace
+    ,T      ,du      Untrace
+    ,l      ,dd      Disassemble
+    ,i      ,di      Inspect
 
     Compile commands:
-    ,cd  Compile Defun
-    ,cl  Compile and Load File
-    ,cf  Compile File
-    ,cr  Compile Region
+    ,D      ,cd      Compile Defun
+    ,L      ,cl      Compile and Load File
+    ,F      ,cf      Compile File
+    ,R      ,cr      Compile Region
 
     Profile commands:
-    ,pl  Load Profiler
-    ,pp  Profile
-    ,pu  Unprofile
-    ,pa  Unprofile All
-    ,pr  Profile Report
-    ,px  Profile Reset
+    ,O      ,pl      Load Profiler
+    ,p      ,pp      Profile
+    ,P      ,pu      Unprofile
+    ,U      ,pa      Unprofile All
+    ,o      ,pr      Profile Report
+    ,x      ,px      Profile Reset
 
     Documentation commands:
-    ,ds  Describe Symbol
-    ,da  Apropos
-    ,dt  Generate Tags
+    ,s      ,ds      Describe Symbol
+    ,a      ,da      Apropos
+    ,]      ,dt      Generate Tags
 
     REPL commands:
-    ,rc  Connect to Server
-    ,rr  Refresh REPL Buffer
-    ,rn  Refresh REPL Now
+    ,S      ,rc      Connect to Server
+    ,z      ,rr      Refresh REPL Buffer
+    ,Z      ,rn      Refresh REPL Now
 
 
 ===============================================================================
