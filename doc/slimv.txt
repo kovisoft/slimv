@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 21 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.3.1
+                               Version 0.4.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -762,8 +762,10 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.3.1  - Added support for SLIME's profiling tool.
-       - Added option and command to generate tags file.
+0.4.0  - Added SLIME's profiling tool with support from Slimv.
+       - Added command to generate tags file.
+       - Fixed Compile And Load filename problems with '\' on Windows.
+       - Recycle old REPL temporary file at next server startup.
 
 0.3.0  - Added syntax highlighting and automatic indentation for the REPL
          buffer (needs lisp and/or clojure Vim plugins).
