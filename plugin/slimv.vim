@@ -1168,6 +1168,18 @@ function! SlimvInspect()
     endif
 endfunction
 
+" Compile and load profiler
+function! SlimvLoadProfiler()
+    let profiler = split( globpath( &runtimepath, 'plugin/**/metering.lisp'), '\n' )
+    if len( profiler ) > 0
+        let filename = profiler[0]
+        let filename = substitute( filename, '\\', '/', 'g' )
+        call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
+    else
+        let dummy = input( "metering.lisp is not found in the Vim plugin directory. Press ENTER to continue." )
+    endif
+endfunction
+
 " Switch profiling on for the selected function
 function! SlimvProfile()
     call SlimvSelectSymbol()
@@ -1285,6 +1297,7 @@ if g:slimv_keybindings == 1
     noremap <Leader>F  :<C-U>call SlimvCompileFile()<CR>
     noremap <Leader>R  :call SlimvCompileRegion()<CR>
 
+    noremap <Leader>O  :call SlimvLoadProfiler()<CR>
     noremap <Leader>p  :call SlimvProfile()<CR>
     noremap <Leader>P  :call SlimvUnprofile()<CR>
     noremap <Leader>U  :call SlimvUnprofileAll()<CR>
@@ -1326,6 +1339,7 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>cr  :call SlimvCompileRegion()<CR>
 
     " Profile commands
+    noremap <Leader>pl  :call SlimvLoadProfiler()<CR>
     noremap <Leader>pp  :call SlimvProfile()<CR>
     noremap <Leader>pu  :call SlimvUnprofile()<CR>
     noremap <Leader>pa  :call SlimvUnprofileAll()<CR>
@@ -1378,6 +1392,7 @@ if g:slimv_menu == 1
     menu &Slimv.&Compilation.Compile-&File             :<C-U>call SlimvCompileFile()<CR>
     menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
 
+    menu &Slimv.&Profiling.&Load-Profiler              :call SlimvLoadProfiler()<CR>
     menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
     menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
     menu &Slimv.&Profiling.Unprofile-&All              :call SlimvUnprofileAll()<CR>
