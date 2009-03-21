@@ -429,6 +429,7 @@ The default keybindings (|g:slimv_keybindings| = 1) for Slimv are the following:
     ,F  Compile File
     ,R  Compile Region
 
+    ,O  Load Profiler
     ,p  Profile
     ,P  Unprofile
     ,U  Unprofile All
@@ -472,6 +473,7 @@ There is another easy to remember built in keybinding set
     ,cr  Compile Region
 
     Profile commands:
+    ,pl  Load Profiler
     ,pp  Profile
     ,pu  Unprofile
     ,pa  Unprofile All
@@ -603,27 +605,20 @@ PROFILING                                                     *slimv-profiling*
 
 Slimv is capable of utilizing the same monitoring/profiling package that is
 used by SLIME, at least for CLISP and maybe for some other Common Lisp
-implementations. In order to enable profiling you need to download, extract,
-and compile metering.lisp from SLIME: http://common-lisp.net/project/slime/
-Fortunately metering.lisp is in public domain, so the its current version
-(at the time of writing this document) is also included in Slimv.
+implementations. Fortunately metering.lisp is in public domain, so its current
+version (at the time of writing this document) is included in Slimv.
+The most recent version can be extracted from the main directory of SLIME.
+SLIME can be downloaded from http://common-lisp.net/project/slime/
 
+In order to use the profiler first it must be compiled and loaded into a
+running REPL. Perform this with the 'Load-Profiler' command. If the compilation
+was successful then Slimv is ready to profile.
+Use the 'Profile' command to select functions for profiling,
+use 'Profile-Report' to display profiling results.
+Reset profiling counters with 'Profile-Reset'.
 
-Follow these steps to install the profiling system:
-
-1. Obtain a copy of metering.lisp or use the version that came with Slimv.
-
-2. Compile and load metering.lisp into a running REPL:
-   Open metering.lisp in a Vim buffer and select Compilation/Compile-Load-File
-   from the Slimv menu.
-
-Now Slimv is ready to profile. Use the Profile command to select functions
-for profiling, use Profile-Report to display profiling results.
-Reset profiling counters with Profile-Reset.
-
-When the REPL is restarted, then step 2. needs to be repeated, or better just
-load the compiled profiler:
-    (load "metering.fas")
+When the REPL is restarted, the profiler needs to be reloaded:
+select the 'Load-Profiler' command again (this re-compiles metering.lisp).
 
 It is possible to override the default profile commands via the following
 templates (see |slimv_templates|):
