@@ -222,8 +222,10 @@ class repl_buffer:
                     tries = tries - 1
                     if tries == 0:
                         traceback.print_exc()
+                    time.sleep(0.05)
                 except:
                     tries = tries - 1
+                    time.sleep(0.05)
         elif len( self.buffer ) < 2000:
             # No filename supplied, collect output info a buffer until filename is given
             # We collect only some bytes, then probably no filename will be given at all
