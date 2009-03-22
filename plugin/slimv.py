@@ -280,7 +280,6 @@ class socket_listener( Thread ):
                         # Read the message itself
                         received = ''
                         while len( received ) < l:
-                            print 'conn.recv start'
                             r = conn.recv(l)
                             if len( r ) == 0:
                                 break
