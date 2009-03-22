@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.4.0
-# Last Change:  21 Mar 2009
+# Last Change:  22 Mar 2009
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -167,7 +167,7 @@ class repl_buffer:
             try:
                 # Delete old file creted at a previous run
                 os.remove( self.filename )
-            except IOError:
+            except:
                 # OK, at least we tried
                 pass
             self.write_nolock( newline + ';;; Slimv client is connected to REPL on port ' + str(PORT) + '.' + newline, True )
@@ -269,6 +269,7 @@ class socket_listener( Thread ):
                     if len( lstr ) <= 0:
                         break
                 except:
+                    traceback.print_exc()
                     break
                 if terminate:
                     break
@@ -277,10 +278,17 @@ class socket_listener( Thread ):
                     # Valid length received, now wait for the message
                     try:
                         # Read the message itself
-                        received = conn.recv(l)
+                        received = ''
+                        while len( received ) < l:
+                            print 'conn.recv start'
+                            r = conn.recv(l)
+                            if len( r ) == 0:
+                                break
+                            received = received + r
                         if len( received ) < l:
                             break
                     except:
+                        traceback.print_exc()
                         break
 
                     if len(received) >= 7 and received[0:7] == 'SLIMV::':
