@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 21 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 22 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.4.0
@@ -764,6 +764,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
        - Added command to generate tags file.
+       - Fixed evaluation problems of large buffers on some systems.
        - Fixed Compile And Load filename problems with '\' on Windows.
        - Recycle old REPL temporary file at next server startup.
 
