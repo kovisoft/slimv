@@ -51,7 +51,7 @@ Documentation commands:
 
 Place the cursor at any location inside an s-expression or on a name of a symbol then invoke a Slimv command in order to send the command operated on the given expression or symbol to the running Lisp REPL.
 
-For more information see the documentation coupled with the script.
+For more information see the documentation coupled with the script, please refer to section "External Utilities" for other useful Lisp editing tips not covered by Slimv.
  
 Installation details
 Extract the zip archive into your vimfiles or runtime directory. The archive contains plugin/slimv.vim, plugin/slimv.py and doc/slimv.txt.
