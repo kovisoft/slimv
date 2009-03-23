@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 23 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.4.0
+                               Version 0.4.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -450,6 +450,8 @@ built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
 
     REPL commands:
     ,S      ,rc      Connect to Server
+    CR      CR       Send Input
+    C-CR    C-CR     Close and Send Input
     ,z      ,rr      Refresh REPL Buffer
     ,Z      ,rn      Refresh REPL Now
 
@@ -511,6 +513,9 @@ Insert Mode:
 
     <CR>           Sends the command typed in the last line to the Lisp REPL
                    for evaluation.
+
+    <C-CR>         Adds missing closing parens at the end of the command,
+                   then sends the command to the Lisp REPL for evaluation.
 
     <BS>           In the last line it deletes characters to the left only
                    until the end of the Lisp prompt reached.
@@ -620,11 +625,14 @@ There are some built-in Vim reindentation commands that may come very handy
 when editing Lisp files. One can define a custom key mapping for any of them,
 such mappings are not defined by Slimv.
 
+    :set autoindent         Copy indent from current line when starting
+                            a new line.
+
     =                       Reindent selection, after a text has been selected.
 
     ==                      Reindent current line.
 
-    [(v%=                   Select current form and reindent it.
+    vab=   or    [(v%=      Select current form and reindent it.
 
     99[(v%=                 Select top level form and reindent it.
 
@@ -647,9 +655,12 @@ topic for a Lisp programmer.
     :source $VIMRUNTIME/macros/matchit.vim
                             Adds extended matching with "%" to Vim.
 
-    [(v                     Select current form.
+    vab    or    [(v%       Select current form.
+    vib                     Select current form without enclosing parens.
+    yab                     Yank current form.
+    dab                     Delete current form.
 
-    99[(v                   Select top level form.
+    99[(v%                  Select top level form.
 
     g:lisp_rainbow          Colorize differing levels of parenthesization with
                             different highlighting. Currently works only for
@@ -665,7 +676,7 @@ topic for a Lisp programmer.
                             starting with the same letters as typed in up or
                             down direction.
 
-    set complete            The |'complete'| option controls how keyword
+    :set complete           The |'complete'| option controls how keyword
                             completion works.
 
 
@@ -761,6 +772,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.4.1  - Added menu items: Send Command <CR>, Close and Send Command <C-CR>
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
        - Added command to generate tags file.
