@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.4.0
-" Last Change:  21 Mar 2009
+" Version:      0.4.1
+" Last Change:  23 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -682,7 +682,8 @@ function! SlimvOpenReplBuffer()
     endif
 
     " This buffer will not have an associated file
-    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvHandleCR()<CR>
+    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvSendInput(1,0)<CR>
+    inoremap <buffer> <silent> <C-CR> <End><CR><C-O>:call SlimvSendInput(1,1)<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
@@ -854,8 +855,9 @@ function! s:GetParenCount( lines )
     return paren
 endfunction
 
-" Handle insert mode 'Enter' keypress in the REPL buffer
-function! SlimvHandleCR()
+" Send command line to REPL buffer
+" Arguments: insert = we are in insertmode, close = add missing closing parens
+function! SlimvSendInput( insert, close )
     let lastline = line( "'s" )
     let lastcol  =  col( "'s" )
     if lastline > 0
@@ -878,10 +880,17 @@ function! SlimvHandleCR()
 
             " Count the number of opening and closing braces
             let paren = s:GetParenCount( cmd )
+            if paren > 0 && a:close
+                " Expression is not finished yet, add missing parens and evaluate it
+                while paren > 0
+                    let cmd[len(cmd)-1] = cmd[len(cmd)-1] . ')'
+                    let paren = paren - 1
+                endwhile
+            endif
             if paren == 0
                 " Expression finished, let's evaluate it
                 " but first add it to the history
-                let s:insertmode = 1
+                let s:insertmode = a:insert
                 call SlimvAddHistory( cmd )
                 call SlimvEval( cmd )
             elseif paren < 0
@@ -1404,6 +1413,8 @@ if g:slimv_menu == 1
     menu &Slimv.&Documentation.Generate-&Tags          :call SlimvGenerateTags()<CR>
 
     menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
+    menu &Slimv.&REPL.Send-&Input                      :call SlimvSendInput(0,0)<CR>
+    menu &Slimv.&REPL.Cl&ose-Send-Input                :call SlimvSendInput(0,1)<CR>
     menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
     menu &Slimv.&REPL.&Refresh-Now                     :call SlimvRefreshNow()<CR>
 endif
