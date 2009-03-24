@@ -41,6 +41,7 @@ Profile commands:
     *  Profile
     *  Unprofile
     *  Unprofile All
+    *  Show Profiled
     *  Profile Report
     *  Profile Reset
 

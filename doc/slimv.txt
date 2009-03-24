@@ -359,6 +359,11 @@ Lisp form built when issuing the 'Unprofile All' command.
 Example:
     let g:slimv_template_unprofile_all = "(mon:unmonitor)"
 
+                                               *g:slimv_template_show_profiled*
+Lisp form built when issuing the 'Show Profiled' command.
+Example:
+    let g:slimv_template_show_profiled = "(pprint mon:*monitored-functions*)"
+
                                               *g:slimv_template_profile_report*
 Lisp form built when issuing the 'Profile Report' command.
 Example:
@@ -440,6 +445,7 @@ built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
     ,p      ,pp      Profile
     ,P      ,pu      Unprofile
     ,U      ,pa      Unprofile All
+    ,?      ,ps      Show Profiled
     ,o      ,pr      Profile Report
     ,x      ,px      Profile Reset
 
@@ -583,7 +589,10 @@ SBCL's profiler is ready to use by just starting the Lisp REPL.
 In order to use SLIME's profiler with CLISP it first must be compiled and
 loaded into a running REPL. Perform this with the 'Load-Profiler' command.
 If the compilation was successful then Slimv is ready to profile.
-Use the 'Profile' command to select functions for profiling,
+
+Use the 'Profile' command to select functions for profiling, 'Unprofile' to
+deselect specific functions or 'Unprofile All' to deselect all functions.
+Obtain a list of profiled functions with 'Show Profiled'.
 use 'Profile-Report' to display profiling results.
 Reset profiling counters with 'Profile-Reset'.
 
@@ -597,6 +606,7 @@ templates (see |slimv_templates|):
     |g:slimv_template_profile|
     |g:slimv_template_unprofile|
     |g:slimv_template_unprofile_all|
+    |g:slimv_template_show_profiled|
     |g:slimv_template_profile_report|
     |g:slimv_template_profile_reset|
 
@@ -777,7 +787,8 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.4.1  - Added profiler support for SBCL
-       - Added menu items: Send Command <CR>, Close and Send Command <C-CR>
+       - Added commands/menu items: Profiling/Show Profiled,
+         REPL/Send Command <CR>, REPL/Close and Send Command <C-CR>
        - Display Slimv error messages with ErrorMsg highlight
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
