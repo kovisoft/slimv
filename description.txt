@@ -49,6 +49,11 @@ Documentation commands:
     *  Apropos
     *  Generate Tags
 
+REPL commands:
+    *  Connect to Server
+    *  Send Input
+    *  Close and Send Input
+
 Place the cursor at any location inside an s-expression or on a name of a symbol then invoke a Slimv command in order to send the command operated on the given expression or symbol to the running Lisp REPL.
 
 For more information see the documentation coupled with the script, please refer to section "External Utilities" for other useful Lisp editing tips not covered by Slimv.
@@ -81,6 +86,8 @@ Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.4.1:
 
 0.4.0: Added SLIME's profiling tool with support from Slimv, added command to generate tags file, fixed eval problems of large buffers, fixed Compile And Load filename problems with '\' on Windows, recycle old REPL temporary file at next server startup.
 
