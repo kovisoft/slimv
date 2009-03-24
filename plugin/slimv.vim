@@ -481,6 +481,14 @@ if !exists( 'g:slimv_template_unprofile_all' )
     endif
 endif
 
+if !exists( 'g:slimv_template_show_profiled' )
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_show_profiled = '(sb-profile:profile)'
+    else
+        let g:slimv_template_show_profiled = '(pprint mon:*monitored-functions*)'
+    endif
+endif
+
 if !exists( 'g:slimv_template_profile_report' )
     if SlimvGetImpl() == 'sbcl'
         let g:slimv_template_profile_report = '(sb-profile:report)'
@@ -1287,6 +1295,15 @@ function! SlimvUnprofileAll()
     endif
 endfunction
 
+" Display list of profiled functions
+function! SlimvShowProfiled()
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvEvalForm( g:slimv_template_show_profiled )
+    endif
+endfunction
+
 " Report profiling results
 function! SlimvProfileReport()
     if SlimvGetFiletype() == 'clojure'
@@ -1393,6 +1410,7 @@ if g:slimv_keybindings == 1
     noremap <Leader>p  :call SlimvProfile()<CR>
     noremap <Leader>P  :call SlimvUnprofile()<CR>
     noremap <Leader>U  :call SlimvUnprofileAll()<CR>
+    noremap <Leader>?  :call SlimvShowProfiled()<CR>
     noremap <Leader>o  :call SlimvProfileReport()<CR>
     noremap <Leader>x  :call SlimvProfileReset()<CR>
 
@@ -1435,6 +1453,7 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>pp  :call SlimvProfile()<CR>
     noremap <Leader>pu  :call SlimvUnprofile()<CR>
     noremap <Leader>pa  :call SlimvUnprofileAll()<CR>
+    noremap <Leader>ps  :call SlimvShowProfiled()<CR>
     noremap <Leader>pr  :call SlimvProfileReport()<CR>
     noremap <Leader>px  :call SlimvProfileReset()<CR>
 
@@ -1488,6 +1507,8 @@ if g:slimv_menu == 1
     menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
     menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
     menu &Slimv.&Profiling.Unprofile-&All              :call SlimvUnprofileAll()<CR>
+    menu &Slimv.&Profiling.&Show-Profiled              :call SlimvShowProfiled()<CR>
+    menu &Slimv.&Profiling.-ProfilingSep-              :
     menu &Slimv.&Profiling.Profile-Rep&ort             :call SlimvProfileReport()<CR>
     menu &Slimv.&Profiling.Profile-&Reset              :call SlimvProfileReset()<CR>
 
