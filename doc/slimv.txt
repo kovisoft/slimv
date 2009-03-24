@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 23 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 24 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.4.1
@@ -571,22 +571,25 @@ which can be set up this way:
 ===============================================================================
 PROFILING                                                     *slimv-profiling*
 
-Slimv is capable of utilizing the same monitoring/profiling package that is
-used by SLIME, at least for CLISP and maybe for some other Common Lisp
-implementations. Fortunately metering.lisp is in public domain, so its current
-version (at the time of writing this document) is included in Slimv.
+Slimv is capable pf utilizing SBCL's built-in profiler, and also the same
+monitoring/profiling package (metering.lisp) that is used by SLIME, at least
+for CLISP and maybe for some other Common Lisp implementations.
+Fortunately SLIME's metering.lisp is in public domain, so its current version
+(at the time of writing this document) is included in Slimv.
 The most recent version can be extracted from the main directory of SLIME.
 SLIME can be downloaded from http://common-lisp.net/project/slime/
 
-In order to use the profiler first it must be compiled and loaded into a
-running REPL. Perform this with the 'Load-Profiler' command. If the compilation
-was successful then Slimv is ready to profile.
+SBCL's profiler is ready to use by just starting the Lisp REPL.
+In order to use SLIME's profiler with CLISP it first must be compiled and
+loaded into a running REPL. Perform this with the 'Load-Profiler' command.
+If the compilation was successful then Slimv is ready to profile.
 Use the 'Profile' command to select functions for profiling,
 use 'Profile-Report' to display profiling results.
 Reset profiling counters with 'Profile-Reset'.
 
-When the REPL is restarted, the profiler needs to be reloaded:
-select the 'Load-Profiler' command again (this re-compiles metering.lisp).
+When the REPL is restarted, the profiler needs to be reloaded (only in case
+of CLISP): select the 'Load-Profiler' command again (this re-compiles
+metering.lisp).
 
 It is possible to override the default profile commands via the following
 templates (see |slimv_templates|):
@@ -773,7 +776,9 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.4.1  - Added menu items: Send Command <CR>, Close and Send Command <C-CR>
+0.4.1  - Added profiler support for SBCL
+       - Added menu items: Send Command <CR>, Close and Send Command <C-CR>
+       - Display Slimv error messages with ErrorMsg highlight
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
        - Added command to generate tags file.
@@ -864,8 +869,9 @@ Author: Tamas Kovacs <kovisoft at gmail dot com>
 
 Credit must go out to Bram Moolenaar and all the Vim developers for making
 the world's (one of the) best editor.
-Also special thanks to Eric Marsden and all the Emacs/SLIME developers for
-making SLIME.
+Thanks to Eric Marsden and all the Emacs/SLIME developers for making SLIME.
+Also special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
+Rob MacLachlan for making the Metering System.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
