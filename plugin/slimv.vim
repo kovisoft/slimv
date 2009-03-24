@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.4.1
-" Last Change:  23 Mar 2009
+" Last Change:  24 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -26,6 +26,14 @@ endif
 " =====================================================================
 "  Functions used by global variable definitions
 " =====================================================================
+
+" Display an error message
+function SlimvError( msg )
+    echohl ErrorMsg
+    let dummy = input( a:msg . " Press ENTER to continue." )
+    echo ""
+    echohl None
+endfunction 
 
 " Write debug message to logile (message must be a list)
 function! SlimvWriteLog( level, message )
@@ -228,6 +236,17 @@ function! SlimvGetFiletype()
     return 'lisp'
 endfunction
 
+" Get the Lisp implementation used by Slimv
+function! SlimvGetImpl()
+    if exists( 'g:slimv_impl' )
+        " Return Lisp implementation if defined
+        return g:slimv_impl
+    endif
+
+    " We have no clue, guess its clisp
+    return 'clisp'
+endfunction
+
 " Log global variables to logfile (if debug log set)
 function! SlimvLogGlobals()
     let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
@@ -251,6 +270,12 @@ function! SlimvLogGlobals()
     endif
     if exists( 'g:slimv_client' )
         call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
+    endif
+    if exists( 'g:slimv_filetype' )
+        call add( info,  printf( 'g:slimv_filetype      = %s',    g:slimv_filetype ) )
+    endif
+    if exists( 'g:slimv_impl' )
+        call add( info,  printf( 'g:slimv_impl          = %s',    g:slimv_impl ) )
     endif
     if exists( 'g:slimv_repl_open' )
         call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
@@ -319,9 +344,26 @@ endif
 
 " Try to find out if the Lisp dialect used is actually Clojure
 if !exists( 'g:slimv_filetype' )
+    let oldcase = &ignorecase
+    set ignorecase
     if match( g:slimv_lisp, 'clojure' ) >= 0
         let g:slimv_filetype = 'clojure'
     endif
+    let &ignorecase = oldcase
+endif
+
+" Try to find out the Lisp implementation used
+if !exists( 'g:slimv_impl' )
+    let oldcase = &ignorecase
+    set ignorecase
+    if SlimvGetFiletype() == 'clojure'
+	let g:slimv_impl = 'clojure'
+    elseif match( g:slimv_lisp, 'sbcl' ) >= 0
+	let g:slimv_impl = 'sbcl'
+    else
+	let g:slimv_impl = 'clisp'
+    endif
+    let &ignorecase = oldcase
 endif
 
 " Open a REPL buffer inside Vim?
@@ -416,28 +458,43 @@ if !exists( 'g:slimv_template_untrace' )
 endif
 
 if !exists( 'g:slimv_template_profile' )
-    "TODO: support different Lisp implementations
-    let g:slimv_template_profile = '(mon:monitor %1)'
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_profile = '(sb-profile:profile %1)'
+    else
+        let g:slimv_template_profile = '(mon:monitor %1)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_unprofile' )
-    "TODO: support different Lisp implementations
-    let g:slimv_template_unprofile = '(mon:unmonitor %1)'
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_unprofile = '(sb-profile:unprofile %1)'
+    else
+        let g:slimv_template_unprofile = '(mon:unmonitor %1)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_unprofile_all' )
-    "TODO: support different Lisp implementations
-    let g:slimv_template_unprofile_all = '(mon:unmonitor)'
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_unprofile_all = '(sb-profile:unprofile)'
+    else
+        let g:slimv_template_unprofile_all = '(mon:unmonitor)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_profile_report' )
-    "TODO: support different Lisp implementations
-    let g:slimv_template_profile_report = '(mon:report-monitoring)'
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_profile_report = '(sb-profile:report)'
+    else
+        let g:slimv_template_profile_report = '(mon:report-monitoring)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_profile_reset' )
-    "TODO: support different Lisp implementations
-    let g:slimv_template_profile_reset = '(mon:reset-all-monitoring)'
+    if SlimvGetImpl() == 'sbcl'
+        let g:slimv_template_profile_reset = '(sb-profile:reset)'
+    else
+        let g:slimv_template_profile_reset = '(mon:reset-all-monitoring)'
+    endif
 endif
 
 if !exists( 'g:slimv_template_disassemble' )
@@ -895,7 +952,7 @@ function! SlimvSendInput( insert, close )
                 call SlimvEval( cmd )
             elseif paren < 0
                 " Too many closing braces
-                let dummy = input( "Too many closing parens found. Press ENTER to continue." )
+                call SlimvError( "Too many closing parens found." )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
@@ -1179,47 +1236,73 @@ endfunction
 
 " Compile and load profiler
 function! SlimvLoadProfiler()
-    let profiler = split( globpath( &runtimepath, 'plugin/**/metering.lisp'), '\n' )
-    if len( profiler ) > 0
-        let filename = profiler[0]
-        let filename = substitute( filename, '\\', '/', 'g' )
-        call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    elseif SlimvGetImpl() == 'sbcl'
+        call SlimvError( "SBCL has a built-in profiler, no need to load it." )
     else
-        let dummy = input( "metering.lisp is not found in the Vim plugin directory. Press ENTER to continue." )
+        let profiler = split( globpath( &runtimepath, 'plugin/**/metering.lisp'), '\n' )
+        if len( profiler ) > 0
+            let filename = profiler[0]
+            let filename = substitute( filename, '\\', '/', 'g' )
+            call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
+        else
+            call SlimvError( "metering.lisp is not found in the Vim plugin directory." )
+        endif
     endif
 endfunction
 
 " Switch profiling on for the selected function
 function! SlimvProfile()
-    call SlimvSelectSymbol()
-    let s = input( 'Profile: ', SlimvGetSelection() )
-    if s != ''
-        call SlimvEvalForm1( g:slimv_template_profile, s )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvSelectSymbol()
+        let s = input( 'Profile: ', SlimvGetSelection() )
+        if s != ''
+            call SlimvEvalForm1( g:slimv_template_profile, s )
+        endif
     endif
 endfunction
 
 " Switch profiling off for the selected function
 function! SlimvUnprofile()
-    call SlimvSelectSymbol()
-    let s = input( 'Unprofile: ', SlimvGetSelection() )
-    if s != ''
-        call SlimvEvalForm1( g:slimv_template_unprofile, s )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvSelectSymbol()
+        let s = input( 'Unprofile: ', SlimvGetSelection() )
+        if s != ''
+            call SlimvEvalForm1( g:slimv_template_unprofile, s )
+        endif
     endif
 endfunction
 
 " Switch profiling completely off
 function! SlimvUnprofileAll()
-    call SlimvEvalForm( g:slimv_template_unprofile_all )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvEvalForm( g:slimv_template_unprofile_all )
+    endif
 endfunction
 
 " Report profiling results
 function! SlimvProfileReport()
-    call SlimvEvalForm( g:slimv_template_profile_report )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvEvalForm( g:slimv_template_profile_report )
+    endif
 endfunction
 
 " Reset profiling counters
 function! SlimvProfileReset()
-    call SlimvEvalForm( g:slimv_template_profile_reset )
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvError( "No profiler support for Clojure." )
+    else
+        call SlimvEvalForm( g:slimv_template_profile_reset )
+    endif
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1271,7 +1354,7 @@ function! SlimvGenerateTags()
     if exists( 'g:slimv_ctags' ) && g:slimv_ctags != ''
         execute 'silent !' . g:slimv_ctags
     else
-        let dummy = input( "Copy ctags to the Vim path or define g:slimv_ctags. Press ENTER to continue." )
+        call SlimvError( "Copy ctags to the Vim path or define g:slimv_ctags." )
     endif
 endfunction
 
