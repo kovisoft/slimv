@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.4.1
-" Last Change:  24 Mar 2009
+" Last Change:  25 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -26,14 +26,6 @@ endif
 " =====================================================================
 "  Functions used by global variable definitions
 " =====================================================================
-
-" Display an error message
-function SlimvError( msg )
-    echohl ErrorMsg
-    let dummy = input( a:msg . " Press ENTER to continue." )
-    echo ""
-    echohl None
-endfunction 
 
 " Write debug message to logile (message must be a list)
 function! SlimvWriteLog( level, message )
@@ -90,83 +82,84 @@ function! SlimvAutodetectPython()
 endfunction
 
 " Try to autodetect Lisp executable
+" Returns list [Lisp executable, Lisp implementation]
 function! SlimvAutodetectLisp()
     " Check the easy cases
     if executable( 'clisp' )
         " Common Lisp
-        return 'clisp'
+        return ['clisp', 'clisp']
     endif
     if executable( 'gcl' )
         " GNU Common Lisp
-        return 'gcl'
+        return ['gcl', 'clisp']
     endif
     if executable( 'cmucl' )
         " Carnegie Mellon University Common Lisp
-        return 'cmucl'
+        return ['cmucl', 'cmu']
     endif
     if executable( 'sbcl' )
         " Steel Bank Common Lisp
-        return 'sbcl'
+        return ['sbcl', 'sbcl']
     endif
     if executable( 'ecl' )
         " Embeddable Common Lisp
-        return 'ecl'
+        return ['ecl', 'ecl']
     endif
     if executable( 'acl' )
         " Allegro Common Lisp
-        return 'acl'
+        return ['acl', 'allegro']
     endif
     if executable( 'lwl' )
         " LispWorks
-        return 'lwl'
+        return ['lwl', 'lispworks']
     endif
 
     if g:slimv_windows
         " Try to find Lisp on the standard installation places
         let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'clisp']
         endif
         let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'clisp']
         endif
         let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'clisp']
         endif
         let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'clisp']
         endif
         let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'cmu']
         endif
         let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'sbcl']
         endif
         let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
         if len( lisps ) > 0
-            return lisps[0]
+            return [lisps[0], 'ecl']
         endif
     endif
 
     if executable( 'clojure.jar' )
         " Clojure
-        return '"java -cp clojure.jar clojure.lang.Repl"'
+        return ['"java -cp clojure.jar clojure.lang.Repl"', 'clojure']
     endif
 
     if g:slimv_windows
         " Try to find Clojure on the standard installation places
         let lisps = split( globpath( 'c:/*clojure*', 'clojure.jar' ), '\n' )
         if len( lisps ) > 0
-            return '"java -cp ' . lisps[0] . ' clojure.lang.Repl"'
+            return ['"java -cp ' . lisps[0] . ' clojure.lang.Repl"', 'clojure']
         endif
     endif
 
-    return ''
+    return ['', '']
 endfunction
 
 " Build the command to start the client
@@ -222,9 +215,9 @@ endif
 
 " Get the filetype (Lisp dialect) used by Slimv
 function! SlimvGetFiletype()
-    if exists( 'g:slimv_filetype' )
+    if exists( 'g:slimv_filetype' ) && g:slimv_filetype != ''
         " Return Slimv filetype if defined
-        return g:slimv_filetype
+        return tolower( g:slimv_filetype )
     endif
 
     if &ft != ''
@@ -238,9 +231,9 @@ endfunction
 
 " Get the Lisp implementation used by Slimv
 function! SlimvGetImpl()
-    if exists( 'g:slimv_impl' )
+    if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
         " Return Lisp implementation if defined
-        return g:slimv_impl
+        return tolower( g:slimv_impl )
     endif
 
     " We have no clue, guess its clisp
@@ -339,31 +332,30 @@ endif
 
 " Find Lisp (if not given in vimrc)
 if !exists( 'g:slimv_lisp' )
-    let g:slimv_lisp = SlimvAutodetectLisp()
+    let lisp = SlimvAutodetectLisp()
+    let g:slimv_lisp = lisp[0]
+    if !exists( 'g:slimv_impl' )
+        let g:slimv_impl = lisp[1]
+    endif
 endif
 
 " Try to find out if the Lisp dialect used is actually Clojure
 if !exists( 'g:slimv_filetype' )
-    let oldcase = &ignorecase
-    set ignorecase
-    if match( g:slimv_lisp, 'clojure' ) >= 0
+    if match( tolower( g:slimv_lisp ), 'clojure' ) >= 0
         let g:slimv_filetype = 'clojure'
     endif
-    let &ignorecase = oldcase
 endif
 
-" Try to find out the Lisp implementation used
+" Try to find out the Lisp implementation
+" if not autodetected and not given in vimrc
 if !exists( 'g:slimv_impl' )
-    let oldcase = &ignorecase
-    set ignorecase
     if SlimvGetFiletype() == 'clojure'
 	let g:slimv_impl = 'clojure'
-    elseif match( g:slimv_lisp, 'sbcl' ) >= 0
+    elseif match( tolower( g:slimv_lisp ), 'sbcl' ) >= 0
 	let g:slimv_impl = 'sbcl'
     else
 	let g:slimv_impl = 'clisp'
     endif
-    let &ignorecase = oldcase
 endif
 
 " Open a REPL buffer inside Vim?
@@ -576,6 +568,21 @@ let s:insertmode = 0
 "  General utility functions
 " =====================================================================
 
+" Display an error message
+function SlimvError( msg )
+    echohl ErrorMsg
+    echo a:msg
+    echohl None
+endfunction 
+
+" Display an error message and wait for ENTER
+function SlimvErrorWait( msg )
+    echohl ErrorMsg
+    let dummy = input( a:msg . " Press ENTER to continue." )
+    echo ""
+    echohl None
+endfunction 
+
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer( markit )
@@ -747,8 +754,8 @@ function! SlimvOpenReplBuffer()
     endif
 
     " This buffer will not have an associated file
-    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvSendInput(1,0)<CR>
-    inoremap <buffer> <silent> <C-CR> <End><CR><C-O>:call SlimvSendInput(1,1)<CR>
+    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvSendCommand(1,0)<CR>
+    inoremap <buffer> <silent> <C-CR> <End><CR><C-O>:call SlimvSendCommand(1,1)<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
@@ -922,7 +929,7 @@ endfunction
 
 " Send command line to REPL buffer
 " Arguments: insert = we are in insertmode, close = add missing closing parens
-function! SlimvSendInput( insert, close )
+function! SlimvSendCommand( insert, close )
     let lastline = line( "'s" )
     let lastcol  =  col( "'s" )
     if lastline > 0
@@ -960,7 +967,7 @@ function! SlimvSendInput( insert, close )
                 call SlimvEval( cmd )
             elseif paren < 0
                 " Too many closing braces
-                call SlimvError( "Too many closing parens found." )
+                call SlimvErrorWait( "Too many closing parens found." )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
@@ -991,13 +998,28 @@ function! SlimvHandleBS()
     endif
 endfunction
 
+" Recall previous command from command history
+function! s:PreviousCommand()
+    if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
+        let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
+        call SlimvRecallHistory()
+    endif
+endfunction
+
+" Recall next command from command history
+function! s:NextCommand()
+    if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
+        let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
+        call SlimvRecallHistory()
+    else
+        call SlimvSetCommandLine( "" )
+    endif
+endfunction
+
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
     if line( "." ) >= line( "'s" )
-        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
-            let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
-            call SlimvRecallHistory()
-        endif
+        call s:PreviousCommand()
     else
         normal k
     endif
@@ -1006,18 +1028,29 @@ endfunction
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
     if line( "." ) >= line( "'s" )
-        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
-            let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
-            call SlimvRecallHistory()
-        else
-            call SlimvSetCommandLine( "" )
-        endif
+        call s:NextCommand()
     else
         normal j
     endif
 endfunction
 
-" Handle insert mode 'Down' keypress in the REPL buffer
+" Go to command line and recall previous command from command history
+function! SlimvPreviousCommand()
+    call SlimvEndOfReplBuffer( 0 )
+    if line( "." ) >= line( "'s" )
+        call s:PreviousCommand()
+    endif
+endfunction
+
+" Go to command line and recall next command from command history
+function! SlimvNextCommand()
+    call SlimvEndOfReplBuffer( 0 )
+    if line( "." ) >= line( "'s" )
+        call s:NextCommand()
+    endif
+endfunction
+
+" Handle interrupt (Ctrl-C) keypress in the REPL buffer
 function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
     call SlimvRefreshReplBuffer()
@@ -1419,6 +1452,10 @@ if g:slimv_keybindings == 1
     noremap <Leader>]  :call SlimvGenerateTags()<CR>
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
+    noremap <Leader>.  :call SlimvSendCommand(0,0)<CR>
+    noremap <Leader>/  :call SlimvSendCommand(0,1)<CR>
+    noremap <Leader><  :call SlimvPreviousCommand()<CR>
+    noremap <Leader>>  :call SlimvNextCommand()<CR>
     noremap <Leader>z  :call SlimvRefresh()<CR>
     noremap <Leader>Z  :call SlimvRefreshNow()<CR>
 
@@ -1464,8 +1501,12 @@ elseif g:slimv_keybindings == 2
 
     " REPL commands
     noremap <Leader>rc  :call SlimvConnectServer()<CR>
+    noremap <Leader>rs  :call SlimvSendCommand(0,0)<CR>
+    noremap <Leader>ro  :call SlimvSendCommand(0,1)<CR>
+    noremap <Leader>rp  :call SlimvPreviousCommand()<CR>
+    noremap <Leader>rn  :call SlimvNextCommand()<CR>
     noremap <Leader>rr  :call SlimvRefresh()<CR>
-    noremap <Leader>rn  :call SlimvRefreshNow()<CR>
+    noremap <Leader>rw  :call SlimvRefreshNow()<CR>
 
 endif
 
@@ -1517,9 +1558,11 @@ if g:slimv_menu == 1
     menu &Slimv.&Documentation.Generate-&Tags          :call SlimvGenerateTags()<CR>
 
     menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
-    menu &Slimv.&REPL.Send-&Input                      :call SlimvSendInput(0,0)<CR>
-    menu &Slimv.&REPL.Cl&ose-Send-Input                :call SlimvSendInput(0,1)<CR>
+    menu &Slimv.&REPL.Send-&Input                      :call SlimvSendCommand(0,0)<CR>
+    menu &Slimv.&REPL.Cl&ose-Send-Input                :call SlimvSendCommand(0,1)<CR>
+    menu &Slimv.&REPL.&Previous-Input                  :call SlimvPreviousCommand()<CR>
+    menu &Slimv.&REPL.&Next-Input                      :call SlimvNextCommand()<CR>
     menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
-    menu &Slimv.&REPL.&Refresh-Now                     :call SlimvRefreshNow()<CR>
+    menu &Slimv.&REPL.Refresh-No&w                     :call SlimvRefreshNow()<CR>
 endif
 
