@@ -803,7 +803,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.4.1  - Added profiler support for SBCL.
        - Added commands/menu items: Profiling: Show Profiled,
-         REPL: Send Command, Close and Send Command, Previous Input, Next Input
+         REPL: Send Input, Close and Send Input, Previous Input, Next Input
        - Display Slimv error messages with ErrorMsg highlight.
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
