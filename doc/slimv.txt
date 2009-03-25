@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 24 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 25 Mar 2009
 
 Slimv                                                                  *slimv*
                                Version 0.4.1
@@ -98,6 +98,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_filetype|           Filetype for Slimv. Not necessarily the same as
                              the Vim filetype. Defaults to 'lisp'.
 
+|g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
+
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
                              1 = set #1, 2 = set #2, other = no keybindings
 
@@ -163,6 +165,13 @@ Possible values are: 'lisp' or 'clojure'.
 When 'clojure' is used, |g:slimv_lisp| also needs to be defined to the command
 that starts the Clojure REPL.
 See |g:slimv-clojure| for details.
+
+                                                                 *g:slimv_impl*
+This is the Lisp implementation used. Slimv tries to autodetect it at script
+startup. If the autodetection fails, set this to the actual Lisp
+implementation.
+Example:
+    let g:slimv_impl = 'sbcl'
 
                                                                  *g:slimv_port*
 The default port used by Slimv is 5151. If this port is used by another
@@ -456,10 +465,16 @@ built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
 
     REPL commands:
     ,S      ,rc      Connect to Server
-    CR      CR       Send Input
-    C-CR    C-CR     Close and Send Input
+    ,.      ,rs      Send Input
+    ,/      ,ro      Close and Send Input
+    ,<      ,rp      Previous Input
+    ,>      ,rn      Next Input
     ,z      ,rr      Refresh REPL Buffer
-    ,Z      ,rn      Refresh REPL Now
+    ,Z      ,rw      Refresh REPL Now
+
+
+The above mappings are defined for normal mode.
+Also see *slimv-repl* for additional keybindings valid only in the REPL buffer.
 
 
 ===============================================================================
@@ -786,10 +801,10 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.4.1  - Added profiler support for SBCL
-       - Added commands/menu items: Profiling/Show Profiled,
-         REPL/Send Command <CR>, REPL/Close and Send Command <C-CR>
-       - Display Slimv error messages with ErrorMsg highlight
+0.4.1  - Added profiler support for SBCL.
+       - Added commands/menu items: Profiling: Show Profiled,
+         REPL: Send Command, Close and Send Command, Previous Input, Next Input
+       - Display Slimv error messages with ErrorMsg highlight.
 
 0.4.0  - Added SLIME's profiling tool with support from Slimv.
        - Added command to generate tags file.
