@@ -64,7 +64,7 @@ REPL commands:
     *  Previous Input
     *  Next Input
 
-Many Slimv commands operate on s-expressions or symbols, just like in SLIME. Place the cursor at any location inside the s-expression or on the symbol's name then invoke the command. This builds a command specific form and sends in to the running REPL for evaluation.
+Many Slimv commands operate on s-expressions or symbols, just like in SLIME. Place the cursor at any location inside the s-expression or on the symbol's name then invoke the command. This builds a command specific form and sends it to the running REPL for evaluation.
 
 For more information see the documentation coupled with the script, please refer to section "External Utilities" for other useful Lisp editing tips not covered by Slimv.
  
@@ -99,7 +99,7 @@ Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
 
-0.4.1: Added profiler support for SBCL, new commands: Show Profiled/Send Command/Close and Send Command/Previous Input/Next Input, highlight error messages.
+0.4.1: Added profiler support for SBCL, new commands: Show Profiled/Send Input/Close and Send Input/Previous Input/Next Input, highlight error messages.
 
 0.4.0: Added SLIME's profiling tool with support from Slimv, added command to generate tags file, fixed eval problems of large buffers, fixed Compile And Load filename problems with '\' on Windows, recycle old REPL temporary file at next server startup.
 
