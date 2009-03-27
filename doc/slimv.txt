@@ -874,6 +874,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
+- Add Hyperspec lookup.
+- Add Compile System.
+- Add Cross Reference functions.
+- Add Debugger.
 - Make the script a lisp+clojure filetype plugin.
 - Start client and server separately having two simpler commands for client
   and server startup, instead of the existing g:slimv_client solution.
@@ -884,9 +888,6 @@ TODO                                                               *slimv-todo*
 - Or put the (Python) client part back into the .vim script, rewrite only the
   server part in Lisp.
 - Handle specific REPL output in Vim (like compilation notes).
-- Add Compile System.
-- Add Cross Reference functions.
-- Extend profile support.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
