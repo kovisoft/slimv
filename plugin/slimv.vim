@@ -1275,6 +1275,8 @@ function! SlimvInspect()
     endif
 endfunction
 
+" ---------------------------------------------------------------------
+
 " Compile and load profiler
 function! SlimvLoadProfiler()
     if SlimvGetFiletype() == 'clojure'
@@ -1408,6 +1410,12 @@ function! SlimvGenerateTags()
     endif
 endfunction
 
+" Lookup current symbol in the Common Lisp Hyperspec
+function! SlimvHyperspec()
+    call SlimvSelectSymbol()
+    call SlimvHSLookup( SlimvGetSelection() )
+endfunction
+
 " =====================================================================
 "  Slimv keybindings
 " =====================================================================
@@ -1449,6 +1457,7 @@ if g:slimv_keybindings == 1
 
     noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>a  :call SlimvApropos()<CR>
+    noremap <Leader>h  :call SlimvHyperspec()<CR>
     noremap <Leader>]  :call SlimvGenerateTags()<CR>
 
     noremap <Leader>S  :call SlimvConnectServer()<CR>
@@ -1497,6 +1506,7 @@ elseif g:slimv_keybindings == 2
     " Documentation commands
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>da  :call SlimvApropos()<CR>
+    noremap <Leader>dh  :call SlimvHyperspec()<CR>
     noremap <Leader>dt  :call SlimvGenerateTags()<CR>
 
     " REPL commands
@@ -1555,6 +1565,7 @@ if g:slimv_menu == 1
 
     menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
     menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
+    menu &Slimv.&Documentation.&Hyperspec              :call SlimvHyperspec()<CR>
     menu &Slimv.&Documentation.Generate-&Tags          :call SlimvGenerateTags()<CR>
 
     menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
