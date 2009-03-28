@@ -2297,7 +2297,6 @@ endfunction
 " Lookup word in Common Lisp Hyperspec
 function! SlimvHSLookup( word )
     " First try an exact match
-    "TODO: remove package name from word
     let w = a:word
     let symbol = ['', '']
     while symbol[0] == ''
@@ -2312,16 +2311,21 @@ function! SlimvHSLookup( word )
             else
                 " Ask user if this is that he/she meant
                 let w = input( 'Hyperspec lookup word: ', symbol[0] )
+                if w == ''
+                    " OK, user does not want to continue
+                    return
+                endif
                 let symbol = ['', '']
             endif
         endif
     endwhile
     if symbol[0] != ''
         " Symbol found, open HS page in browser
+        let page = g:slimvhs_root . symbol[1]
         if g:slimv_windows
-            silent execute '! start ' . g:slimvhs_root . symbol[1]
+            silent execute '! start ' . page
         else
-            "TODO: add Linux version
+            silent execute g:slimv_python . ' -c "import webbrowser; webbrowser.open( ' . page . ' )"'
         endif
     endif
 endfunction
