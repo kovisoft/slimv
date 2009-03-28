@@ -724,6 +724,17 @@ function! SlimvRefreshReplBuffer()
     endif
 endfunction
 
+" Called when entering REPL buffer
+function! SlimvReplEnter()
+    call SlimvAddReplMenu()
+    call SlimvRefreshReplBufferNow()
+endfunction
+
+" Called when leaving REPL buffer
+function! SlimvReplLeave()
+    aunmenu REPL
+endfunction
+
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
     "TODO: check if this works without 'set hidden'
@@ -761,7 +772,8 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
-    execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
+    execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
+    execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
     filetype on
     redraw
@@ -1534,46 +1546,50 @@ if g:slimv_menu == 1
         execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
     endif
 
-    menu &Slimv.&Evaluation.Eval-&Defun                :<C-U>call SlimvEvalDefun()<CR>
-    menu &Slimv.&Evaluation.Eval-Last-&Exp             :<C-U>call SlimvEvalLastExp()<CR>
-    menu &Slimv.&Evaluation.&Pprint-Eval-Last          :<C-U>call SlimvPprintEvalLastExp()<CR>
-    menu &Slimv.&Evaluation.Eval-&Region               :call SlimvEvalRegion()<CR>
-    menu &Slimv.&Evaluation.Eval-&Buffer               :<C-U>call SlimvEvalBuffer()<CR>
-    menu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.    :call SlimvInteractiveEval()<CR>
-    menu &Slimv.&Evaluation.&Undefine-Function         :call SlimvUndefineFunction()<CR>
+    amenu &Slimv.&Evaluation.Eval-&Defun               :<C-U>call SlimvEvalDefun()<CR>
+    amenu &Slimv.&Evaluation.Eval-Last-&Exp            :<C-U>call SlimvEvalLastExp()<CR>
+    amenu &Slimv.&Evaluation.&Pprint-Eval-Last         :<C-U>call SlimvPprintEvalLastExp()<CR>
+    amenu &Slimv.&Evaluation.Eval-&Region              :call SlimvEvalRegion()<CR>
+    amenu &Slimv.&Evaluation.Eval-&Buffer              :<C-U>call SlimvEvalBuffer()<CR>
+    amenu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.   :call SlimvInteractiveEval()<CR>
+    amenu &Slimv.&Evaluation.&Undefine-Function        :call SlimvUndefineFunction()<CR>
 
-    menu &Slimv.De&bugging.Macroexpand-&1              :<C-U>call SlimvMacroexpand()<CR>
-    menu &Slimv.De&bugging.&Macroexpand-All            :<C-U>call SlimvMacroexpandAll()<CR>
-    menu &Slimv.De&bugging.&Trace\.\.\.                :call SlimvTrace()<CR>
-    menu &Slimv.De&bugging.U&ntrace\.\.\.              :call SlimvUntrace()<CR>
-    menu &Slimv.De&bugging.Disassemb&le\.\.\.          :call SlimvDisassemble()<CR>
-    menu &Slimv.De&bugging.&Inspect\.\.\.              :call SlimvInspect()<CR>
+    amenu &Slimv.De&bugging.Macroexpand-&1             :<C-U>call SlimvMacroexpand()<CR>
+    amenu &Slimv.De&bugging.&Macroexpand-All           :<C-U>call SlimvMacroexpandAll()<CR>
+    amenu &Slimv.De&bugging.&Trace\.\.\.               :call SlimvTrace()<CR>
+    amenu &Slimv.De&bugging.U&ntrace\.\.\.             :call SlimvUntrace()<CR>
+    amenu &Slimv.De&bugging.Disassemb&le\.\.\.         :call SlimvDisassemble()<CR>
+    amenu &Slimv.De&bugging.&Inspect\.\.\.             :call SlimvInspect()<CR>
 
-    menu &Slimv.&Compilation.Compile-&Defun            :<C-U>call SlimvCompileDefun()<CR>
-    menu &Slimv.&Compilation.Compile-&Load-File        :<C-U>call SlimvCompileLoadFile()<CR>
-    menu &Slimv.&Compilation.Compile-&File             :<C-U>call SlimvCompileFile()<CR>
-    menu &Slimv.&Compilation.Compile-&Region           :call SlimvCompileRegion()<CR>
+    amenu &Slimv.&Compilation.Compile-&Defun           :<C-U>call SlimvCompileDefun()<CR>
+    amenu &Slimv.&Compilation.Compile-&Load-File       :<C-U>call SlimvCompileLoadFile()<CR>
+    amenu &Slimv.&Compilation.Compile-&File            :<C-U>call SlimvCompileFile()<CR>
+    amenu &Slimv.&Compilation.Compile-&Region          :call SlimvCompileRegion()<CR>
 
-    menu &Slimv.&Profiling.&Load-Profiler              :call SlimvLoadProfiler()<CR>
-    menu &Slimv.&Profiling.&Profile\.\.\.              :call SlimvProfile()<CR>
-    menu &Slimv.&Profiling.&Unprofile\.\.\.            :call SlimvUnprofile()<CR>
-    menu &Slimv.&Profiling.Unprofile-&All              :call SlimvUnprofileAll()<CR>
-    menu &Slimv.&Profiling.&Show-Profiled              :call SlimvShowProfiled()<CR>
-    menu &Slimv.&Profiling.-ProfilingSep-              :
-    menu &Slimv.&Profiling.Profile-Rep&ort             :call SlimvProfileReport()<CR>
-    menu &Slimv.&Profiling.Profile-&Reset              :call SlimvProfileReset()<CR>
+    amenu &Slimv.&Profiling.&Load-Profiler             :call SlimvLoadProfiler()<CR>
+    amenu &Slimv.&Profiling.&Profile\.\.\.             :call SlimvProfile()<CR>
+    amenu &Slimv.&Profiling.&Unprofile\.\.\.           :call SlimvUnprofile()<CR>
+    amenu &Slimv.&Profiling.Unprofile-&All             :call SlimvUnprofileAll()<CR>
+    amenu &Slimv.&Profiling.&Show-Profiled             :call SlimvShowProfiled()<CR>
+    amenu &Slimv.&Profiling.-ProfilingSep-             :
+    amenu &Slimv.&Profiling.Profile-Rep&ort            :call SlimvProfileReport()<CR>
+    amenu &Slimv.&Profiling.Profile-&Reset             :call SlimvProfileReset()<CR>
 
-    menu &Slimv.&Documentation.Describe-&Symbol        :call SlimvDescribeSymbol()<CR>
-    menu &Slimv.&Documentation.&Apropos                :call SlimvApropos()<CR>
-    menu &Slimv.&Documentation.&Hyperspec              :call SlimvHyperspec()<CR>
-    menu &Slimv.&Documentation.Generate-&Tags          :call SlimvGenerateTags()<CR>
-
-    menu &Slimv.&REPL.&Connect-Server                  :call SlimvConnectServer()<CR>
-    menu &Slimv.&REPL.Send-&Input                      :call SlimvSendCommand(0,0)<CR>
-    menu &Slimv.&REPL.Cl&ose-Send-Input                :call SlimvSendCommand(0,1)<CR>
-    menu &Slimv.&REPL.&Previous-Input                  :call SlimvPreviousCommand()<CR>
-    menu &Slimv.&REPL.&Next-Input                      :call SlimvNextCommand()<CR>
-    menu &Slimv.&REPL.&Refresh                         :call SlimvRefresh()<CR>
-    menu &Slimv.&REPL.Refresh-No&w                     :call SlimvRefreshNow()<CR>
+    amenu &Slimv.&Documentation.Describe-&Symbol       :call SlimvDescribeSymbol()<CR>
+    amenu &Slimv.&Documentation.&Apropos               :call SlimvApropos()<CR>
+    amenu &Slimv.&Documentation.&Hyperspec             :call SlimvHyperspec()<CR>
+    amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
+    
+    amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
 endif
+
+" Add REPL menu. This menu exist only for the REPL buffer.
+function SlimvAddReplMenu()
+    amenu &REPL.Send-&Input                            :call SlimvSendCommand(0,0)<CR>
+    amenu &REPL.Cl&ose-Send-Input                      :call SlimvSendCommand(0,1)<CR>
+    amenu &REPL.&Previous-Input                        :call SlimvPreviousCommand()<CR>
+    amenu &REPL.&Next-Input                            :call SlimvNextCommand()<CR>
+    menu  &REPL.&Refresh                               :call SlimvRefresh()<CR>
+    amenu &REPL.Refresh-No&w                           :call SlimvRefreshNow()<CR>
+endfunction
 
