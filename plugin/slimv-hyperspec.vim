@@ -2306,17 +2306,17 @@ function! SlimvHSLookup( word )
             let symbol = SlimvHSFindSymbol( w, 0 )
             if symbol[0] == ''
                 " We are out of luck, can't find anything
-                call SlimvError( 'Symbol ' . w . ' not found.' )
-                return
+                let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
             else
-                " Ask user if this is that he/she meant
-                let w = input( 'Hyperspec lookup word: ', symbol[0] )
-                if w == ''
-                    " OK, user does not want to continue
-                    return
-                endif
-                let symbol = ['', '']
+                let msg = 'Hyperspec lookup word: '
             endif
+            " Ask user if this is that he/she meant
+            let w = input( msg, symbol[0] )
+            if w == ''
+                " OK, user does not want to continue
+                return
+            endif
+            let symbol = ['', '']
         endif
     endwhile
     if symbol[0] != ''
@@ -2325,7 +2325,10 @@ function! SlimvHSLookup( word )
         if g:slimv_windows
             silent execute '! start ' . page
         else
-            silent execute g:slimv_python . ' -c "import webbrowser; webbrowser.open( ' . page . ' )"'
+            " On Linux it's not easy to determine the default browser
+            " Ask help from Python webbrowser package
+            let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
+            silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
         endif
     endif
 endfunction
