@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.4.1
-" Last Change:  25 Mar 2009
+" Version:      0.5.0
+" Last Change:  29 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -764,12 +764,29 @@ function! SlimvOpenReplBuffer()
         endif
     endif
 
-    " This buffer will not have an associated file
+    " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvSendCommand(1,0)<CR>
     inoremap <buffer> <silent> <C-CR> <End><CR><C-O>:call SlimvSendCommand(1,1)<CR>
     inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
     inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
+    if g:slimv_keybindings == 1
+        noremap <buffer> <silent> <Leader>.  :call SlimvSendCommand(0,0)<CR>
+        noremap <buffer> <silent> <Leader>/  :call SlimvSendCommand(0,1)<CR>
+        noremap <buffer> <silent> <Leader><  :call SlimvPreviousCommand()<CR>
+        noremap <buffer> <silent> <Leader>>  :call SlimvNextCommand()<CR>
+        noremap <buffer> <silent> <Leader>z  :call SlimvRefresh()<CR>
+        noremap <buffer> <silent> <Leader>Z  :call SlimvRefreshNow()<CR>
+    elseif g:slimv_keybindings == 2
+        noremap <buffer> <silent> <Leader>rs  :call SlimvSendCommand(0,0)<CR>
+        noremap <buffer> <silent> <Leader>ro  :call SlimvSendCommand(0,1)<CR>
+        noremap <buffer> <silent> <Leader>rp  :call SlimvPreviousCommand()<CR>
+        noremap <buffer> <silent> <Leader>rn  :call SlimvNextCommand()<CR>
+        noremap <buffer> <silent> <Leader>rr  :call SlimvRefresh()<CR>
+        noremap <buffer> <silent> <Leader>rw  :call SlimvRefreshNow()<CR>
+    endif
+
+    " Add autocommands specific to the REPL buffer
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
@@ -1069,9 +1086,9 @@ function! SlimvHandleInterrupt()
 endfunction
 
 " Start and connect slimv server
-" This is a quite dummy function that just evaluates a comment
+" This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
-    call SlimvEval( [';;; Slimv client connected successfully'] )
+    call SlimvEval( [''] )
 endfunction
 
 " Refresh REPL buffer continuously
@@ -1472,13 +1489,7 @@ if g:slimv_keybindings == 1
     noremap <Leader>h  :call SlimvHyperspec()<CR>
     noremap <Leader>]  :call SlimvGenerateTags()<CR>
 
-    noremap <Leader>S  :call SlimvConnectServer()<CR>
-    noremap <Leader>.  :call SlimvSendCommand(0,0)<CR>
-    noremap <Leader>/  :call SlimvSendCommand(0,1)<CR>
-    noremap <Leader><  :call SlimvPreviousCommand()<CR>
-    noremap <Leader>>  :call SlimvNextCommand()<CR>
-    noremap <Leader>z  :call SlimvRefresh()<CR>
-    noremap <Leader>Z  :call SlimvRefreshNow()<CR>
+    noremap <Leader>c  :call SlimvConnectServer()<CR>
 
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
@@ -1523,12 +1534,6 @@ elseif g:slimv_keybindings == 2
 
     " REPL commands
     noremap <Leader>rc  :call SlimvConnectServer()<CR>
-    noremap <Leader>rs  :call SlimvSendCommand(0,0)<CR>
-    noremap <Leader>ro  :call SlimvSendCommand(0,1)<CR>
-    noremap <Leader>rp  :call SlimvPreviousCommand()<CR>
-    noremap <Leader>rn  :call SlimvNextCommand()<CR>
-    noremap <Leader>rr  :call SlimvRefresh()<CR>
-    noremap <Leader>rw  :call SlimvRefreshNow()<CR>
 
 endif
 
