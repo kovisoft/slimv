@@ -134,3 +134,16 @@ As far as I know, the main differences at the moment are:
 - Limp (0.3.4) works with SBCL on Linux (and Mac?), Slimv (0.1) should work for any Common Lisp implementation on Linux and Windows.
 - Limp is a filetype plugin, it does automatic bracket closing, (some) name completion, current form highlighting, Hyperspec lookup in browser.
 
+---------------------------------------------------------------------------------------------
+
+File list
+
+doc/slimv.txt
+ftplugin/lisp/slimv-lisp.vim
+ftplugin/lisp/slimv-lisp-hyperspec.vim
+ftplugin/lisp/slimv/slimv.vim
+ftplugin/lisp/slimv/slimv.py
+ftplugin/lisp/slimv/metering.lisp
+ftplugin/clojure/slimv-clojure.vim
+ftplugin/clojure/slimv-clojure-hyperspec.vim
+
