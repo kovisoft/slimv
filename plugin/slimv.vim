@@ -243,6 +243,7 @@ endfunction
 " Log global variables to logfile (if debug log set)
 function! SlimvLogGlobals()
     let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
+
     if exists( 'g:slimv_debug' )
         call add( info,  printf( 'g:slimv_debug         = %d',    g:slimv_debug ) )
     endif
@@ -294,6 +295,10 @@ function! SlimvLogGlobals()
     if exists( 'g:slimv_ctags' )
         call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
     endif
+    if exists( 'g:slimvhs_root' )
+        call add( info,  printf( 'g:slimvhs_root        = %d',    g:slimvhs_root ) )
+    endif
+
     call SlimvLog( 1, info )
 endfunction
 
@@ -1439,10 +1444,77 @@ function! SlimvGenerateTags()
     endif
 endfunction
 
+" ---------------------------------------------------------------------
+
+" Find word in the CLHS symbol database, with exact or partial match
+function! SlimvFindSymbol( word, exact )
+    let i = 0
+    let w = tolower( a:word )
+    if a:exact
+        while i < len( g:slimvhs_db )
+            " Try to find an exact match
+            if g:slimvhs_db[i][0] == w
+                return g:slimvhs_db[i]
+            endif
+            let i = i + 1
+        endwhile
+    else
+        while i < len( g:slimvhs_db )
+            " Try to find the symbol starting with the given word
+            if match( g:slimvhs_db[i][0], w ) == 0
+                return g:slimvhs_db[i]
+            endif
+            let i = i + 1
+        endwhile
+    endif
+
+    " Nothing found
+    return ['', '']
+endfunction
+
+" Lookup word in Common Lisp Hyperspec
+function! SlimvLookup( word )
+    " First try an exact match
+    let w = a:word
+    let symbol = ['', '']
+    while symbol[0] == ''
+        let symbol = SlimvFindSymbol( w, 1 )
+        if symbol[0] == ''
+            " Symbol not found, try a match on beginning of symbol name
+            let symbol = SlimvFindSymbol( w, 0 )
+            if symbol[0] == ''
+                " We are out of luck, can't find anything
+                let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
+            else
+                let msg = 'Hyperspec lookup word: '
+            endif
+            " Ask user if this is that he/she meant
+            let w = input( msg, symbol[0] )
+            if w == ''
+                " OK, user does not want to continue
+                return
+            endif
+            let symbol = ['', '']
+        endif
+    endwhile
+    if symbol[0] != ''
+        " Symbol found, open HS page in browser
+        let page = g:slimvhs_root . symbol[1]
+        if g:slimv_windows
+            silent execute '! start ' . page
+        else
+            " On Linux it's not easy to determine the default browser
+            " Ask help from Python webbrowser package
+            let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
+            silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
+        endif
+    endif
+endfunction
+
 " Lookup current symbol in the Common Lisp Hyperspec
 function! SlimvHyperspec()
     call SlimvSelectSymbol()
-    call SlimvHSLookup( SlimvGetSelection() )
+    call SlimvLookup( SlimvGetSelection() )
 endfunction
 
 " =====================================================================
