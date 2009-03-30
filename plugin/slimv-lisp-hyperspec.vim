@@ -20,13 +20,13 @@ endif
 
 let g:slimvhs_loaded = 1
 
+" It is possible to lookup the following information:
 " symbol                    , e.g. "setf"
 " hyperspec-chapters        , e.g. [index], [syntax]
 " format-control-characters , e.g. "~C: Character", "~%: Newline"
 " reader-macro-characters   , e.g. "(", "#'", "#b", "#+"
 " loop                      , e.g. loop:with, loop:collect
 " arguments                 , e.g. :test, :key, :eof-error-p
-" concepts                  , e.g. "lambda lists:", "character names:"
 " glossary                  , e.g. {absolute}, {binding}
 
 " Root of the Common Lisp Hyperspec
@@ -1538,18 +1538,6 @@ if !exists( 'g:slimvhs_arguments' )
     \[":allow-other-keys", "03_dada.htm"]]
 endif
 
-if !exists( 'g:slimvhs_concepts' )
-    let g:slimvhs_concepts = [
-    \["formatted output", "22_c.htm"],
-    \["lambda lists", "03_d.htm"],
-    \["modified BNF syntax", "01_dab.htm"],
-    \["character names", "13_ag.htm"],
-    \["standardized packages", "11_ab.htm"],
-    \["the common-lisp package", "11_aba.htm"],
-    \["the common-lisp-user package", "11_aba.htm"],
-    \["the keyword package", "11_abc.htm"]]
-endif
-
 if !exists( 'g:slimvhs_glossary' )
     let g:slimvhs_glossary = [
     \["{()}", "26_glo_9.htm#OPCP"],
@@ -2249,6 +2237,7 @@ endif
 " Build the complete CLHS symbol database
 if !exists( 'g:slimvhs_db' )
     if exists( 'g:slimvhs_user' )
+	" Give a choice for the user to extend the symbol database
         let user = g:slimvhs_user
     else
         let user = []
@@ -2261,75 +2250,10 @@ if !exists( 'g:slimvhs_db' )
     \g:slimvhs_macro_characters +
     \g:slimvhs_loop +
     \g:slimvhs_arguments +
-    \g:slimvhs_concepts +
     \g:slimvhs_glossary +
     \user
 
+    " Do we need to sort the symbol database?
     "call sort( g:slimvhs_db )
 endif
-
-" Find word in the CLHS symbol database, with exact or partial match
-function! SlimvHSFindSymbol( word, exact )
-    let i = 0
-    let w = tolower( a:word )
-    if a:exact
-        while i < len( g:slimvhs_db )
-            " Try to find an exact match
-            if g:slimvhs_db[i][0] == w
-                return g:slimvhs_db[i]
-            endif
-            let i = i + 1
-        endwhile
-    else
-        while i < len( g:slimvhs_db )
-            " Try to find the symbol starting with the given word
-            if match( g:slimvhs_db[i][0], w ) == 0
-                return g:slimvhs_db[i]
-            endif
-            let i = i + 1
-        endwhile
-    endif
-
-    " Nothing found
-    return ['', '']
-endfunction
-
-" Lookup word in Common Lisp Hyperspec
-function! SlimvHSLookup( word )
-    " First try an exact match
-    let w = a:word
-    let symbol = ['', '']
-    while symbol[0] == ''
-        let symbol = SlimvHSFindSymbol( w, 1 )
-        if symbol[0] == ''
-            " Symbol not found, try a match on beginning of symbol name
-            let symbol = SlimvHSFindSymbol( w, 0 )
-            if symbol[0] == ''
-                " We are out of luck, can't find anything
-                let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
-            else
-                let msg = 'Hyperspec lookup word: '
-            endif
-            " Ask user if this is that he/she meant
-            let w = input( msg, symbol[0] )
-            if w == ''
-                " OK, user does not want to continue
-                return
-            endif
-            let symbol = ['', '']
-        endif
-    endwhile
-    if symbol[0] != ''
-        " Symbol found, open HS page in browser
-        let page = g:slimvhs_root . symbol[1]
-        if g:slimv_windows
-            silent execute '! start ' . page
-        else
-            " On Linux it's not easy to determine the default browser
-            " Ask help from Python webbrowser package
-            let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
-            silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
-        endif
-    endif
-endfunction
 
