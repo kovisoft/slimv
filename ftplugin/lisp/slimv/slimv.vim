@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.0
-" Last Change:  29 Mar 2009
+" Last Change:  30 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -203,9 +203,9 @@ function! SlimvClientCommand()
     endif
 endfunction
 
-" Find slimv.py in the Vim plugin directory (if not given in vimrc)
+" Find slimv.py in the Vim ftplugin directory (if not given in vimrc)
 if !exists( 'g:slimv_path' )
-    let plugins = split( globpath( &runtimepath, 'plugin/**/slimv.py'), '\n' )
+    let plugins = split( globpath( &runtimepath, 'ftplugin/**/slimv.py'), '\n' )
     if len( plugins ) > 0
         let g:slimv_path = plugins[0]
     else
@@ -737,7 +737,13 @@ endfunction
 
 " Called when leaving REPL buffer
 function! SlimvReplLeave()
-    aunmenu REPL
+    try
+        " Check if REPL menu exists, then remove it
+        silent amenu REPL
+        aunmenu REPL
+    catch /.*/
+        " REPL menu not found, we cannot remove it
+    endtry
 endfunction
 
 " Open a new REPL buffer or switch to the existing one
@@ -1318,13 +1324,13 @@ function! SlimvLoadProfiler()
     elseif SlimvGetImpl() == 'sbcl'
         call SlimvError( "SBCL has a built-in profiler, no need to load it." )
     else
-        let profiler = split( globpath( &runtimepath, 'plugin/**/metering.lisp'), '\n' )
+        let profiler = split( globpath( &runtimepath, 'ftplugin/**/metering.lisp'), '\n' )
         if len( profiler ) > 0
             let filename = profiler[0]
             let filename = substitute( filename, '\\', '/', 'g' )
             call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
         else
-            call SlimvError( "metering.lisp is not found in the Vim plugin directory." )
+            call SlimvError( "metering.lisp is not found in the Vim ftplugin directory or below." )
         endif
     endif
 endfunction
@@ -1448,6 +1454,11 @@ endfunction
 
 " Find word in the CLHS symbol database, with exact or partial match
 function! SlimvFindSymbol( word, exact )
+    if !exists( 'g:slimvhs_db' )
+        " Hyperspec symbol database not found
+        return ['', '']
+    endif
+
     let i = 0
     let w = tolower( a:word )
     if a:exact
@@ -1474,6 +1485,12 @@ endfunction
 
 " Lookup word in Common Lisp Hyperspec
 function! SlimvLookup( word )
+    if !exists( 'g:slimvhs_db' )
+        " Hyperspec symbol database not found
+        call SlimvError( "Hyperspec symbol database not found." )
+        return
+    endif
+
     " First try an exact match
     let w = a:word
     let symbol = ['', '']

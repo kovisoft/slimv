@@ -1,7 +1,7 @@
-" slimv-hyperspec.vim:
+" lisp-hyperspec.vim:
 "               Common Lisp Hyperspec lookup support for Slimv
 " Version:      0.5.0
-" Last Change:  27 Mar 2009
+" Last Change:  30 Mar 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
