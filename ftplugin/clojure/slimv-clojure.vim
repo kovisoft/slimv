@@ -17,4 +17,5 @@ endif
 let g:slimv_clojure_loaded = 1
 
 runtime ftplugin/**/slimv.vim
+runtime ftplugin/**/clojure-hyperspec.vim
 
