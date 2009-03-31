@@ -48,13 +48,13 @@ To install the script:
 
        doc/slimv.txt
        ftdetect/clojure.vim
+       ftplugin/metering.lisp
+       ftplugin/slimv.py
+       ftplugin/slimv.vim
        ftplugin/clojure/slimv-clojure.vim
-       ftplugin/clojure/slimv/clojure-hyperspec.vim
+       ftplugin/clojure/slimv-clojure-hyperspec.vim
        ftplugin/lisp/slimv-lisp.vim
-       ftplugin/lisp/slimv/lisp-hyperspec.vim
-       ftplugin/lisp/slimv/metering.lisp
-       ftplugin/lisp/slimv/slimv.py
-       ftplugin/lisp/slimv/slimv.vim
+       ftplugin/lisp/slimv-lisp-hyperspec.vim
        indent/clojure/slimv-indent-clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
@@ -89,17 +89,19 @@ Uninstallation:
   - Exit all Vim instances and exit from the REPL server terminal window.
   - Delete the files that were copied to the vimfiles directory during
     installation:
+
        doc/slimv.txt
        ftdetect/clojure.vim
+       ftplugin/metering.*
+       ftplugin/slimv.py
+       ftplugin/slimv.vim
        ftplugin/clojure/slimv-clojure.vim
-       ftplugin/clojure/slimv/clojure-hyperspec.vim
+       ftplugin/clojure/slimv-clojure-hyperspec.vim
        ftplugin/lisp/slimv-lisp.vim
-       ftplugin/lisp/slimv/lisp-hyperspec.vim
-       ftplugin/lisp/slimv/metering.*
-       ftplugin/lisp/slimv/slimv.py
-       ftplugin/lisp/slimv/slimv.vim
+       ftplugin/lisp/slimv-lisp-hyperspec.vim
        indent/clojure/slimv-indent-clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
+
     (Special note on metering.lisp: if the profiler was compiled, then the
     compiled files should be deleted as well, hence the metering.* above.)
 
