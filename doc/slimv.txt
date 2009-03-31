@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 25 Mar 2009
+*slimv.txt*                    Slimv                 Last Change: 31 Mar 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.4.1
+                               Version 0.5.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -44,8 +44,22 @@ To install the script:
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
-    The archive contains plugin/slimv.vim, plugin/slimv.py,
-    plugin/metering.lisp and doc/slimv.txt.
+    The archive contains the following files:
+
+       doc/slimv.txt
+       ftdetect/clojure.vim
+       ftplugin/clojure/slimv-clojure.vim
+       ftplugin/clojure/slimv/clojure-hyperspec.vim
+       ftplugin/lisp/slimv-lisp.vim
+       ftplugin/lisp/slimv/lisp-hyperspec.vim
+       ftplugin/lisp/slimv/metering.lisp
+       ftplugin/lisp/slimv/slimv.py
+       ftplugin/lisp/slimv/slimv.vim
+       indent/clojure/slimv-indent-clojure.vim
+       syntax/clojure/slimv-syntax-clojure.vim
+
+    You might already have an ftdetect/clojure.vim file if you already use
+    another Clojure filetype plugin. In this case just keep the original file.
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
@@ -59,6 +73,11 @@ To install the script:
 
 Upgrade from previous script versions:
 
+0.1   - 0.4.x    The project went through a major reorganization, so users
+                 who already installed previous versions of the plugin should
+                 first delete the old files. These are: plugin/slimv.vim,
+                 plugin/slimv.py, plugin/metering.lisp and doc/slimv.txt
+                 in the vimfiles directory.
 0.1   - 0.2.x    Users having a custom |g:slimv_repl_file| setting should
                  consider attaching the .lisp or .clj extension to the name
                  of the REPL buffer, in order to have syntax highlighting
@@ -68,9 +87,22 @@ Upgrade from previous script versions:
 Uninstallation:
 
   - Exit all Vim instances and exit from the REPL server terminal window.
-  - Delete plugin/slimv.vim, plugin/slimv.py, plugin/metering.lisp and
-    doc/slimv.txt from the vimfiles directory, where these files were copied
-    during installation.
+  - Delete the files that were copied to the vimfiles directory during
+    installation:
+       doc/slimv.txt
+       ftdetect/clojure.vim
+       ftplugin/clojure/slimv-clojure.vim
+       ftplugin/clojure/slimv/clojure-hyperspec.vim
+       ftplugin/lisp/slimv-lisp.vim
+       ftplugin/lisp/slimv/lisp-hyperspec.vim
+       ftplugin/lisp/slimv/metering.*
+       ftplugin/lisp/slimv/slimv.py
+       ftplugin/lisp/slimv/slimv.vim
+       indent/clojure/slimv-indent-clojure.vim
+       syntax/clojure/slimv-syntax-clojure.vim
+    (Special note on metering.lisp: if the profiler was compiled, then the
+    compiled files should be deleted as well, hence the metering.* above.)
+
 
 ===============================================================================
 CUSTOMIZATION                                             *slimv-customization*
@@ -463,8 +495,10 @@ built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
     ,a      ,da      Apropos
     ,]      ,dt      Generate Tags
 
-    REPL commands:
-    ,S      ,rc      Connect to Server
+    Repl commands:
+    ,c      ,rc      Connect to Server
+
+    REPL menu commands (separate menu, valid only for the REPL buffer):
     ,.      ,rs      Send Input
     ,/      ,ro      Close and Send Input
     ,<      ,rp      Previous Input
@@ -473,7 +507,6 @@ built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
     ,Z      ,rw      Refresh REPL Now
 
 
-The above mappings are defined for normal mode.
 Also see *slimv-repl* for additional keybindings valid only in the REPL buffer.
 
 
@@ -801,6 +834,11 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.5.0  - Major project reorganization: Slimv is now a Lisp and Clojure filetype
+         plugin.
+       - Added Hyperspec lookup.
+       - Separate menu for REPL buffer.
+
 0.4.1  - Added profiler support for SBCL.
        - Added commands/menu items: Profiling: Show Profiled,
          REPL: Send Input, Close and Send Input, Previous Input, Next Input
@@ -874,11 +912,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Add Hyperspec lookup.
+- Add JavaDoc to Clojure Hyperspec lookup.
 - Add Compile System.
 - Add Cross Reference functions.
 - Add Debugger.
-- Make the script a lisp+clojure filetype plugin.
 - Start client and server separately having two simpler commands for client
   and server startup, instead of the existing g:slimv_client solution.
 - Implement an own main loop in Vim for the REPL buffer, poll REPL output
@@ -897,8 +934,10 @@ Author: Tamas Kovacs <kovisoft at gmail dot com>
 Credit must go out to Bram Moolenaar and all the Vim developers for making
 the world's (one of the) best editor.
 Thanks to Eric Marsden and all the Emacs/SLIME developers for making SLIME.
-Also special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
-Rob MacLachlan for making the Metering System.
+Special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
+Rob MacLachlan for creating the Metering System.
+Also special thanks to Erik Naggum, Yuji Minejima and others for making the
+Common Lisp Hyperspec lookup packages for SLIME.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
