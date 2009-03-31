@@ -1,0 +1,5 @@
+- eliminate identical lines from command history
+- separate menu for REPL besides SLIMV
+- display lisp startup text
+- separate variables for wanting to open repl and repl actually opened
+- refresh do not open repl in .lisp window
