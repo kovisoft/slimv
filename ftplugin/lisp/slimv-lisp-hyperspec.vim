@@ -1,7 +1,7 @@
 " slimv-lisp-hyperspec.vim:
 "               Common Lisp Hyperspec lookup support for Slimv
 " Version:      0.5.0
-" Last Change:  31 Mar 2009
+" Last Change:  01 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -14,11 +14,11 @@
 " =====================================================================
 "
 "  Load Once:
-if &cp || exists( 'g:slimvhs_loaded' )
+if &cp || exists( 'g:slimv_lhs_loaded' )
     finish
 endif
 
-let g:slimvhs_loaded = 1
+let g:slimv_lhs_loaded = 1
 
 " It is possible to lookup the following information:
 " symbol                    , e.g. "setf"
@@ -30,12 +30,12 @@ let g:slimvhs_loaded = 1
 " glossary                  , e.g. {absolute}, {binding}
 
 " Root of the Common Lisp Hyperspec
-if !exists( 'g:slimvhs_root' )
-    let g:slimvhs_root = 'http://www.lispworks.com/reference/HyperSpec/Body/'
+if !exists( 'g:slimv_lhs_root' )
+    let g:slimv_lhs_root = 'http://www.lispworks.com/reference/HyperSpec/Body/'
 endif
 
-if !exists( 'g:slimvhs_clhs' )
-    let g:slimvhs_clhs = [
+if !exists( 'g:slimv_lhs_clhs' )
+    let g:slimv_lhs_clhs = [
     \["&allow-other-keys", "03_da.htm"],
     \["&aux", "03_da.htm"],
     \["&body", "03_dd.htm"],
@@ -1016,8 +1016,8 @@ if !exists( 'g:slimvhs_clhs' )
     \["zerop", "f_zerop.htm"]]
 endif
 
-if !exists( 'g:slimvhs_issues' )
-    let g:slimvhs_issues = [
+if !exists( 'g:slimv_lhs_issues' )
+    let g:slimv_lhs_issues = [
     \["&environment-binding-order:first", "iss001.htm"],
     \["access-error-name", "iss002.htm"],
     \["adjust-array-displacement", "iss003.htm"],
@@ -1386,8 +1386,8 @@ if !exists( 'g:slimvhs_issues' )
     \["with-standard-io-syntax-readtable:x3j13-mar-91", "iss366.htm"]]
 endif
  
-if !exists( 'g:slimvhs_chapters' )
-    let g:slimvhs_chapters = [
+if !exists( 'g:slimv_lhs_chapters' )
+    let g:slimv_lhs_chapters = [
     \["[index]", "../Front/Contents.htm"],
     \["[introduction]", "01_.htm"],
     \["[syntax]", "02_.htm"],
@@ -1417,8 +1417,8 @@ if !exists( 'g:slimvhs_chapters' )
     \["[glossary]", "26_.htm"]]
 endif
 
-if !exists( 'g:slimvhs_control_characters' )
-    let g:slimvhs_control_characters = [
+if !exists( 'g:slimv_lhs_control_characters' )
+    let g:slimv_lhs_control_characters = [
     \["~C: Character", "22_caa.htm"],
     \["~%: Newline", "22_cab.htm"],
     \["~&: Freshline", "22_cac.htm"],
@@ -1457,8 +1457,8 @@ if !exists( 'g:slimvhs_control_characters' )
     \["~NEWLINE: Ignored Newline", "22_cic.htm"]]
 endif
 
-if !exists( 'g:slimvhs_macro_characters' )
-    let g:slimvhs_macro_characters = [
+if !exists( 'g:slimv_lhs_macro_characters' )
+    let g:slimv_lhs_macro_characters = [
     \["(", "02_da.htm"],
     \[")", "02_db.htm"],
     \["'", "02_dc.htm"],
@@ -1489,8 +1489,8 @@ if !exists( 'g:slimvhs_macro_characters' )
     \["#<", "02_dht.htm"]]
 endif
 
-if !exists( 'g:slimvhs_loop' )
-    let g:slimvhs_loop = [
+if !exists( 'g:slimv_lhs_loop' )
+    let g:slimv_lhs_loop = [
     \["loop:with", "06_abb.htm"],
     \["loop:for-as", "06_aba.htm"],
     \["loop:for-as-arithmetic", "06_abaa.htm"],
@@ -1526,8 +1526,8 @@ if !exists( 'g:slimvhs_loop' )
     \["loop:finally", "06_agb.htm"]]
 endif
             
-if !exists( 'g:slimvhs_arguments' )
-    let g:slimvhs_arguments = [
+if !exists( 'g:slimv_lhs_arguments' )
+    let g:slimv_lhs_arguments = [
     \[":test", "17_ba.htm"],
     \[":test-not", "17_ba.htm"],
     \[":key", "17_bb.htm"],
@@ -1538,8 +1538,8 @@ if !exists( 'g:slimvhs_arguments' )
     \[":allow-other-keys", "03_dada.htm"]]
 endif
 
-if !exists( 'g:slimvhs_glossary' )
-    let g:slimvhs_glossary = [
+if !exists( 'g:slimv_lhs_glossary' )
+    let g:slimv_lhs_glossary = [
     \["{()}", "26_glo_9.htm\\#OPCP"],
     \["{absolute}", "26_glo_a.htm\\#absolute"],
     \["{access}", "26_glo_a.htm\\#access"],
@@ -2235,25 +2235,25 @@ if !exists( 'g:slimvhs_glossary' )
 endif
 
 " Build the complete CLHS symbol database
-if !exists( 'g:slimvhs_db' )
-    if exists( 'g:slimvhs_user' )
+if !exists( 'g:slimv_lhs_db' )
+    if exists( 'g:slimv_lhs_user' )
 	" Give a choice for the user to extend the symbol database
-        let user = g:slimvhs_user
+        let user = g:slimv_lhs_user
     else
         let user = []
     endif
-    let g:slimvhs_db = 
-    \g:slimvhs_clhs +
-    \g:slimvhs_issues +
-    \g:slimvhs_chapters +
-    \g:slimvhs_control_characters +
-    \g:slimvhs_macro_characters +
-    \g:slimvhs_loop +
-    \g:slimvhs_arguments +
-    \g:slimvhs_glossary +
+    let g:slimv_lhs_db = 
+    \g:slimv_lhs_clhs +
+    \g:slimv_lhs_issues +
+    \g:slimv_lhs_chapters +
+    \g:slimv_lhs_control_characters +
+    \g:slimv_lhs_macro_characters +
+    \g:slimv_lhs_loop +
+    \g:slimv_lhs_arguments +
+    \g:slimv_lhs_glossary +
     \user
 
     " Do we need to sort the symbol database?
-    "call sort( g:slimvhs_db )
+    "call sort( g:slimv_lhs_db )
 endif
 
