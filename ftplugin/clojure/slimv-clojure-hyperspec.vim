@@ -1,7 +1,7 @@
 " slimv-clojure-hyperspec.vim:
 "               Clojure Hyperspec lookup support for Slimv
 " Version:      0.5.0
-" Last Change:  31 Mar 2009
+" Last Change:  01 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,19 +10,19 @@
 " =====================================================================
 "
 "  Load Once:
-if &cp || exists( 'g:slimvhs_loaded' )
+if &cp || exists( 'g:slimv_chs_loaded' )
     finish
 endif
 
-let g:slimvhs_loaded = 1
+let g:slimv_chs_loaded = 1
 
 " Root of the Clojure Hyperspec
-if !exists( 'g:slimvhs_root' )
-    let g:slimvhs_root = 'http://clojure.org/'
+if !exists( 'g:slimv_chs_root' )
+    let g:slimv_chs_root = 'http://clojure.org/'
 endif
  
-if !exists( 'g:slimvhs_cljhs' )
-    let g:slimvhs_cljhs = [
+if !exists( 'g:slimv_chs_cljhs' )
+    let g:slimv_chs_cljhs = [
     \["clojure.core", "api\\#toc1"],
     \["*", "api\\#toc2"],
     \["*1", "api\\#toc6"],
@@ -529,18 +529,18 @@ if !exists( 'g:slimvhs_cljhs' )
 endif
 
 " Build the complete CLHS symbol database
-if !exists( 'g:slimvhs_db' )
-    if exists( 'g:slimvhs_user' )
+if !exists( 'g:slimv_chs_db' )
+    if exists( 'g:slimv_chs_user' )
 	" Give a choice for the user to extend the symbol database
-        let user = g:slimvhs_user
+        let user = g:slimv_chs_user
     else
         let user = []
     endif
-    let g:slimvhs_db = 
-    \g:slimvhs_cljhs +
+    let g:slimv_chs_db = 
+    \g:slimv_chs_cljhs +
     \user
 
     " Do we need to sort the symbol database?
-    "call sort( g:slimvhs_db )
+    "call sort( g:slimv_chs_db )
 endif 
 
