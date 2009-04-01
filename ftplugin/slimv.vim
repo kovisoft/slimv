@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.0
-" Last Change:  30 Mar 2009
+" Last Change:  01 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -295,8 +295,11 @@ function! SlimvLogGlobals()
     if exists( 'g:slimv_ctags' )
         call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
     endif
-    if exists( 'g:slimvhs_root' )
-        call add( info,  printf( 'g:slimvhs_root        = %d',    g:slimvhs_root ) )
+    if exists( 'g:slimv_lhs_root' )
+        call add( info,  printf( 'g:slimv_lhs_root      = %d',    g:slimv_lhs_root ) )
+    endif
+    if exists( 'g:slimv_chs_root' )
+        call add( info,  printf( 'g:slimv_chs_root      = %d',    g:slimv_chs_root ) )
     endif
 
     call SlimvLog( 1, info )
@@ -1452,28 +1455,54 @@ endfunction
 
 " ---------------------------------------------------------------------
 
-" Find word in the CLHS symbol database, with exact or partial match
-function! SlimvFindSymbol( word, exact )
-    if !exists( 'g:slimvhs_db' )
-        " Hyperspec symbol database not found
-        return ['', '']
+" Initialize Hyperspec according to the current filetype
+function! s:InitHyperspec()
+    if !exists( 'g:slimv_hs_root' )
+        " Initialize Hyperspec root URL
+        let g:slimv_hs_root = ''
+        if SlimvGetFiletype() == 'clojure'
+            if exists( 'g:slimv_chs_root' )
+                let g:slimv_hs_root = g:slimv_chs_root
+            endif
+        else
+            if exists( 'g:slimv_lhs_root' )
+                let g:slimv_hs_root = g:slimv_lhs_root
+            endif
+        endif
     endif
+    if !exists( 'g:slimv_hs_db' )
+        " Initialize Hyerspec symbol database
+        let g:slimv_hs_db = []
+        if SlimvGetFiletype() == 'clojure'
+            if exists( 'g:slimv_chs_db' )
+                let g:slimv_hs_db = g:slimv_chs_db
+            endif
+        else
+            if exists( 'g:slimv_lhs_db' )
+                let g:slimv_hs_db = g:slimv_lhs_db
+            endif
+        endif
+    endif
+endfunction
 
+" Find word in the CLHS symbol database, with exact or partial match
+" Assumption: InitHyperspec() already called
+function! SlimvFindSymbol( word, exact )
     let i = 0
     let w = tolower( a:word )
     if a:exact
-        while i < len( g:slimvhs_db )
+        while i < len( g:slimv_hs_db )
             " Try to find an exact match
-            if g:slimvhs_db[i][0] == w
-                return g:slimvhs_db[i]
+            if g:slimv_hs_db[i][0] == w
+                return g:slimv_hs_db[i]
             endif
             let i = i + 1
         endwhile
     else
-        while i < len( g:slimvhs_db )
+        while i < len( g:slimv_hs_db )
             " Try to find the symbol starting with the given word
-            if match( g:slimvhs_db[i][0], w ) == 0
-                return g:slimvhs_db[i]
+            if match( g:slimv_hs_db[i][0], w ) == 0
+                return g:slimv_hs_db[i]
             endif
             let i = i + 1
         endwhile
@@ -1485,7 +1514,8 @@ endfunction
 
 " Lookup word in Common Lisp Hyperspec
 function! SlimvLookup( word )
-    if !exists( 'g:slimvhs_db' )
+    call s:InitHyperspec()
+    if g:slimv_hs_db == []
         " Hyperspec symbol database not found
         call SlimvError( "Hyperspec symbol database not found." )
         return
@@ -1516,7 +1546,7 @@ function! SlimvLookup( word )
     endwhile
     if symbol[0] != ''
         " Symbol found, open HS page in browser
-        let page = g:slimvhs_root . symbol[1]
+        let page = g:slimv_hs_root . symbol[1]
         if g:slimv_windows
             silent execute '! start ' . page
         else
