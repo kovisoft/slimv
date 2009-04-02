@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.0
-" Last Change:  01 Apr 2009
+" Last Change:  02 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -215,14 +215,14 @@ endif
 
 " Get the filetype (Lisp dialect) used by Slimv
 function! SlimvGetFiletype()
-    if exists( 'g:slimv_filetype' ) && g:slimv_filetype != ''
-        " Return Slimv filetype if defined
-        return tolower( g:slimv_filetype )
-    endif
-
     if &ft != ''
         " Return Vim filetype if defined
         return &ft
+    endif
+
+    if match( tolower( g:slimv_lisp ), 'clojure' ) >= 0
+        " Must be Clojure
+        return 'clojure'
     endif
 
     " We have no clue, guess its lisp
@@ -264,9 +264,6 @@ function! SlimvLogGlobals()
     endif
     if exists( 'g:slimv_client' )
         call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
-    endif
-    if exists( 'g:slimv_filetype' )
-        call add( info,  printf( 'g:slimv_filetype      = %s',    g:slimv_filetype ) )
     endif
     if exists( 'g:slimv_impl' )
         call add( info,  printf( 'g:slimv_impl          = %s',    g:slimv_impl ) )
@@ -344,13 +341,6 @@ if !exists( 'g:slimv_lisp' )
     let g:slimv_lisp = lisp[0]
     if !exists( 'g:slimv_impl' )
         let g:slimv_impl = lisp[1]
-    endif
-endif
-
-" Try to find out if the Lisp dialect used is actually Clojure
-if !exists( 'g:slimv_filetype' )
-    if match( tolower( g:slimv_lisp ), 'clojure' ) >= 0
-        let g:slimv_filetype = 'clojure'
     endif
 endif
 
@@ -1546,7 +1536,12 @@ function! SlimvLookup( word )
     endwhile
     if symbol[0] != ''
         " Symbol found, open HS page in browser
-        let page = g:slimv_hs_root . symbol[1]
+        if match( symbol[1], ':' ) < 0
+            let page = g:slimv_hs_root . symbol[1]
+        else
+            " URL is already a fully qualified address
+            let page = symbol[1]
+        endif
         if g:slimv_windows
             silent execute '! start ' . page
         else
