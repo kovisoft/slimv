@@ -11,11 +11,13 @@ Lisp and Clojure REPL inside Vim: a script that tries to mimic SLIME.
 ---------------------------------------------------------------------------------------------
 Description
 ---------------------------------------------------------------------------------------------
-Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux and Windows. The script defines functions and keybindings to send Lisp s-expressions to a Lisp REPL. Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session. The connection to Lisp is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
+Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux and Windows. The script defines functions and keybindings to send s-expressions to a Lisp or Clojure REPL (Read-Eval-Print Loop). Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
 Check out the screenshot at:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
+
+Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API.
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 For a more complete description with keybindings see the included documentation.
@@ -55,6 +57,7 @@ Profile commands:
 Documentation commands:
     *  Describe Symbol
     *  Apropos
+    *  Hyperspec
     *  Generate Tags
 
 REPL commands:
@@ -71,7 +74,20 @@ For more information see the documentation coupled with the script, please refer
 ---------------------------------------------------------------------------------------------
 Installation details
 ---------------------------------------------------------------------------------------------
-Extract the zip archive into your vimfiles or runtime directory. The archive contains plugin/slimv.vim, plugin/slimv.py, plugin/metering.lisp and doc/slimv.txt.
+Note for users of pre-0.5.0 versions: Slimv is now a Lisp+Clojure filetype plugin, which means that is went through a major reorganization. Please delete the old version before installing the new one. See details in the documentation.
+
+Extract the zip archive into your vimfiles or runtime directory. The archive contains the following files:
+    *  doc/slimv.txt
+    *  ftdetect/clojure.vim
+    *  ftplugin/metering.lisp
+    *  ftplugin/slimv.py
+    *  ftplugin/slimv.vim
+    *  ftplugin/clojure/slimv-clojure.vim
+    *  ftplugin/clojure/slimv-clojure-hyperspec.vim
+    *  ftplugin/lisp/slimv-lisp.vim
+    *  ftplugin/lisp/slimv-lisp-hyperspec.vim
+    *  indent/clojure/slimv-indent-clojure.vim
+    *  syntax/clojure/slimv-syntax-clojure.vim
 
 Slimv works on Windows and on Linux. The script requires the following programs installed on your system:
     *  Lisp (any Common Lisp should be OK) or Clojure
@@ -97,7 +113,11 @@ Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 
 Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
 
+Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profiling and Hyperspec lookup.
+
 ---------------------------------------------------------------------------------------------
+
+0.5.0: Major project reorganization: Slimv is now a Lisp and Clojure filetype plugin, added Common Lisp and Clojure Hyperspec lookup, separate menu for REPL buffer, menu items work in every Vim mode.
 
 0.4.1: Added profiler support for SBCL, new commands: Show Profiled/Send Input/Close and Send Input/Previous Input/Next Input, highlight error messages.
 
