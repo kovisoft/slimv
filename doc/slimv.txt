@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Apr 2009
+*slimv.txt*                    Slimv                 Last Change: 03 Apr 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.0
@@ -855,8 +855,8 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.5.0  - Major project reorganization: Slimv is now a Lisp and Clojure filetype
          plugin.
-       - Added Hyperspec lookup.
-       - Separate menu for REPL buffer.
+       - Added Hyperspec lookup, both Common Lisp and Clojure.
+       - Separate menu for REPL buffer, menu items work in every Vim mode.
 
 0.4.1  - Added profiler support for SBCL.
        - Added commands/menu items: Profiling: Show Profiled,
@@ -927,13 +927,15 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - There are some functions that are not compatible or simply not working for
   Clojure.
 - It is not possible to run separate Lisp and Clojure REPL in the same
-  Slimv session.
+  Slimv session. Also some other features cannot switch language in the same
+  session, e.g. profiling.
 
 
 ===============================================================================
 TODO                                                               *slimv-todo*
 
 - Add JavaDoc to Clojure Hyperspec lookup.
+- Autocomplete symbols based on the Hyperspec database.
 - Add Compile System.
 - Add Cross Reference functions.
 - Add Debugger.
