@@ -1,7 +1,7 @@
 " slimv-lisp-hyperspec.vim:
 "               Common Lisp Hyperspec lookup support for Slimv
 " Version:      0.5.0
-" Last Change:  01 Apr 2009
+" Last Change:  07 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1417,8 +1417,8 @@ if !exists( 'g:slimv_lhs_chapters' )
     \["[glossary]", "26_.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_control_characters' )
-    let g:slimv_lhs_control_characters = [
+if !exists( 'g:slimv_lhs_control_chars' )
+    let g:slimv_lhs_control_chars = [
     \["~C: Character", "22_caa.htm"],
     \["~%: Newline", "22_cab.htm"],
     \["~&: Freshline", "22_cac.htm"],
@@ -1457,8 +1457,8 @@ if !exists( 'g:slimv_lhs_control_characters' )
     \["~NEWLINE: Ignored Newline", "22_cic.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_macro_characters' )
-    let g:slimv_lhs_macro_characters = [
+if !exists( 'g:slimv_lhs_macro_chars' )
+    let g:slimv_lhs_macro_chars = [
     \["(", "02_da.htm"],
     \[")", "02_db.htm"],
     \["'", "02_dc.htm"],
@@ -2234,26 +2234,26 @@ if !exists( 'g:slimv_lhs_glossary' )
     \["{yield}", "26_glo_y.htm\\#yield"]]
 endif
 
-" Build the complete CLHS symbol database
-if !exists( 'g:slimv_lhs_db' )
-    if exists( 'g:slimv_lhs_user' )
+" Lookup symbol in the list of Lisp Hyperspec symbol databases
+function! b:HyperspecLookup( word, exact )
+    let symbol = ['', '']
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_clhs,          g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_issues,        g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_chapters,      g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_control_chars, g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_macro_chars,   g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_loop,          g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_arguments,     g:slimv_lhs_root, symbol )
+    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_glossary,      g:slimv_lhs_root, symbol )
+    if exists( 'g:slimv_lhs_user_db' )
 	" Give a choice for the user to extend the symbol database
-        let user = g:slimv_lhs_user
-    else
-        let user = []
+        if exists( 'g:slimv_lhs_user_root' )
+            let user_root = g:slimv_lhs_user_root
+        else
+            let user_root = ''
+        endif
+        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_user_db, user_root, symbol )
     endif
-    let g:slimv_lhs_db = 
-    \g:slimv_lhs_clhs +
-    \g:slimv_lhs_issues +
-    \g:slimv_lhs_chapters +
-    \g:slimv_lhs_control_characters +
-    \g:slimv_lhs_macro_characters +
-    \g:slimv_lhs_loop +
-    \g:slimv_lhs_arguments +
-    \g:slimv_lhs_glossary +
-    \user
-
-    " Do we need to sort the symbol database?
-    "call sort( g:slimv_lhs_db )
-endif
+    return symbol
+endfunction
 
