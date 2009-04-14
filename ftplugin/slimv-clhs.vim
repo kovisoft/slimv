@@ -1,7 +1,7 @@
-" slimv-lisp-hyperspec.vim:
+" slimv-clhs.vim:
 "               Common Lisp Hyperspec lookup support for Slimv
 " Version:      0.5.0
-" Last Change:  07 Apr 2009
+" Last Change:  14 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -14,11 +14,11 @@
 " =====================================================================
 "
 "  Load Once:
-if &cp || exists( 'g:slimv_lhs_loaded' )
+if &cp || exists( 'g:slimv_clhs_loaded' )
     finish
 endif
 
-let g:slimv_lhs_loaded = 1
+let g:slimv_clhs_loaded = 1
 
 " It is possible to lookup the following information:
 " symbol                    , e.g. "setf"
@@ -30,12 +30,12 @@ let g:slimv_lhs_loaded = 1
 " glossary                  , e.g. {absolute}, {binding}
 
 " Root of the Common Lisp Hyperspec
-if !exists( 'g:slimv_lhs_root' )
-    let g:slimv_lhs_root = 'http://www.lispworks.com/reference/HyperSpec/Body/'
+if !exists( 'g:slimv_clhs_root' )
+    let g:slimv_clhs_root = 'http://www.lispworks.com/reference/HyperSpec/Body/'
 endif
 
-if !exists( 'g:slimv_lhs_clhs' )
-    let g:slimv_lhs_clhs = [
+if !exists( 'g:slimv_clhs_clhs' )
+    let g:slimv_clhs_clhs = [
     \["&allow-other-keys", "03_da.htm"],
     \["&aux", "03_da.htm"],
     \["&body", "03_dd.htm"],
@@ -1016,8 +1016,8 @@ if !exists( 'g:slimv_lhs_clhs' )
     \["zerop", "f_zerop.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_issues' )
-    let g:slimv_lhs_issues = [
+if !exists( 'g:slimv_clhs_issues' )
+    let g:slimv_clhs_issues = [
     \["&environment-binding-order:first", "iss001.htm"],
     \["access-error-name", "iss002.htm"],
     \["adjust-array-displacement", "iss003.htm"],
@@ -1386,8 +1386,8 @@ if !exists( 'g:slimv_lhs_issues' )
     \["with-standard-io-syntax-readtable:x3j13-mar-91", "iss366.htm"]]
 endif
  
-if !exists( 'g:slimv_lhs_chapters' )
-    let g:slimv_lhs_chapters = [
+if !exists( 'g:slimv_clhs_chapters' )
+    let g:slimv_clhs_chapters = [
     \["[index]", "../Front/Contents.htm"],
     \["[introduction]", "01_.htm"],
     \["[syntax]", "02_.htm"],
@@ -1417,8 +1417,8 @@ if !exists( 'g:slimv_lhs_chapters' )
     \["[glossary]", "26_.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_control_chars' )
-    let g:slimv_lhs_control_chars = [
+if !exists( 'g:slimv_clhs_control_chars' )
+    let g:slimv_clhs_control_chars = [
     \["~C: Character", "22_caa.htm"],
     \["~%: Newline", "22_cab.htm"],
     \["~&: Freshline", "22_cac.htm"],
@@ -1457,8 +1457,8 @@ if !exists( 'g:slimv_lhs_control_chars' )
     \["~NEWLINE: Ignored Newline", "22_cic.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_macro_chars' )
-    let g:slimv_lhs_macro_chars = [
+if !exists( 'g:slimv_clhs_macro_chars' )
+    let g:slimv_clhs_macro_chars = [
     \["(", "02_da.htm"],
     \[")", "02_db.htm"],
     \["'", "02_dc.htm"],
@@ -1489,8 +1489,8 @@ if !exists( 'g:slimv_lhs_macro_chars' )
     \["#<", "02_dht.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_loop' )
-    let g:slimv_lhs_loop = [
+if !exists( 'g:slimv_clhs_loop' )
+    let g:slimv_clhs_loop = [
     \["loop:with", "06_abb.htm"],
     \["loop:for-as", "06_aba.htm"],
     \["loop:for-as-arithmetic", "06_abaa.htm"],
@@ -1526,8 +1526,8 @@ if !exists( 'g:slimv_lhs_loop' )
     \["loop:finally", "06_agb.htm"]]
 endif
             
-if !exists( 'g:slimv_lhs_arguments' )
-    let g:slimv_lhs_arguments = [
+if !exists( 'g:slimv_clhs_arguments' )
+    let g:slimv_clhs_arguments = [
     \[":test", "17_ba.htm"],
     \[":test-not", "17_ba.htm"],
     \[":key", "17_bb.htm"],
@@ -1538,8 +1538,8 @@ if !exists( 'g:slimv_lhs_arguments' )
     \[":allow-other-keys", "03_dada.htm"]]
 endif
 
-if !exists( 'g:slimv_lhs_glossary' )
-    let g:slimv_lhs_glossary = [
+if !exists( 'g:slimv_clhs_glossary' )
+    let g:slimv_clhs_glossary = [
     \["{()}", "26_glo_9.htm\\#OPCP"],
     \["{absolute}", "26_glo_a.htm\\#absolute"],
     \["{access}", "26_glo_a.htm\\#access"],
@@ -2233,27 +2233,4 @@ if !exists( 'g:slimv_lhs_glossary' )
     \["{writer}", "26_glo_w.htm\\#writer"],
     \["{yield}", "26_glo_y.htm\\#yield"]]
 endif
-
-" Lookup symbol in the list of Lisp Hyperspec symbol databases
-function! b:HyperspecLookup( word, exact )
-    let symbol = ['', '']
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_clhs,          g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_issues,        g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_chapters,      g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_control_chars, g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_macro_chars,   g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_loop,          g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_arguments,     g:slimv_lhs_root, symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_glossary,      g:slimv_lhs_root, symbol )
-    if exists( 'g:slimv_lhs_user_db' )
-	" Give a choice for the user to extend the symbol database
-        if exists( 'g:slimv_lhs_user_root' )
-            let user_root = g:slimv_lhs_user_root
-        else
-            let user_root = ''
-        endif
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_lhs_user_db, user_root, symbol )
-    endif
-    return symbol
-endfunction
 
