@@ -22,23 +22,19 @@ runtime ftplugin/**/slimv.vim
 function! b:HyperspecLookup( word, exact )
     if !exists( 'g:slimv_cljapi_loaded' )
         runtime ftplugin/**/slimv-cljapi.vim
-"        if !exists( 'g:slimv_cljapi_loaded' )
-"            call SlimvError( "Clojure API database not found." )
-"            return
-"        endif
     endif
 
     if !exists( 'g:slimv_javadoc_loaded' )
         runtime ftplugin/**/slimv-javadoc.vim
-"        if !exists( 'g:slimv_javadoc_loaded' )
-"            call SlimvError( "JavaDoc database not found." )
-"            return
-"        endif
     endif
 
     let symbol = ['', '']
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_cljapi_db,  g:slimv_cljapi_root,  symbol )
-    let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_javadoc_db, g:slimv_javadoc_root, symbol )
+    if exists( 'g:slimv_cljapi_db' )
+        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_cljapi_db,  g:slimv_cljapi_root,  symbol )
+    endif
+    if exists( 'g:slimv_javadoc_db' )
+        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_javadoc_db, g:slimv_javadoc_root, symbol )
+    endif
     if exists( 'g:slimv_cljapi_user_db' )
 	" Give a choice for the user to extend the symbol database
         if exists( 'g:slimv_cljapi_user_root' )
