@@ -586,8 +586,8 @@ function! SlimvEndOfReplBuffer( markit )
     if a:markit
         " Remember the end of the buffer: user may enter commands here
         " Also remember the prompt, because the user may overwrite it
-        call setpos( "'s'", [0, line('$'), col('$'), 0] )
-        let s:prompt = getline( "'s'" )
+        call setpos( "'s", [0, line('$'), col('$'), 0] )
+        let s:prompt = getline( "'s" )
         if s:insertmode
             " Hacking: we add a space at the end of the last line
             " so that the cursor remains in correct position after insertmode eval
@@ -801,6 +801,18 @@ endfunction
 function! SlimvSelectSymbol()
     "TODO: can we use expand('<cWORD>') here?
     normal viw"sy
+endfunction
+
+" Select extended symbol under cursor and copy it to register 's'
+function! SlimvSelectSymbolExt()
+    let oldkw = &iskeyword
+    if SlimvGetFiletype() == 'clojure'
+        let &iskeyword = oldkw . ',~,#,&,|,{,}'
+    else
+        let &iskeyword = oldkw . ',~,#,&,|,{,},[,]'
+    endif
+    normal viw"sy
+    let &iskeyword = oldkw
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
@@ -1458,7 +1470,8 @@ function! SlimvFindSymbol( word, exact, db, root, prev )
     else
         while i < len( a:db )
             " Try to find the symbol starting with the given word
-            if match( a:db[i][0], w ) == 0
+            let w2 = escape( w, '~' )
+            if match( a:db[i][0], w2 ) == 0
                 return [a:db[i][0], a:root . a:db[i][1]]
             endif
             let i = i + 1
@@ -1515,7 +1528,7 @@ endfunction
 
 " Lookup current symbol in the Common Lisp Hyperspec
 function! SlimvHyperspec()
-    call SlimvSelectSymbol()
+    call SlimvSelectSymbolExt()
     call SlimvLookup( SlimvGetSelection() )
 endfunction
 
