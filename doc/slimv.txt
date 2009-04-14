@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 03 Apr 2009
+*slimv.txt*                    Slimv                 Last Change: 14 Apr 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.0
@@ -119,10 +119,20 @@ CUSTOMIZATION                                             *slimv-customization*
 The list below contains an alphabetical collection of Slimv options.
 Below that list follows the detailed explanation on each option.
 
-|g:slimv_chs_root|           Base URL for the Clojure Hyperspec.
+|g:slimv_clhs_root|          Base URL for the Common Lisp Hyperspec.
 
-|g:slimv_chs_user|           User defined extension for Slimv's built-in
-                             Clojure Hyperspec symbol database.
+|g:slimv_clhs_user_db|       User defined extension for Slimv's built-in
+                             Common Lisp Hyperspec symbol database.
+
+|g:slimv_clhs_user_root|     Base URL for the user defined CLHS extension.
+
+|g:slimv_cljapi_root|        Base URL for the Clojure API.
+
+|g:slimv_cljapi_user_db|     User defined extension for Slimv's built-in
+                             Clojure API symbol database.
+
+|g:slimv_cljapi_user_root|   Base URL for the user defined Clojure API
+                             extension.
 
 |g:slimv_client|             The whole OS command to start the Slimv client.
                              Used for advanced customization, like changing
@@ -136,13 +146,10 @@ Below that list follows the detailed explanation on each option.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
+|g:slimv_javadoc_root|       Base URL for the JavaDoc.
+
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
                              1 = set #1, 2 = set #2, other = no keybindings
-
-|g:slimv_lhs_root|           Base URL for the Common Lisp Hyperspec.
-
-|g:slimv_lhs_user|           User defined extension for Slimv's built-in
-                             Common Lisp Hyperspec symbol database.
 
 |g:slimv_lisp|               Path for the Lisp interpreter.
 
@@ -347,28 +354,35 @@ While waiting, the output is displayed continuously. During that time the
 regular Vim commands are not available. For the posssible commands see
 |slimv-repl|.
 
-                                                             *g:slimv_lhs_root*
-                                                             *g:slimv_chs_root*
-Base URL for the Common Lisp or Clojure Hyperspec. If the Hyperspec is
-downloaded to the hard disk, then set these variables to the base path
-of the local copy, something like "file:/usr/local/doc/HyperSpec/".
+                                                            *g:slimv_clhs_root*
+                                                          *g:slimv_cljapi_root*
+                                                         *g:slimv_javadoc_root*
+Base URL for the Common Lisp Hyperspec, Clojure API, and JavaDoc.
+If the Hyperspec/API is downloaded to the hard disk, then set these variables
+to the base path of the local copy, something like
+"file:/usr/local/doc/HyperSpec/".
 It is possible to extend the Hyperspec symbol database with user defined
-symbols, see |g:slimv_lhs_user| and |g:slimv_chs_user|.
+symbols, see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
 
-                                                             *g:slimv_lhs_user*
-                                                             *g:slimv_chs_user*
-If you want to extend Slimv's built-in Hyperspec symbol database, define
+                                                         *g:slimv_clhs_user_db*
+                                                       *g:slimv_cljapi_user_db*
+                                                       *g:slimv_clhs_user_root*
+                                                     *g:slimv_cljapi_user_root*
+If you want to extend Slimv's built-in Hyperspec/API symbol database, define
 the list of additional symbols in these variables. The format of this list is
 the following: [["symbol1", "url1"], ["symbol2", "url2"], ...].
 If the URL contains a ":" character then it is considered to be a fully
 qualified URL, otherwise it is a relative address to the Hyperspec root
-defined in |g:slimv_lhs_root| or |g:slimv_chs_root|.
+defined in |g:slimv_clhs_root| or |g:slimv_cljapi_root|.
+It is also possible to define a separate base URL for the user extensions via
+|g:slimv_clhs_user_root| or |g:slimv_cljapi_user_root|.
 
 Example:
-    let g:slimv_lhs_user = [
-        \["my-cool-function", "http://myhyperspec.com/mycoolfunc.htm"],
-        \["my-super-function", "http://myhyperspec.com/mysuperfunc.htm"],
-        \["my-awesome-function", "http://myhyperspec.com/myawesomefunc.htm"]] 
+    let g:slimv_clhs_user_root = "http://myhyperspec.com/"
+    let g:slimv_clhs_user_db = [
+        \["my-cool-function", "mycoolfunc.htm"],
+        \["my-super-function", "mysuperfunc.htm"],
+        \["my-awesome-function", "myawesomefunc.htm"]] 
 
 Remember to insert a backslash at the beginning of each additional line of a
 multi-line Vim command.
