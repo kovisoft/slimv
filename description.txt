@@ -7,17 +7,18 @@ slimv.vim
 Summary
 ---------------------------------------------------------------------------------------------
 Lisp and Clojure REPL inside Vim: a script that tries to mimic SLIME.
+Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup, similar to SLIME.
 
 ---------------------------------------------------------------------------------------------
 Description
 ---------------------------------------------------------------------------------------------
-Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux and Windows. The script defines functions and keybindings to send s-expressions to a Lisp or Clojure REPL (Read-Eval-Print Loop). Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
+Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux and Windows. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop). Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
 Check out the screenshot at:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
 
-Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API.
+Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 For a more complete description with keybindings see the included documentation.
@@ -82,15 +83,16 @@ Extract the zip archive into your vimfiles or runtime directory. The archive con
     *  ftplugin/metering.lisp
     *  ftplugin/slimv.py
     *  ftplugin/slimv.vim
+    *  ftplugin/slimv-clhs.vim
+    *  ftplugin/slimv-cljapi.vim
+    *  ftplugin/slimv-javadoc.vim
     *  ftplugin/clojure/slimv-clojure.vim
-    *  ftplugin/clojure/slimv-clojure-hyperspec.vim
     *  ftplugin/lisp/slimv-lisp.vim
-    *  ftplugin/lisp/slimv-lisp-hyperspec.vim
     *  indent/clojure/slimv-indent-clojure.vim
     *  syntax/clojure/slimv-syntax-clojure.vim
 
-Slimv works on Windows and on Linux. The script requires the following programs installed on your system:
-    *  Lisp (any Common Lisp should be OK) or Clojure
+Slimv works on Windows and on Linux, Cygwin is not supported. The script requires the following programs installed on your system:
+    *  Lisp (any console Common Lisp should be OK) or Clojure
     *  Python 2.4 or later
     *  Pywin32 is recommended on Windows
 Slimv tries to autodetect your Lisp and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
@@ -115,9 +117,11 @@ Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
 
 Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profiling and Hyperspec lookup.
 
+Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
+
 ---------------------------------------------------------------------------------------------
 
-0.5.0: Major project reorganization: Slimv is now a Lisp and Clojure filetype plugin, added Common Lisp and Clojure Hyperspec lookup, separate menu for REPL buffer, menu items work in every Vim mode.
+0.5.0: Major project reorganization: Slimv is now a Lisp and Clojure filetype plugin, added Common Lisp Hyperspec, Clojure API and JavaDoc lookup, separate menu for REPL buffer, menu items work in every Vim mode, fixed mark 's usage bug.
 
 0.4.1: Added profiler support for SBCL, new commands: Show Profiled/Send Input/Close and Send Input/Previous Input/Next Input, highlight error messages.
 
@@ -151,19 +155,24 @@ Differences to Limp
 
 
 As far as I know, the main differences at the moment are:
-- Limp (0.3.4) works with SBCL on Linux (and Mac?), Slimv (0.1) should work for any Common Lisp implementation on Linux and Windows.
-- Limp is a filetype plugin, it does automatic bracket closing, (some) name completion, current form highlighting, Hyperspec lookup in browser.
+- Limp (0.3.4) works with SBCL on Linux (and Mac?), Slimv (0.5.0) should work for any Common Lisp implementation on Linux and Windows.
+- Limp does automatic bracket closing, (some) name completion, current form highlighting.
+- Slimv has Clojure support with API and JavaDoc lookup.
 
 ---------------------------------------------------------------------------------------------
 
 File list
 
 doc/slimv.txt
-ftplugin/lisp/slimv-lisp.vim
-ftplugin/lisp/slimv-lisp-hyperspec.vim
-ftplugin/lisp/slimv/slimv.vim
-ftplugin/lisp/slimv/slimv.py
-ftplugin/lisp/slimv/metering.lisp
+ftdetect/clojure.vim
+ftplugin/metering.lisp
+ftplugin/slimv.py
+ftplugin/slimv.vim
+ftplugin/slimv-clhs.vim
+ftplugin/slimv-cljapi.vim
+ftplugin/slimv-javadoc.vim
 ftplugin/clojure/slimv-clojure.vim
-ftplugin/clojure/slimv-clojure-hyperspec.vim
+ftplugin/lisp/slimv-lisp.vim
+indent/clojure/slimv-indent-clojure.vim
+syntax/clojure/slimv-syntax-clojure.vim
 
