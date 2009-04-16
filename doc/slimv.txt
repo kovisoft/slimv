@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Apr 2009
+*slimv.txt*                    Slimv                 Last Change: 16 Apr 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.0
@@ -31,7 +31,8 @@ INSTALLATION                                               *slimv-installation*
 Prerequisites:
 
   Required components:
-  - Lisp (any Common Lisp implementation should be OK) or Clojure installed.
+  - Lisp (any console Common Lisp implementation should be OK) or
+    Clojure installed.
   - Python 2.4 or later installed.
 
   Optional components:
@@ -51,10 +52,11 @@ To install the script:
        ftplugin/metering.lisp
        ftplugin/slimv.py
        ftplugin/slimv.vim
+       ftplugin/slimv-clhs.vim
+       ftplugin/slimv-cljapi.vim
+       ftplugin/slimv-javadoc.vim
        ftplugin/clojure/slimv-clojure.vim
-       ftplugin/clojure/slimv-clojure-hyperspec.vim
        ftplugin/lisp/slimv-lisp.vim
-       ftplugin/lisp/slimv-lisp-hyperspec.vim
        indent/clojure/slimv-indent-clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
@@ -95,10 +97,11 @@ Uninstallation:
        ftplugin/metering.*
        ftplugin/slimv.py
        ftplugin/slimv.vim
+       ftplugin/slimv-clhs.vim
+       ftplugin/slimv-cljapi.vim
+       ftplugin/slimv-javadoc.vim
        ftplugin/clojure/slimv-clojure.vim
-       ftplugin/clojure/slimv-clojure-hyperspec.vim
        ftplugin/lisp/slimv-lisp.vim
-       ftplugin/lisp/slimv-lisp-hyperspec.vim
        indent/clojure/slimv-indent-clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
@@ -815,7 +818,8 @@ FAQ                                                                 *slimv-faq*
 
 - Q: How does Slimv work?
 - A: Slimv consists of three parts: Vim plugin, client and server.
-     The Slimv server is a swank server that embeds a Lisp REPL.
+     The Slimv server is a swank server that embeds a console Lisp REPL
+     via pipes, catching all REPL input/output.
      The Slimv client interfaces with the server and is responsible
      for sending Lisp commands to the Lisp REPL.
      The Vim plugin is translating editor commands to Lisp commands to be
@@ -867,10 +871,11 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.5.0  - Major project reorganization: Slimv is now a Lisp and Clojure filetype
-         plugin.
-       - Added Hyperspec lookup, both Common Lisp and Clojure.
+0.5.0  - Major project reorganization:
+         Slimv is now a Lisp and Clojure filetype plugin.
+       - Added Common Lisp Hyperspec, Clojure API, and JavaDoc lookup.
        - Separate menu for REPL buffer, menu items work in every Vim mode.
+       - Fixed mark 's usage bug - thanks to Lorenzo Campedelli.
 
 0.4.1  - Added profiler support for SBCL.
        - Added commands/menu items: Profiling: Show Profiled,
@@ -923,15 +928,16 @@ CHANGE LOG                                                    *slimv-changelog*
 ===============================================================================
 ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 
-- Needs Vim version 7.0 or above, because of the intensive use of lists.
-- Vim register 's' is used for all form selections, so its original content is
+- Works only with the console Lisp and Python versions, does not work with the
+  GUI Lisp versions or with a Python IDE (like IDLE).
+- Does not work from within Cygwin.
+- Vim register "s is used for all form selections, so its original content is
   destroyed.
-- Vim mark 's' is used to mark the end of the REPL buffer, i.e. the beginning
+- Vim mark 's is used to mark the end of the REPL buffer, i.e. the beginning
   of the "command line".
 - Limited profiling support: does not work for all Lisp implementations.
+- Needs Vim version 7.0 or above, because of the intensive use of lists.
 - Needs Python 2.4 or higher (uses the subprocess module)
-- Works only via the Python interpreter, does not work using a Python IDE
-  (like IDLE).
 - Sometimes a Python exception happens after a CTRL-C inside the REPL buffer
   followed by an EOF (CTRL-Z or CTRL-D) in the external REPL window.
 - REPL buffer refresh on Vim focus gain works only in gvim, not in console vim.
@@ -975,6 +981,7 @@ Special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
 Rob MacLachlan for creating the Metering System.
 Also special thanks to Erik Naggum, Yuji Minejima and others for making the
 Common Lisp Hyperspec lookup packages for SLIME.
+Thanks to the Vim community for testing and commenting the script.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
