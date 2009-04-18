@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.5.0
-" Last Change:  14 Apr 2009
+" Last Change:  18 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -16,10 +16,42 @@ endif
 
 let g:slimv_clojure_loaded = 1
 
-runtime ftplugin/**/slimv.vim
+" Try to autodetect Clojure executable
+" Returns list [Clojure executable, Clojure implementation]
+function! b:SlimvAutodetect()
+    if executable( 'clojure.jar' )
+        " Clojure
+        return ['"java -cp clojure.jar clojure.lang.Repl"', 'clojure']
+    endif
+
+    if g:slimv_windows
+        " Try to find Clojure on the standard installation places
+        let lisps = split( globpath( 'c:/*clojure*', 'clojure.jar' ), '\n' )
+        if len( lisps ) > 0
+            return ['"java -cp ' . lisps[0] . ' clojure.lang.Repl"', 'clojure']
+        endif
+    endif
+
+    return ['', '']
+endfunction
+
+" Try to find out the Clojure implementation
+function! b:SlimvImplementation()
+    if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
+        " Return Lisp implementation if defined
+        return tolower( g:slimv_impl )
+    endif
+
+    return 'clojure'
+endfunction
+
+" Filename for the REPL buffer file
+function! b:SlimvREPLFile()
+    return 'Slimv.REPL.clj'
+endfunction
 
 " Lookup symbol in the list of Clojure Hyperspec symbol databases
-function! b:HyperspecLookup( word, exact )
+function! b:SlimvHyperspecLookup( word, exact )
     if !exists( 'g:slimv_cljapi_loaded' )
         runtime ftplugin/**/slimv-cljapi.vim
     endif
@@ -46,4 +78,7 @@ function! b:HyperspecLookup( word, exact )
     endif
     return symbol
 endfunction
+
+" Source Slimv general part
+runtime ftplugin/**/slimv.vim
 
