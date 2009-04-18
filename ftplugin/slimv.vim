@@ -81,93 +81,6 @@ function! SlimvAutodetectPython()
     endif
 endfunction
 
-" Try to autodetect Lisp executable
-" Returns list [Lisp executable, Lisp implementation]
-function! SlimvAutodetectLisp()
-    " Check the easy cases
-    if executable( 'clisp' )
-        " Common Lisp
-        return ['clisp', 'clisp']
-    endif
-    if executable( 'gcl' )
-        " GNU Common Lisp
-        return ['gcl', 'clisp']
-    endif
-    if executable( 'cmucl' )
-        " Carnegie Mellon University Common Lisp
-        return ['cmucl', 'cmu']
-    endif
-    if executable( 'sbcl' )
-        " Steel Bank Common Lisp
-        return ['sbcl', 'sbcl']
-    endif
-    if executable( 'ecl' )
-        " Embeddable Common Lisp
-        return ['ecl', 'ecl']
-    endif
-    if executable( 'acl' )
-        " Allegro Common Lisp
-        return ['acl', 'allegro']
-    endif
-    if executable( 'lwl' )
-        " LispWorks
-        return ['lwl', 'lispworks']
-    endif
-
-    if g:slimv_windows
-        " Try to find Lisp on the standard installation places
-        let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'cmu']
-        endif
-        let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'sbcl']
-        endif
-        let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'ecl']
-        endif
-    endif
-
-    return ['', '']
-endfunction
-
-" Try to autodetect Clojure executable
-" Returns list [Clojure executable, Clojure implementation]
-function! SlimvAutodetectClojure()
-    if executable( 'clojure.jar' )
-        " Clojure
-        return ['"java -cp clojure.jar clojure.lang.Repl"', 'clojure']
-    endif
-
-    if g:slimv_windows
-        " Try to find Clojure on the standard installation places
-        let lisps = split( globpath( 'c:/*clojure*', 'clojure.jar' ), '\n' )
-        if len( lisps ) > 0
-            return ['"java -cp ' . lisps[0] . ' clojure.lang.Repl"', 'clojure']
-        endif
-    endif
-
-    return ['', '']
-endfunction
-
 " Build the command to start the client
 function! SlimvMakeClientCommand()
     if g:slimv_python == '' || g:slimv_lisp == ''
@@ -233,17 +146,6 @@ function! SlimvGetFiletype()
 
     " We have no clue, guess its lisp
     return 'lisp'
-endfunction
-
-" Get the Lisp implementation used by Slimv
-function! SlimvGetImpl()
-    if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
-        " Return Lisp implementation if defined
-        return tolower( g:slimv_impl )
-    endif
-
-    " We have no clue, guess its clisp
-    return 'clisp'
 endfunction
 
 " Log global variables to logfile (if debug log set)
@@ -337,11 +239,7 @@ endif
 
 " Find Lisp (if not given in vimrc)
 if !exists( 'g:slimv_lisp' )
-    if SlimvGetFiletype() == 'clojure'
-        let lisp = SlimvAutodetectClojure()
-    else
-        let lisp = SlimvAutodetectLisp()
-    endif
+    let lisp = b:SlimvAutodetect()
     let g:slimv_lisp = lisp[0]
     if !exists( 'g:slimv_impl' )
         let g:slimv_impl = lisp[1]
@@ -351,13 +249,7 @@ endif
 " Try to find out the Lisp implementation
 " if not autodetected and not given in vimrc
 if !exists( 'g:slimv_impl' )
-    if SlimvGetFiletype() == 'clojure'
-	let g:slimv_impl = 'clojure'
-    elseif match( tolower( g:slimv_lisp ), 'sbcl' ) >= 0
-	let g:slimv_impl = 'sbcl'
-    else
-	let g:slimv_impl = 'clisp'
-    endif
+    let g:slimv_impl = b:SlimvImplementation()
 endif
 
 " Open a REPL buffer inside Vim?
@@ -376,11 +268,7 @@ endif
 
 " Filename for the REPL buffer file
 if !exists( 'g:slimv_repl_file' )
-    if SlimvGetFiletype() == 'clojure'
-        let g:slimv_repl_file = 'Slimv.REPL.clj'
-    else
-        let g:slimv_repl_file = 'Slimv.REPL.lisp'
-    endif
+    let g:slimv_repl_file = b:SlimvREPLFile()
 endif
 
 " Shall we open REPL buffer in split window?
@@ -452,7 +340,7 @@ if !exists( 'g:slimv_template_untrace' )
 endif
 
 if !exists( 'g:slimv_template_profile' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_profile = '(sb-profile:profile %1)'
     else
         let g:slimv_template_profile = '(mon:monitor %1)'
@@ -460,7 +348,7 @@ if !exists( 'g:slimv_template_profile' )
 endif
 
 if !exists( 'g:slimv_template_unprofile' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_unprofile = '(sb-profile:unprofile %1)'
     else
         let g:slimv_template_unprofile = '(mon:unmonitor %1)'
@@ -468,7 +356,7 @@ if !exists( 'g:slimv_template_unprofile' )
 endif
 
 if !exists( 'g:slimv_template_unprofile_all' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_unprofile_all = '(sb-profile:unprofile)'
     else
         let g:slimv_template_unprofile_all = '(mon:unmonitor)'
@@ -476,7 +364,7 @@ if !exists( 'g:slimv_template_unprofile_all' )
 endif
 
 if !exists( 'g:slimv_template_show_profiled' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_show_profiled = '(sb-profile:profile)'
     else
         let g:slimv_template_show_profiled = '(pprint mon:*monitored-functions*)'
@@ -484,7 +372,7 @@ if !exists( 'g:slimv_template_show_profiled' )
 endif
 
 if !exists( 'g:slimv_template_profile_report' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_profile_report = '(sb-profile:report)'
     else
         let g:slimv_template_profile_report = '(mon:report-monitoring)'
@@ -492,7 +380,7 @@ if !exists( 'g:slimv_template_profile_report' )
 endif
 
 if !exists( 'g:slimv_template_profile_reset' )
-    if SlimvGetImpl() == 'sbcl'
+    if b:SlimvImplementation() == 'sbcl'
         let g:slimv_template_profile_reset = '(sb-profile:reset)'
     else
         let g:slimv_template_profile_reset = '(mon:reset-all-monitoring)'
@@ -1330,7 +1218,7 @@ endfunction
 function! SlimvLoadProfiler()
     if SlimvGetFiletype() == 'clojure'
         call SlimvError( "No profiler support for Clojure." )
-    elseif SlimvGetImpl() == 'sbcl'
+    elseif b:SlimvImplementation() == 'sbcl'
         call SlimvError( "SBCL has a built-in profiler, no need to load it." )
     else
         let profiler = split( globpath( &runtimepath, 'ftplugin/**/metering.lisp'), '\n' )
@@ -1498,10 +1386,10 @@ function! SlimvLookup( word )
     let w = a:word
     let symbol = ['', '']
     while symbol[0] == ''
-        let symbol = b:HyperspecLookup( w, 1 )
+        let symbol = b:SlimvHyperspecLookup( w, 1 )
         if symbol[0] == ''
             " Symbol not found, try a match on beginning of symbol name
-            let symbol = b:HyperspecLookup( w, 0 )
+            let symbol = b:SlimvHyperspecLookup( w, 0 )
             if symbol[0] == ''
                 " We are out of luck, can't find anything
                 let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
