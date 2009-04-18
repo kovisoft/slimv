@@ -1,3 +1,4 @@
+- have different g:slimv_lisp variables for Lisp and Clojure
 - handle "{xxx}" type symbol lookup in hyperspec
 - allow switch on/off each hyperspec symbol db
 - initialize hyperspec symbol db only at first lookup
