@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.0
-" Last Change:  14 Apr 2009
+" Last Change:  18 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -146,6 +146,12 @@ function! SlimvAutodetectLisp()
         endif
     endif
 
+    return ['', '']
+endfunction
+
+" Try to autodetect Clojure executable
+" Returns list [Clojure executable, Clojure implementation]
+function! SlimvAutodetectClojure()
     if executable( 'clojure.jar' )
         " Clojure
         return ['"java -cp clojure.jar clojure.lang.Repl"', 'clojure']
@@ -331,7 +337,11 @@ endif
 
 " Find Lisp (if not given in vimrc)
 if !exists( 'g:slimv_lisp' )
-    let lisp = SlimvAutodetectLisp()
+    if SlimvGetFiletype() == 'clojure'
+        let lisp = SlimvAutodetectClojure()
+    else
+        let lisp = SlimvAutodetectLisp()
+    endif
     let g:slimv_lisp = lisp[0]
     if !exists( 'g:slimv_impl' )
         let g:slimv_impl = lisp[1]
