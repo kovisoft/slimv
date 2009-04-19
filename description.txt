@@ -7,7 +7,7 @@ slimv.vim
 Summary
 ---------------------------------------------------------------------------------------------
 Lisp and Clojure REPL inside Vim: a script that tries to mimic SLIME.
-Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup, similar to SLIME.
+Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup, like SLIME
 
 ---------------------------------------------------------------------------------------------
 Description
@@ -15,8 +15,12 @@ Description
 Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux and Windows. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop). Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
-Check out the screenshot at:
+
+Check out the screenshot of Slimv having a clisp REPL buffer:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
+
+Another screenshot of Slimv running the Clojure Ants demo:
+http://img21.imageshack.us/img21/3949/slimvants.png
 
 Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
@@ -75,7 +79,7 @@ For more information see the documentation coupled with the script, please refer
 ---------------------------------------------------------------------------------------------
 Installation details
 ---------------------------------------------------------------------------------------------
-Note for users of pre-0.5.0 versions: Slimv is now a Lisp+Clojure filetype plugin, which means that is went through a major reorganization. Please delete the old version before installing the new one. See details in the documentation.
+Note for users of pre-0.5.0 versions: Slimv is now a Lisp+Clojure filetype plugin, which means that it went through a major reorganization. Please delete the old version before installing the new one. See details in the documentation.
 
 Extract the zip archive into your vimfiles or runtime directory. The archive contains the following files:
     *  doc/slimv.txt
@@ -95,16 +99,15 @@ Slimv works on Windows and on Linux, Cygwin is not supported. The script require
     *  Lisp (any console Common Lisp should be OK) or Clojure
     *  Python 2.4 or later
     *  Pywin32 is recommended on Windows
-Slimv tries to autodetect your Lisp and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
+Slimv tries to autodetect your Lisp/Clojure and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
     let g:slimv_python = 'C:/MyPythonDir/python.exe'
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
 
-For Clojure set the Lisp path to the Clojure startup command, something like:
-    let g:slimv_lisp = '"java -cp clojure.jar clojure.lang.Repl"'
+Should the autodetection for Clojure fail, set the Lisp path to the complete Clojure REPL startup command, something like:
+    let g:slimv_lisp = '"java -cp /myclojuredir/clojure.jar clojure.lang.Repl"'
 
 Linux users using terminal emulator other than xterm should define the complete command to run the Slimv client + server. Here follows an example with konsole and clisp:
-
-let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
+    let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
 
 See the included documentation for more complete installation and customization instructions.
 
