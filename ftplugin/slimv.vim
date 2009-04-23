@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.0
-" Last Change:  18 Apr 2009
+" Version:      0.5.1
+" Last Change:  22 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1349,18 +1349,22 @@ endfunction
 
 " ---------------------------------------------------------------------
 
-" Find word in the CLHS symbol database, with exact or partial match
-function! SlimvFindSymbol( word, exact, db, root, prev )
-    if a:prev[0] != ''
+" Find word in the CLHS symbol database, with exact or partial match.
+" Return either the first symbol found with the associated URL,
+" or the list of all symbols found without the associated URL.
+function! SlimvFindSymbol( word, exact, all, db, root, init )
+    if !a:all && a:init != []
         " Found something already at a previous db lookup, no need to search this db
-        return a:prev
+        return a:init
     endif
+    let lst = a:init
     let i = 0
     let w = tolower( a:word )
     if a:exact
         while i < len( a:db )
             " Try to find an exact match
             if a:db[i][0] == w
+                " No reason to check a:all here
                 return [a:db[i][0], a:root . a:db[i][1]]
             endif
             let i = i + 1
@@ -1370,42 +1374,48 @@ function! SlimvFindSymbol( word, exact, db, root, prev )
             " Try to find the symbol starting with the given word
             let w2 = escape( w, '~' )
             if match( a:db[i][0], w2 ) == 0
-                return [a:db[i][0], a:root . a:db[i][1]]
+                if a:all
+                    call add( lst, a:db[i][0] )
+                else
+                    return [a:db[i][0], a:root . a:db[i][1]]
+                endif
             endif
             let i = i + 1
         endwhile
     endif
 
-    " Nothing found
-    return ['', '']
+    " Return whatever found so far
+    return lst
 endfunction
 
 " Lookup word in Common Lisp Hyperspec
 function! SlimvLookup( word )
     " First try an exact match
     let w = a:word
-    let symbol = ['', '']
-    while symbol[0] == ''
-        let symbol = b:SlimvHyperspecLookup( w, 1 )
-        if symbol[0] == ''
+    let symbol = []
+    while symbol == []
+        let symbol = b:SlimvHyperspecLookup( w, 1, 0 )
+        if symbol == []
             " Symbol not found, try a match on beginning of symbol name
-            let symbol = b:SlimvHyperspecLookup( w, 0 )
-            if symbol[0] == ''
+            let symbol = b:SlimvHyperspecLookup( w, 0, 0 )
+            if symbol == []
                 " We are out of luck, can't find anything
                 let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
+                let val = ''
             else
                 let msg = 'Hyperspec lookup word: '
+                let val = symbol[0]
             endif
             " Ask user if this is that he/she meant
-            let w = input( msg, symbol[0] )
+            let w = input( msg, val )
             if w == ''
                 " OK, user does not want to continue
                 return
             endif
-            let symbol = ['', '']
+            let symbol = []
         endif
     endwhile
-    if symbol[0] != ''
+    if symbol != []
         " Symbol found, open HS page in browser
         if match( symbol[1], ':' ) < 0
             let page = g:slimv_hs_root . symbol[1]
@@ -1429,6 +1439,36 @@ function! SlimvHyperspec()
     call SlimvSelectSymbolExt()
     call SlimvLookup( SlimvGetSelection() )
 endfunction
+
+" Complete function that uses the Hyperspec database
+function! SlimvComplete( findstart, base )
+    if a:findstart
+        " locate the start of the word
+	"TODO: use Lisp delimiters here
+        let line = getline( '.' )
+        let start = col( '.' ) - 1
+        while start > 0 && line[start - 1] =~ '\a'
+            let start -= 1
+        endwhile
+        return start
+    else
+        " Find all symbols starting with "a:base"
+        let res = []
+        let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
+	call sort( symbol )
+        for m in symbol
+            if m =~ '^' . a:base
+                call add( res, m )
+            endif
+        endfor
+        return res
+    endif
+endfunction
+
+" Define complete function only if none is defined yet
+if &omnifunc == ''
+    set omnifunc=SlimvComplete
+endif
 
 " =====================================================================
 "  Slimv keybindings
@@ -1568,6 +1608,7 @@ if g:slimv_menu == 1
     amenu &Slimv.&Documentation.Describe-&Symbol       :call SlimvDescribeSymbol()<CR>
     amenu &Slimv.&Documentation.&Apropos               :call SlimvApropos()<CR>
     amenu &Slimv.&Documentation.&Hyperspec             :call SlimvHyperspec()<CR>
+"TODO: add 'Complete Symbol'
     amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
     
     amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
