@@ -732,7 +732,7 @@ defined already to something else).
 Start to enter the symbol in Insert mode, then at some point press the
 <C-X> <C-O> (omni-complete) key combination or select the 'Complete Symbol'
 function. The first match in the symbol database is inserted at the cursor
-position and a list of matching symbols are displayed in a submenu.
+position and a list of matching symbols is displayed in a submenu.
 Use <C-N> to select the next match, <C-P> to select the previous match.
 
 See Vim help file |insert.txt| for details on the usage of the various
