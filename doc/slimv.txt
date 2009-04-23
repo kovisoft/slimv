@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 16 Apr 2009
+*slimv.txt*                    Slimv                 Last Change: 23 Apr 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.5.0
+                               Version 0.5.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -13,6 +13,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-repl|                 Lisp REPL inside Vim
 |slimv-clojure|              Clojure support
 |slimv-profiling|            Profiling
+|slimv-hyperspec|            Hyperspec lookup and Completion
 |slimv-external|             External utilities
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
@@ -62,6 +63,17 @@ To install the script:
 
     You might already have an ftdetect/clojure.vim file if you already use
     another Clojure filetype plugin. In this case just keep the original file.
+    If you intend to use the script only for Lisp programming, then most of
+    the files may be skipped, in this case it is enough to copy the following
+    files:
+
+       doc/slimv.txt
+       ftplugin/metering.lisp
+       ftplugin/slimv.py
+       ftplugin/slimv.vim
+       ftplugin/slimv-clhs.vim
+       ftplugin/lisp/slimv-lisp.vim
+
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
@@ -696,6 +708,38 @@ templates (see |slimv_templates|):
 
 
 ===============================================================================
+HYPERSPEC AND COMPLETION                                      *slimv-hyperspec*
+
+Slimv contains Common Lisp Hyperspec, Clojure API and JavaDoc symbol databases.
+When you are looking for the definition of a symbol, just place the cursor on
+the symbol and select the 'Hyperspec' function. If the symbol is found in the
+symbol database then the corresponding web page is displayed in the default
+browser. It is also possible to select this function having just the beginning
+of the symbol name, then the first match is presented to the user, and he/she
+is asked to confirm or edit the symbol name before the hyperspec lookup.
+
+It is possible to use a local copy of the Hyperspec, for this you need to
+define its base URL. See |g:slimv_clhs_root|, |g:slimv_cljapi_root| and
+|g:slimv_javadoc_root| for details.
+
+It is also possible to add user defined symbols to the Hyperspec database,
+see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
+
+
+Slimv uses the Hyperspec symbol database for symbol name completion, via
+Vim's omni-completion feature (if it is enabled and 'omnifunc' is not
+defined already to something else).
+Start to enter the symbol in Insert mode, then at some point press the
+<C-X> <C-O> (omni-complete) key combination or select the 'Complete Symbol'
+function. The first match in the symbol database is inserted at the cursor
+position and a list of matching symbols are displayed in a submenu.
+Use <C-N> to select the next match, <C-P> to select the previous match.
+
+See Vim help file |insert.txt| for details on the usage of the various
+completion functions built in Vim.
+
+
+===============================================================================
 EXTERNAL UTILITIES                                             *slimv-external*
 
 This section is about utilities, settings, etc., not related strongly to Slimv,
@@ -771,7 +815,11 @@ topic for a Lisp programmer.
     CTRL-P                  feature. You start typing a word, and when CTRL-P
                             or CTRL-N is pressed, then Vim looks up the keyword
                             starting with the same letters as typed in up or
-                            down direction.
+                            down direction in the current buffer.
+                            This is not the same as the omni-completion
+                            feature (see |slimv-hyperspec|). Omni-completion is
+                            based on a symbol database and not on the contents
+                            of the current buffer.
 
     :set complete           The |'complete'| option controls how keyword
                             completion works.
@@ -871,6 +919,8 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.5.1  - Added symbol name completion based on the Hyperspec database.
+
 0.5.0  - Major project reorganization:
          Slimv is now a Lisp and Clojure filetype plugin.
        - Added Common Lisp Hyperspec, Clojure API, and JavaDoc lookup.
@@ -954,8 +1004,6 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Add JavaDoc to Clojure Hyperspec lookup.
-- Autocomplete symbols based on the Hyperspec database.
 - Add Compile System.
 - Add Cross Reference functions.
 - Add Debugger.
