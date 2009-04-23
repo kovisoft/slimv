@@ -6,7 +6,6 @@ slimv.vim
 ---------------------------------------------------------------------------------------------
 Summary
 ---------------------------------------------------------------------------------------------
-Lisp and Clojure REPL inside Vim: a script that tries to mimic SLIME.
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup, like SLIME
 
 ---------------------------------------------------------------------------------------------
@@ -16,13 +15,16 @@ Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Ema
 
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
 
+Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc. Symbol name completion is supported via Vim's omni-completion based on the hyperspec symbol database.
+
 Check out the screenshot of Slimv having a clisp REPL buffer:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
 
 Another screenshot of Slimv running the Clojure Ants demo:
 http://img21.imageshack.us/img21/3949/slimvants.png
 
-Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
+And this is the symbol name completion in action:
+http://img18.imageshack.us/img18/5859/slimvcompl.png
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 For a more complete description with keybindings see the included documentation.
@@ -123,6 +125,8 @@ Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profi
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.5.1: Added symbol name completion based on the Hyperspec database.
 
 0.5.0: Major project reorganization: Slimv is now a Lisp and Clojure filetype plugin, added Common Lisp Hyperspec, Clojure API and JavaDoc lookup, separate menu for REPL buffer, menu items work in every Vim mode, fixed mark 's usage bug.
 
