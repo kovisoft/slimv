@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.5.0
-" Last Change:  18 Apr 2009
+" Version:      0.5.1
+" Last Change:  22 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -51,7 +51,7 @@ function! b:SlimvREPLFile()
 endfunction
 
 " Lookup symbol in the list of Clojure Hyperspec symbol databases
-function! b:SlimvHyperspecLookup( word, exact )
+function! b:SlimvHyperspecLookup( word, exact, all )
     if !exists( 'g:slimv_cljapi_loaded' )
         runtime ftplugin/**/slimv-cljapi.vim
     endif
@@ -60,21 +60,21 @@ function! b:SlimvHyperspecLookup( word, exact )
         runtime ftplugin/**/slimv-javadoc.vim
     endif
 
-    let symbol = ['', '']
+    let symbol = []
     if exists( 'g:slimv_cljapi_db' )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_cljapi_db,  g:slimv_cljapi_root,  symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_cljapi_db,  g:slimv_cljapi_root,  symbol )
     endif
     if exists( 'g:slimv_javadoc_db' )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_javadoc_db, g:slimv_javadoc_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_javadoc_db, g:slimv_javadoc_root, symbol )
     endif
     if exists( 'g:slimv_cljapi_user_db' )
-	" Give a choice for the user to extend the symbol database
+        " Give a choice for the user to extend the symbol database
         if exists( 'g:slimv_cljapi_user_root' )
             let user_root = g:slimv_cljapi_user_root
         else
             let user_root = ''
         endif
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_cljapi_user_db, user_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_cljapi_user_db, user_root, symbol )
     endif
     return symbol
 endfunction
