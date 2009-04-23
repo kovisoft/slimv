@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.5.0
-" Last Change:  18 Apr 2009
+" Version:      0.5.1
+" Last Change:  22 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -104,30 +104,30 @@ function! b:SlimvREPLFile()
 endfunction
 
 " Lookup symbol in the list of Lisp Hyperspec symbol databases
-function! b:SlimvHyperspecLookup( word, exact )
+function! b:SlimvHyperspecLookup( word, exact, all )
     if !exists( 'g:slimv_clhs_loaded' )
         runtime ftplugin/**/slimv-clhs.vim
     endif
 
-    let symbol = ['', '']
+    let symbol = []
     if exists( 'g:slimv_clhs_loaded' )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_clhs,          g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_issues,        g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_chapters,      g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_control_chars, g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_macro_chars,   g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_loop,          g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_arguments,     g:slimv_clhs_root, symbol )
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_glossary,      g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_clhs,          g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_issues,        g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_chapters,      g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_control_chars, g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_macro_chars,   g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_loop,          g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_arguments,     g:slimv_clhs_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_glossary,      g:slimv_clhs_root, symbol )
     endif
     if exists( 'g:slimv_clhs_user_db' )
-	" Give a choice for the user to extend the symbol database
+        " Give a choice for the user to extend the symbol database
         if exists( 'g:slimv_clhs_user_root' )
             let user_root = g:slimv_clhs_user_root
         else
             let user_root = ''
         endif
-        let symbol = SlimvFindSymbol( a:word, a:exact, g:slimv_clhs_user_db, user_root, symbol )
+        let symbol = SlimvFindSymbol( a:word, a:exact, a:all, g:slimv_clhs_user_db, user_root, symbol )
     endif
     return symbol
 endfunction
