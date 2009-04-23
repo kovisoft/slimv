@@ -1353,6 +1353,9 @@ endfunction
 " Return either the first symbol found with the associated URL,
 " or the list of all symbols found without the associated URL.
 function! SlimvFindSymbol( word, exact, all, db, root, init )
+    if a:word == ''
+        return []
+    endif
     if !a:all && a:init != []
         " Found something already at a previous db lookup, no need to search this db
         return a:init
@@ -1443,11 +1446,10 @@ endfunction
 " Complete function that uses the Hyperspec database
 function! SlimvComplete( findstart, base )
     if a:findstart
-        " locate the start of the word
-	"TODO: use Lisp delimiters here
+        " Locate the start of the symbol name
         let line = getline( '.' )
         let start = col( '.' ) - 1
-        while start > 0 && line[start - 1] =~ '\a'
+        while start > 0 && ( line[start - 1] =~ '\a' || match( '\*&', line[start - 1] ) )
             let start -= 1
         endwhile
         return start
@@ -1608,7 +1610,7 @@ if g:slimv_menu == 1
     amenu &Slimv.&Documentation.Describe-&Symbol       :call SlimvDescribeSymbol()<CR>
     amenu &Slimv.&Documentation.&Apropos               :call SlimvApropos()<CR>
     amenu &Slimv.&Documentation.&Hyperspec             :call SlimvHyperspec()<CR>
-"TODO: add 'Complete Symbol'
+    imenu &Slimv.&Documentation.&Complete-Symbol       <C-X><C-O>
     amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
     
     amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
