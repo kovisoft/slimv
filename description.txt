@@ -65,6 +65,7 @@ Documentation commands:
     *  Describe Symbol
     *  Apropos
     *  Hyperspec
+    *  Complete Symbol
     *  Generate Tags
 
 REPL commands:
