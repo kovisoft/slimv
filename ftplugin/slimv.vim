@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.1
-" Last Change:  24 Apr 2009
+" Version:      0.5.2
+" Last Change:  28 Apr 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -925,6 +925,33 @@ function! SlimvSendCommand( insert, close )
     endif
 endfunction
 
+" Close current top level form by adding the missing parens
+function! SlimvCloseForm()
+    let l2 = line( '.' )
+    normal 99[(
+    let l1 = line( '.' )
+    let form = []
+    let l = l1
+    while l <= l2
+        call add( form, getline( l ) )
+        let l = l + 1
+    endwhile
+    let paren = s:GetParenCount( form )
+    if paren < 0
+        " Too many closing braces
+        call SlimvErrorWait( "Too many closing parens found." )
+    elseif paren > 0
+        " Add missing parens
+        let lastline = getline( l2 )
+        while paren > 0
+            let lastline = lastline . ')'
+            let paren = paren - 1
+        endwhile
+        call setline( l2, lastline )
+    endif
+    normal %
+endfunction
+
 " Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
     if line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
@@ -1483,6 +1510,8 @@ endif
 if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
+    noremap <Leader>)  :<C-U>call SlimvCloseForm()<CR>
+
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
     noremap <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
@@ -1520,6 +1549,9 @@ if g:slimv_keybindings == 1
 
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
+
+    " Edit commands
+    noremap <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
 
     " Evaluation commands
     noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
@@ -1577,6 +1609,9 @@ if g:slimv_menu == 1
     if &wildcharm != 0
         execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
     endif
+
+    amenu &Slimv.Edi&t.Close-&Form                     :<C-U>call SlimvCloseForm()<CR>
+    imenu &Slimv.Edi&t.&Complete-Symbol                <C-X><C-O>
 
     amenu &Slimv.&Evaluation.Eval-&Defun               :<C-U>call SlimvEvalDefun()<CR>
     amenu &Slimv.&Evaluation.Eval-Last-&Exp            :<C-U>call SlimvEvalLastExp()<CR>
