@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.5.1
-" Last Change:  22 Apr 2009
+" Version:      0.5.2
+" Last Change:  04 May 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -24,9 +24,16 @@ function! b:SlimvAutodetect()
         return ['"java -cp clojure.jar clojure.lang.Repl"', 'clojure']
     endif
 
+    " Try to find Clojure in the PATH
+    let path = substitute( $PATH, ';', ',', 'g' )
+    let lisps = split( globpath( path, 'clojure*.jar' ), '\n' )
+    if len( lisps ) > 0
+        return ['"java -cp ' . lisps[0] . ' clojure.lang.Repl"', 'clojure']
+    endif
+
     if g:slimv_windows
         " Try to find Clojure on the standard installation places
-        let lisps = split( globpath( 'c:/*clojure*', 'clojure.jar' ), '\n' )
+        let lisps = split( globpath( 'c:/*clojure*', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
             return ['"java -cp ' . lisps[0] . ' clojure.lang.Repl"', 'clojure']
         endif
