@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.2
-" Last Change:  28 Apr 2009
+" Last Change:  06 May 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1511,6 +1511,7 @@ if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
     noremap <Leader>)  :<C-U>call SlimvCloseForm()<CR>
+    inoremap <C-X>0    <C-O>:call SlimvCloseForm()<CR>
 
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
@@ -1552,6 +1553,7 @@ elseif g:slimv_keybindings == 2
 
     " Edit commands
     noremap <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
+    inoremap <C-X>0     <C-O>:call SlimvCloseForm()<CR>
 
     " Evaluation commands
     noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
