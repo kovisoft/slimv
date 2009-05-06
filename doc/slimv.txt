@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 23 Apr 2009
+*slimv.txt*                    Slimv                 Last Change: 06 May 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.5.1
+                               Version 0.5.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -505,11 +505,17 @@ Example:
                                                                *slimv_keyboard*
 
 The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
-built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following:
+built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
+Please note that the leading ',' key below refers to <Leader>, which is set
+by Slimv to ',' by default.
 
     Set#1   Set#2    Command
     ---------------------------------------------------
     ,,      ,,       Slimv Menu
+
+    Edit commands (Insert mode):
+    <C-X>0           Close-Form
+    <C-X><C-O>       Complete-Symbol
 
     Evaluation commands:
     ,d      ,ed      Eval Defun
@@ -918,6 +924,11 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.5.2  - Updated Clojure API.
+       - Adapted Clojure autodetection to version 1.0 (clojure-1.0.0.jar).
+       - Complete-Symbol command moved to separate Edit submenu.
+       - Added Close-Form command to the Edit submenu.
 
 0.5.1  - Added symbol name completion based on the Hyperspec database.
 
