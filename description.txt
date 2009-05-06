@@ -23,11 +23,15 @@ http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
 Another screenshot of Slimv running the Clojure Ants demo:
 http://img21.imageshack.us/img21/3949/slimvants.png
 
-And this is the symbol name completion in action:
+And this is the symbol name completion in action (no, the pink background is not done by Slimv, this is Vim's default):
 http://img18.imageshack.us/img18/5859/slimvcompl.png
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 For a more complete description with keybindings see the included documentation.
+
+Edit commands:
+    *  Close Form
+    *  Complete Symbol
 
 Evaluation commands:
     *  Eval Defun
@@ -65,7 +69,6 @@ Documentation commands:
     *  Describe Symbol
     *  Apropos
     *  Hyperspec
-    *  Complete Symbol
     *  Generate Tags
 
 REPL commands:
@@ -107,7 +110,7 @@ Slimv tries to autodetect your Lisp/Clojure and Python installation directories.
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
 
 Should the autodetection for Clojure fail, set the Lisp path to the complete Clojure REPL startup command, something like:
-    let g:slimv_lisp = '"java -cp /myclojuredir/clojure.jar clojure.lang.Repl"'
+    let g:slimv_lisp = '"java -cp /myclojuredir/clojure-1.0.0.jar clojure.lang.Repl"'
 
 Linux users using terminal emulator other than xterm should define the complete command to run the Slimv client + server. Here follows an example with konsole and clisp:
     let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
@@ -126,6 +129,8 @@ Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profi
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.5.2: Adapted Clojure API lookup and autodetection to version 1.0, Complete-Symbol moved to separate Edit submenu, added Close-Form command.
 
 0.5.1: Added symbol name completion based on the Hyperspec database.
 
