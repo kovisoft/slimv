@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.2
-" Last Change:  06 May 2009
+" Version:      0.5.3
+" Last Change:  16 May 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -475,7 +475,7 @@ endfunction
 
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
-function! SlimvEndOfReplBuffer( markit )
+function! SlimvEndOfReplBuffer( markit, insert )
     if !g:slimv_repl_open
         " User does not want to display REPL in Vim
         return
@@ -486,10 +486,9 @@ function! SlimvEndOfReplBuffer( markit )
         " Also remember the prompt, because the user may overwrite it
         call setpos( "'s", [0, line('$'), col('$'), 0] )
         let s:prompt = getline( "'s" )
-        if s:insertmode
-            " Hacking: we add a space at the end of the last line
-            " so that the cursor remains in correct position after insertmode eval
-            "call setline( "'s", s:prompt . " " )
+        if a:insert
+            " We are in insert mode, so we end up appending to the last line
+            startinsert!
         endif
     endif
     set nomodified
@@ -524,12 +523,19 @@ function! SlimvRefreshReplBufferNow()
             " updating the REPL file. Just go on, it's not that important.
         endtry
     endif
-    call SlimvEndOfReplBuffer( 1 )
+    let insert = 0
+    if mode() == 'i' || mode() == 'I'
+        let insert = 1
+    endif
+    call SlimvEndOfReplBuffer( 1, insert )
 endfunction
 
 " Send interrupt command to REPL
 function! SlimvInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+    sleep 200m
+    call SlimvRefreshReplBufferNow()
+    startinsert!
 endfunction
 
 " Refresh REPL buffer continuously until no change is detected
@@ -571,9 +577,14 @@ function! SlimvRefreshReplBuffer()
             sleep 100m
             let lastftime = ftime
             let ftime = getftime( s:repl_name )
-            if ftime != lastftime || ftime == localtime()
+            if ftime != lastftime || ftime == localtime() || ftime == localtime()-1
                 " REPL buffer file changed recently, reload it
                 call SlimvRefreshReplBufferNow()
+                if s:insertmode
+                    " We are in insert mode, let's fake a movement to the right
+                    " in order to display the cursor at the right place.
+                    normal l
+                endif
             endif
             if g:slimv_repl_wait != 0
                 let wait = wait - 1
@@ -593,9 +604,6 @@ function! SlimvRefreshReplBuffer()
 
     " Restore everything
     silent! execute 'match None ' . m
-    if !interrupt
-        let s:insertmode = 0
-    endif
     echon '            '
     let &ve = save_ve
 
@@ -610,7 +618,11 @@ function! SlimvRefreshReplBuffer()
             let refresh = ":call SlimvRefreshReplBuffer()"
         endif
         call append( '$', "Slimv warning: REPL is busy, refresh display with " . refresh )
-        call SlimvEndOfReplBuffer( 1 )
+        call SlimvEndOfReplBuffer( 1, s:insertmode )
+    endif
+    if s:insertmode
+        startinsert!
+        let s:insertmode = 0
     endif
 endfunction
 
@@ -692,7 +704,7 @@ function! SlimvOpenReplBuffer()
     redraw
 
     call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
-    call SlimvEndOfReplBuffer( 0 )
+    call SlimvEndOfReplBuffer( 0, 0 )
 endfunction
 
 " Select symbol under cursor and copy it to register 's'
@@ -795,7 +807,7 @@ function! SlimvSetCommandLine( cmd )
     endif
     let line = line . a:cmd
     call setline( ".", line )
-    call SlimvEndOfReplBuffer( 0 )
+    call SlimvEndOfReplBuffer( 0, 0 )
 endfunction
 
 " Add command list to the command history
@@ -915,13 +927,13 @@ function! SlimvSendCommand( insert, close )
                     let i = i - 1
                 endwhile
                 call setline( ".", indent )
-                call SlimvEndOfReplBuffer( 0 )
+                call SlimvEndOfReplBuffer( 0, 0 )
             endif
         endif
     else
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
         call append( '$', "" )
-        call SlimvEndOfReplBuffer( 1 )
+        call SlimvEndOfReplBuffer( 1, 0 )
     endif
 endfunction
 
@@ -1000,7 +1012,7 @@ endfunction
 
 " Go to command line and recall previous command from command history
 function! SlimvPreviousCommand()
-    call SlimvEndOfReplBuffer( 0 )
+    call SlimvEndOfReplBuffer( 0, 0 )
     if line( "." ) >= line( "'s" )
         call s:PreviousCommand()
     endif
@@ -1008,7 +1020,7 @@ endfunction
 
 " Go to command line and recall next command from command history
 function! SlimvNextCommand()
-    call SlimvEndOfReplBuffer( 0 )
+    call SlimvEndOfReplBuffer( 0, 0 )
     if line( "." ) >= line( "'s" )
         call s:NextCommand()
     endif
@@ -1017,7 +1029,8 @@ endfunction
 " Handle interrupt (Ctrl-C) keypress in the REPL buffer
 function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-    call SlimvRefreshReplBuffer()
+    sleep 200m
+    call SlimvRefreshReplBufferNow()
 endfunction
 
 " Start and connect slimv server
@@ -1657,6 +1670,8 @@ endif
 function SlimvAddReplMenu()
     amenu &REPL.Send-&Input                            :call SlimvSendCommand(0,0)<CR>
     amenu &REPL.Cl&ose-Send-Input                      :call SlimvSendCommand(0,1)<CR>
+    amenu &REPL.Interrup&t-Lisp-Process                <Esc>:<C-U>call SlimvInterrupt()<CR>
+    amenu &REPL.-REPLSep-                              :
     amenu &REPL.&Previous-Input                        :call SlimvPreviousCommand()<CR>
     amenu &REPL.&Next-Input                            :call SlimvNextCommand()<CR>
     menu  &REPL.&Refresh                               :call SlimvRefresh()<CR>
