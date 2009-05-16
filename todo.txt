@@ -1,3 +1,5 @@
+- add debugger (SLDB) (how?)
+- add some kind of Complete-Form (it can probably not read back arglist, so maybe use hyperspec instead)
 - use maplocalleader instead of mapleader
 - have different g:slimv_lisp variables for Lisp and Clojure
 - allow switch on/off each hyperspec symbol db
