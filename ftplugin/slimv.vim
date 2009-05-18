@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.3
-" Last Change:  16 May 2009
+" Last Change:  18 May 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -638,6 +638,7 @@ function! SlimvReplLeave()
         " Check if REPL menu exists, then remove it
         silent amenu REPL
         aunmenu REPL
+        unmap <Leader>\
     catch /.*/
         " REPL menu not found, we cannot remove it
     endtry
@@ -1668,6 +1669,10 @@ endif
 
 " Add REPL menu. This menu exist only for the REPL buffer.
 function SlimvAddReplMenu()
+    if &wildcharm != 0
+        execute ':map <Leader>\ :emenu REPL.' . nr2char( &wildcharm )
+    endif
+
     amenu &REPL.Send-&Input                            :call SlimvSendCommand(0,0)<CR>
     amenu &REPL.Cl&ose-Send-Input                      :call SlimvSendCommand(0,1)<CR>
     amenu &REPL.Interrup&t-Lisp-Process                <Esc>:<C-U>call SlimvInterrupt()<CR>
