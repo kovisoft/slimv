@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 06 May 2009
+*slimv.txt*                    Slimv                 Last Change: 18 May 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.5.2
+                               Version 0.5.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -558,9 +558,15 @@ by Slimv to ',' by default.
     Repl commands:
     ,c      ,rc      Connect to Server
 
-    REPL menu commands (separate menu, valid only for the REPL buffer):
+
+    Set#1   Set#2    Command
+    ---------------------------------------------------
+    ,\      ,\       REPL Menu (separate menu, valid only for the REPL buffer)
+
+    REPL menu commands:
     ,.      ,rs      Send Input
     ,/      ,ro      Close and Send Input
+    <C-C>   <C-C>    Interrupt Lisp Process
     ,<      ,rp      Previous Input
     ,>      ,rn      Next Input
     ,z      ,rr      Refresh REPL Buffer
@@ -925,6 +931,11 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.5.3  - Added Interrupt-Lisp-Process command.
+       - Added mapping for the REPL menu.
+       - Bugfix: put cursor after the last character in insert mode when
+         continuously refreshing REPL buffer.
+
 0.5.2  - Updated Clojure API.
        - Adapted Clojure autodetection to version 1.0 (clojure-1.0.0.jar).
        - Complete-Symbol command moved to separate Edit submenu.
@@ -1005,6 +1016,7 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - Interruption (Ctrl-C) does not work with all Lisp implementations.
   For example SBCL exits on Windows when receiving Ctrl-C.
   It does not work in Clojure.
+  In this case use the Interrupt-Lisp-Process menu command.
 - There are some functions that are not compatible or simply not working for
   Clojure.
 - It is not possible to run separate Lisp and Clojure REPL in the same

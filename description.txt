@@ -74,6 +74,7 @@ Documentation commands:
 REPL commands:
     *  Connect to Server
     *  Send Input
+    *  Interrupt Lisp Process
     *  Close and Send Input
     *  Previous Input
     *  Next Input
@@ -129,6 +130,8 @@ Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profi
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, bugfix: put cursor after the last character in insert mode when refreshing REPL buffer.
 
 0.5.2: Adapted Clojure API lookup and autodetection to version 1.0, Complete-Symbol moved to separate Edit submenu, added Close-Form command.
 
