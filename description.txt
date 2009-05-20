@@ -131,7 +131,7 @@ Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to 
 
 ---------------------------------------------------------------------------------------------
 
-0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, bugfix: put cursor after the last character in insert mode when refreshing REPL buffer.
+0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, added special forms to Clojre API lookup, bugfix: put cursor after the last character in insert mode when refreshing REPL buffer.
 
 0.5.2: Adapted Clojure API lookup and autodetection to version 1.0, Complete-Symbol moved to separate Edit submenu, added Close-Form command.
 
