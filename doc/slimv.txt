@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 18 May 2009
+*slimv.txt*                    Slimv                 Last Change: 20 May 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.3
@@ -933,6 +933,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.5.3  - Added Interrupt-Lisp-Process command.
        - Added mapping for the REPL menu.
+       - Added special forms to Clojre API lookup.
        - Bugfix: put cursor after the last character in insert mode when
          continuously refreshing REPL buffer.
 
