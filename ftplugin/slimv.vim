@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.5.3
-" Last Change:  18 May 2009
+" Last Change:  23 May 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -565,8 +565,8 @@ function! SlimvRefreshReplBuffer()
     endif
     let interrupt = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
-    try
-        while wait > 0 || g:slimv_repl_wait == 0
+    while wait > 0 || g:slimv_repl_wait == 0
+        try
             let m = '/\%#/'
             silent! execute 'match Cursor ' . m
             match Cursor /\%#/
@@ -589,18 +589,23 @@ function! SlimvRefreshReplBuffer()
             if g:slimv_repl_wait != 0
                 let wait = wait - 1
             endif
-        endwhile
-    catch /^Vim:Interrupt$/
-        if getchar(1)
-            " Swallow interrupt key
-            let c = getchar(0)
-            if c == 3
-                " Yes, this was the Ctrl-C, propagate it to the server
-                let interrupt = 1
-                call SlimvHandleInterrupt()
+        catch /^Vim:Interrupt$/
+            if getchar(1)
+                " Swallow interrupt key
+                let c = getchar(0)
+                if c == 3
+                    " Yes, this was the Ctrl-C, propagate it to the server
+                    " but only if it has not yet been done in this turn
+                    if interrupt == 0
+                        let interrupt = 1
+                        call SlimvHandleInterrupt()
+                        " We override the wait time here to 2 secs
+                        let wait = 20
+                    endif
+                endif
             endif
-        endif
-    endtry
+        endtry
+    endwhile
 
     " Restore everything
     silent! execute 'match None ' . m
