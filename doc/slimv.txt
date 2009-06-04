@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 May 2009
+*slimv.txt*                    Slimv                 Last Change: 04 Jun 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.3
@@ -936,6 +936,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added special forms to Clojre API lookup.
        - Bugfix: put cursor after the last character in insert mode when
          continuously refreshing REPL buffer.
+       - Fixed some Ctrl-C handling problems.
 
 0.5.2  - Updated Clojure API.
        - Adapted Clojure autodetection to version 1.0 (clojure-1.0.0.jar).

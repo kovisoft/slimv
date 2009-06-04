@@ -131,7 +131,7 @@ Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to 
 
 ---------------------------------------------------------------------------------------------
 
-0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, added special forms to Clojre API lookup, bugfix: put cursor after the last character in insert mode when refreshing REPL buffer.
+0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, added special forms to Clojre API lookup, bugfixes: put cursor after the last character in insert mode when refreshing REPL buffer, fixed some Ctrl-C handling problems.
 
 0.5.2: Adapted Clojure API lookup and autodetection to version 1.0, Complete-Symbol moved to separate Edit submenu, added Close-Form command.
 
@@ -162,18 +162,7 @@ Issues
 
 - REPL buffer refresh on Vim focus gain works only in gvim, not in console vim
 - REPL buffer refresh sometimes does not work first time after the server Lisp windows was just opened
-- Ctrl+C does not work from Vim REPL buffer
 - Ctrl+C works in server Lisp window (but only in Lisp implementations that support it, so not in SBCL)
-
----------------------------------------------------------------------------------------------
-
-Differences to Limp
-
-
-As far as I know, the main differences at the moment are:
-- Limp (0.3.4) works with SBCL on Linux (and Mac?), Slimv (0.5.0) should work for any Common Lisp implementation on Linux and Windows.
-- Limp does automatic bracket closing, (some) name completion, current form highlighting.
-- Slimv has Clojure support with API and JavaDoc lookup.
 
 ---------------------------------------------------------------------------------------------
 
