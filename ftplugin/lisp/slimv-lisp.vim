@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.5.1
-" Last Change:  22 Apr 2009
+" Version:      0.5.4
+" Last Change:  03 Oct 2009
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -48,6 +48,14 @@ function! b:SlimvAutodetect()
         " LispWorks
         return ['lwl', 'lispworks']
     endif
+    if g:slimv_windows && executable( 'wx86cl' )
+        " Clozure CL
+        return ['wx86cl', 'clozure']
+    endif
+    if !g:slimv_windows && executable( 'lx86cl' )
+        " Clozure CL
+        return ['lx86cl', 'clozure']
+    endif
 
     if g:slimv_windows
         " Try to find Lisp on the standard installation places
@@ -78,6 +86,10 @@ function! b:SlimvAutodetect()
         let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
         if len( lisps ) > 0
             return [lisps[0], 'ecl']
+        endif
+        let lisps = split( globpath( 'c:/ccl*,c:/Program Files/ccl*', 'wx86cl.exe' ), '\n' )
+        if len( lisps ) > 0
+            return [lisps[0], 'clozure']
         endif
     endif
 
