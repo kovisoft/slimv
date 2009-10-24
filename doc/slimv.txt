@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 04 Jun 2009
+*slimv.txt*                    Slimv                 Last Change: 24 Oct 2009
 
 Slimv                                                                  *slimv*
-                               Version 0.5.3
+                               Version 0.5.4
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -674,12 +674,13 @@ directory for clojure.jar is in the PATH. Please note that the whole expression
 needs to be enclosed in double quotes, as it will be passed to the server in
 one single command line argument:
 
-  let g:slimv_lisp = '"java -cp clojure.jar clojure.lang.Repl"'
+  let g:slimv_lisp = '"java -cp clojure.jar;clojure-contrib.jar clojure.main"'
 
 Here follows an example, which starts c:\Clojure\clojure.jar on Windows.
 Remember to escape the backslashes:
 
-  let g:slimv_lisp = '"java -cp c:\\Clojure\\clojure.jar clojure.lang.Repl"'
+  let g:slimv_lisp =
+  \ '"java -cp c:\\Clojure\\clojure.jar;c:\\Clojure\\clojure-contrib.jar clojure.lang.Repl"'
 
 
 ===============================================================================
@@ -930,6 +931,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.5.4  - Added autodetection for clojure-contrib.jar.
+       - Added autodetection for Clozure CL.
 
 0.5.3  - Added Interrupt-Lisp-Process command.
        - Added mapping for the REPL menu.
