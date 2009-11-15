@@ -58,7 +58,7 @@ To install the script:
        ftplugin/slimv-javadoc.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
-       indent/clojure/slimv-indent-clojure.vim
+       indent/clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
@@ -114,7 +114,7 @@ Uninstallation:
        ftplugin/slimv-javadoc.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
-       indent/clojure/slimv-indent-clojure.vim
+       indent/clojure.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
     (Special note on metering.lisp: if the profiler was compiled, then the
@@ -935,6 +935,9 @@ CHANGE LOG                                                    *slimv-changelog*
 0.5.4  - Added autodetection for clojure-contrib.jar.
        - Added autodetection for Clozure CL.
        - Applied lisp_rainbow to Clojure's [].
+       - Remaned Clojure indent plugin to clojure.vim
+         so that Vim finds and loads it.
+       - Switched on lisp mode explicitly for Clojure filetype.
 
 0.5.3  - Added Interrupt-Lisp-Process command.
        - Added mapping for the REPL menu.
