@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 24 Oct 2009
+*slimv.txt*                    Slimv                 Last Change: 15 Nov 2009
 
 Slimv                                                                  *slimv*
                                Version 0.5.4
@@ -934,6 +934,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.5.4  - Added autodetection for clojure-contrib.jar.
        - Added autodetection for Clozure CL.
+       - Applied lisp_rainbow to Clojure's [].
 
 0.5.3  - Added Interrupt-Lisp-Process command.
        - Added mapping for the REPL menu.
