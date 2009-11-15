@@ -16,3 +16,5 @@ endif
 
 runtime indent/**/lisp.vim
 
+set lisp
+
