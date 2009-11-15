@@ -935,7 +935,7 @@ CHANGE LOG                                                    *slimv-changelog*
 0.5.4  - Added autodetection for clojure-contrib.jar.
        - Added autodetection for Clozure CL.
        - Applied lisp_rainbow to Clojure's [].
-       - Remaned Clojure indent plugin to clojure.vim
+       - Renamed Clojure indent plugin to clojure.vim
          so that Vim finds and loads it.
        - Switched on lisp mode explicitly for Clojure filetype.
 
