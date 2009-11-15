@@ -99,7 +99,7 @@ Extract the zip archive into your vimfiles or runtime directory. The archive con
     *  ftplugin/slimv-javadoc.vim
     *  ftplugin/clojure/slimv-clojure.vim
     *  ftplugin/lisp/slimv-lisp.vim
-    *  indent/clojure/slimv-indent-clojure.vim
+    *  indent/clojure.vim
     *  syntax/clojure/slimv-syntax-clojure.vim
 
 Slimv works on Windows and on Linux, Cygwin is not supported. The script requires the following programs installed on your system:
@@ -130,6 +130,8 @@ Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profi
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.5.4: Added autodetection for clojure-contrib.jar and Clozure CL, applied lisp_rainbow to Clojure's [], renamed Clojure indent plugin to clojure.vim, switched on lisp indentation for Clojure files. 
 
 0.5.3: Added Interrupt-Lisp-Process command, added mapping for the REPL menu, added special forms to Clojre API lookup, bugfixes: put cursor after the last character in insert mode when refreshing REPL buffer, fixed some Ctrl-C handling problems.
 
@@ -178,6 +180,6 @@ ftplugin/slimv-cljapi.vim
 ftplugin/slimv-javadoc.vim
 ftplugin/clojure/slimv-clojure.vim
 ftplugin/lisp/slimv-lisp.vim
-indent/clojure/slimv-indent-clojure.vim
+indent/clojure.vim
 syntax/clojure/slimv-syntax-clojure.vim
 
