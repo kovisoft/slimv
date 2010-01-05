@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 15 Nov 2009
+*slimv.txt*                    Slimv                 Last Change: 05 Jan 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.5.4
+                               Version 0.5.5
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -680,7 +680,7 @@ Here follows an example, which starts c:\Clojure\clojure.jar on Windows.
 Remember to escape the backslashes:
 
   let g:slimv_lisp =
-  \ '"java -cp c:\\Clojure\\clojure.jar;c:\\Clojure\\clojure-contrib.jar clojure.lang.Repl"'
+  \ '"java -cp c:\\Clojure\\clojure.jar;c:\\Clojure\\clojure-contrib.jar clojure.main"'
 
 
 ===============================================================================
@@ -931,6 +931,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.5.5  - Updated Clojure API to 1.1
 
 0.5.4  - Added autodetection for clojure-contrib.jar.
        - Added autodetection for Clozure CL.
