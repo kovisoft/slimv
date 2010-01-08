@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.4.0
-# Last Change:  22 Mar 2009
+# Version:      0.5.5
+# Last Change:  08 Jan 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -376,7 +376,13 @@ def server():
         return
 
     # Build Lisp-starter command
-    cmd = shlex.split( lisp_path.replace( '\\', '\\\\' ) )
+    lisp_exp = lisp_path.replace( '\\', '\\\\' )
+    if not mswindows:
+        # Popen does not work with tilde-prefix on Linux
+        # so we expand them to the home directory
+        user = os.path.expanduser( '~/' )
+        lisp_exp = lisp_exp.replace( ' ~/', ' ' + user )
+    cmd = shlex.split( lisp_exp )
 
     # Start Lisp
     repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
