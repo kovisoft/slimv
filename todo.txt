@@ -1,10 +1,9 @@
 - add debugger (SLDB) (how?)
 - add some kind of Complete-Form (it can probably not read back arglist, so maybe use hyperspec instead)
 - use maplocalleader instead of mapleader
-- have different g:slimv_lisp variables for Lisp and Clojure
 - allow switch on/off each hyperspec symbol db
-- initialize hyperspec symbol db only at first lookup
 - eliminate identical lines from command history
 - display lisp startup text
 - separate variables for wanting to open repl and repl actually opened
 - refresh do not open repl in .lisp window
+
