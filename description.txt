@@ -111,7 +111,7 @@ Slimv tries to autodetect your Lisp/Clojure and Python installation directories.
     let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
 
 Should the autodetection for Clojure fail, set the Lisp path to the complete Clojure REPL startup command, something like:
-    let g:slimv_lisp = '"java -cp /myclojuredir/clojure-1.0.0.jar clojure.lang.Repl"'
+    let g:slimv_lisp = '"java -cp /myclojuredir/clojure.jar clojure.main"'
 
 Linux users using terminal emulator other than xterm should define the complete command to run the Slimv client + server. Here follows an example with konsole and clisp:
     let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
@@ -130,6 +130,8 @@ Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profi
 Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
+
+0.5.5: Updated Clojure API to 1.1, expand tilde-prefix to home directory on Linux, autodetect Clojure in the user home directory on Linux. 
 
 0.5.4: Added autodetection for clojure-contrib.jar and Clozure CL, applied lisp_rainbow to Clojure's [], renamed Clojure indent plugin to clojure.vim, switched on lisp indentation for Clojure files. 
 
