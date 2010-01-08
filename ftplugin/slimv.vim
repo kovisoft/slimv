@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.3
-" Last Change:  23 May 2009
+" Version:      0.5.5
+" Last Change:  05 Jan 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -204,7 +204,8 @@ function! SlimvLogGlobals()
     call SlimvLog( 1, info )
 endfunction
 
-au BufNewFile,BufRead *.lisp call SlimvLogGlobals()
+au VimEnter,BufNewFile,BufRead *.lisp call SlimvLogGlobals()
+au VimEnter,BufNewFile,BufRead *.clj  call SlimvLogGlobals()
 
 
 " =====================================================================
@@ -548,7 +549,7 @@ function! SlimvRefreshReplBuffer()
     " Refresh REPL buffer for a while until no change is detected
     let ftime = getftime( s:repl_name )
     let lastftime = ftime
-    sleep 200m
+    sleep 100m
     call SlimvRefreshReplBufferNow()
 
     let save_ve = &ve
