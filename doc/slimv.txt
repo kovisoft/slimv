@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Jan 2010
+*slimv.txt*                    Slimv                 Last Change: 08 Jan 2010
 
 Slimv                                                                  *slimv*
                                Version 0.5.5
@@ -932,7 +932,8 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.5.5  - Updated Clojure API to 1.1
+0.5.5  - Updated Clojure API to 1.1.
+       - Expand tilde-prefix to home directory on Linux.
 
 0.5.4  - Added autodetection for clojure-contrib.jar.
        - Added autodetection for Clozure CL.
