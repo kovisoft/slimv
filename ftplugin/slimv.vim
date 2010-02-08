@@ -1,5 +1,5 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.5
+" Version:      0.5.6
 " Last Change:  08 Jan 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
@@ -27,14 +27,14 @@ endif
 "  Functions used by global variable definitions
 " =====================================================================
 
-" Write debug message to logile (message must be a list)
-function! SlimvWriteLog( level, message )
-    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && g:slimv_debug >= a:level
+" Flush log message buffer to logfile
+function! SlimvLogFlush()
+    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && s:debug_list != []
         " We need to make a hack: write things into a temporary file
         " then append temp file contents to the logfile
         let tmp = tempname()
         try
-            call writefile( a:message, tmp )
+            call writefile( s:debug_list, tmp )
         finally
             if g:slimv_windows
                 silent execute '!type ' . tmp . ' >> ' . g:slimv_logfile
@@ -45,17 +45,28 @@ function! SlimvWriteLog( level, message )
         endtry
         " Unfortunately I know no way to tell writefile to append the text
         "call writefile( a:message, g:slimv_logfile )
+        let s:debug_list = []
     endif
 endfunction
 
-" Write debug message to logile with a timestamp
+" Write debug message to logfile (message must be a list)
+function! SlimvLogWrite( level, message, immediate )
+    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && g:slimv_debug >= a:level
+        let s:debug_list = s:debug_list + a:message
+        if len( s:debug_list ) >= g:slimv_logfreq || a:immediate
+            call SlimvLogFlush()
+        endif
+    endif
+endfunction
+
+" Write debug message to logfile with a timestamp
 function! SlimvLog( level, message )
     if exists( '*strftime' )
         let time = strftime( '%Y %b %d %X' )
     else
         let time = localtime()
     endif
-    call SlimvWriteLog( a:level, ['***** ' . time] + a:message + [''] )
+    call SlimvLogWrite( a:level, ['***** ' . time] + a:message + [''], 0 )
 endfunction
 
 " Try to autodetect Python executable
@@ -206,6 +217,8 @@ endfunction
 
 au VimEnter,BufNewFile,BufRead *.lisp call SlimvLogGlobals()
 au VimEnter,BufNewFile,BufRead *.clj  call SlimvLogGlobals()
+au VimLeave *.lisp call SlimvLogFlush()
+au VimLeave *.clj  call SlimvLogFlush()
 
 
 " =====================================================================
@@ -226,6 +239,11 @@ endif
 " Logfile name for debug messages
 if !exists( 'g:slimv_logfile' )
     let g:slimv_logfile = 'slimv.log'
+endif
+
+" Flushing frequency into debug logfile
+if !exists( 'g:slimv_logfreq' )
+    let g:slimv_logfreq = 1
 endif
 
 " TCP port number to use
@@ -454,6 +472,12 @@ let s:prompt = ''
 " The current mode when REPL refresh was started
 let s:insertmode = 0
 
+" The last refresh time of the REPL buffer
+let s:last_refresh = 0
+
+" Debug log buffer
+let s:debug_list = []
+
 
 " =====================================================================
 "  General utility functions
@@ -497,6 +521,7 @@ endfunction
 
 " Reload the contents of the REPL buffer from the output file immediately
 function! SlimvRefreshReplBufferNow()
+    let s:last_refresh = localtime()
     if !g:slimv_repl_open
         " User does not want to display REPL in Vim
         return
@@ -529,6 +554,16 @@ function! SlimvRefreshReplBufferNow()
         let insert = 1
     endif
     call SlimvEndOfReplBuffer( 1, insert )
+endfunction
+
+function! SlimvFileChangedShell()
+    call SlimvRefreshReplBufferNow()
+endfunction
+
+function! SlimvFocusGained()
+    if s:last_refresh < localtime()
+        call SlimvRefreshReplBufferNow()
+    endif
 endfunction
 
 " Send interrupt command to REPL
@@ -564,6 +599,13 @@ function! SlimvRefreshReplBuffer()
         " Inform user that we are in running mode (waiting for REPL output)
         echon '-- RUNNING --'
     endif
+
+    " For some reason sometimes a getchar comes with 128 followed by 0.
+    " This is meant to swallow it.
+    while getchar(1) == 128
+        let c = getchar(0)
+    endwhile
+
     let interrupt = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
     while wait > 0 || g:slimv_repl_wait == 0
@@ -634,8 +676,10 @@ endfunction
 
 " Called when entering REPL buffer
 function! SlimvReplEnter()
-    call SlimvAddReplMenu()
-    call SlimvRefreshReplBufferNow()
+    if s:last_refresh < localtime()
+        call SlimvAddReplMenu()
+        call SlimvRefreshReplBufferNow()
+    endif
 endfunction
 
 " Called when leaving REPL buffer
@@ -702,8 +746,8 @@ function! SlimvOpenReplBuffer()
     endif
 
     " Add autocommands specific to the REPL buffer
-    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
-    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBufferNow()"
+    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvFileChangedShell()"
+    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvFocusGained()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
@@ -1504,7 +1548,7 @@ function! SlimvComplete( findstart, base )
         " Find all symbols starting with "a:base"
         let res = []
         let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
-	call sort( symbol )
+        call sort( symbol )
         for m in symbol
             if m =~ '^' . a:base
                 call add( res, m )
@@ -1669,7 +1713,7 @@ if g:slimv_menu == 1
     amenu &Slimv.&Documentation.&Hyperspec             :call SlimvHyperspec()<CR>
     imenu &Slimv.&Documentation.&Complete-Symbol       <C-X><C-O>
     amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
-    
+
     amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
 endif
 
