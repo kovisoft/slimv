@@ -131,6 +131,8 @@ Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to 
 
 ---------------------------------------------------------------------------------------------
 
+0.5.6: Improved REPL buffer response time, added debug log flushing frequency, bugfix: REPL refresh mode exited immediately on some machines.
+
 0.5.5: Updated Clojure API to 1.1, expand tilde-prefix to home directory on Linux, autodetect Clojure in the user home directory on Linux. 
 
 0.5.4: Added autodetection for clojure-contrib.jar and Clozure CL, applied lisp_rainbow to Clojure's [], renamed Clojure indent plugin to clojure.vim, switched on lisp indentation for Clojure files. 
