@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 08 Jan 2010
+*slimv.txt*                    Slimv                 Last Change: 08 Feb 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.5.5
+                               Version 0.5.6
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -171,6 +171,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_logfile|            Name of the logfile to use for debug messages.
                              Also see |g:slimv_debug|.
 
+|g:slimv_logfreq|            Flushing frequency to logfile.
+
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
 
 |g:slimv_port|               TCP/IP port number to use in the Slimv client-
@@ -310,6 +312,12 @@ when setting up a custom |g:slimv_client| command.
                                                               *g:slimv_logfile*
 Name of the Slimv logfile. Defaults to slimv.log.
 Used only when |g:slimv_debug| level is nonzero.
+
+                                                              *g:slimv_logfreq*
+Flushing frequency to logfile.
+Writing to logfile generates extra Vim messages, so setting a relatively high
+flush frequency helps to get rid of them. The log messages are flushed when
+exiting Vim.
 
                                                                 *g:slimv_ctags*
 It is possible to generate tags file from within Vim. By default Slimv assumes
@@ -592,6 +600,13 @@ enter them and under what conditions.
 It is possible to interrupt a running Lisp program by pressing Ctrl-C,
 at least in some Lisp implementations, like CLISP (does not work for example
 with SBCL).
+In Clojure Ctrl-C exits the REPL by default, but it is possible to change this
+behaviour via the add-break-thread! function:
+    user=> (use 'clojure.contrib.repl-utils)
+    nil
+    user=> (add-break-thread!)
+Then pressing Ctrl-C results in a SIGINT exception in the current thread.
+This may however make bad things to your JVM, so use it with caution.
 
 To end the Lisp session press EOF (Ctrl-D on Linux, Ctrl-Z on Windows)
 in the Lisp REPL window. After exiting the REPL it is possible to open
@@ -931,6 +946,10 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.5.6  - Improved REPL buffer response time.
+       - Added debug log flushing frequency.
+       - Bugfix: REPL refresh mode exited immediately on some machines.
 
 0.5.5  - Updated Clojure API to 1.1.
        - Expand tilde-prefix to home directory on Linux.
