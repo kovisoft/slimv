@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 08 Feb 2010
+*slimv.txt*                    Slimv                 Last Change: 15 Feb 2010
 
 Slimv                                                                  *slimv*
                                Version 0.5.6
@@ -949,7 +949,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.5.6  - Improved REPL buffer response time.
        - Added debug log flushing frequency.
-       - Bugfix: REPL refresh mode exited immediately on some machines.
+       - Bugfix: early exit of REPL refresh mode on some machines.
 
 0.5.5  - Updated Clojure API to 1.1.
        - Expand tilde-prefix to home directory on Linux.
