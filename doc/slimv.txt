@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 15 Feb 2010
+*slimv.txt*                    Slimv                 Last Change: 15 Mar 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.5.6
+                               Version 0.6.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -11,6 +11,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-customization|        Customization
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
+|slimv-paredit|              Paredit mode
 |slimv-clojure|              Clojure support
 |slimv-profiling|            Profiling
 |slimv-hyperspec|            Hyperspec lookup and Completion
@@ -174,6 +175,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_logfreq|            Flushing frequency to logfile.
 
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
+
+|g:slimv_paredit|            If nonzero, paredit mode is switched on.
 
 |g:slimv_port|               TCP/IP port number to use in the Slimv client-
                              server communication.
@@ -339,6 +342,11 @@ The <Leader> is set to ',' by default.
                                                                  *g:slimv_menu*
 If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
+
+
+                                                              *g:slimv_paredit*
+If nonzero then paredit mode is switched on, i.e. Slimv tries to keep the
+balanced state of parens. See |g:slimv-paredit|.
 
 
                                                              *g:slimv_repl_dir*
@@ -675,6 +683,46 @@ While waiting for REPL output:
 
 
 ===============================================================================
+PAREDIT MODE                                                    *slimv-paredit*
+
+Paredit mode is a special editing mode that keeps all paired-characters
+(parens, brackets, double quotes) balanced, i.e. all opening character has
+a matching closing character. Most text entering and erasing commands try to
+maintain the balanced state, so no single paired-character is added or deleted,
+they are entered or removed in pairs.
+The function takes care of strings and comments, so no paren and bracket
+balancing is performed inside a string or comment.
+
+When you enter a '(' then a matching ')' is automatically inserted.
+If needed, spaces before and/or after the '()' pair are added.
+
+When you press ')' in insert mode then there's no need to insert a closing
+paren (it is already there), so the cursor is simply advanced past the next
+closing paren (then the next outer closing paren, etc.).
+
+When you are trying to delete a '(' or ')' alone then it is not possible,
+the cursor is simply moved inside the form, where all regular characters can
+be deleted. When the form is finally empty: '()', then both parens are deleted
+at once, so the balanced state is maintained.
+
+All the above holds (more or less) for '[', ']' and '"' characters.
+
+
+Of course not all Vim commands are compatible with the paredit mode (e.g.
+you can yank and paste unbalanced code snippet, or comment out an asymmetrical
+part of the code), and there is also the possibility to edit the source code
+with another editor to make it unbalanced.
+When paredit mode detects that the underlying code is not balanced, then the
+paredit functionality is suspended until the top level form balance is fixed.
+As soon as all parens are matched, the paredit mode is automatically resumed.
+
+Paredit mode is set by default but it is possible to switch it out by putting
+the following statement in the .vimrc file:
+
+    let g:slimv_paredit = 0
+
+
+===============================================================================
 CLOJURE SUPPORT                                                 *slimv-clojure*
 
 Vim has a built-in support for Lisp, however it has no Clojure support by
@@ -946,6 +994,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.6.0  - Added paredit mode.
 
 0.5.6  - Improved REPL buffer response time.
        - Added debug log flushing frequency.
