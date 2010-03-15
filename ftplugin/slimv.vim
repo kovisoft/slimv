@@ -505,7 +505,7 @@ function! SlimvEndOfReplBuffer( markit, insert )
         " User does not want to display REPL in Vim
         return
     endif
-    normal G$
+    normal! G$
     if a:markit
         " Remember the end of the buffer: user may enter commands here
         " Also remember the prompt, because the user may overwrite it
@@ -594,7 +594,7 @@ function! SlimvRefreshReplBuffer()
         " For this we need to set the virtualedit=all option temporarily
         echon '-- INSERT --'
         set ve=all
-        normal l
+        normal! l
     else
         " Inform user that we are in running mode (waiting for REPL output)
         echon '-- RUNNING --'
@@ -626,7 +626,7 @@ function! SlimvRefreshReplBuffer()
                 if s:insertmode
                     " We are in insert mode, let's fake a movement to the right
                     " in order to display the cursor at the right place.
-                    normal l
+                    normal! l
                 endif
             endif
             if g:slimv_repl_wait != 0
@@ -761,7 +761,7 @@ endfunction
 " Select symbol under cursor and copy it to register 's'
 function! SlimvSelectSymbol()
     "TODO: can we use expand('<cWORD>') here?
-    normal viw"sy
+    normal! viw"sy
 endfunction
 
 " Select extended symbol under cursor and copy it to register 's'
@@ -772,26 +772,26 @@ function! SlimvSelectSymbolExt()
     else
         let &iskeyword = oldkw . ',~,#,&,|,{,},[,]'
     endif
-    normal viw"sy
+    normal! viw"sy
     let &iskeyword = oldkw
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm()
-    normal va(o
+    normal! va(o
     " Handle '() or #'() etc. type special syntax forms
     " TODO: what to do with ` operator?
     let c = col( '.' ) - 2
     while c > 0 && match( ' \t()', getline( '.' )[c] ) < 0
-        normal h
+        normal! h
         let c = c - 1
     endwhile
-    normal "sy
+    normal! "sy
 endfunction
 
 " Select top level form the cursor is inside and copy it to register 's'
 function! SlimvSelectToplevelForm()
-    normal 99[(
+    normal! 99[(
     call SlimvSelectForm()
 endfunction
 
@@ -991,7 +991,7 @@ endfunction
 " Close current top level form by adding the missing parens
 function! SlimvCloseForm()
     let l2 = line( '.' )
-    normal 99[(
+    normal! 99[(
     let l1 = line( '.' )
     let form = []
     let l = l1
@@ -1012,7 +1012,7 @@ function! SlimvCloseForm()
         endwhile
         call setline( l2, lastline )
     endif
-    normal %
+    normal! %
 endfunction
 
 " Handle insert mode 'Backspace' keypress in the REPL buffer
@@ -1048,7 +1048,7 @@ function! SlimvHandleUp()
     if line( "." ) >= line( "'s" )
         call s:PreviousCommand()
     else
-        normal k
+        normal! k
     endif
 endfunction
 
@@ -1057,7 +1057,7 @@ function! SlimvHandleDown()
     if line( "." ) >= line( "'s" )
         call s:NextCommand()
     else
-        normal j
+        normal! j
     endif
 endfunction
 
@@ -1223,7 +1223,7 @@ endfunction
 
 " General part of the various macroexpand functions
 function! SlimvMacroexpandGeneral( command )
-    normal 99[(
+    normal! 99[(
     let line = getline( "." )
     if match( line, 'defmacro' ) < 0
         " The form does not contain 'defmacro', put it in a macroexpand block
@@ -1233,9 +1233,9 @@ function! SlimvMacroexpandGeneral( command )
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
         if SlimvGetFiletype() == 'clojure'
             " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
-            normal vt[%ht]"sy
+            normal! vt[%ht]"sy
         else
-            normal vt(])"sy
+            normal! vt(])"sy
         endif
         let m = SlimvGetSelection() . '))'
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
@@ -1740,17 +1740,22 @@ let g:slimv_paredit = 1
 let g:slimv_matchlines = 100
 
 
+" Is the current cursor position inside a comment?
+function! s:InsideComment()
+    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "comment"
+endfunction
+
+" Is the current cursor position inside a string?
+function! s:InsideString()
+    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string"
+endfunction
+
+" Is the current cursor position inside a comment or string?
 function! s:InsideCommentOrString()
     return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string\\|comment"
 endfunction
 
 function! SlimvIsBalanced()
-
-
-" if synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string\\|comment"
-
-
-
     let paren = 0
     let bracket = 0
     let inside_string = 0
@@ -1767,8 +1772,6 @@ function! SlimvIsBalanced()
     endif
     let [lend, cend] = searchpairpos( '(', '', ')', 'rnW', '', l1+g:slimv_matchlines )
     if lend == 0 && cend == 0
-"        echo input('111')
-"        return 0
         let lend = line( '$' )
     endif
     while l <= lend
@@ -1802,7 +1805,6 @@ function! SlimvIsBalanced()
                         let current_form_closed = 1
                     elseif paren < 0
                         " Oops, too many closing parens
-                        echo input('222')
                         return 0
                     endif
                 elseif line[c] == '['
@@ -1811,7 +1813,6 @@ function! SlimvIsBalanced()
                     let bracket = bracket - 1
                     if bracket < 0
                         " Oops, too many closing brackets
-                        echo input('333')
                         return 0
                     endif
                 endif
@@ -1823,32 +1824,67 @@ function! SlimvIsBalanced()
 
     " No subsequent form found, paren/bracket must be 0 for balanced forms
     if paren != 0 || bracket != 0 || inside_string
-        echo input('444')
         return 0
     endif
     return 1
 endfunction
 
+" Insert opening type of a paired character, like ( or [.
 function! SlimvInsertOpening( open, close )
     if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
         return a:open
     endif
+    let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
-        return " " . a:open . a:close . "\<Left>"
+    if line[pos] != ' ' && line[pos] != '\t' && line[pos] != '(' && line[pos] != '['
+        let retval = a:open . a:close . " \<Left>\<Left>"
     else
-        return a:open . a:close . "\<Left>"
+        let retval = a:open . a:close . "\<Left>"
     endif
+    if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
+        let retval = " " . retval
+    endif
+    return retval
 endfunction
 
+" Insert closing type of a paired character, like ) or ].
 function! SlimvInsertClosing( open, close )
     if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
         return a:close
     endif
-    return "\<Right>"
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if line[pos] == a:close
+        return "\<Right>"
+    else
+        if a:close == ')'
+            return "\<C-O>])"
+        else
+            return "\<C-O>f" . a:close
+        endif
+    endif
 endfunction
 
+" Insert an (opening or closing) double quote
+function! SlimvInsertQuotes()
+    if !g:slimv_paredit || s:InsideComment()
+        return a:char
+    endif
+    if s:InsideString()
+        let line = getline( '.' )
+        let pos = col( '.' ) - 1
+        if line[pos] == '"'
+            return "\<Right>"
+        else
+            return "\<C-O>f" . '"'
+        endif
+    else
+        return '""' . "\<Left>"
+    endif
+endfunction
+
+" Handle <BS> keypress
 function! SlimvBackspace( repl_mode )
     if a:repl_mode && line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
         " No BS allowed before the previous EOF mark in the REPL
@@ -1856,7 +1892,7 @@ function! SlimvBackspace( repl_mode )
         return ""
     endif
 
-    if !g:slimv_paredit || s:InsideCommentOrString()
+    if !g:slimv_paredit || s:InsideComment()
         return "\<BS>"
     endif
 
@@ -1866,15 +1902,15 @@ function! SlimvBackspace( repl_mode )
     if pos == 0
         " We are at the beginning of the line
         return "\<BS>"
-    elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']'
+    elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']' && line[pos-1] != '"'
         " Deleting a non-special character
         return "\<BS>"
-    elseif !SlimvIsBalanced()
+    elseif line[pos-1] != '"' && !SlimvIsBalanced()
         " Current top-form is unbalanced, can't retain paredit mode
         return "\<BS>"
     endif
 
-    if ( line[pos-1] == '(' && line[pos] == ')' ) || ( line[pos-1] == '[' && line[pos] == ']' )
+    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
         " Deleting an empty character-pair
         return "\<Right>\<BS>\<BS>"
     else
@@ -1883,36 +1919,9 @@ function! SlimvBackspace( repl_mode )
     endif
 endfunction
 
-"function! SlimvIErase( command )
-"    "TODO: handle case when inside string or comment
-"    if !g:slimv_paredit
-"        return a:command
-"    endif
-"
-"    let line = getline( '.' )
-"    let pos = col( '.' ) - 1
-"
-"    if pos == len(line)
-"        " We are at the end of the line
-"        return a:command
-"    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']'
-"        " Erasiing a non-special character
-"        return a:command
-"    elseif !SlimvIsBalanced()
-"        " Current top-form is unbalanced, can't retain paredit mode
-"        return a:command
-"    endif
-"
-"    if pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
-"        " Erasing an empty character-pair
-"        return "\<Left>" . a:command . a:command
-"    else
-"        " Character-paid is not empty, don't erase just move inside
-"        return "\<Right>"
-"    endif
-"endfunction
+" Handle <Del> keypress
 function! SlimvDel()
-    if !g:slimv_paredit || s:InsideCommentOrString()
+    if !g:slimv_paredit || s:InsideComment()
         return "\<Del>"
     endif
 
@@ -1922,15 +1931,17 @@ function! SlimvDel()
     if pos == len(line)
         " We are at the end of the line
         return "\<Del>"
-    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']'
+    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']' && line[pos] != '"'
         " Erasing a non-special character
         return "\<Del>"
-    elseif !SlimvIsBalanced()
+    elseif line[pos] != '"' && !SlimvIsBalanced()
         " Current top-form is unbalanced, can't retain paredit mode
         return "\<Del>"
+    elseif pos == 0
+        return "\<Right>"
     endif
 
-    if pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
         " Erasing an empty character-pair
         return "\<Left>\<Del>\<Del>"
     else
@@ -1939,35 +1950,13 @@ function! SlimvDel()
     endif
 endfunction
 
-"function! SlimvNErase2()
-"    "TODO: handle case when inside string or comment
-"    if !g:slimv_paredit
-"        normal x
-"        return
-"    endif
-"    let c = v:count1
-"    while c > 0
-"        let line = getline( '.' )
-"        let pos = col( '.' ) - 1
-"        if pos == len(line)
-"            call setline( '.', strpart( line, 0, pos-1 ) )
-"        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
-"            call setline( '.', strpart( line, 0, pos-1 ) . strpart( line, pos+1 ) )
-"            normal h
-"        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']'
-"            normal l
-"        else
-"            call setline( '.', strpart( line, 0, pos ) . strpart( line, pos+1 ) )
-"        endif
-"        let c = c - 1
-"    endwhile
-"endfunction
+" Forward erasing a character in normal mode
 function! SlimvNErase()
-    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
+    if !g:slimv_paredit || s:InsideComment() || !SlimvIsBalanced()
         if v:count > 0
-            silent execute 'normal ' . v:count . 'x'
+            silent execute 'normal! ' . v:count . 'x'
         else
-            normal x
+            normal! x
         endif
         return
     endif
@@ -1979,15 +1968,15 @@ function! SlimvNErase()
         if pos == len(line)
             " We are at the end of the line
             let line = strpart( line, 0, pos-1 )
-        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
             let pos = pos - 1
-            normal h
-        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']'
+            normal! h
+        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']' || line[pos] == '"'
             " Character-paid is not empty, don't erase just move inside
             let pos = pos + 1
-            normal l
+            normal! l
         else
             " Erasing a non-special character
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
@@ -2000,13 +1989,11 @@ endfunction
 
 inoremap <expr> (     SlimvInsertOpening('(',')')
 inoremap <expr> )     SlimvInsertClosing('(',')')
-"inoremap        )     <Right>
 inoremap <expr> [     SlimvInsertOpening('[',']')
 inoremap <expr> ]     SlimvInsertClosing('[',']')
-"inoremap        ]     <Right>
+
+inoremap <expr> "     SlimvInsertQuotes()
 inoremap <expr> <BS>  SlimvBackspace(0)
-"inoremap <expr> <Del> SlimvIErase("\Del")
 inoremap <expr> <Del> SlimvDel()
-"noremap  <expr> x     SlimvErase("x")
 noremap         x     :<C-U>call SlimvNErase()<CR>
 
