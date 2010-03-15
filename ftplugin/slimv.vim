@@ -1733,3 +1733,280 @@ function SlimvAddReplMenu()
     amenu &REPL.Refresh-No&w                           :call SlimvRefreshNow()<CR>
 endfunction
 
+
+"TODO: mapping to switch paredit mode on/off
+"TODO: handle repeat (dot) command
+let g:slimv_paredit = 1
+let g:slimv_matchlines = 100
+
+
+function! s:InsideCommentOrString()
+    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string\\|comment"
+endfunction
+
+function! SlimvIsBalanced()
+
+
+" if synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string\\|comment"
+
+
+
+    let paren = 0
+    let bracket = 0
+    let inside_string = 0
+    let current_form_closed = 0
+    let l1 = line( '.' )
+    let c1 = col ( '.' ) - 1
+    "let l = 1
+    "let start = searchpairpos( '(', '', ')', 'brW', 'getline(".")=~".*;.*"' )
+    let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', '', l1-g:slimv_matchlines )
+    if lstart == 0 && cstart == 0
+        let l = l1
+    else
+        let l = lstart
+    endif
+    let [lend, cend] = searchpairpos( '(', '', ')', 'rnW', '', l1+g:slimv_matchlines )
+    if lend == 0 && cend == 0
+"        echo input('111')
+"        return 0
+        let lend = line( '$' )
+    endif
+    while l <= lend
+        let inside_comment = 0
+        let line = getline( l )
+        let c = 0
+        while c < len( line )
+            if inside_string
+                " We are inside a string, skip parens, wait for closing '"'
+                if line[c] == '"'
+                    let inside_string = 0
+                endif
+            elseif inside_comment
+                " We are inside a comment, skip to the end of line
+                let c = len( line ) - 1
+            else
+                " We are outside of strings and comments, now we shall count parens
+                if line[c] == '"'
+                    let inside_string = 1
+                elseif line[c] == ';'
+                    let inside_comment = 1
+                elseif line[c] == '('
+                    let paren = paren + 1
+                    if current_form_closed
+                        " Current form closed (balanced) and another one is starting
+                        return 1
+                    endif
+                elseif line[c] == ')'
+                    let paren = paren - 1
+                    if paren == 0 && ( l > l1 || ( l == l1 && c >= c1 ))
+                        let current_form_closed = 1
+                    elseif paren < 0
+                        " Oops, too many closing parens
+                        echo input('222')
+                        return 0
+                    endif
+                elseif line[c] == '['
+                    let bracket = bracket + 1
+                elseif line[c] == ']'
+                    let bracket = bracket - 1
+                    if bracket < 0
+                        " Oops, too many closing brackets
+                        echo input('333')
+                        return 0
+                    endif
+                endif
+            endif
+            let c = c + 1
+        endwhile
+        let l = l + 1
+    endwhile
+
+    " No subsequent form found, paren/bracket must be 0 for balanced forms
+    if paren != 0 || bracket != 0 || inside_string
+        echo input('444')
+        return 0
+    endif
+    return 1
+endfunction
+
+function! SlimvInsertOpening( open, close )
+    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
+        return a:open
+    endif
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
+        return " " . a:open . a:close . "\<Left>"
+    else
+        return a:open . a:close . "\<Left>"
+    endif
+endfunction
+
+function! SlimvInsertClosing( open, close )
+    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
+        return a:close
+    endif
+    return "\<Right>"
+endfunction
+
+function! SlimvBackspace( repl_mode )
+    if a:repl_mode && line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
+        " No BS allowed before the previous EOF mark in the REPL
+        " i.e. don't delete Lisp prompt
+        return ""
+    endif
+
+    if !g:slimv_paredit || s:InsideCommentOrString()
+        return "\<BS>"
+    endif
+
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+
+    if pos == 0
+        " We are at the beginning of the line
+        return "\<BS>"
+    elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']'
+        " Deleting a non-special character
+        return "\<BS>"
+    elseif !SlimvIsBalanced()
+        " Current top-form is unbalanced, can't retain paredit mode
+        return "\<BS>"
+    endif
+
+    if ( line[pos-1] == '(' && line[pos] == ')' ) || ( line[pos-1] == '[' && line[pos] == ']' )
+        " Deleting an empty character-pair
+        return "\<Right>\<BS>\<BS>"
+    else
+        " Character-paid is not empty, don't delete just move inside
+        return "\<Left>"
+    endif
+endfunction
+
+"function! SlimvIErase( command )
+"    "TODO: handle case when inside string or comment
+"    if !g:slimv_paredit
+"        return a:command
+"    endif
+"
+"    let line = getline( '.' )
+"    let pos = col( '.' ) - 1
+"
+"    if pos == len(line)
+"        " We are at the end of the line
+"        return a:command
+"    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']'
+"        " Erasiing a non-special character
+"        return a:command
+"    elseif !SlimvIsBalanced()
+"        " Current top-form is unbalanced, can't retain paredit mode
+"        return a:command
+"    endif
+"
+"    if pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+"        " Erasing an empty character-pair
+"        return "\<Left>" . a:command . a:command
+"    else
+"        " Character-paid is not empty, don't erase just move inside
+"        return "\<Right>"
+"    endif
+"endfunction
+function! SlimvDel()
+    if !g:slimv_paredit || s:InsideCommentOrString()
+        return "\<Del>"
+    endif
+
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+
+    if pos == len(line)
+        " We are at the end of the line
+        return "\<Del>"
+    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']'
+        " Erasing a non-special character
+        return "\<Del>"
+    elseif !SlimvIsBalanced()
+        " Current top-form is unbalanced, can't retain paredit mode
+        return "\<Del>"
+    endif
+
+    if pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+        " Erasing an empty character-pair
+        return "\<Left>\<Del>\<Del>"
+    else
+        " Character-paid is not empty, don't erase just move inside
+        return "\<Right>"
+    endif
+endfunction
+
+"function! SlimvNErase2()
+"    "TODO: handle case when inside string or comment
+"    if !g:slimv_paredit
+"        normal x
+"        return
+"    endif
+"    let c = v:count1
+"    while c > 0
+"        let line = getline( '.' )
+"        let pos = col( '.' ) - 1
+"        if pos == len(line)
+"            call setline( '.', strpart( line, 0, pos-1 ) )
+"        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+"            call setline( '.', strpart( line, 0, pos-1 ) . strpart( line, pos+1 ) )
+"            normal h
+"        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']'
+"            normal l
+"        else
+"            call setline( '.', strpart( line, 0, pos ) . strpart( line, pos+1 ) )
+"        endif
+"        let c = c - 1
+"    endwhile
+"endfunction
+function! SlimvNErase()
+    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
+        if v:count > 0
+            silent execute 'normal ' . v:count . 'x'
+        else
+            normal x
+        endif
+        return
+    endif
+
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    let c = v:count1
+    while c > 0
+        if pos == len(line)
+            " We are at the end of the line
+            let line = strpart( line, 0, pos-1 )
+        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']'))
+            " Erasing an empty character-pair
+            let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
+            let pos = pos - 1
+            normal h
+        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']'
+            " Character-paid is not empty, don't erase just move inside
+            let pos = pos + 1
+            normal l
+        else
+            " Erasing a non-special character
+            let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
+        endif
+        let c = c - 1
+    endwhile
+    call setline( '.', line )
+endfunction
+
+
+inoremap <expr> (     SlimvInsertOpening('(',')')
+inoremap <expr> )     SlimvInsertClosing('(',')')
+"inoremap        )     <Right>
+inoremap <expr> [     SlimvInsertOpening('[',']')
+inoremap <expr> ]     SlimvInsertClosing('[',']')
+"inoremap        ]     <Right>
+inoremap <expr> <BS>  SlimvBackspace(0)
+"inoremap <expr> <Del> SlimvIErase("\Del")
+inoremap <expr> <Del> SlimvDel()
+"noremap  <expr> x     SlimvErase("x")
+noremap         x     :<C-U>call SlimvNErase()<CR>
+
