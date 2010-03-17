@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.5.6
-" Last Change:  08 Feb 2010
+" Version:      0.6.0
+" Last Change:  17 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -313,6 +313,11 @@ endif
 " Append Slimv menu to the global menu (0 = no menu)
 if !exists( 'g:slimv_menu' )
     let g:slimv_menu = 1
+endif
+
+" Paredit mode selector
+if !exists( 'g:slimv_paredit' )
+    let g:slimv_paredit = 1
 endif
 
 " Build the ctags command capable of generating lisp tags file
@@ -724,11 +729,22 @@ function! SlimvOpenReplBuffer()
     endif
 
     " Add keybindings valid only for the REPL buffer
-    inoremap <buffer> <silent> <CR> <End><CR><C-O>:call SlimvSendCommand(1,0)<CR>
-    inoremap <buffer> <silent> <C-CR> <End><CR><C-O>:call SlimvSendCommand(1,1)<CR>
-    inoremap <buffer> <silent> <expr> <BS> SlimvHandleBS()
-    inoremap <buffer> <silent> <Up> <C-O>:call SlimvHandleUp()<CR>
-    inoremap <buffer> <silent> <Down> <C-O>:call SlimvHandleDown()<CR>
+    inoremap <buffer> <silent>        <CR>   <End><CR><C-O>:call SlimvSendCommand(1,0)<CR>
+    inoremap <buffer> <silent>        <C-CR> <End><CR><C-O>:call SlimvSendCommand(1,1)<CR>
+    ""inoremap <buffer> <silent> <expr> <BS>   SlimvHandleBS()
+    inoremap <buffer> <silent> <expr> <BS>   SlimvBackspace(1)
+    inoremap <buffer> <silent>        <Up>   <C-O>:call SlimvHandleUp()<CR>
+    inoremap <buffer> <silent>        <Down> <C-O>:call SlimvHandleDown()<CR>
+    inoremap <buffer> <silent>        <Home> <C-O>g<Home>
+    inoremap <buffer> <silent>        <End>  <C-O>g<End>
+    noremap  <buffer> <silent>        <Up>   gk
+    noremap  <buffer> <silent>        <Down> gj
+    noremap  <buffer> <silent>        <Home> g<Home>
+    noremap  <buffer> <silent>        <End>  g<End>
+    noremap  <buffer> <silent>        k      gk
+    noremap  <buffer> <silent>        j      gj
+    noremap  <buffer> <silent>        0      g0
+    noremap  <buffer> <silent>        $      g$
     if g:slimv_keybindings == 1
         noremap <buffer> <silent> <Leader>.  :call SlimvSendCommand(0,0)<CR>
         noremap <buffer> <silent> <Leader>/  :call SlimvSendCommand(0,1)<CR>
@@ -751,6 +767,7 @@ function! SlimvOpenReplBuffer()
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
+    set wrap
     filetype on
     redraw
 
@@ -1048,7 +1065,7 @@ function! SlimvHandleUp()
     if line( "." ) >= line( "'s" )
         call s:PreviousCommand()
     else
-        normal! k
+        normal! gk
     endif
 endfunction
 
@@ -1057,7 +1074,7 @@ function! SlimvHandleDown()
     if line( "." ) >= line( "'s" )
         call s:NextCommand()
     else
-        normal! j
+        normal! gj
     endif
 endfunction
 
@@ -1736,23 +1753,37 @@ endfunction
 
 "TODO: mapping to switch paredit mode on/off
 "TODO: handle repeat (dot) command
-let g:slimv_paredit = 1
 let g:slimv_matchlines = 100
 
 
 " Is the current cursor position inside a comment?
 function! s:InsideComment()
-    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "comment"
+    let line = line('.')
+    let col  = col('.')
+    if col > len( getline( line ) )
+        let col = col - 1
+    endif
+    return synIDattr( synID( line, col, 0), 'name' ) =~ "comment"
 endfunction
 
 " Is the current cursor position inside a string?
 function! s:InsideString()
-    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string"
+    let line = line('.')
+    let col  = col('.')
+    if col > len( getline( line ) )
+        let col = col - 1
+    endif
+    return synIDattr( synID( line, col, 0), 'name' ) =~ "string"
 endfunction
 
 " Is the current cursor position inside a comment or string?
 function! s:InsideCommentOrString()
-    return synIDattr( synID( line('.'), col('.'), 0), 'name' ) =~ "string\\|comment"
+    let line = line('.')
+    let col  = col('.')
+    if col > len( getline( line ) )
+        let col = col - 1
+    endif
+    return synIDattr( synID( line, col, 0), 'name' ) =~ "string\\|comment"
 endfunction
 
 function! SlimvIsBalanced()
@@ -1858,10 +1889,16 @@ function! SlimvInsertClosing( open, close )
     if line[pos] == a:close
         return "\<Right>"
     else
-        if a:close == ')'
-            return "\<C-O>])"
+"        if a:close == ')'
+"            return "\<C-O>])"
+"        else
+"            return "\<C-O>f" . a:close
+"        endif
+        if a:close == ']'
+            " The matched characters need to be escaped
+            return "\<C-O>:call searchpair('\\" . a:open . "','','\\" . a:close . "','W')\<CR>\<Right>"
         else
-            return "\<C-O>f" . a:close
+            return "\<C-O>:call searchpair('" . a:open . "','','" . a:close . "','W')\<CR>\<Right>"
         endif
     endif
 endfunction
@@ -1869,15 +1906,20 @@ endfunction
 " Insert an (opening or closing) double quote
 function! SlimvInsertQuotes()
     if !g:slimv_paredit || s:InsideComment()
-        return a:char
+        return '"'
     endif
     if s:InsideString()
         let line = getline( '.' )
         let pos = col( '.' ) - 1
         if line[pos] == '"'
             return "\<Right>"
+        elseif search('"', 'W') == 0
+            return '"'
         else
-            return "\<C-O>f" . '"'
+            "return "\<C-O>f" . '"'
+            "return "\<C-O>:call search('" . '"' . "','W')\<CR>\<Right>"
+            "call search('"', 'W')
+            return "\<Right>"
         endif
     else
         return '""' . "\<Left>"
