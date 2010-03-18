@@ -202,6 +202,9 @@ function! SlimvLogGlobals()
     if exists( 'g:slimv_repl_wait' )
         call add( info,  printf( 'g:slimv_repl_wait     = %d',    g:slimv_repl_wait ) )
     endif
+    if exists( 'g:slimv_repl_wrap' )
+        call add( info,  printf( 'g:slimv_repl_wrap     = %d',    g:slimv_repl_wrap ) )
+    endif
     if exists( 'g:slimv_keybindings' )
         call add( info,  printf( 'g:slimv_keybindings   = %d',    g:slimv_keybindings ) )
     endif
@@ -210,6 +213,12 @@ function! SlimvLogGlobals()
     endif
     if exists( 'g:slimv_ctags' )
         call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
+    endif
+    if exists( 'g:paredit_mode' )
+        call add( info,  printf( 'g:paredit_mode        = %d',    g:paredit_mode ) )
+    endif
+    if exists( 'g:paredit_matchlines' )
+        call add( info,  printf( 'g:paredit_matchlines  = %d',    g:paredit_matchlines ) )
     endif
 
     call SlimvLog( 1, info )
@@ -300,6 +309,11 @@ if !exists( 'g:slimv_repl_wait' )
     let g:slimv_repl_wait = 10
 endif
 
+" Wrap long lines in REPL buffer
+if !exists( 'g:slimv_repl_wrap' )
+    let g:slimv_repl_wrap = 1
+endif
+
 " Build client command (if not given in vimrc)
 if !exists( 'g:slimv_client' )
     let g:slimv_client = SlimvMakeClientCommand()
@@ -313,11 +327,6 @@ endif
 " Append Slimv menu to the global menu (0 = no menu)
 if !exists( 'g:slimv_menu' )
     let g:slimv_menu = 1
-endif
-
-" Paredit mode selector
-if !exists( 'g:slimv_paredit' )
-    let g:slimv_paredit = 1
 endif
 
 " Build the ctags command capable of generating lisp tags file
@@ -731,20 +740,15 @@ function! SlimvOpenReplBuffer()
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <CR>   <End><CR><C-O>:call SlimvSendCommand(1,0)<CR>
     inoremap <buffer> <silent>        <C-CR> <End><CR><C-O>:call SlimvSendCommand(1,1)<CR>
-    ""inoremap <buffer> <silent> <expr> <BS>   SlimvHandleBS()
-    inoremap <buffer> <silent> <expr> <BS>   SlimvBackspace(1)
     inoremap <buffer> <silent>        <Up>   <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent>        <Down> <C-O>:call SlimvHandleDown()<CR>
-    inoremap <buffer> <silent>        <Home> <C-O>g<Home>
-    inoremap <buffer> <silent>        <End>  <C-O>g<End>
-    noremap  <buffer> <silent>        <Up>   gk
-    noremap  <buffer> <silent>        <Down> gj
-    noremap  <buffer> <silent>        <Home> g<Home>
-    noremap  <buffer> <silent>        <End>  g<End>
-    noremap  <buffer> <silent>        k      gk
-    noremap  <buffer> <silent>        j      gj
-    noremap  <buffer> <silent>        0      g0
-    noremap  <buffer> <silent>        $      g$
+
+    if exists( 'g:paredit_loaded' )
+        inoremap <buffer> <silent> <expr> <BS>   PareditBackspace(1)
+    else
+        inoremap <buffer> <silent> <expr> <BS>   SlimvHandleBS()
+    endif
+
     if g:slimv_keybindings == 1
         noremap <buffer> <silent> <Leader>.  :call SlimvSendCommand(0,0)<CR>
         noremap <buffer> <silent> <Leader>/  :call SlimvSendCommand(0,1)<CR>
@@ -761,13 +765,26 @@ function! SlimvOpenReplBuffer()
         noremap <buffer> <silent> <Leader>rw  :call SlimvRefreshNow()<CR>
     endif
 
+    if g:slimv_repl_wrap
+        inoremap <buffer> <silent>        <Home> <C-O>g<Home>
+        inoremap <buffer> <silent>        <End>  <C-O>g<End>
+        noremap  <buffer> <silent>        <Up>   gk
+        noremap  <buffer> <silent>        <Down> gj
+        noremap  <buffer> <silent>        <Home> g<Home>
+        noremap  <buffer> <silent>        <End>  g<End>
+        noremap  <buffer> <silent>        k      gk
+        noremap  <buffer> <silent>        j      gj
+        noremap  <buffer> <silent>        0      g0
+        noremap  <buffer> <silent>        $      g$
+        set wrap
+    endif
+
     " Add autocommands specific to the REPL buffer
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvFileChangedShell()"
     execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvFocusGained()"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
-    set wrap
     filetype on
     redraw
 
@@ -1749,293 +1766,4 @@ function SlimvAddReplMenu()
     menu  &REPL.&Refresh                               :call SlimvRefresh()<CR>
     amenu &REPL.Refresh-No&w                           :call SlimvRefreshNow()<CR>
 endfunction
-
-
-"TODO: mapping to switch paredit mode on/off
-"TODO: handle repeat (dot) command
-let g:slimv_matchlines = 100
-
-
-" Is the current cursor position inside a comment?
-function! s:InsideComment()
-    let line = line('.')
-    let col  = col('.')
-    if col > len( getline( line ) )
-        let col = col - 1
-    endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "comment"
-endfunction
-
-" Is the current cursor position inside a string?
-function! s:InsideString()
-    let line = line('.')
-    let col  = col('.')
-    if col > len( getline( line ) )
-        let col = col - 1
-    endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "string"
-endfunction
-
-" Is the current cursor position inside a comment or string?
-function! s:InsideCommentOrString()
-    let line = line('.')
-    let col  = col('.')
-    if col > len( getline( line ) )
-        let col = col - 1
-    endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "string\\|comment"
-endfunction
-
-function! SlimvIsBalanced()
-    let paren = 0
-    let bracket = 0
-    let inside_string = 0
-    let current_form_closed = 0
-    let l1 = line( '.' )
-    let c1 = col ( '.' ) - 1
-    "let l = 1
-    "let start = searchpairpos( '(', '', ')', 'brW', 'getline(".")=~".*;.*"' )
-    let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', '', l1-g:slimv_matchlines )
-    if lstart == 0 && cstart == 0
-        let l = l1
-    else
-        let l = lstart
-    endif
-    let [lend, cend] = searchpairpos( '(', '', ')', 'rnW', '', l1+g:slimv_matchlines )
-    if lend == 0 && cend == 0
-        let lend = line( '$' )
-    endif
-    while l <= lend
-        let inside_comment = 0
-        let line = getline( l )
-        let c = 0
-        while c < len( line )
-            if inside_string
-                " We are inside a string, skip parens, wait for closing '"'
-                if line[c] == '"'
-                    let inside_string = 0
-                endif
-            elseif inside_comment
-                " We are inside a comment, skip to the end of line
-                let c = len( line ) - 1
-            else
-                " We are outside of strings and comments, now we shall count parens
-                if line[c] == '"'
-                    let inside_string = 1
-                elseif line[c] == ';'
-                    let inside_comment = 1
-                elseif line[c] == '('
-                    let paren = paren + 1
-                    if current_form_closed
-                        " Current form closed (balanced) and another one is starting
-                        return 1
-                    endif
-                elseif line[c] == ')'
-                    let paren = paren - 1
-                    if paren == 0 && ( l > l1 || ( l == l1 && c >= c1 ))
-                        let current_form_closed = 1
-                    elseif paren < 0
-                        " Oops, too many closing parens
-                        return 0
-                    endif
-                elseif line[c] == '['
-                    let bracket = bracket + 1
-                elseif line[c] == ']'
-                    let bracket = bracket - 1
-                    if bracket < 0
-                        " Oops, too many closing brackets
-                        return 0
-                    endif
-                endif
-            endif
-            let c = c + 1
-        endwhile
-        let l = l + 1
-    endwhile
-
-    " No subsequent form found, paren/bracket must be 0 for balanced forms
-    if paren != 0 || bracket != 0 || inside_string
-        return 0
-    endif
-    return 1
-endfunction
-
-" Insert opening type of a paired character, like ( or [.
-function! SlimvInsertOpening( open, close )
-    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
-        return a:open
-    endif
-    let retval = a:open . a:close . "\<Left>"
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    if line[pos] != ' ' && line[pos] != '\t' && line[pos] != '(' && line[pos] != '['
-        let retval = a:open . a:close . " \<Left>\<Left>"
-    else
-        let retval = a:open . a:close . "\<Left>"
-    endif
-    if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
-        let retval = " " . retval
-    endif
-    return retval
-endfunction
-
-" Insert closing type of a paired character, like ) or ].
-function! SlimvInsertClosing( open, close )
-    if !g:slimv_paredit || s:InsideCommentOrString() || !SlimvIsBalanced()
-        return a:close
-    endif
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    if line[pos] == a:close
-        return "\<Right>"
-    else
-"        if a:close == ')'
-"            return "\<C-O>])"
-"        else
-"            return "\<C-O>f" . a:close
-"        endif
-        if a:close == ']'
-            " The matched characters need to be escaped
-            return "\<C-O>:call searchpair('\\" . a:open . "','','\\" . a:close . "','W')\<CR>\<Right>"
-        else
-            return "\<C-O>:call searchpair('" . a:open . "','','" . a:close . "','W')\<CR>\<Right>"
-        endif
-    endif
-endfunction
-
-" Insert an (opening or closing) double quote
-function! SlimvInsertQuotes()
-    if !g:slimv_paredit || s:InsideComment()
-        return '"'
-    endif
-    if s:InsideString()
-        let line = getline( '.' )
-        let pos = col( '.' ) - 1
-        if line[pos] == '"'
-            return "\<Right>"
-        elseif search('"', 'W') == 0
-            return '"'
-        else
-            "return "\<C-O>f" . '"'
-            "return "\<C-O>:call search('" . '"' . "','W')\<CR>\<Right>"
-            "call search('"', 'W')
-            return "\<Right>"
-        endif
-    else
-        return '""' . "\<Left>"
-    endif
-endfunction
-
-" Handle <BS> keypress
-function! SlimvBackspace( repl_mode )
-    if a:repl_mode && line( "." ) == line( "'s" ) && col( "." ) <= col( "'s" )
-        " No BS allowed before the previous EOF mark in the REPL
-        " i.e. don't delete Lisp prompt
-        return ""
-    endif
-
-    if !g:slimv_paredit || s:InsideComment()
-        return "\<BS>"
-    endif
-
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-
-    if pos == 0
-        " We are at the beginning of the line
-        return "\<BS>"
-    elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']' && line[pos-1] != '"'
-        " Deleting a non-special character
-        return "\<BS>"
-    elseif line[pos-1] != '"' && !SlimvIsBalanced()
-        " Current top-form is unbalanced, can't retain paredit mode
-        return "\<BS>"
-    endif
-
-    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
-        " Deleting an empty character-pair
-        return "\<Right>\<BS>\<BS>"
-    else
-        " Character-paid is not empty, don't delete just move inside
-        return "\<Left>"
-    endif
-endfunction
-
-" Handle <Del> keypress
-function! SlimvDel()
-    if !g:slimv_paredit || s:InsideComment()
-        return "\<Del>"
-    endif
-
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-
-    if pos == len(line)
-        " We are at the end of the line
-        return "\<Del>"
-    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']' && line[pos] != '"'
-        " Erasing a non-special character
-        return "\<Del>"
-    elseif line[pos] != '"' && !SlimvIsBalanced()
-        " Current top-form is unbalanced, can't retain paredit mode
-        return "\<Del>"
-    elseif pos == 0
-        return "\<Right>"
-    endif
-
-    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
-        " Erasing an empty character-pair
-        return "\<Left>\<Del>\<Del>"
-    else
-        " Character-paid is not empty, don't erase just move inside
-        return "\<Right>"
-    endif
-endfunction
-
-" Forward erasing a character in normal mode
-function! SlimvNErase()
-    if !g:slimv_paredit || s:InsideComment() || !SlimvIsBalanced()
-        if v:count > 0
-            silent execute 'normal! ' . v:count . 'x'
-        else
-            normal! x
-        endif
-        return
-    endif
-
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    let c = v:count1
-    while c > 0
-        if pos == len(line)
-            " We are at the end of the line
-            let line = strpart( line, 0, pos-1 )
-        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
-            " Erasing an empty character-pair
-            let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-            let pos = pos - 1
-            normal! h
-        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']' || line[pos] == '"'
-            " Character-paid is not empty, don't erase just move inside
-            let pos = pos + 1
-            normal! l
-        else
-            " Erasing a non-special character
-            let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
-        endif
-        let c = c - 1
-    endwhile
-    call setline( '.', line )
-endfunction
-
-
-inoremap <expr> (     SlimvInsertOpening('(',')')
-inoremap <expr> )     SlimvInsertClosing('(',')')
-inoremap <expr> [     SlimvInsertOpening('[',']')
-inoremap <expr> ]     SlimvInsertClosing('[',']')
-
-inoremap <expr> "     SlimvInsertQuotes()
-inoremap <expr> <BS>  SlimvBackspace(0)
-inoremap <expr> <Del> SlimvDel()
-noremap         x     :<C-U>call SlimvNErase()<CR>
 
