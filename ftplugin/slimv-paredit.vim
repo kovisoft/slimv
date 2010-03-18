@@ -45,6 +45,7 @@ endfunction
 
 " Is the current cursor position inside a string?
 function! PareditInsideString()
+    "TODO: detect only if we are really inside, i.e. not on the double quote at the edge
     let line = line('.')
     let col  = col('.')
     if col > len( getline( line ) )
@@ -374,19 +375,25 @@ function! PareditEraseLine()
         return
     endif
 
-    call PareditEraseFwdLine()
+    let c = v:count1
+    while c > 0
+        call PareditEraseFwdLine()
 
-    let lastcol = -1
-    let lastlen = -1
-    while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
-        let lastcol = col( '.' )
-        let lastlen = len( getline( '.' ) )
-        call s:EraseBck( 1 )
+        let lastcol = -1
+        let lastlen = -1
+        while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
+            let lastcol = col( '.' )
+            let lastlen = len( getline( '.' ) )
+            call s:EraseBck( 1 )
+        endwhile
+
+        if len( getline( '.' ) ) == 0
+            normal! dd
+        elseif c > 1
+            normal! J
+        endif
+        let c = c - 1
     endwhile
-
-    if len( getline( '.' ) ) == 0
-        normal! dd
-    endif
 endfunction
 
 " =====================================================================
