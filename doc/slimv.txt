@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 15 Mar 2010
+*slimv.txt*                    Slimv                 Last Change: 18 Mar 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -57,6 +57,7 @@ To install the script:
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
+       ftplugin/slimv-paredit.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -113,6 +114,7 @@ Uninstallation:
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
+       ftplugin/slimv-paredit.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -134,6 +136,11 @@ CUSTOMIZATION                                             *slimv-customization*
 
 The list below contains an alphabetical collection of Slimv options.
 Below that list follows the detailed explanation on each option.
+
+|g:paredit_matchlines|       Number of lines to look backward and forward
+                             when checking if the current form is balanced.
+
+|g:paredit_mode|             If nonzero, paredit mode is switched on.
 
 |g:slimv_clhs_root|          Base URL for the Common Lisp Hyperspec.
 
@@ -175,8 +182,6 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_logfreq|            Flushing frequency to logfile.
 
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
-
-|g:slimv_paredit|            If nonzero, paredit mode is switched on.
 
 |g:slimv_port|               TCP/IP port number to use in the Slimv client-
                              server communication.
@@ -344,9 +349,14 @@ If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
 
-                                                              *g:slimv_paredit*
+                                                               *g:paredit_mode*
 If nonzero then paredit mode is switched on, i.e. Slimv tries to keep the
 balanced state of parens. See |g:slimv-paredit|.
+
+
+                                                         *g:paredit_matchlines*
+Number of lines to look backward and forward when checking if the current
+top level form is balanced in paredit mode. Default is 100.
 
 
                                                              *g:slimv_repl_dir*
@@ -685,13 +695,16 @@ While waiting for REPL output:
 ===============================================================================
 PAREDIT MODE                                                    *slimv-paredit*
 
-Paredit mode is a special editing mode that keeps all paired-characters
-(parens, brackets, double quotes) balanced, i.e. all opening character has
+Paredit mode is a special editing mode that keeps all matched characters
+(parens, brackets, double quotes) balanced, i.e. all opening characters have
 a matching closing character. Most text entering and erasing commands try to
-maintain the balanced state, so no single paired-character is added or deleted,
-they are entered or removed in pairs.
+maintain the balanced state, so no single matched character is added or
+deleted, they are entered or removed in pairs.
 The function takes care of strings and comments, so no paren and bracket
 balancing is performed inside a string or comment.
+
+The idea is taken from the paredit mode of Emacs, but not all editing
+functions behave the same way as they do in Emacs.
 
 When you enter a '(' then a matching ')' is automatically inserted.
 If needed, spaces before and/or after the '()' pair are added.
@@ -705,7 +718,24 @@ the cursor is simply moved inside the form, where all regular characters can
 be deleted. When the form is finally empty: '()', then both parens are deleted
 at once, so the balanced state is maintained.
 
-All the above holds (more or less) for '[', ']' and '"' characters.
+All the above holds for '[', ']' and '"' characters.
+
+When you are deleting multiple characters at once, e.g. deleting a whole line,
+or deleting till the end of the line, etc, then the deletion logic of a single
+character is iterated. This means that the whole line or the characters till
+the end of the line, etc are not necessarily deleted all. Depending on the
+number of open/close parens, brackets, double quotes some of them might be
+kept in order to maintain the balanced state.
+For example if you press D to delete till the end of line between the a and b
+parameters of the following Clojure function definition:
+
+(defn myfunc [a b c] (+ a b c))
+               ^--- press D here
+
+then the closing ] as well as the last closing ) will not be deleted, because
+in the form you have an ( and a [ to be matched, so the result will be:
+
+(defn myfunc [a])
 
 
 Of course not all Vim commands are compatible with the paredit mode (e.g.
@@ -720,6 +750,10 @@ Paredit mode is set by default but it is possible to switch it out by putting
 the following statement in the .vimrc file:
 
     let g:slimv_paredit = 0
+
+It is also possible to use the paredit mode alone, without the other parts of
+Slimv. If you intend to use it for Lisp, then create a ftplugin/lisp directory,
+and copy slimv-paredit.vim into that directory instead of ftplugin.
 
 
 ===============================================================================
@@ -856,7 +890,8 @@ such mappings are not defined by Slimv.
 
 3. Parenthesis handling
 
-Vim obtains many tools to aid working with parentheses. This is a very important
+First of all there is the paredit mode. If you don't like it, Vim still
+obtains many tools to aid working with parentheses. This is a very important
 topic for a Lisp programmer.
 
     :inoremap ( ()<Esc>i    Automatically insert closing paren when an opening
@@ -996,6 +1031,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.6.0  - Added paredit mode.
+       - Set wrap for REPL buffer.
 
 0.5.6  - Improved REPL buffer response time.
        - Added debug log flushing frequency.
