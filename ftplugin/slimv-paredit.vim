@@ -267,7 +267,9 @@ function! s:EraseFwd( count )
     let pos = col( '.' ) - 1
     let c = a:count
     while c > 0
-        if pos == len(line)
+        if PareditInsideComment()
+            let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
+        elseif pos == len(line)
             " We are at the end of the line
             let line = strpart( line, 0, pos-1 )
         elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
@@ -294,7 +296,9 @@ function! s:EraseBck( count )
     let pos = col( '.' ) - 1
     let c = a:count
     while c > 0 && pos > 0
-        if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
+        if PareditInsideComment()
+            let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
+        elseif (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
         elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']' && line[pos-1] != '"'
@@ -310,7 +314,7 @@ endfunction
 
 " Forward erasing a character in normal mode
 function! PareditEraseFwd()
-    if !g:paredit_mode || PareditInsideComment() || !PareditIsBalanced()
+    if !g:paredit_mode || !PareditIsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'x'
         else
@@ -324,7 +328,7 @@ endfunction
 
 " Backward erasing a character in normal mode
 function! PareditEraseBck()
-    if !g:paredit_mode || PareditInsideComment() || !PareditIsBalanced()
+    if !g:paredit_mode || !PareditIsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'X'
         else
@@ -339,7 +343,7 @@ endfunction
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
 function! PareditEraseFwdLine()
-    if !g:paredit_mode || PareditInsideComment() || !PareditIsBalanced()
+    if !g:paredit_mode || !PareditIsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'D'
         else
@@ -361,7 +365,7 @@ endfunction
 " Erasing all characters in the line in normal mode
 " Keeping the balanced state
 function! PareditEraseLine()
-    if !g:paredit_mode || PareditInsideComment() || !PareditIsBalanced()
+    if !g:paredit_mode || !PareditIsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'dd'
         else
@@ -379,6 +383,10 @@ function! PareditEraseLine()
         let lastlen = len( getline( '.' ) )
         call s:EraseBck( 1 )
     endwhile
+
+    if len( getline( '.' ) ) == 0
+        normal! dd
+    endif
 endfunction
 
 " =====================================================================
@@ -398,6 +406,6 @@ noremap         X     :<C-U>call PareditEraseBck()<CR>
 noremap         s     :<C-U>call PareditEraseFwd()<CR>i
 noremap         D     :<C-U>call PareditEraseFwdLine()<CR>
 noremap         C     :<C-U>call PareditEraseFwdLine()<CR>A
+noremap         S     0:<C-U>call PareditEraseFwdLine()<CR>A
 noremap         dd    :<C-U>call PareditEraseLine()<CR>
-"TODO: paredit map for D, C, <n>dd, S
 
