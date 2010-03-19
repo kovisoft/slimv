@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 18 Mar 2010
+*slimv.txt*                    Slimv                 Last Change: 19 Mar 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -696,11 +696,11 @@ While waiting for REPL output:
 PAREDIT MODE                                                    *slimv-paredit*
 
 Paredit mode is a special editing mode that keeps all matched characters
-(parens, brackets, double quotes) balanced, i.e. all opening characters have
-a matching closing character. Most text entering and erasing commands try to
-maintain the balanced state, so no single matched character is added or
+(parens, square brackets, double quotes) balanced, i.e. all opening characters
+have a matching closing character. Most text entering and erasing commands try
+to maintain the balanced state, so no single matched character is added or
 deleted, they are entered or removed in pairs.
-The function takes care of strings and comments, so no paren and bracket
+The function takes care of strings and comments, so no paren and square bracket
 balancing is performed inside a string or comment.
 
 The idea is taken from the paredit mode of Emacs, but not all editing
@@ -711,7 +711,9 @@ If needed, spaces before and/or after the '()' pair are added.
 
 When you press ')' in insert mode then there's no need to insert a closing
 paren (it is already there), so the cursor is simply advanced past the next
-closing paren (then the next outer closing paren, etc.).
+closing paren (then the next outer closing paren, etc.).  The result of this
+is however that when entering text with paredit mode you will end up using
+the same keystrokes as without paredit mode.
 
 When you are trying to delete a '(' or ')' alone then it is not possible,
 the cursor is simply moved inside the form, where all regular characters can
@@ -724,8 +726,8 @@ When you are deleting multiple characters at once, e.g. deleting a whole line,
 or deleting till the end of the line, etc, then the deletion logic of a single
 character is iterated. This means that the whole line or the characters till
 the end of the line, etc are not necessarily deleted all. Depending on the
-number of open/close parens, brackets, double quotes some of them might be
-kept in order to maintain the balanced state.
+number of open/close parens, square brackets, double quotes some of them might
+be kept in order to maintain the balanced state.
 For example if you press D to delete till the end of line between the a and b
 parameters of the following Clojure function definition:
 
@@ -736,6 +738,10 @@ then the closing ] as well as the last closing ) will not be deleted, because
 in the form you have an ( and a [ to be matched, so the result will be:
 
 (defn myfunc [a])
+
+If you are deleting multiple lines, then the above process is performed for
+all lines involved. If a line was not completely cleared, then it is joined
+with the next line and the process continues.
 
 
 Of course not all Vim commands are compatible with the paredit mode (e.g.
@@ -897,7 +903,7 @@ topic for a Lisp programmer.
     :inoremap ( ()<Esc>i    Automatically insert closing paren when an opening
                             one is inserted.
 
-    :inoremap [ []<Esc>i    Same as above but for brackets.
+    :inoremap [ []<Esc>i    Same as above but for square brackets.
 
     :set showmatch          Briefly jump with the cursor to the matching paren
                             or bracket when a closing pair is inserted.
@@ -1170,7 +1176,8 @@ Thanks to Eric Marsden and all the Emacs/SLIME developers for making SLIME.
 Special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
 Rob MacLachlan for creating the Metering System.
 Also special thanks to Erik Naggum, Yuji Minejima and others for making the
-Common Lisp Hyperspec lookup packages for SLIME.
+Common Lisp Hyperspec lookup packages for SLIME, and thanks to
+Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing and commenting the script.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
