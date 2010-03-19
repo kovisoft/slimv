@@ -1,7 +1,7 @@
 " slimv-paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  18 Mar 2010
+" Last Change:  19 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -45,7 +45,6 @@ endfunction
 
 " Is the current cursor position inside a string?
 function! PareditInsideString()
-    "TODO: detect only if we are really inside, i.e. not on the double quote at the edge
     let line = line('.')
     let col  = col('.')
     if col > len( getline( line ) )
@@ -71,8 +70,6 @@ function! PareditIsBalanced()
     let current_form_closed = 0
     let l1 = line( '.' )
     let c1 = col ( '.' ) - 1
-    "let l = 1
-    "let start = searchpairpos( '(', '', ')', 'brW', 'getline(".")=~".*;.*"' )
     let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', '', l1-g:paredit_matchlines )
     if lstart == 0 && cstart == 0
         let l = l1
@@ -186,9 +183,6 @@ function! PareditInsertQuotes()
         elseif search('"', 'W') == 0
             return '"'
         else
-            "return "\<C-O>f" . '"'
-            "return "\<C-O>:call search('" . '"' . "','W')\<CR>\<Right>"
-            "call search('"', 'W')
             return "\<Right>"
         endif
     else
@@ -268,7 +262,7 @@ function! s:EraseFwd( count )
     let pos = col( '.' ) - 1
     let c = a:count
     while c > 0
-        if PareditInsideComment()
+        if PareditInsideComment() || ( PareditInsideString() && line[pos] != '"' )
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos == len(line)
             " We are at the end of the line
@@ -297,7 +291,7 @@ function! s:EraseBck( count )
     let pos = col( '.' ) - 1
     let c = a:count
     while c > 0 && pos > 0
-        if PareditInsideComment()
+        if PareditInsideComment() || ( PareditInsideString() && line[pos-1] != '"' )
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         elseif (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
             " Erasing an empty character-pair
