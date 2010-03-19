@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.6.0
-" Last Change:  17 Mar 2010
+" Last Change:  19 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1610,6 +1610,7 @@ if g:slimv_keybindings == 1
 
     noremap <Leader>)  :<C-U>call SlimvCloseForm()<CR>
     inoremap <C-X>0    <C-O>:call SlimvCloseForm()<CR>
+    noremap <Leader>(  :<C-U>call PareditToggle()<CR>
 
     noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
     noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
@@ -1652,6 +1653,7 @@ elseif g:slimv_keybindings == 2
     " Edit commands
     noremap <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
     inoremap <C-X>0     <C-O>:call SlimvCloseForm()<CR>
+    noremap <Leader>(t  :<C-U>call PareditToggle()<CR>
 
     " Evaluation commands
     noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
@@ -1712,6 +1714,7 @@ if g:slimv_menu == 1
 
     amenu &Slimv.Edi&t.Close-&Form                     :<C-U>call SlimvCloseForm()<CR>
     imenu &Slimv.Edi&t.&Complete-Symbol                <C-X><C-O>
+    amenu &Slimv.Edi&t.&Paredit-Toggle                 :<C-U>call PareditToggle()<CR>
 
     amenu &Slimv.&Evaluation.Eval-&Defun               :<C-U>call SlimvEvalDefun()<CR>
     amenu &Slimv.&Evaluation.Eval-Last-&Exp            :<C-U>call SlimvEvalLastExp()<CR>
