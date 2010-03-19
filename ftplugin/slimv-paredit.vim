@@ -388,6 +388,8 @@ function! PareditEraseLine()
         endif
         let c = c - 1
     endwhile
+
+    normal! ==
 endfunction
 
 " =====================================================================
