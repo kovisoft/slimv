@@ -33,6 +33,12 @@ endif
 "  General utility functions
 " =====================================================================
 
+" Toggle paredit mode
+function! PareditToggle()
+    let g:paredit_mode = 1 - g:paredit_mode
+    echo g:paredit_mode ? 'Paredit mode on' : 'Paredit mode off'
+endfunction
+
 " Is the current cursor position inside a comment?
 function! PareditInsideComment()
     let line = line('.')
