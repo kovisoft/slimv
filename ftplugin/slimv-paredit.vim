@@ -1,7 +1,7 @@
 " slimv-paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  19 Mar 2010
+" Last Change:  20 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -76,13 +76,17 @@ function! PareditIsBalanced()
     let current_form_closed = 0
     let l1 = line( '.' )
     let c1 = col ( '.' ) - 1
-    let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', '', l1-g:paredit_matchlines )
-    if lstart == 0 && cstart == 0
+    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+    let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', skip, l1-g:paredit_matchlines )
+    let [lend,   cend  ] = searchpairpos( '(', '', ')', 'rnW',  skip, l1+g:paredit_matchlines )
+    if lstart == 0 && cstart == 0 && lend == 0 && cend == 0
+        " Outside of all forms
+        return 1
+    elseif lstart == 0 && cstart == 0
         let l = l1
     else
         let l = lstart
     endif
-    let [lend, cend] = searchpairpos( '(', '', ')', 'rnW', '', l1+g:paredit_matchlines )
     if lend == 0 && cend == 0
         let lend = line( '$' )
     endif
@@ -172,7 +176,8 @@ function! PareditInsertClosing( open, close )
     else
         let open  = escape( a:open , '[]' )
         let close = escape( a:close, '[]' )
-        return "\<C-O>:call searchpair('" . open . "','','" . close . "','W')\<CR>\<Right>"
+        let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+        return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . skip . "')\<CR>\<Right>"
     endif
 endfunction
 
