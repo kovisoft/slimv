@@ -77,20 +77,66 @@ function! PareditIsBalanced()
     let l1 = line( '.' )
     let c1 = col ( '.' ) - 1
     let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
-    let [lstart, cstart] = searchpairpos( '(', '', ')', 'brnW', skip, l1-g:paredit_matchlines )
-    let [lend,   cend  ] = searchpairpos( '(', '', ')', 'rnW',  skip, l1+g:paredit_matchlines )
-    if lstart == 0 && cstart == 0 && lend == 0 && cend == 0
+    let p1 = searchpair( '(', '', ')', 'brnmW', skip, l1-g:paredit_matchlines )
+    if p1 == 0
         " Outside of all forms
         return 1
-    elseif lstart == 0 && cstart == 0
+    endif
+    let p2 = searchpair( '(', '', ')',  'rnmW', skip, l1-g:paredit_matchlines )
+    if p1 != p2
+        " Number of opening and closing parens differ
+        return 0
+    endif
+    let b1 = searchpair( '[', '', ']', 'brnmW', skip, l1-g:paredit_matchlines )
+    if b1 == 0
+        " Outside of all bracket-pairs
+        return 1
+    endif
+    let b2 = searchpair( '[', '', ']',  'rnmW', skip, l1-g:paredit_matchlines )
+    if b1 != b2
+        " Number of opening and closing brackets differ
+        return 0
+    endif
+    return 0
+
+
+
+
+
+    let [lp0, cp0] = searchpairpos( '(', '', ')', 'brnW', skip, l1-g:paredit_matchlines )
+"    let [lb0, cb0] = searchpairpos( '[', '', ']', 'brnW', skip, l1-g:paredit_matchlines )
+"    let [lb1, cb1] = searchpairpos( '[', '', ']', 'rnW',  skip, l1+g:paredit_matchlines )
+    "if lp0 == 0 && cp0 == 0 && lp1 == 0 && cp1 == 0
+    let line = getline( l1 )
+    if lp0 == 0 && cp0 == 0 && line[c1] != '('
+        " Outside of all forms
+        return 1
+    endif
+    let [lp1, cp1] = searchpairpos( '(', '', ')', 'rnW',  skip, l1+g:paredit_matchlines )
+    if synIDattr( synID( lp1, cp1, 0), 'name' ) =~ "error"
+        return 0
+    endif
+    return 1
+"
+"    if lp1 == 0 && cp1 == 0
+"        return 0
+"    endif
+"    if synIDattr( synID( lp0, cp0, 0), 'name' ) =~ "error" || synIDattr( synID( lp1, cp1, 0), 'name' ) =~ "error"
+"        return 0
+"    endif
+"    if synIDattr( synID( lb0, cb0, 0), 'name' ) =~ "error" || synIDattr( synID( lb1, cb1, 0), 'name' ) =~ "error"
+"        return 0
+"    endif
+"    return 1
+    elseif lp0 == 0 && cp0 == 0
         let l = l1
     else
-        let l = lstart
+        let l = lp0
     endif
-    if lend == 0 && cend == 0
-        let lend = line( '$' )
+    if lp1 == 0 && cp1 == 0
+        let lp1 = line( '$' )
     endif
-    while l <= lend
+    while l <= lp1
         let inside_comment = 0
         let line = getline( l )
         let c = 0
@@ -164,6 +210,22 @@ function! PareditInsertOpening( open, close )
     return retval
 endfunction
 
+" Find opening matched character
+function! PareditFindOpening( open, close )
+    let open  = escape( a:open , '[]' )
+    let close = escape( a:close, '[]' )
+    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+    call searchpair( a:open, '', a:close, 'bW', skip )
+endfunction
+
+" Find closing matched character
+function! PareditFindClosing( open, close )
+    let open  = escape( a:open , '[]' )
+    let close = escape( a:close, '[]' )
+    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+    call searchpair( a:open, '', a:close, 'W', skip )
+endfunction
+
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
     if !g:paredit_mode || PareditInsideCommentOrString() || !PareditIsBalanced()
@@ -178,6 +240,14 @@ function! PareditInsertClosing( open, close )
         let close = escape( a:close, '[]' )
         let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
         return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . skip . "')\<CR>\<Right>"
+        "TODO: indent after going to closing character
+"        let retval = "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . skip . "')\<CR>"
+"        if a:close == ')'
+"            let retval = retval . "\<C-O>=[("
+"            let retval = retval . "\<C-O>:call searchpair('(','',')','W','" . skip . "')\<CR>"
+"        endif
+"        let retval = retval . "\<Right>"
+"        return retval
     endif
 endfunction
 
@@ -403,6 +473,52 @@ function! PareditEraseLine()
     normal! ==
 endfunction
 
+" Move next s-expression into the current form
+function! PareditSlurp()
+endfunction
+
+" Move last s-expression of the current form out of it
+function! PareditBarf()
+endfunction
+
+" Move delimiter one atom or s-expression to the right
+function! PareditMoveRight()
+    let line = getline( '.' )
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos('\s\S\|^\S', 'nW')
+    if l1 == 0
+        return
+    endif
+    let [l2, c2] = searchpos('(\|)\|\[\|\]', 'nW')
+    if l2 > 0 && (l1 > l2 || (l1 == l2 && c1 > c2))
+        " No whitespace till the next delimiter
+    else
+        " Whitespace comes first
+        let c = line[c0-1]
+        if l1 == l0
+            " Next whitespace is on the same line
+            let line = strpart( line, 0, c0-1 ) . strpart( line, c0, c1-c0 ) . c . strpart( line, c1 )
+            call setline( '.', line )
+            call setpos( '.', [0, l1, c1, 0] ) 
+        else
+            " Next whitespace is on another line
+            let line = strpart( line, 0, c0-1 ) . strpart( line, c0 )
+            call setline( '.', line )
+            let line1 = getline( l1 )
+            if c1 > 1
+                let line1 = strpart( line1, 0, c1 ) . c . strpart( line1, c1 )
+                call setline( l1, line1 )
+                call setpos( '.', [0, l1, c1+1, 0] ) 
+            else
+                let line1 = c . line1
+                call setline( l1, line1 )
+                call setpos( '.', [0, l1, 1, 0] ) 
+            endif
+        endif
+    endif
+endfunction
+
 " =====================================================================
 "  Keybindings
 " =====================================================================
@@ -411,6 +527,10 @@ inoremap <expr> (     PareditInsertOpening('(',')')
 inoremap <expr> )     PareditInsertClosing('(',')')
 inoremap <expr> [     PareditInsertOpening('[',']')
 inoremap <expr> ]     PareditInsertClosing('[',']')
+nnoremap        (     :call PareditFindOpening('(',')')<CR>
+nnoremap        )     :call PareditFindClosing('(',')')<CR>
+nnoremap        <     :call PareditMoveLeft()<CR>
+nnoremap        >     :call PareditMoveRight()<CR>
 
 inoremap <expr> "     PareditInsertQuotes()
 inoremap <expr> <BS>  PareditBackspace(0)
@@ -422,4 +542,6 @@ noremap         D     :<C-U>call PareditEraseFwdLine()<CR>
 noremap         C     :<C-U>call PareditEraseFwdLine()<CR>A
 noremap         S     0:<C-U>call PareditEraseFwdLine()<CR>A
 noremap         dd    :<C-U>call PareditEraseLine()<CR>
+"TODO: add mapping for default behaviour of (), [], ", <Del>, etc
+"TODO: add slurp and barf
 
