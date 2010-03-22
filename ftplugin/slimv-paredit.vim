@@ -74,28 +74,28 @@ endfunction
 " have a matching closing delimiter
 function! PareditIsBalanced()
     let l = line( '.' )
+    let c =  col( '.' )
+    let line = getline( '.' )
     let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
-    let p1 = searchpair( '(', '', ')', 'brnmW', skip, l-g:paredit_matchlines )
-    if p1 == 0
-        " Outside of all forms
-        return 1
-    endif
-    let p2 = searchpair( '(', '', ')',  'rnmW', skip, l+g:paredit_matchlines )
-    if p1 != p2
+    let matchb = max( [l-g:paredit_matchlines, 1] )
+    let matchf = min( [l+g:paredit_matchlines, line('$')] )
+    let p1 = searchpair( '(', '', ')', 'brnmW', skip, matchb )
+    let p2 = searchpair( '(', '', ')',  'rnmW', skip, matchf )
+    if !(p1 == p2) && !(p1 == p2 - 1 && line[c-1] == '(') && !(p1 == p2 + 1 && line[c-1] == ')')
         " Number of opening and closing parens differ
         return 0
     endif
-    let b1 = searchpair( '[', '', ']', 'brnmW', skip, l-g:paredit_matchlines )
+    let b1 = searchpair( '\[', '', '\]', 'brnmW', skip, matchb )
     if b1 == 0
         " Outside of all bracket-pairs
         return 1
     endif
-    let b2 = searchpair( '[', '', ']',  'rnmW', skip, l+g:paredit_matchlines )
+    let b2 = searchpair( '\[', '', '\]',  'rnmW', skip, matchf )
     if b1 != b2
         " Number of opening and closing brackets differ
         return 0
     endif
-    return 0
+    return 1
 endfunction
 
 " Insert opening type of a paired character, like ( or [.
@@ -106,7 +106,7 @@ function! PareditInsertOpening( open, close )
     let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] != ' ' && line[pos] != '\t' && line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']'
+    if line[pos] != ' ' && line[pos] != '\t' && line[pos] != ')' && line[pos] != ']'
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
         let retval = a:open . a:close . "\<Left>"
@@ -151,6 +151,61 @@ function! PareditFindClosing( open, close, select )
     else
         call searchpair( a:open, '', a:close, 'W', skip )
     endif
+endfunction
+
+function! s:FindPrevOpening()
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos('(\|\[', 'bW')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos('(\|\[', 'bW')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] )
+    return [l1, c1]
+endfunction
+
+function! s:FindPrevClosing()
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos(')\|\]', 'bW')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos(')\|\]', 'bW')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] )
+    return [l1, c1]
+endfunction
+
+function! s:FindNextOpening()
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos('(\|\[', 'W')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos('(\|\[', 'W')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] )
+    return [l1, c1]
+endfunction
+
+function! s:FindNextClosing()
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos(')\|\]', 'W')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos(')\|\]', 'W')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] )
+    return [l1, c1]
+endfunction
+
+function! s:FindNextElement()
+    let l0 = line( '.' )
+    let c0 =  col( '.' )
+    let [l1, c1] = searchpos('\s\S\|^\S', 'W')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos('\s\S\|^\S', 'W')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] )
+    return [l1, c1]
 endfunction
 
 " Insert closing type of a paired character, like ) or ].
@@ -409,6 +464,7 @@ function! PareditBarf()
 endfunction
 
 " Move character from [l0, c0] to [l1, c1]
+" Set position to [l1, c1]
 function! PareditMoveChar( l0, c0, l1, c1 )
     let line = getline( a:l0 )
     let c = line[a:c0-1]
@@ -463,17 +519,53 @@ function! PareditMoveRight()
     let line = getline( '.' )
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    let [l1, c1] = searchpos('\s\S\|^\S', 'nW')
+
+    if line[col-1] == '(' || line[col-1] == '['
+        let opening = 1
+    elseif line[col-1] == ')' || line[col-1] == ']'
+        let opening = 0
+    else
+        " Can move only delimiters
+        return
+    endif
+
+    " Find next non whitespace after a whitespace
+    "let [l1, c1] = searchpos('\s\S\|^\S', 'nW')
+    let [l1, c1] = searchpos('\s\S\|^\S', 'W')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos('\s\S\|^\S', 'W')
+    endwhile
     if l1 == 0
         return
     endif
-    let [l2, c2] = searchpos('(\|)\|\[\|\]', 'nW')
+    call setpos( '.', [0, l0, c0, 0] ) 
+
+    " Find next closing delimiter
+"    let [l3, c3] = searchpos(')\|\]', 'W')
+"    while PareditInsideCommentOrString()
+"        let [l3, c3] = searchpos(')\|\]', 'W')
+"    endwhile
+"    call setpos( '.', [0, l0, c0, 0] )
+"    if l3 > 0 && (l1 > l3 || (l1 == l3 && c1 > c3))
+"        return
+"    endif
+
+    " Find next opening delimiter
+"    let [l2, c2] = searchpos('(\|\[', 'W')
+    let [l2, c2] = searchpos('(\|\[\|)\|\]', 'W')
+    while PareditInsideCommentOrString()
+"        let [l2, c2] = searchpos('(\|\[', 'W')
+        let [l2, c2] = searchpos('(\|\[\|)\|\]', 'W')
+    endwhile
+    call setpos( '.', [0, l0, c0, 0] ) 
+    "let [l2, c2] = searchpos('(\|)\|\[\|\]', 'nW')
     if l2 > 0 && (l1 > l2 || (l1 == l2 && c1 > c2))
         " No whitespace till the next delimiter
-    else
-        " Whitespace comes first
-        call PareditMoveChar( l0, c0, l1, c1 )
+        return
     endif
+
+    " Whitespace comes first
+    call PareditMoveChar( l0, c0, l1, c1 )
 endfunction
 
 " =====================================================================
@@ -494,6 +586,7 @@ vnoremap <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
 nnoremap <silent> <     :<C-U>call PareditMoveLeft()<CR>
 nnoremap <silent> >     :<C-U>call PareditMoveRight()<CR>
 noremap  <silent> x     :<C-U>call PareditEraseFwd()<CR>
+
 noremap  <silent> X     :<C-U>call PareditEraseBck()<CR>
 noremap  <silent> s     :<C-U>call PareditEraseFwd()<CR>i
 noremap  <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
