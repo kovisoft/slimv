@@ -1,7 +1,7 @@
 " slimv-paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  21 Mar 2010
+" Last Change:  22 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -23,6 +23,11 @@ let g:paredit_loaded = 1
 " Paredit mode selector
 if !exists( 'g:paredit_mode' )
     let g:paredit_mode = 1
+endif
+
+" Automatic indentation after most editing commands
+if !exists( 'g:paredit_autoindent' )
+    let g:paredit_autoindent = 1
 endif
 
 " Match delimiter this number of lines before and after cursor position
@@ -68,6 +73,21 @@ function! PareditInsideCommentOrString()
         let col = col - 1
     endif
     return synIDattr( synID( line, col, 0), 'name' ) =~ "string\\|comment"
+endfunction
+
+" Autoindent current top level form
+function! PareditIndentTopLevelForm()
+    let l = line( '.' )
+    let c =  col( '.' )
+    normal! ms
+    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+    let matchb = max( [l-g:paredit_matchlines, 1] )
+    let matchf = min( [l+g:paredit_matchlines, line('$')] )
+    let [l0, c0] = searchpairpos( '(', '', ')', 'brmW', skip, matchb )
+    "let save_exp = &expandtab
+    "set expandtab
+    normal! v%=`s
+    "let &expandtab = save_exp
 endfunction
 
 " Is the current top level form balanced, i.e all opening delimiters
