@@ -1,7 +1,7 @@
 " slimv-paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  22 Mar 2010
+" Last Change:  23 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -26,6 +26,9 @@ if !exists( 'g:paredit_mode' )
 endif
 
 " Automatic indentation after most editing commands
+" 0 = never
+" 1 = after editing a block of text
+" 2 = always
 if !exists( 'g:paredit_autoindent' )
     let g:paredit_autoindent = 1
 endif
@@ -34,6 +37,13 @@ endif
 if !exists( 'g:paredit_matchlines' )
     let g:paredit_matchlines = 100
 endif
+
+" =====================================================================
+"  Other variable definitions
+" =====================================================================
+
+" Skip matches inside string or comment
+let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
 
 " =====================================================================
 "  General utility functions
@@ -45,34 +55,29 @@ function! PareditToggle()
     echo g:paredit_mode ? 'Paredit mode on' : 'Paredit mode off'
 endfunction
 
-" Is the current cursor position inside a comment?
-function! PareditInsideComment()
+" Does the current syntax item match the given regular expression?
+function! s:SynIDMatch( regexp )
     let line = line('.')
     let col  = col('.')
     if col > len( getline( line ) )
         let col = col - 1
     endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "comment"
+    return synIDattr( synID( line, col, 0), 'name' ) =~ a:regexp
+endfunction
+
+" Is the current cursor position inside a comment?
+function! PareditInsideComment()
+    return s:SynIDMatch( 'comment' )
 endfunction
 
 " Is the current cursor position inside a string?
 function! PareditInsideString()
-    let line = line('.')
-    let col  = col('.')
-    if col > len( getline( line ) )
-        let col = col - 1
-    endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "string"
+    return s:SynIDMatch( 'string' )
 endfunction
 
 " Is the current cursor position inside a comment or string?
 function! PareditInsideCommentOrString()
-    let line = line('.')
-    let col  = col('.')
-    if col > len( getline( line ) )
-        let col = col - 1
-    endif
-    return synIDattr( synID( line, col, 0), 'name' ) =~ "string\\|comment"
+    return s:SynIDMatch( 'string\|comment' )
 endfunction
 
 " Autoindent current top level form
@@ -80,10 +85,8 @@ function! PareditIndentTopLevelForm()
     let l = line( '.' )
     let c =  col( '.' )
     normal! ms
-    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
     let matchb = max( [l-g:paredit_matchlines, 1] )
-    let matchf = min( [l+g:paredit_matchlines, line('$')] )
-    let [l0, c0] = searchpairpos( '(', '', ')', 'brmW', skip, matchb )
+    let [l0, c0] = searchpairpos( '(', '', ')', 'brmW', s:skip_sc, matchb )
     "let save_exp = &expandtab
     "set expandtab
     normal! v%=`s
@@ -96,21 +99,20 @@ function! PareditIsBalanced()
     let l = line( '.' )
     let c =  col( '.' )
     let line = getline( '.' )
-    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
     let matchb = max( [l-g:paredit_matchlines, 1] )
     let matchf = min( [l+g:paredit_matchlines, line('$')] )
-    let p1 = searchpair( '(', '', ')', 'brnmW', skip, matchb )
-    let p2 = searchpair( '(', '', ')',  'rnmW', skip, matchf )
+    let p1 = searchpair( '(', '', ')', 'brnmW', s:skip_sc, matchb )
+    let p2 = searchpair( '(', '', ')',  'rnmW', s:skip_sc, matchf )
     if !(p1 == p2) && !(p1 == p2 - 1 && line[c-1] == '(') && !(p1 == p2 + 1 && line[c-1] == ')')
         " Number of opening and closing parens differ
         return 0
     endif
-    let b1 = searchpair( '\[', '', '\]', 'brnmW', skip, matchb )
+    let b1 = searchpair( '\[', '', '\]', 'brnmW', s:skip_sc, matchb )
     if b1 == 0
         " Outside of all bracket-pairs
         return 1
     endif
-    let b2 = searchpair( '\[', '', '\]',  'rnmW', skip, matchf )
+    let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
     if b1 != b2
         " Number of opening and closing brackets differ
         return 0
@@ -126,12 +128,14 @@ function! PareditInsertOpening( open, close )
     let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] != ' ' && line[pos] != '\t' && line[pos] != ')' && line[pos] != ']'
+    "if line[pos] != ' ' && line[pos] != '\t' && line[pos] != ')' && line[pos] != ']'
+    if line[pos] !~ ' \|\\t\|)\|\]'
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
         let retval = a:open . a:close . "\<Left>"
     endif
-    if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
+    "if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
+    if pos > 0 && line[pos-1] !~ ' \|\\t\|(\|\['
         let retval = " " . retval
     endif
     return retval
@@ -141,15 +145,14 @@ endfunction
 function! PareditFindOpening( open, close, select )
     let open  = escape( a:open , '[]' )
     let close = escape( a:close, '[]' )
-    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
-    call searchpair( a:open, '', a:close, 'bW', skip )
+    call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
     if a:select
-        call searchpair( a:open, '', a:close, 'W', skip )
+        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
         let save_ve = &ve
         set ve=all 
         normal! lvh
         let &ve = save_ve
-        call searchpair( a:open, '', a:close, 'bW', skip )
+        call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
     endif
 endfunction
 
@@ -157,19 +160,18 @@ endfunction
 function! PareditFindClosing( open, close, select )
     let open  = escape( a:open , '[]' )
     let close = escape( a:close, '[]' )
-    let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
     if a:select
         let line = getline( '.' )
         if line[col('.')-1] != a:open
             normal! h
         endif
-        call searchpair( a:open, '', a:close, 'W', skip )
-        call searchpair( a:open, '', a:close, 'bW', skip )
+        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
+        call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
         normal! v
-        call searchpair( a:open, '', a:close, 'W', skip )
+        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
         normal! l
     else
-        call searchpair( a:open, '', a:close, 'W', skip )
+        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
     endif
 endfunction
 
@@ -240,13 +242,12 @@ function! PareditInsertClosing( open, close )
     else
         let open  = escape( a:open , '[]' )
         let close = escape( a:close, '[]' )
-        let skip = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
-        return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . skip . "')\<CR>\<Right>"
+        return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . s:skip_sc . "')\<CR>\<Right>"
         "TODO: indent after going to closing character
-"        let retval = "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . skip . "')\<CR>"
+"        let retval = "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . s:skip_sc . "')\<CR>"
 "        if a:close == ')'
 "            let retval = retval . "\<C-O>=[("
-"            let retval = retval . "\<C-O>:call searchpair('(','',')','W','" . skip . "')\<CR>"
+"            let retval = retval . "\<C-O>:call searchpair('(','',')','W','" . s:skip_sc . "')\<CR>"
 "        endif
 "        let retval = retval . "\<Right>"
 "        return retval
@@ -291,7 +292,7 @@ function! PareditBackspace( repl_mode )
     if pos == 0
         " We are at the beginning of the line
         return "\<BS>"
-    elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']' && line[pos-1] != '"'
+    elseif line[pos-1] !~ '(\|)\|\[\|\]\|\"'
         " Deleting a non-special character
         return "\<BS>"
     elseif line[pos-1] != '"' && !PareditIsBalanced()
@@ -299,7 +300,7 @@ function! PareditBackspace( repl_mode )
         return "\<BS>"
     endif
 
-    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
+    if line[pos-1:pos] =~ '()\|\[\]\|\"\"'
         " Deleting an empty character-pair
         return "\<Right>\<BS>\<BS>"
     else
@@ -320,7 +321,7 @@ function! PareditDel()
     if pos == len(line)
         " We are at the end of the line
         return "\<Del>"
-    elseif line[pos] != '(' && line[pos] != ')' && line[pos] != '[' && line[pos] != ']' && line[pos] != '"'
+    elseif line[pos] !~ '(\|)\|\[\|\]\|\"'
         " Erasing a non-special character
         return "\<Del>"
     elseif line[pos] != '"' && !PareditIsBalanced()
@@ -330,7 +331,7 @@ function! PareditDel()
         return "\<Right>"
     endif
 
-    if (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
+    if line[pos-1:pos] =~ '()\|\[\]\|\"\"'
         " Erasing an empty character-pair
         return "\<Left>\<Del>\<Del>"
     else
@@ -350,12 +351,15 @@ function! s:EraseFwd( count )
         elseif pos == len(line)
             " We are at the end of the line
             let line = strpart( line, 0, pos-1 )
-        elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
+        "elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
+        "elseif pos > 0 && (line[pos-1:pos] == '()' || line[pos-1:pos] == '[]' || line[pos-1:pos] == '""')
+        elseif pos > 0 && line[pos-1:pos] =~ '()\|\[\]\|\"\"'
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
             let pos = pos - 1
             normal! h
-        elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']' || line[pos] == '"'
+        "elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']' || line[pos] == '"'
+        elseif line[pos] =~ '(\|)\|\[\|\]\|\"'
             " Character-pair is not empty, don't erase just move inside
             let pos = pos + 1
             normal! l
@@ -540,12 +544,15 @@ function! PareditMoveRight()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[col-1] == '(' || line[col-1] == '['
+    "if line[c0-1] == '(' || line[c0-1] == '['
+    if line[c0-1] =~ '(\|\['
         let opening = 1
-    elseif line[col-1] == ')' || line[col-1] == ']'
+    "elseif line[c0-1] == ')' || line[c0-1] == ']'
+    elseif line[c0-1] =~ ')\|\]'
         let opening = 0
     else
         " Can move only delimiters
+        "TODO: handle double quotes
         return
     endif
 
@@ -606,6 +613,7 @@ vnoremap <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
 nnoremap <silent> <     :<C-U>call PareditMoveLeft()<CR>
 nnoremap <silent> >     :<C-U>call PareditMoveRight()<CR>
 noremap  <silent> x     :<C-U>call PareditEraseFwd()<CR>
+noremap  <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
 
 noremap  <silent> X     :<C-U>call PareditEraseBck()<CR>
 noremap  <silent> s     :<C-U>call PareditEraseFwd()<CR>i
