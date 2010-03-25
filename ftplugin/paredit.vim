@@ -1,4 +1,4 @@
-" slimv-paredit.vim:
+" paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
 " Last Change:  25 Mar 2010
