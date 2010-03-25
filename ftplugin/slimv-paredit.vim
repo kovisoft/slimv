@@ -1,7 +1,7 @@
 " slimv-paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  23 Mar 2010
+" Last Change:  25 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -128,13 +128,11 @@ function! PareditInsertOpening( open, close )
     let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    "if line[pos] != ' ' && line[pos] != '\t' && line[pos] != ')' && line[pos] != ']'
     if line[pos] !~ ' \|\\t\|)\|\]'
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
         let retval = a:open . a:close . "\<Left>"
     endif
-    "if pos > 0 && line[pos-1] != ' ' && line[pos-1] != '\t' && line[pos-1] != '(' && line[pos-1] != '['
     if pos > 0 && line[pos-1] !~ ' \|\\t\|(\|\['
         let retval = " " . retval
     endif
@@ -351,14 +349,11 @@ function! s:EraseFwd( count )
         elseif pos == len(line)
             " We are at the end of the line
             let line = strpart( line, 0, pos-1 )
-        "elseif pos > 0 && ((line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"'))
-        "elseif pos > 0 && (line[pos-1:pos] == '()' || line[pos-1:pos] == '[]' || line[pos-1:pos] == '""')
         elseif pos > 0 && line[pos-1:pos] =~ '()\|\[\]\|\"\"'
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
             let pos = pos - 1
             normal! h
-        "elseif line[pos] == '(' || line[pos] == ')' || line[pos] == '[' || line[pos] == ']' || line[pos] == '"'
         elseif line[pos] =~ '(\|)\|\[\|\]\|\"'
             " Character-pair is not empty, don't erase just move inside
             let pos = pos + 1
@@ -380,10 +375,10 @@ function! s:EraseBck( count )
     while c > 0 && pos > 0
         if PareditInsideComment() || ( PareditInsideString() && line[pos-1] != '"' )
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
-        elseif (line[pos-1] == '(' && line[pos] == ')') || (line[pos-1] == '[' && line[pos] == ']') || (line[pos-1] == '"' && line[pos] == '"')
+        elseif line[pos-1:pos] =~ '()\|\[\]\|\"\"'
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-        elseif line[pos-1] != '(' && line[pos-1] != ')' && line[pos-1] != '[' && line[pos-1] != ']' && line[pos-1] != '"'
+        elseif line[pos-1] !~ '(\|)\|\[\|\]\|\"'
             " Erasing a non-special character
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         endif
@@ -599,28 +594,27 @@ endfunction
 "  Keybindings
 " =====================================================================
 
-inoremap <expr>   (     PareditInsertOpening('(',')')
-inoremap <expr>   )     PareditInsertClosing('(',')')
-inoremap <expr>   [     PareditInsertOpening('[',']')
-inoremap <expr>   ]     PareditInsertClosing('[',']')
-inoremap <expr>   "     PareditInsertQuotes()
-inoremap <expr>   <BS>  PareditBackspace(0)
-inoremap <expr>   <Del> PareditDel()
-nnoremap <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
-nnoremap <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
-vnoremap <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-vnoremap <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-nnoremap <silent> <     :<C-U>call PareditMoveLeft()<CR>
-nnoremap <silent> >     :<C-U>call PareditMoveRight()<CR>
-noremap  <silent> x     :<C-U>call PareditEraseFwd()<CR>
-noremap  <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-
-noremap  <silent> X     :<C-U>call PareditEraseBck()<CR>
-noremap  <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-noremap  <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-noremap  <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-noremap  <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
-noremap  <silent> dd    :<C-U>call PareditEraseLine()<CR>
+inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
+inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
+inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
+inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
+inoremap <buffer> <expr>   "     PareditInsertQuotes()
+inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
+inoremap <buffer> <expr>   <Del> PareditDel()
+nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
+nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
+vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
+nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
+noremap  <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
+noremap  <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
+noremap  <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
+noremap  <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
+noremap  <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
+noremap  <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
+noremap  <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
+noremap  <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
 "TODO: add mapping for default behaviour of (), [], ", <Del>, etc
 "TODO: add slurp and barf
 
