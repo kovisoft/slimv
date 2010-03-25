@@ -262,10 +262,10 @@ function! PareditInsertQuotes()
         let pos = col( '.' ) - 1
         if line[pos] == '"'
             return "\<Right>"
-        elseif search('"', 'W') == 0
+        elseif search('"', 'nW', s:skip_sc) == 0
             return '"'
         else
-            return "\<Right>"
+            return "\<C-O>:call search('" . '"' . "','W','" . s:skip_sc . "')\<CR>\<Right>"
         endif
     else
         return '""' . "\<Left>"
