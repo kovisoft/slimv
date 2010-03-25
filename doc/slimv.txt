@@ -11,7 +11,7 @@ the Lisp REPL, similarly to Emacs/SLIME.
 |slimv-customization|        Customization
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
-|slimv-paredit|              Paredit mode
+|paredit|                    Paredit mode
 |slimv-clojure|              Clojure support
 |slimv-profiling|            Profiling
 |slimv-hyperspec|            Hyperspec lookup and Completion
@@ -52,12 +52,12 @@ To install the script:
        doc/slimv.txt
        ftdetect/clojure.vim
        ftplugin/metering.lisp
+       ftplugin/paredit.vim
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
-       ftplugin/slimv-paredit.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -109,12 +109,12 @@ Uninstallation:
        doc/slimv.txt
        ftdetect/clojure.vim
        ftplugin/metering.*
+       ftplugin/paredit.vim
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
-       ftplugin/slimv-paredit.vim
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -704,7 +704,7 @@ The function takes care of strings and comments, so no paren and square bracket
 balancing is performed inside a string or comment.
 
 The idea is taken from the paredit mode of Emacs, but not all editing
-functions behave the same way as they do in Emacs.
+functions behave exactly the same way as they do in Emacs.
 
 When you enter a '(' then a matching ')' is automatically inserted.
 If needed, spaces before and/or after the '()' pair are added.
@@ -896,9 +896,9 @@ such mappings are not defined by Slimv.
 
 3. Parenthesis handling
 
-First of all there is the paredit mode. If you don't like it, Vim still
-obtains many tools to aid working with parentheses. This is a very important
-topic for a Lisp programmer.
+First of all there is paredit mode. If you don't like it, Vim still obtains
+many tools to aid working with parentheses. This is a very important topic
+for a Lisp programmer.
 
     :inoremap ( ()<Esc>i    Automatically insert closing paren when an opening
                             one is inserted.
