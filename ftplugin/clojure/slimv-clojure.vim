@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.6.0
-" Last Change:  18 Mar 2010
+" Last Change:  25 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -113,5 +113,5 @@ endfunction
 
 " Source Slimv general part
 runtime ftplugin/**/slimv.vim
-runtime ftplugin/**/slimv-paredit.vim
+runtime ftplugin/**/paredit.vim
 
