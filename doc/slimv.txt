@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Mar 2010
+*slimv.txt*                    Slimv                 Last Change: 25 Mar 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -747,10 +747,14 @@ with the next line and the process continues.
 Of course not all Vim commands are compatible with the paredit mode (e.g.
 you can yank and paste unbalanced code snippet, or comment out an asymmetrical
 part of the code), and there is also the possibility to edit the source code
-with another editor to make it unbalanced.
+with paredit mode switched off or with another editor to make it unbalanced.
 When paredit mode detects that the underlying code is not balanced, then the
 paredit functionality is suspended until the top level form balance is fixed.
 As soon as all parens are matched, the paredit mode is automatically resumed.
+Paredit needs "syntax on" to identify the syntax elements of the underlying
+code, so if syntax is switched off, then paredit will not be suspended inside
+comments or strings.
+
 
 Paredit mode is set by default but it is possible to switch it out by putting
 the following statement in the .vimrc file:
@@ -758,8 +762,90 @@ the following statement in the .vimrc file:
     let g:slimv_paredit = 0
 
 It is also possible to use the paredit mode alone, without the other parts of
-Slimv. If you intend to use it for Lisp, then create a ftplugin/lisp directory,
-and copy slimv-paredit.vim into that directory instead of ftplugin.
+Slimv. The easiest way to do it is prevent Slimv from loading by adding this
+to your .vimrc file:
+
+    let g:slimv_loaded = 1
+
+Slimv core will not be loaded but paredit will be loaded and assigned to
+.lisp and .clj files.
+
+
+Here follows a list of paredit keybindings.
+
+Insert Mode:
+
+    (              Inserts () and moves the cursor inside. Also adds leading
+                   or trailing spaces when needed.
+                   Inserts ( when inside comment or string.
+
+    )              Moves the cursor to the next closing paren of the current
+                   form. When pressed again then moves to the next outer
+                   closing paren, etc, until the closing of the top level
+                   for is reached.
+                   Inserts ) when inside comment or string.
+
+    [              Inserts [] and moves the cursor inside. Also adds leading
+                   or trailing spaces when needed.
+                   Inserts [ when inside comment or string.
+
+    ]              Moves the cursor to the next closing bracket of the current
+                   form. When pressed again then moves to the next outer
+                   closing bracket, etc, until the closing of the top level
+                   for is reached.
+                   Inserts ] when inside comment or string.
+
+    "              When outside of string, inserts "" and moves the cursor
+                   inside. When inside string then moves to the closing ".                   
+                   Inserts " when inside comment.
+
+    <BS>           When about to delete a (, ), [, ], or " and there are other
+                   characters inside, then just skip it to the left. When
+                   about to delete the opening part of the matched character
+                   with nothing inside, then the whole empty form is removed.
+
+    <Del>          When about to delete a (, ), [, ], or " and there are other
+                   characters inside, then just skip it to the right. When
+                   about to delete the closing part of the matched character
+                   with nothing inside, then the whole empty form is removed.
+
+
+Normal Mode:
+
+    (              Finds opening ( of the current form. Can be pressed
+                   repeatedly until the opening of the top level form reached.
+
+    )              Finds closing ) of the current form. Can be pressed
+                   repeatedly until the closing of the top level form reached.
+
+    <              
+
+    >              
+
+    x  or  <Del>   
+
+    X              
+
+    s              
+
+    D              
+
+    C              
+
+    S              
+
+    dd              
+
+
+Visual Mode:
+
+    (              Finds opening ( of the current form and selects the whole
+                   form. Can be pressed repeatedly until the top level form
+                   selected.
+
+    )              Finds closing ) of the current form and selects the whole
+                   form. Can be pressed repeatedly until the top level form
+                   selected.
 
 
 ===============================================================================
