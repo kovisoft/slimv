@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 25 Mar 2010
+*slimv.txt*                    Slimv                 Last Change: 26 Mar 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -797,7 +797,8 @@ Insert Mode:
 
     "              When outside of string, inserts "" and moves the cursor
                    inside. When inside string then moves to the closing ".                   
-                   Inserts " when inside comment.
+                   Inserts " when inside comment. Also insert " when inside
+                   string and preceded by a \.
 
     <BS>           When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the left. When
@@ -828,13 +829,18 @@ Normal Mode:
 
     s              
 
-    D              
+    D              Keep deleting characters towards the end of line,
+                   maintaining the balanced state, i.e. keep the number of
+                   opening and closing parens the same.
 
-    C              
+    C              Same as 'D' but go to insert mode at the end.
 
     S              
 
-    dd              
+    dd             Delete whole line by keeping the balanced state, i.e.
+                   keep the number of opening and closing parens the same.
+                   When preceded by a <count> value then delete this
+                   many lines.
 
 
 Visual Mode:
