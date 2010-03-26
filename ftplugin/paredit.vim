@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  25 Mar 2010
+" Last Change:  26 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -43,7 +43,15 @@ endif
 " =====================================================================
 
 " Skip matches inside string or comment
+let s:skip_c  = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "comment"'
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+
+" Regular expressions to identify special characters combinations used by paredit
+let s:any_matched_char   = '(\|)\|\[\|\]\|\"'
+let s:any_matched_pair   = '()\|\[\]\|\"\"'
+let s:any_opening_char   = '(\|\['
+let s:any_closing_char   = ')\|\]'
+let s:any_openclose_char = '(\|\[\|)\|\]'
 
 " =====================================================================
 "  General utility functions
@@ -176,9 +184,9 @@ endfunction
 function! s:FindPrevOpening()
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    let [l1, c1] = searchpos('(\|\[', 'bW')
+    let [l1, c1] = searchpos(s:any_opening_char, 'bW')
     while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos('(\|\[', 'bW')
+        let [l1, c1] = searchpos(s:any_opening_char, 'bW')
     endwhile
     call setpos( '.', [0, l0, c0, 0] )
     return [l1, c1]
@@ -187,9 +195,9 @@ endfunction
 function! s:FindPrevClosing()
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    let [l1, c1] = searchpos(')\|\]', 'bW')
+    let [l1, c1] = searchpos(s:any_closing_char, 'bW')
     while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(')\|\]', 'bW')
+        let [l1, c1] = searchpos(s:any_closing_char, 'bW')
     endwhile
     call setpos( '.', [0, l0, c0, 0] )
     return [l1, c1]
@@ -198,9 +206,9 @@ endfunction
 function! s:FindNextOpening()
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    let [l1, c1] = searchpos('(\|\[', 'W')
+    let [l1, c1] = searchpos(s:any_opening_char, 'W')
     while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos('(\|\[', 'W')
+        let [l1, c1] = searchpos(s:any_opening_char, 'W')
     endwhile
     call setpos( '.', [0, l0, c0, 0] )
     return [l1, c1]
@@ -209,9 +217,9 @@ endfunction
 function! s:FindNextClosing()
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    let [l1, c1] = searchpos(')\|\]', 'W')
+    let [l1, c1] = searchpos(s:any_closing_char, 'W')
     while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(')\|\]', 'W')
+        let [l1, c1] = searchpos(s:any_closing_char, 'W')
     endwhile
     call setpos( '.', [0, l0, c0, 0] )
     return [l1, c1]
@@ -261,13 +269,17 @@ function! PareditInsertQuotes()
         let line = getline( '.' )
         let pos = col( '.' ) - 1
         if line[pos] == '"'
+            " Standing on a ", just move to the right
             return "\<Right>"
-        elseif search('"', 'nW', s:skip_sc) == 0
+        elseif (pos > 0 && line[pos-1] == '\') || search('[^\\]"\|^"', 'nW', s:skip_c) == 0
+            " We don't have any closing ", insert one
             return '"'
         else
-            return "\<C-O>:call search('" . '"' . "','W','" . s:skip_sc . "')\<CR>\<Right>"
+            " Move to the closing "
+            return "\<C-O>:call search('" . '[^\\]"\|^"' . "','eW','" . s:skip_c . "')\<CR>\<Right>"
         endif
     else
+        " Outside of string: insert a pair of ""
         return '""' . "\<Left>"
     endif
 endfunction
@@ -290,7 +302,7 @@ function! PareditBackspace( repl_mode )
     if pos == 0
         " We are at the beginning of the line
         return "\<BS>"
-    elseif line[pos-1] !~ '(\|)\|\[\|\]\|\"'
+    elseif line[pos-1] !~ s:any_matched_char
         " Deleting a non-special character
         return "\<BS>"
     elseif line[pos-1] != '"' && !PareditIsBalanced()
@@ -298,7 +310,7 @@ function! PareditBackspace( repl_mode )
         return "\<BS>"
     endif
 
-    if line[pos-1:pos] =~ '()\|\[\]\|\"\"'
+    if line[pos-1:pos] =~ s:any_matched_pair
         " Deleting an empty character-pair
         return "\<Right>\<BS>\<BS>"
     else
@@ -319,7 +331,7 @@ function! PareditDel()
     if pos == len(line)
         " We are at the end of the line
         return "\<Del>"
-    elseif line[pos] !~ '(\|)\|\[\|\]\|\"'
+    elseif line[pos] !~ s:any_matched_char
         " Erasing a non-special character
         return "\<Del>"
     elseif line[pos] != '"' && !PareditIsBalanced()
@@ -329,7 +341,7 @@ function! PareditDel()
         return "\<Right>"
     endif
 
-    if line[pos-1:pos] =~ '()\|\[\]\|\"\"'
+    if line[pos-1:pos] =~ s:any_matched_pair
         " Erasing an empty character-pair
         return "\<Left>\<Del>\<Del>"
     else
@@ -349,12 +361,12 @@ function! s:EraseFwd( count )
         elseif pos == len(line)
             " We are at the end of the line
             let line = strpart( line, 0, pos-1 )
-        elseif pos > 0 && line[pos-1:pos] =~ '()\|\[\]\|\"\"'
+        elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
             let pos = pos - 1
             normal! h
-        elseif line[pos] =~ '(\|)\|\[\|\]\|\"'
+        elseif line[pos] =~ s:any_matched_char
             " Character-pair is not empty, don't erase just move inside
             let pos = pos + 1
             normal! l
@@ -375,10 +387,10 @@ function! s:EraseBck( count )
     while c > 0 && pos > 0
         if PareditInsideComment() || ( PareditInsideString() && line[pos-1] != '"' )
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
-        elseif line[pos-1:pos] =~ '()\|\[\]\|\"\"'
+        elseif line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-        elseif line[pos-1] !~ '(\|)\|\[\|\]\|\"'
+        elseif line[pos-1] !~ s:any_matched_char
             " Erasing a non-special character
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         endif
@@ -524,7 +536,7 @@ function! PareditMoveLeft()
         return
     endif
     "echo input('[' . l0 . ',' . c0 . '] [' . l1 . ',' . c1 . ']')
-    let [l2, c2] = searchpos('(\|)\|\[\|\]', 'bnW')
+    let [l2, c2] = searchpos(s:any_openclose_char, 'bnW')
     if l2 > 0 && (l1 < l2 || (l1 == l2 && c1 < c2))
         " No whitespace till the next delimiter
     else
@@ -540,10 +552,10 @@ function! PareditMoveRight()
     let c0 =  col( '.' )
 
     "if line[c0-1] == '(' || line[c0-1] == '['
-    if line[c0-1] =~ '(\|\['
+    if line[c0-1] =~ s:any_opening_char
         let opening = 1
     "elseif line[c0-1] == ')' || line[c0-1] == ']'
-    elseif line[c0-1] =~ ')\|\]'
+    elseif line[c0-1] =~ s:any_closing_char
         let opening = 0
     else
         " Can move only delimiters
@@ -563,9 +575,9 @@ function! PareditMoveRight()
     call setpos( '.', [0, l0, c0, 0] ) 
 
     " Find next closing delimiter
-"    let [l3, c3] = searchpos(')\|\]', 'W')
+"    let [l3, c3] = searchpos(s:any_closing_char, 'W')
 "    while PareditInsideCommentOrString()
-"        let [l3, c3] = searchpos(')\|\]', 'W')
+"        let [l3, c3] = searchpos(s:any_closing_char, 'W')
 "    endwhile
 "    call setpos( '.', [0, l0, c0, 0] )
 "    if l3 > 0 && (l1 > l3 || (l1 == l3 && c1 > c3))
@@ -573,11 +585,11 @@ function! PareditMoveRight()
 "    endif
 
     " Find next opening delimiter
-"    let [l2, c2] = searchpos('(\|\[', 'W')
-    let [l2, c2] = searchpos('(\|\[\|)\|\]', 'W')
+"    let [l2, c2] = searchpos(s:any_opening_char, 'W')
+    let [l2, c2] = searchpos(s:any_openclose_char, 'W')
     while PareditInsideCommentOrString()
-"        let [l2, c2] = searchpos('(\|\[', 'W')
-        let [l2, c2] = searchpos('(\|\[\|)\|\]', 'W')
+"        let [l2, c2] = searchpos(s:any_opening_char, 'W')
+        let [l2, c2] = searchpos(s:any_openclose_char, 'W')
     endwhile
     call setpos( '.', [0, l0, c0, 0] ) 
     "let [l2, c2] = searchpos('(\|)\|\[\|\]', 'nW')
@@ -607,14 +619,14 @@ vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<C
 vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
 nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
 nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
-noremap  <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
-noremap  <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-noremap  <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
-noremap  <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-noremap  <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-noremap  <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-noremap  <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
-noremap  <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
+nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
+nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
+nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
+nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
+nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
+nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
+nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
 "TODO: add mapping for default behaviour of (), [], ", <Del>, etc
 "TODO: add slurp and barf
 
