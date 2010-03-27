@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  26 Mar 2010
+" Last Change:  27 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -25,13 +25,13 @@ if !exists( 'g:paredit_mode' )
     let g:paredit_mode = 1
 endif
 
-" Automatic indentation after most editing commands
-" 0 = never
-" 1 = after editing a block of text
-" 2 = always
+" Automatic indentation after some editing commands
 if !exists( 'g:paredit_autoindent' )
     let g:paredit_autoindent = 1
 endif
+let s:indent_never  = 0    " never autoindent
+let s:indent_block  = 1    " autoindent after editing a block of text
+let s:indent_always = 2    " always autoindent
 
 " Match delimiter this number of lines before and after cursor position
 if !exists( 'g:paredit_matchlines' )
@@ -89,7 +89,10 @@ function! PareditInsideCommentOrString()
 endfunction
 
 " Autoindent current top level form
-function! PareditIndentTopLevelForm()
+function! PareditIndentTopLevelForm( level )
+    if a:level < g:paredit_autoindent
+        return
+    endif
     let l = line( '.' )
     let c =  col( '.' )
     normal! ms
@@ -121,7 +124,7 @@ function! PareditIsBalanced()
         return 1
     endif
     let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
-    if b1 != b2
+    if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '[') && !(b1 == b2 + 1 && line[c-1] == ']')
         " Number of opening and closing brackets differ
         return 0
     endif
@@ -494,6 +497,22 @@ endfunction
 function! PareditBarf()
 endfunction
 
+" Find beginning of the next Lisp element, i.e. atom or s-expression
+function! PareditNextElement( endpos )
+    let pos = getpos( '.' )
+    let [l1, c1] = searchpos('\s\S\|^\S\|(\|)\|\[\|\]', 'eW')
+    while PareditInsideCommentOrString()
+        let [l1, c1] = searchpos('\s\S\|^\S\|(\|)\|\[\|\]', 'eW')
+    endwhile
+    if a:endpos
+        normal! %
+        let l1 = line( '.' )
+        let c1 =  col( '.' )
+    endif
+    call setpos( '.', pos ) 
+    return [l1, c1]
+endfunction
+
 " Move character from [l0, c0] to [l1, c1]
 " Set position to [l1, c1]
 function! PareditMoveChar( l0, c0, l1, c1 )
@@ -563,43 +582,30 @@ function! PareditMoveRight()
         return
     endif
 
-    " Find next non whitespace after a whitespace
-    "let [l1, c1] = searchpos('\s\S\|^\S', 'nW')
-    let [l1, c1] = searchpos('\s\S\|^\S', 'W')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos('\s\S\|^\S', 'W')
-    endwhile
-    if l1 == 0
-        return
-    endif
-    call setpos( '.', [0, l0, c0, 0] ) 
-
-    " Find next closing delimiter
-"    let [l3, c3] = searchpos(s:any_closing_char, 'W')
-"    while PareditInsideCommentOrString()
-"        let [l3, c3] = searchpos(s:any_closing_char, 'W')
-"    endwhile
-"    call setpos( '.', [0, l0, c0, 0] )
-"    if l3 > 0 && (l1 > l3 || (l1 == l3 && c1 > c3))
-"        return
-"    endif
-
-    " Find next opening delimiter
-"    let [l2, c2] = searchpos(s:any_opening_char, 'W')
-    let [l2, c2] = searchpos(s:any_openclose_char, 'W')
-    while PareditInsideCommentOrString()
-"        let [l2, c2] = searchpos(s:any_opening_char, 'W')
-        let [l2, c2] = searchpos(s:any_openclose_char, 'W')
-    endwhile
-    call setpos( '.', [0, l0, c0, 0] ) 
-    "let [l2, c2] = searchpos('(\|)\|\[\|\]', 'nW')
-    if l2 > 0 && (l1 > l2 || (l1 == l2 && c1 > c2))
-        " No whitespace till the next delimiter
+    let [l1, c1] = PareditNextElement( 0 )
+    if l1 == 0 || c1 == 0
+        " No next element found
         return
     endif
 
-    " Whitespace comes first
-    call PareditMoveChar( l0, c0, l1, c1 )
+    let next = getline( l1 )
+
+    if [l1, c1] != [l0, c0+1]
+        " There is some whitespace before the next element
+    elseif next[c1-1] =~ ')\|\]'
+        " Closing delimiter reached: cannot move further
+        return
+    elseif next[c1-1] =~ '(\|\['
+        " Opening delimiter found: need to skip the whole sub-expression
+        let [l1, c1] = PareditNextElement( 1 )
+        if l1 == 0 || c1 == 0
+            " No end of sub-expression found
+            return
+        endif
+        let c1 = c1 + 1
+    endif
+
+    call PareditMoveChar( l0, c0, l1, c1-1 )
 endfunction
 
 " =====================================================================
