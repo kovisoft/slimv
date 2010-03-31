@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  27 Mar 2010
+" Last Change:  31 Mar 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -184,59 +184,159 @@ function! PareditFindClosing( open, close, select )
     endif
 endfunction
 
-function! s:FindPrevOpening()
-    let l0 = line( '.' )
-    let c0 =  col( '.' )
-    let [l1, c1] = searchpos(s:any_opening_char, 'bW')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(s:any_opening_char, 'bW')
+" Find beginning of previous element (atom or sub-expression) in a form
+" skip_whitespc: skip whitespaces before the previous element
+function! PareditFindPrevElement( skip_whitespc )
+    let [l0, c0] = [line( '.' ), col( '.' )]
+    let symbol_pos = [0, 0]
+    let symbol_end = [0, 0]
+
+    while 1
+        " Go to previous character
+        let [l1, c1] = [line( '.' ), col( '.' )]
+        normal! h
+        let [l, c] = [line( '.' ), col( '.' )]
+
+        while [l, c] != [l1, c1] && PareditInsideComment()
+            " Skip comments
+            let [l1, c1] = [l, c]
+            normal! h
+            let [l, c] = [line( '.' ), col( '.' )]
+        endwhile
+
+        while [l, c] == [l1, c1] || PareditInsideComment()
+echo input('nl l='.l.' c='.c)
+            if symbol_pos != [0, 0]
+                let symbol_end = [l, c]
+                if !a:skip_whitespc && !PareditInsideString()
+                    " Comment before previous symbol
+echo input('symbol comment l='.l.' c='.c)
+                    call setpos( '.', [0, l0, c0, 0] )
+                    return [l, c]
+                endif
+            endif
+            normal! k$
+            let [l, c] = [line( '.' ), col( '.' )]
+            if [l, c] == [l1, c1]
+                " Beginning of file reached: stop
+                call setpos( '.', [0, l0, c0, 0] )
+                return [0, 0]
+            endif
+        endwhile
+
+        let line = getline( '.' )
+        if PareditInsideString()
+echo input('string '.line[c-1].' l='.l.' c='.c)
+            let symbol_pos = [l, c]
+        elseif symbol_pos == [0, 0]
+echo input('no symbol '.line[c-1].' l='.l.' c='.c)
+            if line[c-1] =~ s:any_closing_char
+                " Skip to the beginning of this sub-expression
+                let symbol_pos = [l, c]
+                normal! %
+            elseif line[c-1] =~ s:any_opening_char
+                " Opening delimiter found: stop
+                call setpos( '.', [0, l0, c0, 0] )
+                return [0, 0]
+            elseif line[c-1] =~ '\S'
+                " Previous symbol starting
+                let symbol_pos = [l, c]
+            endif
+        else
+echo input('symbol '.line[c-1].' l='.l.' c='.c)
+            if line[c-1] =~ s:any_opening_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
+                " Previous symbol beginning reached, opening delimiter or second previous symbol starting
+                call setpos( '.', [0, l0, c0, 0] )
+                return [l, c+1]
+            elseif line[c-1] =~ '\s' || symbol_pos[0] != l
+                " Whitespace befire previous symbol
+                let symbol_end = [l, c]
+                if !a:skip_whitespc
+                    call setpos( '.', [0, l0, c0, 0] )
+                    return [l, c+1]
+                endif
+            endif
+        endif
     endwhile
-    call setpos( '.', [0, l0, c0, 0] )
-    return [l1, c1]
 endfunction
 
-function! s:FindPrevClosing()
-    let l0 = line( '.' )
-    let c0 =  col( '.' )
-    let [l1, c1] = searchpos(s:any_closing_char, 'bW')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(s:any_closing_char, 'bW')
-    endwhile
-    call setpos( '.', [0, l0, c0, 0] )
-    return [l1, c1]
-endfunction
+" Find end of next element (atom or sub-expression) in a form
+" skip_whitespc: skip whitespaces after the next element
+function! PareditFindNextElement( skip_whitespc )
+    let [l0, c0] = [line( '.' ), col( '.' )]
+    let symbol_pos = [0, 0]
+    let symbol_end = [0, 0]
 
-function! s:FindNextOpening()
-    let l0 = line( '.' )
-    let c0 =  col( '.' )
-    let [l1, c1] = searchpos(s:any_opening_char, 'W')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(s:any_opening_char, 'W')
-    endwhile
-    call setpos( '.', [0, l0, c0, 0] )
-    return [l1, c1]
-endfunction
+    while 1
+        " Go to next character
+        let [l1, c1] = [line( '.' ), col( '.' )]
+        normal! l
+        let [l, c] = [line( '.' ), col( '.' )]
 
-function! s:FindNextClosing()
-    let l0 = line( '.' )
-    let c0 =  col( '.' )
-    let [l1, c1] = searchpos(s:any_closing_char, 'W')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos(s:any_closing_char, 'W')
-    endwhile
-    call setpos( '.', [0, l0, c0, 0] )
-    return [l1, c1]
-endfunction
+        " Skip comments
+        while [l, c] == [l1, c1] || PareditInsideComment()
+"echo input('nl/comment l='.l.' c='.c)
+            if symbol_pos != [0, 0]
+                let symbol_end = [l, c]
+                if !a:skip_whitespc && !PareditInsideString()
+                    " Next symbol ended with comment
+"echo input('symbol comment l='.l.' c='.c)
+                    call setpos( '.', [0, l0, c0, 0] )
+                    return [l, c-1]
+                endif
+            endif
+            normal! 0j0
+            let [l, c] = [line( '.' ), col( '.' )]
+            if [l, c] == [l1, c1]
+                " End of file reached: stop
+                call setpos( '.', [0, l0, c0, 0] )
+                return [0, 0]
+            endif
+        endwhile
 
-function! s:FindNextElement()
-    let l0 = line( '.' )
-    let c0 =  col( '.' )
-    let [l1, c1] = searchpos('\s\S\|^\S', 'W')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos('\s\S\|^\S', 'W')
+        let line = getline( '.' )
+        if PareditInsideString()
+"echo input('string '.line[c-1].' l='.l.' c='.c)
+            let symbol_pos = [l, c]
+        elseif symbol_pos == [0, 0]
+"echo input('no symbol '.line[c-1].' l='.l.' c='.c)
+            if line[c-1] =~ s:any_opening_char
+                " Skip to the end of this sub-expression
+                let symbol_pos = [l, c]
+                normal! %
+            elseif line[c-1] =~ s:any_closing_char
+                " Closing delimiter found: stop
+                call setpos( '.', [0, l0, c0, 0] )
+                return [0, 0]
+                "let [l, c] = [0, 0]
+                "break
+            elseif line[c-1] =~ '\S'
+                " Next symbol starting
+                let symbol_pos = [l, c]
+            endif
+        else
+"echo input('symbol '.line[c-1].' l='.l.' c='.c)
+            if line[c-1] =~ s:any_closing_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
+                " Next symbol ended, closing delimiter or second next symbol starting
+                call setpos( '.', [0, l0, c0, 0] )
+                return [l, c-1]
+                "let c = c - 1
+                "break
+            elseif line[c-1] =~ '\s' || symbol_pos[0] != l
+                " Next symbol ending with whitespace
+                let symbol_end = [l, c]
+                if !a:skip_whitespc
+                    call setpos( '.', [0, l0, c0, 0] )
+                    return [l, c-1]
+                    "let c = c - 1
+                    "break
+                endif
+            endif
+        endif
     endwhile
-    call setpos( '.', [0, l0, c0, 0] )
-    return [l1, c1]
+
+"    call setpos( '.', [0, l0, c0, 0] )
+"    return [l, c]
 endfunction
 
 " Insert closing type of a paired character, like ) or ].
@@ -489,30 +589,6 @@ function! PareditEraseLine()
     normal! ==
 endfunction
 
-" Move next s-expression into the current form
-function! PareditSlurp()
-endfunction
-
-" Move last s-expression of the current form out of it
-function! PareditBarf()
-endfunction
-
-" Find beginning of the next Lisp element, i.e. atom or s-expression
-function! PareditNextElement( endpos )
-    let pos = getpos( '.' )
-    let [l1, c1] = searchpos('\s\S\|^\S\|(\|)\|\[\|\]', 'eW')
-    while PareditInsideCommentOrString()
-        let [l1, c1] = searchpos('\s\S\|^\S\|(\|)\|\[\|\]', 'eW')
-    endwhile
-    if a:endpos
-        normal! %
-        let l1 = line( '.' )
-        let c1 =  col( '.' )
-    endif
-    call setpos( '.', pos ) 
-    return [l1, c1]
-endfunction
-
 " Move character from [l0, c0] to [l1, c1]
 " Set position to [l1, c1]
 function! PareditMoveChar( l0, c0, l1, c1 )
@@ -544,24 +620,40 @@ function! PareditMoveChar( l0, c0, l1, c1 )
     endif
 endfunction
 
-" Move delimiter one atom or s-expression to the right
+" Move delimiter one atom or s-expression to the left
 function! PareditMoveLeft()
     let line = getline( '.' )
     let l0 = line( '.' )
     let c0 =  col( '.' )
-    "let [l1, c1] = searchpos('\s\S\|^\S', 'bnW')
-    let [l1, c1] = searchpos('\<', 'bnW')
-    if l1 == 0
+
+    if line[c0-1] =~ s:any_closing_char
+        let closing = 1
+    elseif line[c0-1] =~ s:any_opening_char
+        let closing = 0
+    else
+        " Can move only delimiters
         return
     endif
-    "echo input('[' . l0 . ',' . c0 . '] [' . l1 . ',' . c1 . ']')
-    let [l2, c2] = searchpos(s:any_openclose_char, 'bnW')
-    if l2 > 0 && (l1 < l2 || (l1 == l2 && c1 < c2))
-        " No whitespace till the next delimiter
-    else
-        " Whitespace comes first
-        call PareditMoveChar( l0, c0, l1, c1 )
+
+    let [l1, c1] = PareditFindPrevElement( closing )
+    if [l1, c1] == [0, 0]
+        " No previous element found
+        return
     endif
+    call PareditMoveChar( l0, c0, l1, c1 )
+    let line = getline( '.' )
+    let c =  col( '.' ) - 1
+    if closing && line[c+1] !~ '\s\|)'
+        " Insert a space after if needed
+        execute "normal! a "
+        normal! h
+    endif
+    if !closing && c > 0 && line[c-1] !~ '\s\|('
+        " Insert a space before if needed
+        execute "normal! i "
+        normal! l
+    endif
+    return
 endfunction
 
 " Move delimiter one atom or s-expression to the right
@@ -578,34 +670,28 @@ function! PareditMoveRight()
         let opening = 0
     else
         " Can move only delimiters
-        "TODO: handle double quotes
         return
     endif
 
-    let [l1, c1] = PareditNextElement( 0 )
-    if l1 == 0 || c1 == 0
+    let [l1, c1] = PareditFindNextElement( opening )
+    if [l1, c1] == [0, 0]
         " No next element found
         return
     endif
-
-    let next = getline( l1 )
-
-    if [l1, c1] != [l0, c0+1]
-        " There is some whitespace before the next element
-    elseif next[c1-1] =~ ')\|\]'
-        " Closing delimiter reached: cannot move further
-        return
-    elseif next[c1-1] =~ '(\|\['
-        " Opening delimiter found: need to skip the whole sub-expression
-        let [l1, c1] = PareditNextElement( 1 )
-        if l1 == 0 || c1 == 0
-            " No end of sub-expression found
-            return
-        endif
-        let c1 = c1 + 1
+    call PareditMoveChar( l0, c0, l1, c1 )
+    let line = getline( '.' )
+    let c =  col( '.' ) - 1
+    if opening && c > 0 && line[c-1] !~ '\s\|('
+        " Insert a space before if needed
+        execute "normal! i "
+        normal! l
     endif
-
-    call PareditMoveChar( l0, c0, l1, c1-1 )
+    if !opening && line[c+1] !~ '\s\|)'
+        " Insert a space after if needed
+        execute "normal! a "
+        normal! h
+    endif
+    return
 endfunction
 
 " =====================================================================
@@ -634,5 +720,4 @@ nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
 nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
 nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
 "TODO: add mapping for default behaviour of (), [], ", <Del>, etc
-"TODO: add slurp and barf
 
