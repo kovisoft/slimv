@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  31 Mar 2010
+" Last Change:  05 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -191,26 +191,22 @@ function! PareditFindPrevElement( skip_whitespc )
     let symbol_pos = [0, 0]
     let symbol_end = [0, 0]
 
+    let moved = 0
     while 1
         " Go to previous character
-        let [l1, c1] = [line( '.' ), col( '.' )]
-        normal! h
+        if !moved
+            let [l1, c1] = [line( '.' ), col( '.' )]
+            normal! h
+        endif
+        let moved = 0
         let [l, c] = [line( '.' ), col( '.' )]
 
-        while [l, c] != [l1, c1] && PareditInsideComment()
-            " Skip comments
-            let [l1, c1] = [l, c]
-            normal! h
-            let [l, c] = [line( '.' ), col( '.' )]
-        endwhile
-
-        while [l, c] == [l1, c1] || PareditInsideComment()
-echo input('nl l='.l.' c='.c)
+        if [l, c] == [l1, c1]
+            " Beginning of line reached
             if symbol_pos != [0, 0]
                 let symbol_end = [l, c]
                 if !a:skip_whitespc && !PareditInsideString()
-                    " Comment before previous symbol
-echo input('symbol comment l='.l.' c='.c)
+                    " Newline before previous symbol
                     call setpos( '.', [0, l0, c0, 0] )
                     return [l, c]
                 endif
@@ -222,38 +218,41 @@ echo input('symbol comment l='.l.' c='.c)
                 call setpos( '.', [0, l0, c0, 0] )
                 return [0, 0]
             endif
-        endwhile
-
-        let line = getline( '.' )
-        if PareditInsideString()
-echo input('string '.line[c-1].' l='.l.' c='.c)
-            let symbol_pos = [l, c]
-        elseif symbol_pos == [0, 0]
-echo input('no symbol '.line[c-1].' l='.l.' c='.c)
-            if line[c-1] =~ s:any_closing_char
-                " Skip to the beginning of this sub-expression
-                let symbol_pos = [l, c]
-                normal! %
-            elseif line[c-1] =~ s:any_opening_char
-                " Opening delimiter found: stop
-                call setpos( '.', [0, l0, c0, 0] )
-                return [0, 0]
-            elseif line[c-1] =~ '\S'
-                " Previous symbol starting
-                let symbol_pos = [l, c]
-            endif
+            let moved = 1
+        elseif PareditInsideComment()
+            " Skip comments
         else
-echo input('symbol '.line[c-1].' l='.l.' c='.c)
-            if line[c-1] =~ s:any_opening_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
-                " Previous symbol beginning reached, opening delimiter or second previous symbol starting
-                call setpos( '.', [0, l0, c0, 0] )
-                return [l, c+1]
-            elseif line[c-1] =~ '\s' || symbol_pos[0] != l
-                " Whitespace befire previous symbol
-                let symbol_end = [l, c]
-                if !a:skip_whitespc
+            let line = getline( '.' )
+            if PareditInsideString()
+"echo input('string '.line[c-1].' l='.l.' c='.c)
+                let symbol_pos = [l, c]
+            elseif symbol_pos == [0, 0]
+"echo input('no symbol '.line[c-1].' l='.l.' c='.c)
+                if line[c-1] =~ s:any_closing_char
+                    " Skip to the beginning of this sub-expression
+                    let symbol_pos = [l, c]
+                    normal! %
+                elseif line[c-1] =~ s:any_opening_char
+                    " Opening delimiter found: stop
+                    call setpos( '.', [0, l0, c0, 0] )
+                    return [0, 0]
+                elseif line[c-1] =~ '\S'
+                    " Previous symbol starting
+                    let symbol_pos = [l, c]
+                endif
+            else
+"echo input('symbol '.line[c-1].' l='.l.' c='.c.' send='.symbol_end[0])
+                if line[c-1] =~ s:any_opening_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
+                    " Previous symbol beginning reached, opening delimiter or second previous symbol starting
                     call setpos( '.', [0, l0, c0, 0] )
                     return [l, c+1]
+                elseif line[c-1] =~ '\s' || symbol_pos[0] != l
+                    " Whitespace before previous symbol
+                    let symbol_end = [l, c]
+                    if !a:skip_whitespc
+                        call setpos( '.', [0, l0, c0, 0] )
+                        return [l, c+1]
+                    endif
                 endif
             endif
         endif
@@ -609,9 +608,9 @@ function! PareditMoveChar( l0, c0, l1, c1 )
         call setline( '.', line )
         let line1 = getline( a:l1 )
         if a:c1 > 1
-            let line1 = strpart( line1, 0, a:c1 ) . c . strpart( line1, a:c1 )
+            let line1 = strpart( line1, 0, a:c1-1 ) . c . strpart( line1, a:c1-1 )
             call setline( a:l1, line1 )
-            call setpos( '.', [0, a:l1, a:c1+1, 0] ) 
+            call setpos( '.', [0, a:l1, a:c1, 0] )
         else
             let line1 = c . line1
             call setline( a:l1, line1 )
