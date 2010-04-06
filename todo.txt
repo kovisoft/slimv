@@ -7,7 +7,8 @@
 - separate variables for wanting to open repl and repl actually opened
 - refresh do not open repl in .lisp window
 - paredit mode into separate script
-- paredit map for X, D, C, <n>dd, s, S
 - connect to remote Lisp
 - refactoring tool (like in Slime)
+- more paredit commands, like in http://mumble.net/~campbell/emacs/paredit.html
+- add paredit mapping for default behaviour of (), [], ", <Del>, etc
 
