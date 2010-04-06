@@ -6,7 +6,10 @@ slimv.vim
 ---------------------------------------------------------------------------------------------
 Summary
 ---------------------------------------------------------------------------------------------
-Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup, like SLIME
+          1         2         3         4         5         6         7
+01234567890123456789012345678901234567890123456789012345678901234567890123456789
+
+SLIME-like Lisp and Clojure REPL inside Vim with Profiling, Hyperspec, Paredit
 
 ---------------------------------------------------------------------------------------------
 Description
@@ -118,18 +121,11 @@ Linux users using terminal emulator other than xterm should define the complete 
 
 See the included documentation for more complete installation and customization instructions.
 
-
+---------------------------------------------------------------------------------------------
+Script versions
 ---------------------------------------------------------------------------------------------
 
-Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
-
-Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
-
-Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profiling and Hyperspec lookup.
-
-Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
-
----------------------------------------------------------------------------------------------
+0.6.0: Added paredit mode, set wrap for REPL buffer.
 
 0.5.6: Improved REPL buffer response time, added debug log flushing frequency, bugfix: early exit of REPL refresh mode on some machines.
 
@@ -161,6 +157,16 @@ Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to 
        Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt a running program.
 
 0.1.3: Handle DOS and Unix style line endings on Windows, don't write logfile when debug level not set
+
+---------------------------------------------------------------------------------------------
+
+Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
+
+Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
+
+Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profiling and Hyperspec lookup.
+
+Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
 
 ---------------------------------------------------------------------------------------------
 
