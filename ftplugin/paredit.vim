@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  06 Apr 2010
+" Last Change:  09 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -447,6 +447,13 @@ function! s:PrevElement( skip_whitespc )
     let symbol_pos = [0, 0]
     let symbol_end = [0, 0]
 
+    " Move to the beginning of the prefix if any
+    let line = getline( '.' )
+    let c = col('.') - 1
+    if c > 0 && line[c-1] =~ s:any_macro_prefix
+        normal! h
+    endif
+
     let moved = 0
     while 1
         " Go to previous character
@@ -486,6 +493,11 @@ function! s:PrevElement( skip_whitespc )
                     " Skip to the beginning of this sub-expression
                     let symbol_pos = [l, c]
                     normal! %
+                    let line2 = getline( '.' )
+                    let c2 = col('.') - 1
+                    if c2 > 0 && line2[c2-1] =~ s:any_macro_prefix
+                        normal! h
+                    endif
                 elseif line[c-1] =~ s:any_opening_char
                     " Opening delimiter found: stop
                     call setpos( '.', [0, l0, c0, 0] )
@@ -548,7 +560,11 @@ function! s:NextElement( skip_whitespc )
         if PareditInsideString()
             let symbol_pos = [l, c]
         elseif symbol_pos == [0, 0]
-            if line[c-1] =~ s:any_opening_char
+            if line[c-1] =~ s:any_macro_prefix && line[c] =~ s:any_opening_char
+                " Skip to the end of this prefixed sub-expression
+                let symbol_pos = [l, c]
+                normal! l%
+            elseif line[c-1] =~ s:any_opening_char
                 " Skip to the end of this sub-expression
                 let symbol_pos = [l, c]
                 normal! %
@@ -580,24 +596,23 @@ endfunction
 " Move character from [l0, c0] to [l1, c1]
 " Set position to [l1, c1]
 function! s:MoveChar( l0, c0, l1, c1 )
-    "TODO: also move ',# in case of '(...), #(...)
     let line = getline( a:l0 )
     let c = line[a:c0-1]
     if a:l1 == a:l0
         " Move character inside line
         if a:c1 > a:c0
             let line = strpart( line, 0, a:c0-1 ) . strpart( line, a:c0, a:c1-a:c0-1 ) . c . strpart( line, a:c1-1 )
-            call setline( '.', line )
+            call setline( a:l0, line )
             call setpos( '.', [0, a:l1, a:c1-1, 0] ) 
         else
             let line = strpart( line, 0, a:c1-1 ) . c . strpart( line, a:c1-1, a:c0-a:c1 ) . strpart( line, a:c0 )
-            call setline( '.', line )
+            call setline( a:l0, line )
             call setpos( '.', [0, a:l1, a:c1, 0] ) 
         endif
     else
         " Move character to another line
         let line = strpart( line, 0, a:c0-1 ) . strpart( line, a:c0 )
-        call setline( '.', line )
+        call setline( a:l0, line )
         let line1 = getline( a:l1 )
         if a:c1 > 1
             let line1 = strpart( line1, 0, a:c1-1 ) . c . strpart( line1, a:c1-1 )
@@ -631,7 +646,14 @@ function! PareditMoveLeft()
         " No previous element found
         return
     endif
-    call s:MoveChar( l0, c0, l1, c1 )
+    if !closing && c0 > 0 && line[c0-2] =~ s:any_macro_prefix
+        call s:MoveChar( l0, c0-1, l1, c1 )
+        call s:MoveChar( l0, c0 - (l0 != l1), l1, c1+1 )
+        let len = 2
+    else
+        call s:MoveChar( l0, c0, l1, c1 )
+        let len = 1
+    endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
     if closing && line[c+1] !~ '\s\|)'
@@ -639,10 +661,15 @@ function! PareditMoveLeft()
         execute "normal! a "
         normal! h
     endif
-    if !closing && c > 0 && line[c-1] !~ '\s\|('
+    if !closing && c > 0 && line[c-len] !~ '\s\|('
         " Insert a space before if needed
-        execute "normal! i "
-        normal! l
+        if len > 1
+            execute "normal! hi "
+            normal! ll
+        else
+            execute "normal! i "
+            normal! l
+        endif
     endif
     return
 endfunction
@@ -653,10 +680,8 @@ function! PareditMoveRight()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    "if line[c0-1] == '(' || line[c0-1] == '['
     if line[c0-1] =~ s:any_opening_char
         let opening = 1
-    "elseif line[c0-1] == ')' || line[c0-1] == ']'
     elseif line[c0-1] =~ s:any_closing_char
         let opening = 0
     else
@@ -669,13 +694,25 @@ function! PareditMoveRight()
         " No next element found
         return
     endif
-    call s:MoveChar( l0, c0, l1, c1 )
+    if opening && c0 > 0 && line[c0-2] =~ s:any_macro_prefix
+        call s:MoveChar( l0, c0-1, l1, c1 )
+        call s:MoveChar( l0, c0-1, l1, c1 + (l0 != l1) )
+        let len = 2
+    else
+        call s:MoveChar( l0, c0, l1, c1 )
+        let len = 1
+    endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if opening && c > 0 && line[c-1] !~ '\s\|('
+    if opening && c > 0 && line[c-len] !~ '\s\|('
         " Insert a space before if needed
-        execute "normal! i "
-        normal! l
+        if len > 1
+            execute "normal! hi "
+            normal! ll
+        else
+            execute "normal! i "
+            normal! l
+        endif
     endif
     if !opening && line[c+1] !~ '\s\|)'
         " Insert a space after if needed
