@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 06 Apr 2010
+*slimv.txt*                    Slimv                 Last Change: 09 Apr 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -79,7 +79,7 @@ To install the script:
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
-      :helptag <your runtime directory/doc
+      :helptags <your runtime directory/doc
 <
     This will generate all the help tags for any file located in the doc
     directory.
@@ -433,10 +433,10 @@ multi-line Vim command.
                                                               *slimv_templates*
 
 Many Slimv commands are performed by creating a special Lisp form from the
-selected symbol (or form) and send it to the REPL for execution.
+selected symbol (or list) and send it to the REPL for execution.
 Slimv defines various templates to build these special Lisp forms.
 You can override them to suit your needs. Use %1 for substituting the selected
-symbol's name or the selected form.
+symbol's name or the selected list.
 Here follows a list of the templates defined in Slimv.
 
                                                       *g:slimv_template_pprint*
@@ -716,8 +716,8 @@ The result of this is however that when entering text with paredit mode
 you will end up using the same keystrokes as without paredit mode.
 
 When you are trying to delete a '(' or ')' alone then it is not possible,
-the cursor is simply moved inside the form, where all regular characters can
-be deleted. When the form is finally empty: '()', then both parentheses are
+the cursor is simply moved inside the list, where all regular characters can
+be deleted. When the list is finally empty: '()', then both parentheses are
 deleted at once, so the balanced state is maintained.
 
 All the above holds for '[', ']' and '"' characters.
@@ -735,7 +735,7 @@ parameters of the following Clojure function definition:
                ^--- press D here
 
 then the closing ] as well as the last closing ) will not be deleted, because
-in the form you have an ( and a [ to be matched, so the result will be:
+in the list you have an ( and a [ to be matched, so the result will be:
 
 (defn myfunc [a])
 
@@ -780,7 +780,7 @@ Insert Mode:
                    Inserts '(' when inside comment or string.
 
     )              Moves the cursor to the next closing parenthesis mark of
-                   the current form. When pressed again then moves to the next
+                   the current list. When pressed again then moves to the next
                    outer closing parenthesis, etc, until the closing of the
                    top level form is reached.
                    Inserts ')' when inside comment or string.
@@ -790,7 +790,7 @@ Insert Mode:
                    Inserts '[' when inside comment or string.
 
     ]              Moves the cursor to the next closing square bracket of the
-                   current form. When pressed again then moves to the next
+                   current list. When pressed again then moves to the next
                    outer closing square bracket, etc, until the closing of the
                    top level form is reached.
                    Inserts ']' when inside comment or string.
@@ -803,20 +803,20 @@ Insert Mode:
     <BS>           When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the left. When
                    about to delete the opening part of the matched character
-                   with nothing inside, then the whole empty form is removed.
+                   with nothing inside, then the whole empty list is removed.
 
     <Del>          When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the right. When
                    about to delete the closing part of the matched character
-                   with nothing inside, then the whole empty form is removed.
+                   with nothing inside, then the whole empty list is removed.
 
 
 Normal Mode:
 
-    (              Finds opening '(' of the current form. Can be pressed
+    (              Finds opening '(' of the current list. Can be pressed
                    repeatedly until the opening of the top level form reached.
 
-    )              Finds closing ')' of the current form. Can be pressed
+    )              Finds closing ')' of the current list. Can be pressed
                    repeatedly until the closing of the top level form reached.
 
     <              If standing on a delimiter (parenthesis or square bracket)
@@ -840,14 +840,14 @@ Normal Mode:
     x  or  <Del>   When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the right. When
                    about to delete the closing part of the matched character
-                   with nothing inside, then the whole empty form is removed.
+                   with nothing inside, then the whole empty list is removed.
                    When preceded by a <count> value then delete this many
                    characters.
 
     X              When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the left. When
                    about to delete the opening part of the matched character
-                   with nothing inside, then the whole empty form is removed.
+                   with nothing inside, then the whole empty list is removed.
 
     D              Keep deleting characters towards the end of line,
                    maintaining the balanced state, i.e. keep the number of
@@ -867,12 +867,12 @@ Normal Mode:
 
 Visual Mode:
 
-    (              Finds opening '(' of the current form and selects the whole
-                   form. Can be pressed repeatedly until the top level form
+    (              Finds opening '(' of the current list and selects the whole
+                   list. Can be pressed repeatedly until the top level form
                    selected.
 
-    )              Finds closing ')' of the current form and selects the whole
-                   form. Can be pressed repeatedly until the top level form
+    )              Finds closing ')' of the current list and selects the whole
+                   list. Can be pressed repeatedly until the top level form
                    selected.
 
 
@@ -1003,7 +1003,7 @@ such mappings are not defined by Slimv.
 
     ==                      Reindent current line.
 
-    vab=   or    [(v%=      Select current form and reindent it.
+    vab=   or    [(v%=      Select current list and reindent it.
 
     99[(v%=                 Select top level form and reindent it.
 
@@ -1028,10 +1028,10 @@ for a Lisp programmer.
     :source $VIMRUNTIME/macros/matchit.vim
                             Adds extended matching with "%" to Vim.
 
-    vab    or    [(v%       Select current form.
-    vib                     Select current form without enclosing parentheses.
-    yab                     Yank current form.
-    dab                     Delete current form.
+    vab    or    [(v%       Select current list.
+    vib                     Select current list without enclosing parentheses.
+    yab                     Yank current list.
+    dab                     Delete current list.
 
     99[(v%                  Select top level form.
 
