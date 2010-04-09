@@ -632,10 +632,14 @@ function! PareditMoveLeft()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_closing_char
-        let closing = 1
+    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
+        let closing = 0
+        normal! l
+        let c0 = c0 + 1
     elseif line[c0-1] =~ s:any_opening_char
         let closing = 0
+    elseif line[c0-1] =~ s:any_closing_char
+        let closing = 1
     else
         " Can move only delimiters
         return
@@ -680,7 +684,11 @@ function! PareditMoveRight()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_opening_char
+    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
+        let opening = 1
+        normal! l
+        let c0 = c0 + 1
+    elseif line[c0-1] =~ s:any_opening_char
         let opening = 1
     elseif line[c0-1] =~ s:any_closing_char
         let opening = 0
