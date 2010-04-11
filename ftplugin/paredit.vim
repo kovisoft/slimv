@@ -9,31 +9,34 @@
 "
 " =====================================================================
 "
-" =====================================================================
-"  Buffer specific keybindings
-" =====================================================================
+" Buffer specific initialization
+function! PareditInitBuffer()
+    "  Buffer specific keybindings
+    inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
+    inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
+    inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
+    inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
+    inoremap <buffer> <expr>   "     PareditInsertQuotes()
+    inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
+    inoremap <buffer> <expr>   <Del> PareditDel()
+    nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
+    nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
+    vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+    vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+    nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
+    nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
+    nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
+    nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
+    nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
+    nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+endfunction
 
-inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
-inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
-inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
-inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
-inoremap <buffer> <expr>   "     PareditInsertQuotes()
-inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
-inoremap <buffer> <expr>   <Del> PareditDel()
-nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
-nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
-vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
-nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
-nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
-nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
-nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
-nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+" Must be called for all buffers
+call PareditInitBuffer()
 
 "  Load Once:
 if &cp || exists( 'g:paredit_loaded' )
@@ -130,10 +133,18 @@ function! PareditIndentTopLevelForm( level )
     "let &expandtab = save_exp
 endfunction
 
+" Is this a Slimv REPL buffer?
 function! s:IsReplBuffer()
-    return bufname( '%' ) =~ '.*\.repl\..*'
+    if exists( 'g:slimv_repl_dir' ) && exists( 'g:slimv_repl_file' )
+        let repl_name = g:slimv_repl_dir . g:slimv_repl_file
+        return bufnr( repl_name ) == bufnr( '%' )
+    else
+        return bufname( '%' ) =~ '.*\.repl\..*'
+    endif
 endfunction
 
+" Get Slimv REPL buffer last command prompt position
+" Return [0, 0] if this is not the REPL buffer
 function! s:GetReplPromptPos()
     if !s:IsReplBuffer()
         return [0, 0]
