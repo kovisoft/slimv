@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  09 Apr 2010
+" Last Change:  11 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -9,6 +9,32 @@
 "
 " =====================================================================
 "
+" =====================================================================
+"  Buffer specific keybindings
+" =====================================================================
+
+inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
+inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
+inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
+inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
+inoremap <buffer> <expr>   "     PareditInsertQuotes()
+inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
+inoremap <buffer> <expr>   <Del> PareditDel()
+nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
+nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
+vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
+nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
+nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
+nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
+nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
+nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
+nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
+nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
+nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
+nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+
 "  Load Once:
 if &cp || exists( 'g:paredit_loaded' )
     finish
@@ -104,15 +130,30 @@ function! PareditIndentTopLevelForm( level )
     "let &expandtab = save_exp
 endfunction
 
+function! s:IsReplBuffer()
+    return bufname( '%' ) =~ '.*\.repl\..*'
+endfunction
+
+function! s:GetReplPromptPos()
+    if !s:IsReplBuffer()
+        return [0, 0]
+    endif
+    return [ line( "'s" ), col( "'s" ) ]
+endfunction
+
 " Is the current top level form balanced, i.e all opening delimiters
 " have a matching closing delimiter
 function! PareditIsBalanced()
-    "TODO: do not go before the command prompt in the REPL buffer
     let l = line( '.' )
     let c =  col( '.' )
     let line = getline( '.' )
     let matchb = max( [l-g:paredit_matchlines, 1] )
     let matchf = min( [l+g:paredit_matchlines, line('$')] )
+    let prompt = line( "'s" )
+    if s:IsReplBuffer() && l >= prompt && matchb < prompt
+        " Do not go before the last command prompt in the REPL buffer
+        let matchb = prompt
+    endif
     let p1 = searchpair( '(', '', ')', 'brnmW', s:skip_sc, matchb )
     let p2 = searchpair( '(', '', ')',  'rnmW', s:skip_sc, matchf )
     if !(p1 == p2) && !(p1 == p2 - 1 && line[c-1] == '(') && !(p1 == p2 + 1 && line[c-1] == ')')
@@ -645,9 +686,13 @@ function! PareditMoveLeft()
         return
     endif
 
+    let [lp, cp] = s:GetReplPromptPos()
     let [l1, c1] = s:PrevElement( closing )
     if [l1, c1] == [0, 0]
         " No previous element found
+        return
+    elseif [lp, cp] != [0, 0] && l0 >= lp && (l1 < lp || (l1 == lp && c1 < cp))
+        " Do not go before the last command prompt in the REPL buffer
         return
     endif
     if !closing && c0 > 0 && line[c0-2] =~ s:any_macro_prefix
@@ -697,9 +742,13 @@ function! PareditMoveRight()
         return
     endif
 
+    let [lp, cp] = s:GetReplPromptPos()
     let [l1, c1] = s:NextElement( opening )
     if [l1, c1] == [0, 0]
         " No next element found
+        return
+    elseif [lp, cp] != [0, 0] && l0 < lp && l1 >= lp
+        " Do not go after the last command prompt in the REPL buffer
         return
     endif
     if opening && c0 > 0 && line[c0-2] =~ s:any_macro_prefix
@@ -729,30 +778,4 @@ function! PareditMoveRight()
     endif
     return
 endfunction
-
-" =====================================================================
-"  Keybindings
-" =====================================================================
-
-inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
-inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
-inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
-inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
-inoremap <buffer> <expr>   "     PareditInsertQuotes()
-inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
-inoremap <buffer> <expr>   <Del> PareditDel()
-nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
-nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
-vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
-nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
-nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
-nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
-nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
-nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
 
