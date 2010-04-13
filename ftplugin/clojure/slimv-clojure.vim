@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.6.0
-" Last Change:  11 Apr 2010
+" Last Change:  12 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -9,9 +9,6 @@
 "
 " =====================================================================
 "
-" Must always be loaded because of buffer specific keybindings
-runtime ftplugin/**/paredit.vim
-
 "  Load Once:
 if &cp || exists( 'g:slimv_clojure_loaded' )
     finish
