@@ -166,7 +166,7 @@ Script versions
 Reddit
 ---------------------------------------------------------------------------------------------
 
-Hi Reddit! I have just added Paredit Mode to my Slimv (Superior Lisp Interaction Mode for Vim) script. I submitted this to both /r/lisp and /r/Clojure because the script works for these languages. Paredit Mode for Vim is similar to how paredit.el works for Emacs: matched delimiters are added or removed in pairs, so that the balanced state of parens are maintained. I hope you'll find it useful.
+Hi Reddit! I have just added Paredit Mode to my Slimv (Superior Lisp Interaction Mode for Vim) script. I submitted this to both /r/lisp and /r/Clojure because the script works for these languages. Paredit Mode for Vim is similar to how paredit.el works for Emacs: matched delimiters are added or removed in pairs, so that the balanced state of parens are maintained. It is also possible to use Paredit Mode alone, without the other Slimv functionalities. I hope you'll find it useful.
 
 Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
 
