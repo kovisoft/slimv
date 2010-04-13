@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  12 Apr 2010
+" Last Change:  13 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -100,17 +100,17 @@ function! s:SynIDMatch( regexp )
 endfunction
 
 " Is the current cursor position inside a comment?
-function! PareditInsideComment()
+function! s:InsideComment()
     return s:SynIDMatch( 'comment' )
 endfunction
 
 " Is the current cursor position inside a string?
-function! PareditInsideString()
+function! s:InsideString()
     return s:SynIDMatch( 'string' )
 endfunction
 
 " Is the current cursor position inside a comment or string?
-function! PareditInsideCommentOrString()
+function! s:InsideCommentOrString()
     return s:SynIDMatch( 'string\|comment' )
 endfunction
 
@@ -151,7 +151,7 @@ endfunction
 
 " Is the current top level form balanced, i.e all opening delimiters
 " have a matching closing delimiter
-function! PareditIsBalanced()
+function! s:IsBalanced()
     let l = line( '.' )
     let c =  col( '.' )
     let line = getline( '.' )
@@ -217,7 +217,7 @@ endfunction
 
 " Insert opening type of a paired character, like ( or [.
 function! PareditInsertOpening( open, close )
-    if !g:paredit_mode || PareditInsideCommentOrString() || !PareditIsBalanced()
+    if !g:paredit_mode || s:InsideCommentOrString() || !s:IsBalanced()
         return a:open
     endif
     let retval = a:open . a:close . "\<Left>"
@@ -236,7 +236,7 @@ endfunction
 
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
-    if !g:paredit_mode || PareditInsideCommentOrString() || !PareditIsBalanced()
+    if !g:paredit_mode || s:InsideCommentOrString() || !s:IsBalanced()
         return a:close
     endif
     let line = getline( '.' )
@@ -248,22 +248,15 @@ function! PareditInsertClosing( open, close )
         let close = escape( a:close, '[]' )
         return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . s:skip_sc . "')\<CR>\<Right>"
         "TODO: indent after going to closing character
-"        let retval = "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . s:skip_sc . "')\<CR>"
-"        if a:close == ')'
-"            let retval = retval . "\<C-O>=[("
-"            let retval = retval . "\<C-O>:call searchpair('(','',')','W','" . s:skip_sc . "')\<CR>"
-"        endif
-"        let retval = retval . "\<Right>"
-"        return retval
     endif
 endfunction
 
 " Insert an (opening or closing) double quote
 function! PareditInsertQuotes()
-    if !g:paredit_mode || PareditInsideComment()
+    if !g:paredit_mode || s:InsideComment()
         return '"'
     endif
-    if PareditInsideString()
+    if s:InsideString()
         let line = getline( '.' )
         let pos = col( '.' ) - 1
         if line[pos] == '"'
@@ -290,7 +283,7 @@ function! PareditBackspace( repl_mode )
         return ""
     endif
 
-    if !g:paredit_mode || PareditInsideComment()
+    if !g:paredit_mode || s:InsideComment()
         return "\<BS>"
     endif
 
@@ -303,7 +296,7 @@ function! PareditBackspace( repl_mode )
     elseif line[pos-1] !~ s:any_matched_char
         " Deleting a non-special character
         return "\<BS>"
-    elseif line[pos-1] != '"' && !PareditIsBalanced()
+    elseif line[pos-1] != '"' && !s:IsBalanced()
         " Current top-form is unbalanced, can't retain paredit mode
         return "\<BS>"
     endif
@@ -319,7 +312,7 @@ endfunction
 
 " Handle <Del> keypress
 function! PareditDel()
-    if !g:paredit_mode || PareditInsideComment()
+    if !g:paredit_mode || s:InsideComment()
         return "\<Del>"
     endif
 
@@ -332,7 +325,7 @@ function! PareditDel()
     elseif line[pos] !~ s:any_matched_char
         " Erasing a non-special character
         return "\<Del>"
-    elseif line[pos] != '"' && !PareditIsBalanced()
+    elseif line[pos] != '"' && !s:IsBalanced()
         " Current top-form is unbalanced, can't retain paredit mode
         return "\<Del>"
     elseif pos == 0
@@ -357,9 +350,9 @@ function! s:EraseFwd( count )
     endif
     let c = a:count
     while c > 0
-        if PareditInsideString() && line[pos : pos+1] == '\"'
+        if s:InsideString() && line[pos : pos+1] == '\"'
             let line = strpart( line, 0, pos ) . strpart( line, pos+2 )
-        elseif PareditInsideComment() || ( PareditInsideString() && line[pos] != '"' )
+        elseif s:InsideComment() || ( s:InsideString() && line[pos] != '"' )
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
@@ -385,11 +378,11 @@ function! s:EraseBck( count )
     let pos = col( '.' ) - 1
     let c = a:count
     while c > 0 && pos > 0
-        if PareditInsideString() && pos > 1 && line[pos-2:pos-1] == '\"'
+        if s:InsideString() && pos > 1 && line[pos-2:pos-1] == '\"'
             let line = strpart( line, 0, pos-2 ) . strpart( line, pos )
             normal! h
             let pos = pos - 1
-        elseif PareditInsideComment() || ( PareditInsideString() && line[pos-1] != '"' )
+        elseif s:InsideComment() || ( s:InsideString() && line[pos-1] != '"' )
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         elseif line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
@@ -407,7 +400,7 @@ endfunction
 
 " Forward erasing a character in normal mode
 function! PareditEraseFwd()
-    if !g:paredit_mode || !PareditIsBalanced()
+    if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'x'
         else
@@ -421,7 +414,7 @@ endfunction
 
 " Backward erasing a character in normal mode
 function! PareditEraseBck()
-    if !g:paredit_mode || !PareditIsBalanced()
+    if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'X'
         else
@@ -436,7 +429,7 @@ endfunction
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
 function! PareditEraseFwdLine()
-    if !g:paredit_mode || !PareditIsBalanced()
+    if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'D'
         else
@@ -457,7 +450,7 @@ endfunction
 " Erasing all characters in the line in normal mode
 " Keeping the balanced state
 function! PareditEraseLine()
-    if !g:paredit_mode || !PareditIsBalanced()
+    if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'dd'
         else
@@ -517,7 +510,7 @@ function! s:PrevElement( skip_whitespc )
             " Beginning of line reached
             if symbol_pos != [0, 0]
                 let symbol_end = [l, c]
-                if !a:skip_whitespc && !PareditInsideString()
+                if !a:skip_whitespc && !s:InsideString()
                     " Newline before previous symbol
                     call setpos( '.', [0, l0, c0, 0] )
                     return [l, c]
@@ -531,11 +524,11 @@ function! s:PrevElement( skip_whitespc )
                 return [0, 0]
             endif
             let moved = 1
-        elseif PareditInsideComment()
+        elseif s:InsideComment()
             " Skip comments
         else
             let line = getline( '.' )
-            if PareditInsideString()
+            if s:InsideString()
                 let symbol_pos = [l, c]
             elseif symbol_pos == [0, 0]
                 if line[c-1] =~ s:any_closing_char
@@ -587,10 +580,10 @@ function! s:NextElement( skip_whitespc )
         let [l, c] = [line( '.' ), col( '.' )]
 
         " Skip comments
-        while [l, c] == [l1, c1] || PareditInsideComment()
+        while [l, c] == [l1, c1] || s:InsideComment()
             if symbol_pos != [0, 0]
                 let symbol_end = [l, c]
-                if !a:skip_whitespc && !PareditInsideString()
+                if !a:skip_whitespc && !s:InsideString()
                     " Next symbol ended with comment
                     call setpos( '.', [0, l0, c0, 0] )
                     return [l, c]
@@ -606,7 +599,7 @@ function! s:NextElement( skip_whitespc )
         endwhile
 
         let line = getline( '.' )
-        if PareditInsideString()
+        if s:InsideString()
             let symbol_pos = [l, c]
         elseif symbol_pos == [0, 0]
             if line[c-1] =~ s:any_macro_prefix && line[c] =~ s:any_opening_char
