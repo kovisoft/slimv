@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 09 Apr 2010
+*slimv.txt*                    Slimv                 Last Change: 12 Apr 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -6,15 +6,17 @@ Slimv                                                                  *slimv*
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
 the Lisp REPL, similarly to Emacs/SLIME.
+Slimv works on Windows and Linux, however the newly introduced paredit mode
+is operating system independent.
 
 |slimv-installation|         Installation
 |slimv-customization|        Customization
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
-|slimv-paredit|              Paredit mode
 |slimv-clojure|              Clojure support
 |slimv-profiling|            Profiling
 |slimv-hyperspec|            Hyperspec lookup and Completion
+|slimv-paredit|              Paredit mode
 |slimv-external|             External utilities
 |slimv-faq|                  Frequently Asked Questions
 |slimv-changelog|            Change Log
@@ -52,7 +54,6 @@ To install the script:
        doc/slimv.txt
        ftdetect/clojure.vim
        ftplugin/metering.lisp
-       ftplugin/paredit.vim
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
@@ -61,6 +62,7 @@ To install the script:
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
+       plugin/paredit.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
@@ -109,7 +111,6 @@ Uninstallation:
        doc/slimv.txt
        ftdetect/clojure.vim
        ftplugin/metering.*
-       ftplugin/paredit.vim
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
@@ -118,6 +119,7 @@ Uninstallation:
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
+       plugin/paredit.vim
        syntax/clojure/slimv-syntax-clojure.vim
 
     (Special note on metering.lisp: if the profiler was compiled, then the
@@ -693,6 +695,99 @@ While waiting for REPL output:
 
 
 ===============================================================================
+CLOJURE SUPPORT                                                 *slimv-clojure*
+
+Vim has a built-in support for Lisp, however it has no Clojure support by
+default. As Clojure is a Lisp dialect, Slimv simply reuses Vim's Lisp syntax
+and indent plugins for Clojure. It this does not suit your needs, then it is
+possible to download and install a separate Clojure plugin parallel to Slimv.
+
+In order to launch the Clojure REPL the variable |g:slimv_lisp| must be
+properly set up.
+The simplest definition is something like this, which assumes that the
+directory for clojure.jar is in the PATH. Please note that the whole expression
+needs to be enclosed in double quotes, as it will be passed to the server in
+one single command line argument:
+
+  let g:slimv_lisp = '"java -cp clojure.jar;clojure-contrib.jar clojure.main"'
+
+Here follows an example, which starts c:\Clojure\clojure.jar on Windows.
+Remember to escape the backslashes:
+
+  let g:slimv_lisp =
+  \ '"java -cp c:\\Clojure\\clojure.jar;c:\\Clojure\\clojure-contrib.jar clojure.main"'
+
+
+===============================================================================
+PROFILING                                                     *slimv-profiling*
+
+Slimv is capable pf utilizing SBCL's built-in profiler, and also the same
+monitoring/profiling package (metering.lisp) that is used by SLIME, at least
+for CLISP and maybe for some other Common Lisp implementations.
+Fortunately SLIME's metering.lisp is in public domain, so its current version
+(at the time of writing this document) is included in Slimv.
+The most recent version can be extracted from the main directory of SLIME.
+SLIME can be downloaded from http://common-lisp.net/project/slime/
+
+SBCL's profiler is ready to use by just starting the Lisp REPL.
+In order to use SLIME's profiler with CLISP it first must be compiled and
+loaded into a running REPL. Perform this with the 'Load-Profiler' command.
+If the compilation was successful then Slimv is ready to profile.
+
+Use the 'Profile' command to select functions for profiling, 'Unprofile' to
+deselect specific functions or 'Unprofile All' to deselect all functions.
+Obtain a list of profiled functions with 'Show Profiled'.
+use 'Profile-Report' to display profiling results.
+Reset profiling counters with 'Profile-Reset'.
+
+When the REPL is restarted, the profiler needs to be reloaded (only in case
+of CLISP): select the 'Load-Profiler' command again (this re-compiles
+metering.lisp).
+
+It is possible to override the default profile commands via the following
+templates (see |slimv_templates|):
+
+    |g:slimv_template_profile|
+    |g:slimv_template_unprofile|
+    |g:slimv_template_unprofile_all|
+    |g:slimv_template_show_profiled|
+    |g:slimv_template_profile_report|
+    |g:slimv_template_profile_reset|
+
+
+===============================================================================
+HYPERSPEC AND COMPLETION                                      *slimv-hyperspec*
+
+Slimv contains Common Lisp Hyperspec, Clojure API and JavaDoc symbol databases.
+When you are looking for the definition of a symbol, just place the cursor on
+the symbol and select the 'Hyperspec' function. If the symbol is found in the
+symbol database then the corresponding web page is displayed in the default
+browser. It is also possible to select this function having just the beginning
+of the symbol name, then the first match is presented to the user, and he/she
+is asked to confirm or edit the symbol name before the hyperspec lookup.
+
+It is possible to use a local copy of the Hyperspec, for this you need to
+define its base URL. See |g:slimv_clhs_root|, |g:slimv_cljapi_root| and
+|g:slimv_javadoc_root| for details.
+
+It is also possible to add user defined symbols to the Hyperspec database,
+see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
+
+
+Slimv uses the Hyperspec symbol database for symbol name completion, via
+Vim's omni-completion feature (if it is enabled and 'omnifunc' is not
+defined already to something else).
+Start to enter the symbol in Insert mode, then at some point press the
+<C-X> <C-O> (omni-complete) key combination or select the 'Complete Symbol'
+function. The first match in the symbol database is inserted at the cursor
+position and a list of matching symbols is displayed in a submenu.
+Use <C-N> to select the next match, <C-P> to select the previous match.
+
+See Vim help file |insert.txt| for details on the usage of the various
+completion functions built in Vim.
+
+
+===============================================================================
 PAREDIT MODE                                          *paredit* *slimv-paredit*
 
 Paredit mode is a special editing mode that keeps all matched characters
@@ -713,14 +808,16 @@ When you press ')' in insert mode then there's no need to insert a closing
 parenthesis mark (it is already there), so the cursor is simply advanced past
 the next closing parenthesis (then the next outer closing parenthesis, etc.).
 The result of this is however that when entering text with paredit mode
-you will end up using the same keystrokes as without paredit mode.
+you can use the same keystrokes as without paredit mode and you get the same
+result (of course you don't have to actually enter the closing parenthesis,
+as needed without paredit mode).
 
 When you are trying to delete a '(' or ')' alone then it is not possible,
 the cursor is simply moved inside the list, where all regular characters can
 be deleted. When the list is finally empty: '()', then both parentheses are
 deleted at once, so the balanced state is maintained.
 
-All the above holds for '[', ']' and '"' characters.
+All the above holds for [...] and "..." character pairs.
 
 When you are deleting multiple characters at once, e.g. deleting a whole line,
 or deleting till the end of the line, etc, then the deletion logic of a single
@@ -756,14 +853,21 @@ code, so if syntax is switched off, then paredit will not be suspended inside
 comments or strings.
 
 
-Paredit mode is set by default but it is possible to switch it out by putting
-the following statement in the .vimrc file:
+Paredit mode is set by default for .lisp and .clj files, but it is possible
+to switch it out by putting the following statement in the .vimrc file:
 
     let g:paredit_mode = 0
 
+You can switch on paredit mode for other file types as well. Here is how to
+set it for Scheme files:
+
+    au BufNewFile,BufRead *.scm call PareditInitBuffer()
+
 It is also possible to use the paredit mode alone, without the other parts of
-Slimv. The easiest way to do it is prevent Slimv from loading by adding this
-to your .vimrc file (and keep intact g:paredit_mode):
+Slimv. The easiest way to do it is to delete all Slimv related files from the 
+ftplugin directory. If you don't intend to use Slimv's indentation and syntax
+files, then you need only plugin/paredit.vim.
+Another way to prevent Slimv from loading by adding this to your .vimrc file:
 
     let g:slimv_loaded = 1
 
@@ -874,99 +978,6 @@ Visual Mode:
     )              Finds closing ')' of the current list and selects the whole
                    list. Can be pressed repeatedly until the top level form
                    selected.
-
-
-===============================================================================
-CLOJURE SUPPORT                                                 *slimv-clojure*
-
-Vim has a built-in support for Lisp, however it has no Clojure support by
-default. As Clojure is a Lisp dialect, Slimv simply reuses Vim's Lisp syntax
-and indent plugins for Clojure. It this does not suit your needs, then it is
-possible to download and install a separate Clojure plugin parallel to Slimv.
-
-In order to launch the Clojure REPL the variable |g:slimv_lisp| must be
-properly set up.
-The simplest definition is something like this, which assumes that the
-directory for clojure.jar is in the PATH. Please note that the whole expression
-needs to be enclosed in double quotes, as it will be passed to the server in
-one single command line argument:
-
-  let g:slimv_lisp = '"java -cp clojure.jar;clojure-contrib.jar clojure.main"'
-
-Here follows an example, which starts c:\Clojure\clojure.jar on Windows.
-Remember to escape the backslashes:
-
-  let g:slimv_lisp =
-  \ '"java -cp c:\\Clojure\\clojure.jar;c:\\Clojure\\clojure-contrib.jar clojure.main"'
-
-
-===============================================================================
-PROFILING                                                     *slimv-profiling*
-
-Slimv is capable pf utilizing SBCL's built-in profiler, and also the same
-monitoring/profiling package (metering.lisp) that is used by SLIME, at least
-for CLISP and maybe for some other Common Lisp implementations.
-Fortunately SLIME's metering.lisp is in public domain, so its current version
-(at the time of writing this document) is included in Slimv.
-The most recent version can be extracted from the main directory of SLIME.
-SLIME can be downloaded from http://common-lisp.net/project/slime/
-
-SBCL's profiler is ready to use by just starting the Lisp REPL.
-In order to use SLIME's profiler with CLISP it first must be compiled and
-loaded into a running REPL. Perform this with the 'Load-Profiler' command.
-If the compilation was successful then Slimv is ready to profile.
-
-Use the 'Profile' command to select functions for profiling, 'Unprofile' to
-deselect specific functions or 'Unprofile All' to deselect all functions.
-Obtain a list of profiled functions with 'Show Profiled'.
-use 'Profile-Report' to display profiling results.
-Reset profiling counters with 'Profile-Reset'.
-
-When the REPL is restarted, the profiler needs to be reloaded (only in case
-of CLISP): select the 'Load-Profiler' command again (this re-compiles
-metering.lisp).
-
-It is possible to override the default profile commands via the following
-templates (see |slimv_templates|):
-
-    |g:slimv_template_profile|
-    |g:slimv_template_unprofile|
-    |g:slimv_template_unprofile_all|
-    |g:slimv_template_show_profiled|
-    |g:slimv_template_profile_report|
-    |g:slimv_template_profile_reset|
-
-
-===============================================================================
-HYPERSPEC AND COMPLETION                                      *slimv-hyperspec*
-
-Slimv contains Common Lisp Hyperspec, Clojure API and JavaDoc symbol databases.
-When you are looking for the definition of a symbol, just place the cursor on
-the symbol and select the 'Hyperspec' function. If the symbol is found in the
-symbol database then the corresponding web page is displayed in the default
-browser. It is also possible to select this function having just the beginning
-of the symbol name, then the first match is presented to the user, and he/she
-is asked to confirm or edit the symbol name before the hyperspec lookup.
-
-It is possible to use a local copy of the Hyperspec, for this you need to
-define its base URL. See |g:slimv_clhs_root|, |g:slimv_cljapi_root| and
-|g:slimv_javadoc_root| for details.
-
-It is also possible to add user defined symbols to the Hyperspec database,
-see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
-
-
-Slimv uses the Hyperspec symbol database for symbol name completion, via
-Vim's omni-completion feature (if it is enabled and 'omnifunc' is not
-defined already to something else).
-Start to enter the symbol in Insert mode, then at some point press the
-<C-X> <C-O> (omni-complete) key combination or select the 'Complete Symbol'
-function. The first match in the symbol database is inserted at the cursor
-position and a list of matching symbols is displayed in a submenu.
-Use <C-N> to select the next match, <C-P> to select the previous match.
-
-See Vim help file |insert.txt| for details on the usage of the various
-completion functions built in Vim.
 
 
 ===============================================================================
