@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  11 Apr 2010
+" Last Change:  12 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -9,35 +9,6 @@
 "
 " =====================================================================
 "
-" Buffer specific initialization
-function! PareditInitBuffer()
-    "  Buffer specific keybindings
-    inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
-    inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
-    inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
-    inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
-    inoremap <buffer> <expr>   "     PareditInsertQuotes()
-    inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
-    inoremap <buffer> <expr>   <Del> PareditDel()
-    nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
-    nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
-    vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-    vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-    nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
-    nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
-    nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
-    nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-    nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-    nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-    nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
-    nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
-endfunction
-
-" Must be called for all buffers
-call PareditInitBuffer()
-
 "  Load Once:
 if &cp || exists( 'g:paredit_loaded' )
     finish
@@ -85,6 +56,32 @@ let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
 " =====================================================================
 "  General utility functions
 " =====================================================================
+
+" Buffer specific initialization
+function! PareditInitBuffer()
+    "  Buffer specific keybindings
+    inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
+    inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
+    inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
+    inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
+    inoremap <buffer> <expr>   "     PareditInsertQuotes()
+    inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
+    inoremap <buffer> <expr>   <Del> PareditDel()
+    nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
+    nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
+    vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+    vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+    nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
+    nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
+    nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
+    nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
+    nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
+    nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+endfunction
 
 " Toggle paredit mode
 function! PareditToggle()
@@ -789,4 +786,11 @@ function! PareditMoveRight()
     endif
     return
 endfunction
+
+" =====================================================================
+"  Autocommands
+" =====================================================================
+
+au BufNewFile,BufRead *.lisp call PareditInitBuffer()
+au BufNewFile,BufRead *.clj  call PareditInitBuffer()
 
