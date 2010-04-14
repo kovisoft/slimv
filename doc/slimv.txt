@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 12 Apr 2010
+*slimv.txt*                    Slimv                 Last Change: 14 Apr 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.0
@@ -203,6 +203,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_repl_wait|          Number of seconds to wait for the REPL output
                              to finish. Zero means inifinity.
 
+|g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
+
 
 Note: Most options require to restart the Vim session when modified.
 
@@ -396,6 +398,15 @@ Number of seconds to wait for the REPL output to finish. Zero means inifinity.
 While waiting, the output is displayed continuously. During that time the
 regular Vim commands are not available. For the posssible commands see
 |slimv-repl|.
+
+                                                            *g:slimv_repl_wrap*
+Set wrap mode for the REPL buffer, which means the lines longer than the
+window width will not be hidden to the right. Instead they will be continued
+in the next display line.
+This is the default behaviour as it is how regular REPL windows work. This
+mode also enables keybindings for cursor movements, so that an <Up> keypress
+will move the cursor one line on the display and not one line in the document.
+
 
                                                             *g:slimv_clhs_root*
                                                           *g:slimv_cljapi_root*
@@ -798,8 +809,9 @@ added or deleted, they are entered or removed in pairs.
 The function takes care of strings and comments, so no parenthesis and square
 bracket balancing is performed inside a string or comment.
 
-The idea is taken from the paredit mode of Emacs, but not all editing
-functions behave exactly the same way as they do in Emacs.
+The idea is taken from the paredit mode of Emacs, but not all paredit.el
+editing functions are implemented or behave exactly the same way as they do
+in Emacs.
 
 When you enter a '(' then a matching ')' is automatically inserted.
 If needed, spaces before and/or after the '()' pair are added.
@@ -809,13 +821,13 @@ parenthesis mark (it is already there), so the cursor is simply advanced past
 the next closing parenthesis (then the next outer closing parenthesis, etc.).
 The result of this is however that when entering text with paredit mode
 you can use the same keystrokes as without paredit mode and you get the same
-result (of course you don't have to actually enter the closing parenthesis,
-as needed without paredit mode).
+result. Of course you can choose to not enter the closing parenthesis (as
+required without paredit mode), because it is already there.
 
-When you are trying to delete a '(' or ')' alone then it is not possible,
-the cursor is simply moved inside the list, where all regular characters can
-be deleted. When the list is finally empty: '()', then both parentheses are
-deleted at once, so the balanced state is maintained.
+When you are trying to delete a ')' alone then it is not possible, the cursor
+is simply moved inside the list, where all regular characters can be deleted.
+When the list is finally empty: '()', then the deletion of the opening '('
+makes both parentheses erased at once, so the balanced state is maintained.
 
 All the above holds for [...] and "..." character pairs.
 
@@ -825,8 +837,8 @@ character is iterated. This means that the whole line or the characters till
 the end of the line, etc are not necessarily deleted all. Depending on the
 number of open/close parentheses, square brackets, double quotes some of them
 might be kept in order to maintain the balanced state.
-For example if you press D to delete till the end of line between the a and b
-parameters of the following Clojure function definition:
+For example if you press D in Normal mode to delete till the end of line
+between the a and b parameters of the following Clojure function definition:
 
 (defn myfunc [a b c] (+ a b c))
                ^--- press D here
@@ -853,20 +865,28 @@ code, so if syntax is switched off, then paredit will not be suspended inside
 comments or strings.
 
 
+Slurpage and Barfage known from Emacs is also possible but in a different
+fashion: you don't move the symbols but move the opening or closing parenthesis
+over the symbol or a sub-list. This way you can move any symbol or sub-list
+into or out of the current list. It is not possible to move the parenthesis
+over its pair, so for example if you move the opening parenthesis to the right,
+then it will stop at the matched closing parenthesis.
+
+
 Paredit mode is set by default for .lisp and .clj files, but it is possible
 to switch it out by putting the following statement in the .vimrc file:
 
     let g:paredit_mode = 0
 
-You can switch on paredit mode for other file types as well. Here is how to
-set it for Scheme files:
+You can enable paredit mode for other file types as well. Here is how to set
+it for Scheme files (meant to be added to your .vimrc file):
 
     au BufNewFile,BufRead *.scm call PareditInitBuffer()
 
 It is also possible to use the paredit mode alone, without the other parts of
 Slimv. The easiest way to do it is to delete all Slimv related files from the 
 ftplugin directory. If you don't intend to use Slimv's indentation and syntax
-files, then you need only plugin/paredit.vim.
+files, then you need to keep only plugin/paredit.vim.
 Another way to prevent Slimv from loading by adding this to your .vimrc file:
 
     let g:slimv_loaded = 1
@@ -1163,7 +1183,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.6.0  - Added paredit mode.
-       - Set wrap for REPL buffer.
+       - Set wrap mode for REPL buffer with keybindings.
 
 0.5.6  - Improved REPL buffer response time.
        - Added debug log flushing frequency.
@@ -1286,6 +1306,7 @@ TODO                                                               *slimv-todo*
 - Implement an own main loop in Vim for the REPL buffer, poll REPL output
   regularly, handle all Vim keypresses and commands inside the main loop,
   continuously update the REPL buffer.
+- Add Swank support, i.e. send commands to SLIME's Swank server.
 - Rewrite client/server in Lisp, so that no Python would be needed,
 - Or put the (Python) client part back into the .vim script, rewrite only the
   server part in Lisp.
