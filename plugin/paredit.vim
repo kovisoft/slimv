@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.0
-" Last Change:  13 Apr 2010
+" Last Change:  14 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -51,6 +51,8 @@ let s:any_matched_pair   = '()\|\[\]\|\"\"'
 let s:any_opening_char   = '(\|\['
 let s:any_closing_char   = ')\|\]'
 let s:any_openclose_char = '(\|\[\|)\|\]'
+let s:any_wsopen_char    = '\s\|(\|\['
+let s:any_wsclose_char   = '\s\|)\|\]'
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
 
 " =====================================================================
@@ -223,12 +225,14 @@ function! PareditInsertOpening( open, close )
     let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] !~ ' \|\\t\|)\|\]'
+    if line[pos] !~ s:any_wsclose_char
+        " Add a space after if needed
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
         let retval = a:open . a:close . "\<Left>"
     endif
-    if pos > 0 && line[pos-1] !~ ' \|\\t\|(\|\['
+    if pos > 0 && line[pos-1] !~ s:any_wsopen_char && line[pos-1] !~ s:any_macro_prefix
+        " Add a space before if needed
         let retval = " " . retval
     endif
     return retval
@@ -706,12 +710,12 @@ function! PareditMoveLeft()
     endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if closing && line[c+1] !~ '\s\|)'
+    if closing && line[c+1] !~ s:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
     endif
-    if !closing && c > 0 && line[c-len] !~ '\s\|('
+    if !closing && c > 0 && line[c-len] !~ s:any_wsopen_char
         " Insert a space before if needed
         if len > 1
             execute "normal! hi "
@@ -762,7 +766,7 @@ function! PareditMoveRight()
     endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if opening && c > 0 && line[c-len] !~ '\s\|('
+    if opening && c > 0 && line[c-len] !~ s:any_wsopen_char
         " Insert a space before if needed
         if len > 1
             execute "normal! hi "
@@ -772,7 +776,7 @@ function! PareditMoveRight()
             normal! l
         endif
     endif
-    if !opening && line[c+1] !~ '\s\|)'
+    if !opening && line[c+1] !~ s:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
