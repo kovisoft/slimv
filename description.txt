@@ -20,7 +20,7 @@ The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax h
 
 Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc. Symbol name completion is supported via Vim's omni-completion based on the hyperspec symbol database.
 
-Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element but move the opening or closing parenthesis over the element or a sub-list.
+Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element but move the opening or closing parenthesis over the element or sub-list.
 
 Check out the screenshot of Slimv having a clisp REPL buffer:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
@@ -98,7 +98,6 @@ Extract the zip archive into your vimfiles or runtime directory. The archive con
     *  doc/slimv.txt
     *  ftdetect/clojure.vim
     *  ftplugin/metering.lisp
-    *  ftplugin/paredit.vim
     *  ftplugin/slimv.py
     *  ftplugin/slimv.vim
     *  ftplugin/slimv-clhs.vim
@@ -107,6 +106,7 @@ Extract the zip archive into your vimfiles or runtime directory. The archive con
     *  ftplugin/clojure/slimv-clojure.vim
     *  ftplugin/lisp/slimv-lisp.vim
     *  indent/clojure.vim
+    *  plugin/paredit.vim
     *  syntax/clojure/slimv-syntax-clojure.vim
 
 Slimv works on Windows and on Linux, Cygwin is not supported. The script requires the following programs installed on your system:
