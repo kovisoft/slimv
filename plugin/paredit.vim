@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.6.0
-" Last Change:  14 Apr 2010
+" Version:      0.6.1
+" Last Change:  20 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -83,6 +83,12 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
     nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
     nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+
+    nnoremap <buffer> <silent> <Leader>S :<C-U>call PareditSplit()<CR>
+    nnoremap <buffer> <silent> <Leader>J :<C-U>call PareditJoin()<CR>
+    nnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrap()<CR>
+    vnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrapSelection()<CR>
+    "nnoremap <buffer> <silent> <Leader>I :<C-U>call PareditSplice()<CR>
 endfunction
 
 " Toggle paredit mode
@@ -465,16 +471,8 @@ function! PareditEraseLine()
 
     let c = v:count1
     while c > 0
+        normal! 0
         call PareditEraseFwdLine()
-
-        let lastcol = -1
-        let lastlen = -1
-        while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
-            let lastcol = col( '.' )
-            let lastlen = len( getline( '.' ) )
-            call s:EraseBck( 1 )
-        endwhile
-
         if len( getline( '.' ) ) == 0
             normal! dd
         elseif c > 1
@@ -672,17 +670,35 @@ function! s:MoveChar( l0, c0, l1, c1 )
     endif
 endfunction
 
+" Find a paren nearby to move
+function! s:FindParenNearby()
+    let line = getline( '.' )
+    let c0 =  col( '.' )
+    if line[c0-1] !~ s:any_openclose_char
+        " OK, we are not standing on a paren to move, but check if there is one nearby
+        if (c0 < 2 || line[c0-2] !~ s:any_openclose_char) && line[c0] =~ s:any_openclose_char
+            normal! l
+        elseif c0 > 1 && line[c0-2] =~ s:any_openclose_char && line[c0] !~ s:any_openclose_char
+            normal! h
+        endif
+    endif
+
+    " Skip macro prefix character    
+    let c0 =  col( '.' )
+    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
+        normal! l
+    endif
+endfunction
+
 " Move delimiter one atom or s-expression to the left
 function! PareditMoveLeft()
+    call s:FindParenNearby()
+
     let line = getline( '.' )
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
-        let closing = 0
-        normal! l
-        let c0 = c0 + 1
-    elseif line[c0-1] =~ s:any_opening_char
+    if line[c0-1] =~ s:any_opening_char
         let closing = 0
     elseif line[c0-1] =~ s:any_closing_char
         let closing = 1
@@ -730,15 +746,14 @@ endfunction
 
 " Move delimiter one atom or s-expression to the right
 function! PareditMoveRight()
+    call s:FindParenNearby()
+
+    "TODO: move ')' in '() xxx' leaves space
     let line = getline( '.' )
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
-        let opening = 1
-        normal! l
-        let c0 = c0 + 1
-    elseif line[c0-1] =~ s:any_opening_char
+    if line[c0-1] =~ s:any_opening_char
         let opening = 1
     elseif line[c0-1] =~ s:any_closing_char
         let opening = 0
@@ -783,6 +798,75 @@ function! PareditMoveRight()
     endif
     return
 endfunction
+
+" Split list or string at the cursor position
+function! PareditSplit()
+    "TODO: also split []
+    "TODO: handle whitespaces
+    if !g:paredit_mode || s:InsideComment()
+        return
+    endif
+    if s:InsideString()
+        normal! i" "
+    else
+        normal! i) (
+    endif
+endfunction
+
+" Join two neighboring lists or strings
+function! PareditJoin()
+    if !g:paredit_mode || s:InsideCommentOrString()
+        return
+    endif
+    let [l0, c0] = searchpos('\S', 'nbW', s:skip_c)
+    let [l1, c1] = searchpos('\S', 'ncW', s:skip_c)
+    if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
+        return
+    endif
+    let line0 = getline( l0 )
+    let line1 = getline( l1 )
+    if (line0[c0-1] == ')' && line1[c1-1] == '(') || (line0[c0-1] == ']' && line1[c1-1] == '[') || (line0[c0-1] == '"' && line1[c1-1] == '"')
+        if l0 == l1
+            " First list ends on the same line where the second list begins
+            let line0 = strpart( line0, 0, c0-1 ) . ' ' . strpart( line0, c1 )
+            call setline( l0, line0 )
+        else
+            " First list ends on a line different from where the second list begins
+            let line0 = strpart( line0, 0, c0-1 )
+            let line1 = strpart( line1, 0, c1-1 ) . strpart( line1, c1 )
+            call setline( l0, line0 )
+            call setline( l1, line1 )
+        endif
+    endif
+endfunction
+
+" Wrap current visual block in parentheses
+function! s:WrapSelection()
+    let l0 = line( "'<" )
+    let l1 = line( "'>" )
+    let c0 = col( "'<" )
+    let c1 = col( "'>" )
+    call setpos( '.', [0, l0, c0, 0] )
+    normal! i(
+    call setpos( '.', [0, l1, c1 + (l0 == l1), 0] )
+    normal! i)
+endfunction
+
+" Wrap current visual block in parentheses
+" Keep visual mode
+function! PareditWrapSelection()
+    call s:WrapSelection()
+    normal! gvl
+endfunction
+
+" Wrap current symbol in parentheses
+function! PareditWrap()
+    normal! ms
+    execute "normal! " . "viw\<Esc>"
+    call s:WrapSelection()
+    normal! `sl
+endfunction
+
 
 " =====================================================================
 "  Autocommands
