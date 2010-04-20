@@ -36,6 +36,11 @@ if !exists( 'g:paredit_matchlines' )
     let g:paredit_matchlines = 100
 endif
 
+" Use short keymaps, i.e. J instead of ,J
+if !exists( 'g:paredit_shortmaps' )
+    let g:paredit_shortmaps = 1
+endif
+
 " =====================================================================
 "  Other variable definitions
 " =====================================================================
@@ -81,14 +86,30 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
     nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
     nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-    nnoremap <buffer> <silent> S     0:<C-U>call PareditEraseFwdLine()<CR>A
     nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
+    nnoremap <buffer> <silent> cc    0:<C-U>call PareditEraseFwdLine()<CR>A
 
-    nnoremap <buffer> <silent> <Leader>S :<C-U>call PareditSplit()<CR>
-    nnoremap <buffer> <silent> <Leader>J :<C-U>call PareditJoin()<CR>
-    nnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrap()<CR>
-    vnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrapSelection()<CR>
-    "nnoremap <buffer> <silent> <Leader>I :<C-U>call PareditSplice()<CR>
+    if g:paredit_shortmaps
+        " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
+        nnoremap <buffer> <silent> O         :<C-U>call PareditSplit()<CR>
+        nnoremap <buffer> <silent> J         :<C-U>call PareditJoin()<CR>
+        nnoremap <buffer> <silent> W         :<C-U>call PareditWrap()<CR>
+        vnoremap <buffer> <silent> W         :<C-U>call PareditWrapSelection()<CR>
+        nnoremap <buffer> <silent> S         :<C-U>call PareditSplice()<CR>
+        nnoremap <buffer> <silent> <Leader>O :<C-U>normal! O<CR>
+        nnoremap <buffer> <silent> <Leader>J :<C-U>normal! J<CR>
+        nnoremap <buffer> <silent> <Leader>W :<C-U>normal! W<CR>
+        vnoremap <buffer> <silent> <Leader>W :<C-U>normal! W<CR>
+        nnoremap <buffer> <silent> <Leader>S :<C-U>normal! S<CR>
+    else
+        " Longer keymaps with <Leader> prefix
+        nnoremap <buffer> <silent> S         0:<C-U>call PareditEraseFwdLine()<CR>A
+        nnoremap <buffer> <silent> <Leader>O :<C-U>call PareditSplit()<CR>
+        nnoremap <buffer> <silent> <Leader>J :<C-U>call PareditJoin()<CR>
+        nnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrap()<CR>
+        vnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrapSelection()<CR>
+        nnoremap <buffer> <silent> <Leader>S :<C-U>call PareditSplice()<CR>
+    endif
 endfunction
 
 " Toggle paredit mode
