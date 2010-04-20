@@ -888,6 +888,18 @@ function! PareditWrap()
     normal! `sl
 endfunction
 
+" Splice current list into the containing list
+function! PareditSplice()
+    "TODO: handle []
+    call PareditFindClosing( '(', ')', 0 )
+    normal! %
+    let l = line( '.' )
+    let c = col( '.' )
+    normal! %x
+    call setpos( '.', [0, l, c, 0] )
+    normal! x
+endfunction
+
 
 " =====================================================================
 "  Autocommands
