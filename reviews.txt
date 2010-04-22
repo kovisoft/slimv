@@ -1,0 +1,19 @@
+daniel@solanogomez.org
+
+http://www.deepbluelambda.org/programming/clojure/programming-clojure-with-vim
+
+Slimv
+
+Slimv is a relatively unknown plug-in in the Clojure community. It is written by Tamas Kovacs, and originated as plug-in for Lisp programmers. However, in the past few versions, it has begun to support Clojure.
+
+Slimv uses a Python script to launch a REPL, to which it sends commands in a way, in principle, not terribly unlike slime.vim. Instead of running a REPL using Screen, it launches the REPL in a new terminal.
+
+Unlike slime.vim, it seems like it supports a much greater amount of functionality, much like VimClojure. In fact, it supports having a REPL inside of Vim that has the potential to be vastly superior to the one provided by VimClojure. In particular, it allows using the arrow keys in insert mode to navigate the REPL history.
+
+Unfortunately, the current version is a bit buggy. For example, the REPL works, but after every command I get series of Vim errors that, although apparently harmless, make the experience intolerable.
+
+The latest version also includes a paredit plug-in, that promises some of the features of Emacs’ paredit minor mode. Unfortunately, I found it fairly buggy. For example, in one case where I wanted to delete to the end of a line using D, it deleted my entire line. In another case when I wanted to move a one-line def using dd and p, I found that the p pasted nothing at all. Yanking and putting still worked, though.
+
+I think Slimv has some great features, but until some of these bugs are worked out, it is not going to be my plug-in of choice. Unfortunately, there does not seem to be a project page or repository available anywhere for Slimv.
+
+
