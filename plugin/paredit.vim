@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.1
-" Last Change:  20 Apr 2010
+" Last Change:  22 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -59,6 +59,8 @@ let s:any_openclose_char = '(\|\[\|)\|\]'
 let s:any_wsopen_char    = '\s\|(\|\['
 let s:any_wsclose_char   = '\s\|)\|\]'
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
+
+let s:yank_list          = []
 
 " =====================================================================
 "  General utility functions
@@ -290,15 +292,16 @@ function! PareditInsertQuotes()
     if s:InsideString()
         let line = getline( '.' )
         let pos = col( '.' ) - 1
+        "TODO: skip comments in search(...)
         if line[pos] == '"'
             " Standing on a ", just move to the right
             return "\<Right>"
-        elseif (pos > 0 && line[pos-1] == '\') || search('[^\\]"\|^"', 'nW', s:skip_c) == 0
+        elseif (pos > 0 && line[pos-1] == '\') || search('[^\\]"\|^"', 'nW') == 0
             " We don't have any closing ", insert one
             return '"'
         else
             " Move to the closing "
-            return "\<C-O>:call search('" . '[^\\]"\|^"' . "','eW','" . s:skip_c . "')\<CR>\<Right>"
+            return "\<C-O>:call search('" . '[^\\]"\|^"' . "','eW')\<CR>\<Right>"
         endif
     else
         " Outside of string: insert a pair of ""
@@ -376,31 +379,45 @@ endfunction
 function! s:EraseFwd( count )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if pos == len(line)
-        let pos = pos - 1
-    endif
     let c = a:count
+    let reg = @1
     while c > 0
+        "TODO: remove not deleted parens from reg
         if s:InsideString() && line[pos : pos+1] == '\"'
+            let reg = reg . line[pos : pos+1]
             let line = strpart( line, 0, pos ) . strpart( line, pos+2 )
         elseif s:InsideComment() || ( s:InsideString() && line[pos] != '"' )
+            let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
+            if len(s:yank_list) > 0
+                let p2 = s:yank_list[0]
+                let s:yank_list = s:yank_list[1:]
+            else
+                let p2 = 0
+            endif
+            let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
+            let reg = reg . line[pos]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
             let pos = pos - 1
             normal! h
         elseif line[pos] =~ s:any_matched_char
             " Character-pair is not empty, don't erase just move inside
+            if line[pos] =~ s:any_opening_char
+                let s:yank_list = [len(reg)] + s:yank_list
+            endif
             let pos = pos + 1
             normal! l
-        else
+        elseif pos < len(line)
             " Erasing a non-special character
+            let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         endif
         let c = c - 1
     endwhile
     call setline( '.', line )
+    let @1 = reg
 endfunction
 
 " Backward erasing a character in normal mode, do not check if current form balanced
@@ -440,6 +457,8 @@ function! PareditEraseFwd()
         return
     endif
 
+    let @1 = ''
+    let s:yank_list = []
     call s:EraseFwd( v:count1 )
 endfunction
 
@@ -459,16 +478,7 @@ endfunction
 
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
-function! PareditEraseFwdLine()
-    if !g:paredit_mode || !s:IsBalanced()
-        if v:count > 0
-            silent execute 'normal! ' . v:count . 'D'
-        else
-            normal! D
-        endif
-        return
-    endif
-
+function! s:EraseFwdLine()
     let lastcol = -1
     let lastlen = -1
     while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
@@ -478,9 +488,28 @@ function! PareditEraseFwdLine()
     endwhile
 endfunction
 
+" Forward erasing character till the end of line in normal mode
+" Keeping the balanced state
+function! PareditEraseFwdLine()
+    "TODO: put erased characters into the yank buffer for pasting
+    if !g:paredit_mode || !s:IsBalanced()
+        if v:count > 0
+            silent execute 'normal! ' . v:count . 'D'
+        else
+            normal! D
+        endif
+        return
+    endif
+
+    let @1 = ''
+    let s:yank_list = []
+    call s:EraseFwdLine()
+endfunction
+
 " Erasing all characters in the line in normal mode
 " Keeping the balanced state
 function! PareditEraseLine()
+    "TODO: put erased line(s) into the yank buffer for pasting
     if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'dd'
@@ -490,14 +519,19 @@ function! PareditEraseLine()
         return
     endif
 
+    normal! 0
+    let @1 = ''
+    let s:yank_list = []
     let c = v:count1
     while c > 0
-        normal! 0
-        call PareditEraseFwdLine()
+        call s:EraseFwdLine()
         if len( getline( '.' ) ) == 0
+            let reg = @1
             normal! dd
+            let @1 = reg . "\n"
         elseif c > 1
             normal! J
+            let @1 = @1 . "\n"
         endif
         let c = c - 1
     endwhile
@@ -839,8 +873,9 @@ function! PareditJoin()
     if !g:paredit_mode || s:InsideCommentOrString()
         return
     endif
-    let [l0, c0] = searchpos('\S', 'nbW', s:skip_c)
-    let [l1, c1] = searchpos('\S', 'ncW', s:skip_c)
+    "TODO: skip parens in comments
+    let [l0, c0] = searchpos(s:any_openclose_char, 'nbW')
+    let [l1, c1] = searchpos(s:any_openclose_char, 'ncW')
     if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
         return
     endif
@@ -867,6 +902,16 @@ function! s:WrapSelection()
     let l1 = line( "'>" )
     let c0 = col( "'<" )
     let c1 = col( "'>" )
+    if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
+        " No selection
+        return
+    endif
+    if l0 > l1 || (l0 == l1 && c0 > c1)
+        " Swap both ends of selection to make [l0, c0] < [l1, c1]
+        let [ltmp, ctmp] = [l0, c0]
+        let [l0, c0] = [l1, c1]
+        let [l1, c1] = [ltmp, ctmp]
+    endif
     call setpos( '.', [0, l0, c0, 0] )
     normal! i(
     call setpos( '.', [0, l1, c1 + (l0 == l1), 0] )
@@ -877,15 +922,19 @@ endfunction
 " Keep visual mode
 function! PareditWrapSelection()
     call s:WrapSelection()
-    normal! gvl
+    if line( "'<" ) == line( "'>" )
+        normal! gvolol
+    else
+        normal! gvolo
+    endif
 endfunction
 
 " Wrap current symbol in parentheses
+" Stand right to the opening paren
 function! PareditWrap()
-    normal! ms
     execute "normal! " . "viw\<Esc>"
     call s:WrapSelection()
-    normal! `sl
+    normal! %
 endfunction
 
 " Splice current list into the containing list
