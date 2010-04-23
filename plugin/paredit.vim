@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.1
-" Last Change:  22 Apr 2010
+" Last Change:  23 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -375,38 +375,65 @@ function! PareditDel()
     endif
 endfunction
 
+" Initialize yank position list
+function! s:InitYankList()
+    let @" = ''
+    let s:yank_list = []
+endfunction
+
+" Add position to the yank list
+function! s:AddYankList( pos )
+"echo input('111 '.a:pos)
+    let s:yank_list = [a:pos] + s:yank_list
+endfunction
+
+" Remove the head of yank list and return it
+function! s:RemoveYankList()
+    if len(s:yank_list) > 0
+        let pos = s:yank_list[0]
+        let s:yank_list = s:yank_list[1:]
+        return pos
+    else
+        return 0
+    endif
+endfunction
+
 " Forward erasing a character in normal mode, do not check if current form balanced
-function! s:EraseFwd( count )
+function! s:EraseFwd( count, startcol )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
+    let reg = @"
     let c = a:count
-    let reg = @1
     while c > 0
-        "TODO: remove not deleted parens from reg
         if s:InsideString() && line[pos : pos+1] == '\"'
+            " Erasing a \" inside string
             let reg = reg . line[pos : pos+1]
             let line = strpart( line, 0, pos ) . strpart( line, pos+2 )
+        elseif s:InsideComment() && line[pos] == ';' && a:startcol >= 0
+            " Erasing the whole comment, only when erasing a block of characters
+            let reg = reg . strpart( line, pos )
+            let line = strpart( line, 0, pos )
         elseif s:InsideComment() || ( s:InsideString() && line[pos] != '"' )
+            " Erasing any character inside string or comment
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
-            " Erasing an empty character-pair
-            if len(s:yank_list) > 0
-                let p2 = s:yank_list[0]
-                let s:yank_list = s:yank_list[1:]
+            if pos > a:startcol
+                " Erasing an empty character-pair
+                let p2 = s:RemoveYankList()
+                let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
+                let reg = reg . line[pos]
+                let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
+                let pos = pos - 1
+                normal! h
             else
-                let p2 = 0
+                " Can't erase character-pair: it would move the cursor before startcol
+                let pos = pos + 1
+                normal! l
             endif
-            let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
-            let reg = reg . line[pos]
-            let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-            let pos = pos - 1
-            normal! h
         elseif line[pos] =~ s:any_matched_char
             " Character-pair is not empty, don't erase just move inside
-            if line[pos] =~ s:any_opening_char
-                let s:yank_list = [len(reg)] + s:yank_list
-            endif
+            call s:AddYankList( len(reg) )
             let pos = pos + 1
             normal! l
         elseif pos < len(line)
@@ -417,26 +444,36 @@ function! s:EraseFwd( count )
         let c = c - 1
     endwhile
     call setline( '.', line )
-    let @1 = reg
+    let @" = reg
 endfunction
 
 " Backward erasing a character in normal mode, do not check if current form balanced
 function! s:EraseBck( count )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
+    let reg = @"
     let c = a:count
     while c > 0 && pos > 0
         if s:InsideString() && pos > 1 && line[pos-2:pos-1] == '\"'
+            let reg = reg . line[pos-2 : pos-1]
             let line = strpart( line, 0, pos-2 ) . strpart( line, pos )
             normal! h
             let pos = pos - 1
         elseif s:InsideComment() || ( s:InsideString() && line[pos-1] != '"' )
+            let reg = reg . line[pos-1]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         elseif line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
+            let p2 = s:RemoveYankList()
+            let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
+            let reg = reg . line[pos]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-        elseif line[pos-1] !~ s:any_matched_char
+        elseif line[pos-1] =~ s:any_matched_char
+            " Character-pair is not empty, don't erase
+            call s:AddYankList( len(reg) )
+        else
             " Erasing a non-special character
+            let reg = reg . line[pos-1]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         endif
         normal! h
@@ -444,6 +481,7 @@ function! s:EraseBck( count )
         let c = c - 1
     endwhile
     call setline( '.', line )
+    let @" = reg
 endfunction
 
 " Forward erasing a character in normal mode
@@ -457,9 +495,8 @@ function! PareditEraseFwd()
         return
     endif
 
-    let @1 = ''
-    let s:yank_list = []
-    call s:EraseFwd( v:count1 )
+    call s:InitYankList()
+    call s:EraseFwd( v:count1, -1 )
 endfunction
 
 " Backward erasing a character in normal mode
@@ -473,25 +510,26 @@ function! PareditEraseBck()
         return
     endif
 
+    call s:InitYankList()
     call s:EraseBck( v:count1 )
 endfunction
 
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
 function! s:EraseFwdLine()
+    let startcol = col( '.' )
     let lastcol = -1
     let lastlen = -1
     while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
         let lastcol = col( '.' )
         let lastlen = len( getline( '.' ) )
-        call s:EraseFwd( 1 )
+        call s:EraseFwd( 1, startcol-1 )
     endwhile
 endfunction
 
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
 function! PareditEraseFwdLine()
-    "TODO: put erased characters into the yank buffer for pasting
     if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'D'
@@ -501,15 +539,13 @@ function! PareditEraseFwdLine()
         return
     endif
 
-    let @1 = ''
-    let s:yank_list = []
+    call s:InitYankList()
     call s:EraseFwdLine()
 endfunction
 
 " Erasing all characters in the line in normal mode
 " Keeping the balanced state
 function! PareditEraseLine()
-    "TODO: put erased line(s) into the yank buffer for pasting
     if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
             silent execute 'normal! ' . v:count . 'dd'
@@ -520,18 +556,17 @@ function! PareditEraseLine()
     endif
 
     normal! 0
-    let @1 = ''
-    let s:yank_list = []
+    call s:InitYankList()
     let c = v:count1
     while c > 0
         call s:EraseFwdLine()
         if len( getline( '.' ) ) == 0
-            let reg = @1
+            let reg = @"
             normal! dd
-            let @1 = reg . "\n"
+            let @" = reg . "\n"
         elseif c > 1
             normal! J
-            let @1 = @1 . "\n"
+            let @" = @" . "\n"
         endif
         let c = c - 1
     endwhile
