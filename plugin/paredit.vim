@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.1
-" Last Change:  23 Apr 2010
+" Last Change:  24 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -80,8 +80,6 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
     vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
     vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-    nnoremap <buffer> <silent> <     :<C-U>call PareditMoveLeft()<CR>
-    nnoremap <buffer> <silent> >     :<C-U>call PareditMoveRight()<CR>
     nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
     nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
     nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
@@ -93,11 +91,15 @@ function! PareditInitBuffer()
 
     if g:paredit_shortmaps
         " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
+        nnoremap <buffer> <silent> <         :<C-U>call PareditMoveLeft()<CR>
+        nnoremap <buffer> <silent> >         :<C-U>call PareditMoveRight()<CR>
         nnoremap <buffer> <silent> O         :<C-U>call PareditSplit()<CR>
         nnoremap <buffer> <silent> J         :<C-U>call PareditJoin()<CR>
         nnoremap <buffer> <silent> W         :<C-U>call PareditWrap()<CR>
         vnoremap <buffer> <silent> W         :<C-U>call PareditWrapSelection()<CR>
         nnoremap <buffer> <silent> S         :<C-U>call PareditSplice()<CR>
+        nnoremap <buffer> <silent> <Leader>< :<C-U>normal! <<CR>
+        nnoremap <buffer> <silent> <Leader>> :<C-U>normal! ><CR>
         nnoremap <buffer> <silent> <Leader>O :<C-U>normal! O<CR>
         nnoremap <buffer> <silent> <Leader>J :<C-U>normal! J<CR>
         nnoremap <buffer> <silent> <Leader>W :<C-U>normal! W<CR>
@@ -106,6 +108,8 @@ function! PareditInitBuffer()
     else
         " Longer keymaps with <Leader> prefix
         nnoremap <buffer> <silent> S         0:<C-U>call PareditEraseFwdLine()<CR>A
+        nnoremap <buffer> <silent> <Leader>< :<C-U>call PareditMoveLeft()<CR>
+        nnoremap <buffer> <silent> <Leader>> :<C-U>call PareditMoveRight()<CR>
         nnoremap <buffer> <silent> <Leader>O :<C-U>call PareditSplit()<CR>
         nnoremap <buffer> <silent> <Leader>J :<C-U>call PareditJoin()<CR>
         nnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrap()<CR>
@@ -892,13 +896,18 @@ endfunction
 " Split list or string at the cursor position
 function! PareditSplit()
     "TODO: also split []
-    "TODO: handle whitespaces
     if !g:paredit_mode || s:InsideComment()
         return
     endif
     if s:InsideString()
         normal! i" "
     else
+        while getline('.')[col('.')-1] =~ '\s'
+            normal! x
+        endwhile
+        while col('.') > 1 && getline('.')[col('.')-2] =~ '\s'
+            normal! X
+        endwhile
         normal! i) (
     endif
 endfunction
@@ -909,8 +918,8 @@ function! PareditJoin()
         return
     endif
     "TODO: skip parens in comments
-    let [l0, c0] = searchpos(s:any_openclose_char, 'nbW')
-    let [l1, c1] = searchpos(s:any_openclose_char, 'ncW')
+    let [l0, c0] = searchpos(s:any_matched_char, 'nbW')
+    let [l1, c1] = searchpos(s:any_matched_char, 'ncW')
     if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
         return
     endif
@@ -947,10 +956,13 @@ function! s:WrapSelection()
         let [l0, c0] = [l1, c1]
         let [l1, c1] = [ltmp, ctmp]
     endif
+    let save_ve = &ve
+    set ve=all 
     call setpos( '.', [0, l0, c0, 0] )
     normal! i(
     call setpos( '.', [0, l1, c1 + (l0 == l1), 0] )
     normal! i)
+    let &ve = save_ve
 endfunction
 
 " Wrap current visual block in parentheses
