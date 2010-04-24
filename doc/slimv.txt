@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Apr 2010
+*slimv.txt*                    Slimv                 Last Change: 24 Apr 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.6.0
+                               Version 0.6.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -143,6 +143,9 @@ Below that list follows the detailed explanation on each option.
                              when checking if the current form is balanced.
 
 |g:paredit_mode|             If nonzero, paredit mode is switched on.
+
+|g:paredit_shortmaps|        If nonzero, paredit is remapping some one-letter
+                             Vim commands that are not frequently used.
 
 |g:slimv_clhs_root|          Base URL for the Common Lisp Hyperspec.
 
@@ -353,14 +356,24 @@ If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
 
+                                                         *g:paredit_matchlines*
+Number of lines to look backward and forward when checking if the current
+top level form is balanced in paredit mode. Default is 100.
+
+
                                                                *g:paredit_mode*
 If nonzero then paredit mode is switched on, i.e. Slimv tries to keep the
 balanced state of parens. See |g:slimv-paredit|.
 
 
-                                                         *g:paredit_matchlines*
-Number of lines to look backward and forward when checking if the current
-top level form is balanced in paredit mode. Default is 100.
+                                                          *g:paredit_shortmaps*
+If nonzero, paredit is remapping some one-letter normal mode Vim commands that
+are not frequently used. These are <, >, J, O, W, S. The original function of
+these maps then can be reached via the <Leader> prefix (which is the ","
+character by default in Slimv).
+If you want to keep the original Vim mappings then set this variable to zero
+in your .vimrc file, which makes the new paredit functions be mapped with the
+<Leader> prefix.
 
 
                                                              *g:slimv_repl_dir*
@@ -895,7 +908,10 @@ Slimv core will not be loaded but paredit will be loaded and assigned to
 .lisp and .clj files.
 
 
-Here follows a list of paredit keybindings.
+Here follows a list of paredit keybindings. Please note that if variable
+|g:paredit_shortmaps| is zero, then the following normal mode mappings get a
+<Leader> prefix (and the original Vim functions are kept):
+                   <, >, J, O, W, S
 
 Insert Mode:
 
@@ -951,6 +967,9 @@ Normal Mode:
                    to the left of the ')' going out of the current list.
                    Pressing '<' when standing on a '(' makes the s-expression
                    to the left of the '(' coming into the current list.
+                   For example pressing < at position marked with |:
+                       (aaa bbb|)        --->    (aaa) bbb
+                       aaa |(bbb)        --->    (aaa bbb)
 
     >              If standing on a delimiter (parenthesis or square bracket)
                    then moves it to the right by slurping or barfing the
@@ -960,6 +979,35 @@ Normal Mode:
                    to the right of the '(' going out of the current list.
                    Pressing '>' when standing on a ')' makes the s-expression
                    to the right of the ')' coming into the current list.
+                   For example pressing < at position marked with |:
+                       (aaa|) bbb        --->    (aaa bbb)
+                       |(aaa bbb)        --->    aaa (bbb)
+
+    J              Join two subsequent lists or strings. The first one must end
+                   before the cursor, the second one must start after the
+                   cursor position.
+                   For example pressing J at position marked with |:
+                       (aaa)| (bbb)      --->    (aaa bbb)
+                       "aaa"| "bbb"      --->    "aaa bbb"
+
+    O              Split ("Open") current list or string at the cursor position.
+                   Opposite of Join. Key O is selected because for the original
+                   Vim mapping J and O are also kind of opposites.
+                   For example pressing O at position marked with |:
+                       (aaa |bbb)        --->    (aaa) (bbb)
+                       "aaa|bbb"         --->    "aaa" "bbb"
+
+    W              Wrap the current symbol in a pair of parentheses. The cursor
+                   is then positioned after the opening parenthesis, because
+                   usually wrapping is done because one wants to call a
+                   function with the symbol as parameter.
+                   For example pressing W at position marked with |:
+                       (aaa b|bb ccc)    --->    (aaa (bbb) ccc)
+
+    S              Splice the current list into the containing list, i.e.
+                   remove the opening and closing parens. Opposite of wrap.
+                   For example pressing S at position marked with |:
+                       (aaa (b|bb) ccc)  --->    (aaa bbb ccc)
 
     x  or  <Del>   When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the right. When
@@ -986,7 +1034,7 @@ Normal Mode:
                    When preceded by a <count> value then delete this many
                    lines.
 
-    S              Same as 'dd' but go to insert mode at the end.
+    <Leader>S      Same as 'dd' but go to insert mode at the end.
 
 
 Visual Mode:
@@ -998,6 +1046,9 @@ Visual Mode:
     )              Finds closing ')' of the current list and selects the whole
                    list. Can be pressed repeatedly until the top level form
                    selected.
+
+    W              Wrap the current visual selection in a pair of parentheses.
+                   The visual selection is kept.
 
 
 ===============================================================================
@@ -1181,6 +1232,11 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.6.1  - Added Split, Join, Wrap, Splice functions to Paredit Mode.
+       - Added g:paredit_shortmaps to select short/long paredit keymaps.
+       - Bugfix: delete commands put erased characters into yank buffer.
+       - Bugfix: D does not delete whole line.
 
 0.6.0  - Added paredit mode.
        - Set wrap mode for REPL buffer with keybindings.
