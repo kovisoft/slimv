@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.1
-" Last Change:  24 Apr 2010
+" Last Change:  25 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -220,14 +220,14 @@ endfunction
 function! PareditFindOpening( open, close, select )
     let open  = escape( a:open , '[]' )
     let close = escape( a:close, '[]' )
-    call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
+    call searchpair( open, '', close, 'bW', s:skip_sc )
     if a:select
-        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
+        call searchpair( open, '', close, 'W', s:skip_sc )
         let save_ve = &ve
         set ve=all 
         normal! lvh
         let &ve = save_ve
-        call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
+        call searchpair( open, '', close, 'bW', s:skip_sc )
     endif
 endfunction
 
@@ -240,13 +240,13 @@ function! PareditFindClosing( open, close, select )
         if line[col('.')-1] != a:open
             normal! h
         endif
-        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
-        call searchpair( a:open, '', a:close, 'bW', s:skip_sc )
+        call searchpair( open, '', close, 'W', s:skip_sc )
+        call searchpair( open, '', close, 'bW', s:skip_sc )
         normal! v
-        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
+        call searchpair( open, '', close, 'W', s:skip_sc )
         normal! l
     else
-        call searchpair( a:open, '', a:close, 'W', s:skip_sc )
+        call searchpair( open, '', close, 'W', s:skip_sc )
     endif
 endfunction
 
@@ -895,20 +895,41 @@ endfunction
 
 " Split list or string at the cursor position
 function! PareditSplit()
-    "TODO: also split []
     if !g:paredit_mode || s:InsideComment()
         return
     endif
+
     if s:InsideString()
         normal! i" "
     else
+        " First find which kind of paren is the innermost
+        let l = line( '.' )
+        let c = col( '.' )
+        call PareditFindClosing( '(', ')', 0 )
+        let lp = line( '.' )
+        let cp = col( '.' )
+        call setpos( '.', [0, l, c, 0] )
+        call PareditFindClosing( '[', ']', 0 )
+        let lb = line( '.' )
+        let cb = col( '.' )
+        call setpos( '.', [0, l, c, 0] )
+
+        " Delete all whitespaces around cursor position
         while getline('.')[col('.')-1] =~ '\s'
             normal! x
         endwhile
         while col('.') > 1 && getline('.')[col('.')-2] =~ '\s'
             normal! X
         endwhile
-        normal! i) (
+
+        " Insert a split for the right kind of paren
+        if [lp, cp] == [l, c] && [lb, cb] == [l, c]
+            " Not found any kind of paren
+        elseif [lb, cb] == [l, c] || lp < lb || (lp == lb && cp < cb)
+            normal! i) (
+        else
+            normal! i] [
+        endif
     endif
 endfunction
 
@@ -917,6 +938,7 @@ function! PareditJoin()
     if !g:paredit_mode || s:InsideCommentOrString()
         return
     endif
+
     "TODO: skip parens in comments
     let [l0, c0] = searchpos(s:any_matched_char, 'nbW')
     let [l1, c1] = searchpos(s:any_matched_char, 'ncW')
@@ -986,6 +1008,9 @@ endfunction
 
 " Splice current list into the containing list
 function! PareditSplice()
+    if !g:paredit_mode
+        return
+    endif
     "TODO: handle []
     call PareditFindClosing( '(', ')', 0 )
     normal! %
@@ -994,6 +1019,9 @@ function! PareditSplice()
     normal! %x
     call setpos( '.', [0, l, c, 0] )
     normal! x
+    if c > 1 && getline('.')[c-2] =~ s:any_macro_prefix
+        normal! X
+    endif
 endfunction
 
 
