@@ -998,9 +998,10 @@ Normal Mode:
                        "aaa|bbb"         --->    "aaa" "bbb"
 
     W              Wrap the current symbol in a pair of parentheses. The cursor
-                   is then positioned after the opening parenthesis, because
-                   usually wrapping is done because one wants to call a
-                   function with the symbol as parameter.
+                   is then positioned on the opening parenthesis, as wrapping
+                   is usually done because one wants to call a function with
+                   the symbol as parameter, so by pressing "a" one can enter
+                   the function name right after the newly inserted "(".
                    For example pressing W at position marked with |:
                        (aaa b|bb ccc)    --->    (aaa (bbb) ccc)
 
