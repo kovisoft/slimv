@@ -58,6 +58,7 @@ function! b:SlimvAutodetect()
         endif
     else
         " Try to find Clojure in the home directory
+        "TODO: add /usr/local/bin/clojure
         let lisps = split( globpath( '~/*clojure*', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
             return b:SlimvBuildStartCmd( lisps )
