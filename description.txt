@@ -20,7 +20,7 @@ The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax h
 
 Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc. Symbol name completion is supported via Vim's omni-completion based on the hyperspec symbol database.
 
-Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element but move the opening or closing parenthesis over the element or sub-list. Other paredit.el functions implemented are Split/Join/Wrap/Splice.
+Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slimv also implements many paredit.el s-expression handling functions, like Split/Join/Wrap/Splice. Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element in or out of the list, rather you move the opening or closing parenthesis over the element or sub-list.
 
 Check out the screenshot of Slimv having a clisp REPL buffer:
 http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
@@ -129,7 +129,7 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
-0.6.1: Added Split/Join/Wrap/Splice functions to Paredit Mode, added option to select short/long paredit keymaps, bugfix: delete commands put erased characters into yank buffer, bugfix: D does not delete whole line.
+0.6.1: Added Split/Join/Wrap/Splice functions to Paredit Mode, bugfixes: delete commands put erased characters into yank buffer, D does not delete whole line.
 
 0.6.0: Added paredit mode, set wrap for REPL buffer.
 
