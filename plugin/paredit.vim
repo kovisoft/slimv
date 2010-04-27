@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.1
-" Last Change:  25 Apr 2010
+" Last Change:  27 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -36,9 +36,9 @@ if !exists( 'g:paredit_matchlines' )
     let g:paredit_matchlines = 100
 endif
 
-" Use short keymaps, i.e. J instead of ,J
+" Use short keymaps, i.e. J instead of <Leader>J
 if !exists( 'g:paredit_shortmaps' )
-    let g:paredit_shortmaps = 1
+    let g:paredit_shortmaps = 0
 endif
 
 " =====================================================================
@@ -60,7 +60,7 @@ let s:any_wsopen_char    = '\s\|(\|\['
 let s:any_wsclose_char   = '\s\|)\|\]'
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
 
-let s:yank_list          = []
+let s:yank_pos           = []
 
 " =====================================================================
 "  General utility functions
@@ -69,52 +69,58 @@ let s:yank_list          = []
 " Buffer specific initialization
 function! PareditInitBuffer()
     "  Buffer specific keybindings
-    inoremap <buffer> <expr>   (     PareditInsertOpening('(',')')
-    inoremap <buffer> <expr>   )     PareditInsertClosing('(',')')
-    inoremap <buffer> <expr>   [     PareditInsertOpening('[',']')
-    inoremap <buffer> <expr>   ]     PareditInsertClosing('[',']')
-    inoremap <buffer> <expr>   "     PareditInsertQuotes()
-    inoremap <buffer> <expr>   <BS>  PareditBackspace(0)
-    inoremap <buffer> <expr>   <Del> PareditDel()
-    nnoremap <buffer> <silent> (     :<C-U>call PareditFindOpening('(',')',0)<CR>
-    nnoremap <buffer> <silent> )     :<C-U>call PareditFindClosing('(',')',0)<CR>
-    vnoremap <buffer> <silent> (     <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-    vnoremap <buffer> <silent> )     <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-    nnoremap <buffer> <silent> x     :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> <Del> :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> X     :<C-U>call PareditEraseBck()<CR>
-    nnoremap <buffer> <silent> s     :<C-U>call PareditEraseFwd()<CR>i
-    nnoremap <buffer> <silent> D     :<C-U>call PareditEraseFwdLine()<CR>
-    nnoremap <buffer> <silent> C     :<C-U>call PareditEraseFwdLine()<CR>A
-    nnoremap <buffer> <silent> dd    :<C-U>call PareditEraseLine()<CR>
-    nnoremap <buffer> <silent> cc    0:<C-U>call PareditEraseFwdLine()<CR>A
+    inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
+    inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
+    inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
+    inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
+    inoremap <buffer> <expr>   "            PareditInsertQuotes()
+    inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
+    inoremap <buffer> <expr>   <Del>        PareditDel()
+    nnoremap <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
+    nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
+    vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+    vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+    nnoremap <buffer> <silent> x            :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
+    nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
+    nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
+    nnoremap <buffer> <silent> D            :<C-U>call PareditEraseFwdLine()<CR>
+    nnoremap <buffer> <silent> C            :<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> dd           :<C-U>call PareditEraseLine()<CR>
+    nnoremap <buffer> <silent> cc           0:<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
+    vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
+    nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
+    vnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrapSelection('[',']')<CR>
+    nnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrap('"','"')<CR>
+    vnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrapSelection('"','"')<CR>
 
     if g:paredit_shortmaps
         " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
-        nnoremap <buffer> <silent> <         :<C-U>call PareditMoveLeft()<CR>
-        nnoremap <buffer> <silent> >         :<C-U>call PareditMoveRight()<CR>
-        nnoremap <buffer> <silent> O         :<C-U>call PareditSplit()<CR>
-        nnoremap <buffer> <silent> J         :<C-U>call PareditJoin()<CR>
-        nnoremap <buffer> <silent> W         :<C-U>call PareditWrap()<CR>
-        vnoremap <buffer> <silent> W         :<C-U>call PareditWrapSelection()<CR>
-        nnoremap <buffer> <silent> S         :<C-U>call PareditSplice()<CR>
-        nnoremap <buffer> <silent> <Leader>< :<C-U>normal! <<CR>
-        nnoremap <buffer> <silent> <Leader>> :<C-U>normal! ><CR>
-        nnoremap <buffer> <silent> <Leader>O :<C-U>normal! O<CR>
-        nnoremap <buffer> <silent> <Leader>J :<C-U>normal! J<CR>
-        nnoremap <buffer> <silent> <Leader>W :<C-U>normal! W<CR>
-        vnoremap <buffer> <silent> <Leader>W :<C-U>normal! W<CR>
-        nnoremap <buffer> <silent> <Leader>S :<C-U>normal! S<CR>
+        nnoremap <buffer> <silent> <            :<C-U>call PareditMoveLeft()<CR>
+        nnoremap <buffer> <silent> >            :<C-U>call PareditMoveRight()<CR>
+        nnoremap <buffer> <silent> O            :<C-U>call PareditSplit()<CR>
+        nnoremap <buffer> <silent> J            :<C-U>call PareditJoin()<CR>
+        nnoremap <buffer> <silent> W            :<C-U>call PareditWrap()<CR>
+        vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection()<CR>
+        nnoremap <buffer> <silent> S            :<C-U>call PareditSplice()<CR>
+        nnoremap <buffer> <silent> <Leader><    :<C-U>normal! <<CR>
+        nnoremap <buffer> <silent> <Leader>>    :<C-U>normal! ><CR>
+        nnoremap <buffer> <silent> <Leader>O    :<C-U>normal! O<CR>
+        nnoremap <buffer> <silent> <Leader>J    :<C-U>normal! J<CR>
+        nnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
+        vnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
+        nnoremap <buffer> <silent> <Leader>S    :<C-U>normal! S<CR>
     else
         " Longer keymaps with <Leader> prefix
-        nnoremap <buffer> <silent> S         0:<C-U>call PareditEraseFwdLine()<CR>A
-        nnoremap <buffer> <silent> <Leader>< :<C-U>call PareditMoveLeft()<CR>
-        nnoremap <buffer> <silent> <Leader>> :<C-U>call PareditMoveRight()<CR>
-        nnoremap <buffer> <silent> <Leader>O :<C-U>call PareditSplit()<CR>
-        nnoremap <buffer> <silent> <Leader>J :<C-U>call PareditJoin()<CR>
-        nnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrap()<CR>
-        vnoremap <buffer> <silent> <Leader>W :<C-U>call PareditWrapSelection()<CR>
-        nnoremap <buffer> <silent> <Leader>S :<C-U>call PareditSplice()<CR>
+        nnoremap <buffer> <silent> S            0:<C-U>call PareditEraseFwdLine()<CR>A
+        nnoremap <buffer> <silent> <Leader><    :<C-U>call PareditMoveLeft()<CR>
+        nnoremap <buffer> <silent> <Leader>>    :<C-U>call PareditMoveRight()<CR>
+        nnoremap <buffer> <silent> <Leader>O    :<C-U>call PareditSplit()<CR>
+        nnoremap <buffer> <silent> <Leader>J    :<C-U>call PareditJoin()<CR>
+        nnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrap('(',')')<CR>
+        vnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrapSelection('(',')')<CR>
+        nnoremap <buffer> <silent> <Leader>S    :<C-U>call PareditSplice()<CR>
     endif
 endfunction
 
@@ -380,22 +386,22 @@ function! PareditDel()
 endfunction
 
 " Initialize yank position list
-function! s:InitYankList()
+function! s:InitYankPos()
     let @" = ''
-    let s:yank_list = []
+    let s:yank_pos = []
 endfunction
 
 " Add position to the yank list
-function! s:AddYankList( pos )
+function! s:AddYankPos( pos )
 "echo input('111 '.a:pos)
-    let s:yank_list = [a:pos] + s:yank_list
+    let s:yank_pos = [a:pos] + s:yank_pos
 endfunction
 
-" Remove the head of yank list and return it
-function! s:RemoveYankList()
-    if len(s:yank_list) > 0
-        let pos = s:yank_list[0]
-        let s:yank_list = s:yank_list[1:]
+" Remove the head of yank position list and return it
+function! s:RemoveYankPos()
+    if len(s:yank_pos) > 0
+        let pos = s:yank_pos[0]
+        let s:yank_pos = s:yank_pos[1:]
         return pos
     else
         return 0
@@ -424,7 +430,7 @@ function! s:EraseFwd( count, startcol )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
             if pos > a:startcol
                 " Erasing an empty character-pair
-                let p2 = s:RemoveYankList()
+                let p2 = s:RemoveYankPos()
                 let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
                 let reg = reg . line[pos]
                 let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
@@ -437,7 +443,7 @@ function! s:EraseFwd( count, startcol )
             endif
         elseif line[pos] =~ s:any_matched_char
             " Character-pair is not empty, don't erase just move inside
-            call s:AddYankList( len(reg) )
+            call s:AddYankPos( len(reg) )
             let pos = pos + 1
             normal! l
         elseif pos < len(line)
@@ -468,13 +474,13 @@ function! s:EraseBck( count )
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
         elseif line[pos-1:pos] =~ s:any_matched_pair
             " Erasing an empty character-pair
-            let p2 = s:RemoveYankList()
+            let p2 = s:RemoveYankPos()
             let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
         elseif line[pos-1] =~ s:any_matched_char
             " Character-pair is not empty, don't erase
-            call s:AddYankList( len(reg) )
+            call s:AddYankPos( len(reg) )
         else
             " Erasing a non-special character
             let reg = reg . line[pos-1]
@@ -499,7 +505,7 @@ function! PareditEraseFwd()
         return
     endif
 
-    call s:InitYankList()
+    call s:InitYankPos()
     call s:EraseFwd( v:count1, -1 )
 endfunction
 
@@ -514,25 +520,24 @@ function! PareditEraseBck()
         return
     endif
 
-    call s:InitYankList()
+    call s:InitYankPos()
     call s:EraseBck( v:count1 )
 endfunction
 
 " Forward erasing character till the end of line in normal mode
 " Keeping the balanced state
-function! s:EraseFwdLine()
-    let startcol = col( '.' )
+function! s:EraseFwdLine( startcol )
     let lastcol = -1
     let lastlen = -1
     while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
         let lastcol = col( '.' )
         let lastlen = len( getline( '.' ) )
-        call s:EraseFwd( 1, startcol-1 )
+        call s:EraseFwd( 1, a:startcol )
     endwhile
 endfunction
 
 " Forward erasing character till the end of line in normal mode
-" Keeping the balanced state
+" But first check if we are allowed to do it in paredit way
 function! PareditEraseFwdLine()
     if !g:paredit_mode || !s:IsBalanced()
         if v:count > 0
@@ -543,8 +548,8 @@ function! PareditEraseFwdLine()
         return
     endif
 
-    call s:InitYankList()
-    call s:EraseFwdLine()
+    call s:InitYankPos()
+    call s:EraseFwdLine( col( '.' ) - 1 )
 endfunction
 
 " Erasing all characters in the line in normal mode
@@ -560,10 +565,10 @@ function! PareditEraseLine()
     endif
 
     normal! 0
-    call s:InitYankList()
+    call s:InitYankPos()
     let c = v:count1
     while c > 0
-        call s:EraseFwdLine()
+        call s:EraseFwdLine( -1 )
         if len( getline( '.' ) ) == 0
             let reg = @"
             normal! dd
@@ -893,7 +898,34 @@ function! PareditMoveRight()
     return
 endfunction
 
+" Find closing of the innermost structure: (...) or [...]
+" Return a list where first element is the closing character,
+" second and third is its position (line, column)
+function! s:FindClosing()
+    let l = line( '.' )
+    let c = col( '.' )
+    call PareditFindClosing( '(', ')', 0 )
+    let lp = line( '.' )
+    let cp = col( '.' )
+    call setpos( '.', [0, l, c, 0] )
+    call PareditFindClosing( '[', ']', 0 )
+    let lb = line( '.' )
+    let cb = col( '.' )
+    call setpos( '.', [0, l, c, 0] )
+    if [lp, cp] == [l, c] && [lb, cb] == [l, c]
+        " Not found any kind of paren
+        return ['', 0, 0]
+    elseif [lb, cb] == [l, c] || lp < lb || (lp == lb && cp < cb)
+        " The innermost structure is a (...)
+        return [')', lp, cp]
+    else
+        " The innermost structure is a [...]
+        return [']', lb, cb]
+    endif
+endfunction
+
 " Split list or string at the cursor position
+" Current symbol will be split into the second part
 function! PareditSplit()
     if !g:paredit_mode || s:InsideComment()
         return
@@ -902,17 +934,22 @@ function! PareditSplit()
     if s:InsideString()
         normal! i" "
     else
+        " Go back to the beginning of the current symbol
+        let c = col('.') - 1
+        if getline('.')[c] =~ '\S'
+            if c == 0 || (c > 0 && getline('.')[c-1] =~ s:any_wsopen_char)
+                " OK, we are standing on the first character of the symbol
+            else
+                normal! b
+            endif
+        endif
+
         " First find which kind of paren is the innermost
-        let l = line( '.' )
-        let c = col( '.' )
-        call PareditFindClosing( '(', ')', 0 )
-        let lp = line( '.' )
-        let cp = col( '.' )
-        call setpos( '.', [0, l, c, 0] )
-        call PareditFindClosing( '[', ']', 0 )
-        let lb = line( '.' )
-        let cb = col( '.' )
-        call setpos( '.', [0, l, c, 0] )
+        let [p, l, c] = s:FindClosing()
+        if p !~ s:any_closing_char
+            " Not found any kind of parens
+            return
+        endif
 
         " Delete all whitespaces around cursor position
         while getline('.')[col('.')-1] =~ '\s'
@@ -922,10 +959,7 @@ function! PareditSplit()
             normal! X
         endwhile
 
-        " Insert a split for the right kind of paren
-        if [lp, cp] == [l, c] && [lb, cb] == [l, c]
-            " Not found any kind of paren
-        elseif [lb, cb] == [l, c] || lp < lb || (lp == lb && cp < cb)
+        if p == ')'
             normal! i) (
         else
             normal! i] [
@@ -962,8 +996,8 @@ function! PareditJoin()
     endif
 endfunction
 
-" Wrap current visual block in parentheses
-function! s:WrapSelection()
+" Wrap current visual block in parens of the given kind
+function! s:WrapSelection( open, close )
     let l0 = line( "'<" )
     let l1 = line( "'>" )
     let c0 = col( "'<" )
@@ -981,16 +1015,16 @@ function! s:WrapSelection()
     let save_ve = &ve
     set ve=all 
     call setpos( '.', [0, l0, c0, 0] )
-    normal! i(
+    execute "normal! i" . a:open
     call setpos( '.', [0, l1, c1 + (l0 == l1), 0] )
-    normal! i)
+    execute "normal! i" . a:close
     let &ve = save_ve
 endfunction
 
-" Wrap current visual block in parentheses
+" Wrap current visual block in parens of the given kind
 " Keep visual mode
-function! PareditWrapSelection()
-    call s:WrapSelection()
+function! PareditWrapSelection( open, close )
+    call s:WrapSelection( a:open, a:close )
     if line( "'<" ) == line( "'>" )
         normal! gvolol
     else
@@ -998,12 +1032,14 @@ function! PareditWrapSelection()
     endif
 endfunction
 
-" Wrap current symbol in parentheses
-" Stand right to the opening paren
-function! PareditWrap()
+" Wrap current symbol in parens of the given kind
+" Stand on the opening paren (if not wrapping in "")
+function! PareditWrap( open, close )
     execute "normal! " . "viw\<Esc>"
-    call s:WrapSelection()
-    normal! %
+    call s:WrapSelection( a:open, a:close )
+    if a:open != '"'
+        normal! %
+    endif
 endfunction
 
 " Splice current list into the containing list
@@ -1011,8 +1047,15 @@ function! PareditSplice()
     if !g:paredit_mode
         return
     endif
-    "TODO: handle []
-    call PareditFindClosing( '(', ')', 0 )
+
+    " First find which kind of paren is the innermost
+    let [p, l, c] = s:FindClosing()
+    if p !~ s:any_closing_char
+        " Not found any kind of parens
+        return
+    endif
+
+    call setpos( '.', [0, l, c, 0] )
     normal! %
     let l = line( '.' )
     let c = col( '.' )
