@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.6.0
-" Last Change:  19 Mar 2010
+" Version:      0.6.1
+" Last Change:  26 Apr 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -750,19 +750,19 @@ function! SlimvOpenReplBuffer()
     endif
 
     if g:slimv_keybindings == 1
-        noremap <buffer> <silent> <Leader>.  :call SlimvSendCommand(0,0)<CR>
-        noremap <buffer> <silent> <Leader>/  :call SlimvSendCommand(0,1)<CR>
-        noremap <buffer> <silent> <Leader><  :call SlimvPreviousCommand()<CR>
-        noremap <buffer> <silent> <Leader>>  :call SlimvNextCommand()<CR>
-        noremap <buffer> <silent> <Leader>z  :call SlimvRefresh()<CR>
-        noremap <buffer> <silent> <Leader>Z  :call SlimvRefreshNow()<CR>
+        noremap <buffer> <silent> <Leader>.      :call SlimvSendCommand(0,0)<CR>
+        noremap <buffer> <silent> <Leader>/      :call SlimvSendCommand(0,1)<CR>
+        noremap <buffer> <silent> <Leader><Up>   :call SlimvPreviousCommand()<CR>
+        noremap <buffer> <silent> <Leader><Down> :call SlimvNextCommand()<CR>
+        noremap <buffer> <silent> <Leader>z      :call SlimvRefresh()<CR>
+        noremap <buffer> <silent> <Leader>Z      :call SlimvRefreshNow()<CR>
     elseif g:slimv_keybindings == 2
-        noremap <buffer> <silent> <Leader>rs  :call SlimvSendCommand(0,0)<CR>
-        noremap <buffer> <silent> <Leader>ro  :call SlimvSendCommand(0,1)<CR>
-        noremap <buffer> <silent> <Leader>rp  :call SlimvPreviousCommand()<CR>
-        noremap <buffer> <silent> <Leader>rn  :call SlimvNextCommand()<CR>
-        noremap <buffer> <silent> <Leader>rr  :call SlimvRefresh()<CR>
-        noremap <buffer> <silent> <Leader>rw  :call SlimvRefreshNow()<CR>
+        noremap <buffer> <silent> <Leader>rs     :call SlimvSendCommand(0,0)<CR>
+        noremap <buffer> <silent> <Leader>ro     :call SlimvSendCommand(0,1)<CR>
+        noremap <buffer> <silent> <Leader>rp     :call SlimvPreviousCommand()<CR>
+        noremap <buffer> <silent> <Leader>rn     :call SlimvNextCommand()<CR>
+        noremap <buffer> <silent> <Leader>rr     :call SlimvRefresh()<CR>
+        noremap <buffer> <silent> <Leader>rw     :call SlimvRefreshNow()<CR>
     endif
 
     if g:slimv_repl_wrap
