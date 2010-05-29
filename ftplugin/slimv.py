@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.5.5
-# Last Change:  08 Jan 2010
+# Version:      0.6.2
+# Last Change:  27 May 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -38,8 +38,9 @@ run_cmd     = ''            # Complex server-run command (if given via command l
 
 newline     = '\n'
 
-# Are we running on Windows (otherwise assume Linux, sorry for other OS-es)
+# Check if we're running Windows or Mac OS X, otherwise assume Linux
 mswindows = (sys.platform == 'win32')
+darwin = (sys.platform == 'darwin')
 
 
 def log( s, level ):
@@ -60,7 +61,7 @@ def start_server():
     """
     if run_cmd == '':
         # Complex run command not given, build it from the information available
-        if mswindows:
+        if mswindows or darwin:
             cmd = []
         else:
             cmd = ['xterm', '-T', 'Slimv', '-e']
@@ -73,6 +74,11 @@ def start_server():
     if mswindows:
         CREATE_NEW_CONSOLE = 16
         server = Popen( cmd, creationflags=CREATE_NEW_CONSOLE )
+    elif darwin:
+        from ScriptingBridge import SBApplication
+
+        term = SBApplication.applicationWithBundleIdentifier_("com.apple.Terminal")
+        term.doScript_in_(" ".join(cmd) + " ; exit", 0) 
     else:
         server = Popen( cmd )
 
