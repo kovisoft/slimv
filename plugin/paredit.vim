@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.6.1
-" Last Change:  27 Apr 2010
+" Version:      0.6.2
+" Last Change:  26 May 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1035,11 +1035,14 @@ endfunction
 " Wrap current symbol in parens of the given kind
 " Stand on the opening paren (if not wrapping in "")
 function! PareditWrap( open, close )
+    let sel = &selection
+    let &selection = 'exclusive'
     execute "normal! " . "viw\<Esc>"
     call s:WrapSelection( a:open, a:close )
     if a:open != '"'
         normal! %
     endif
+    let &selection = sel
 endfunction
 
 " Splice current list into the containing list
