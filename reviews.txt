@@ -17,3 +17,8 @@ The latest version also includes a paredit plug-in, that promises some of the fe
 I think Slimv has some great features, but until some of these bugs are worked out, it is not going to be my plug-in of choice. Unfortunately, there does not seem to be a project page or repository available anywhere for Slimv.
 
 
+
+
+
+dakrone: I'm using slimv and I was wondering if there is a way to stop the "results buffer" from stealing focus ever time you eval a statement
+
