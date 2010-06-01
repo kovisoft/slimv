@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.6.2
-" Last Change:  27 May 2010
+" Last Change:  01 Jun 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -553,16 +553,6 @@ function! SlimvRefreshReplBufferNow()
     endtry
     syntax on
     "TODO: use :read instead and keep only the delta in the readout file
-    if &endofline == 1
-        " Handle the situation when the last line is an empty line in REPL
-        " but Vim rejects to handle it as a separate line
-        try
-            call append( '$', "" )
-        catch /.*/
-            " OK, we cannot append right now, the server is probably busy with
-            " updating the REPL file. Just go on, it's not that important.
-        endtry
-    endif
     let insert = 0
     if mode() == 'i' || mode() == 'I'
         let insert = 1
@@ -601,14 +591,12 @@ function! SlimvRefreshReplBuffer()
     sleep 100m
     call SlimvRefreshReplBufferNow()
 
-    let save_ve = &ve
     if s:insertmode
         " We are in insert mode, let's fake a movement to the right
         " in order to display the cursor at the right place.
         " For this we need to set the virtualedit=all option temporarily
         echon '-- INSERT --'
-        set ve=all
-        normal! l
+        set nomodified
     else
         " Inform user that we are in running mode (waiting for REPL output)
         echon '-- RUNNING --'
@@ -620,13 +608,12 @@ function! SlimvRefreshReplBuffer()
         let c = getchar(0)
     endwhile
 
+    let m = '/\%#/'
     let interrupt = 0
     let wait = g:slimv_repl_wait * 10   " number of cycles to wait for refreshing the REPL buffer
     while wait > 0 || g:slimv_repl_wait == 0
         try
-            let m = '/\%#/'
-            silent! execute 'match Cursor ' . m
-            match Cursor /\%#/
+            silent! execute 'match SlimvCursor ' . m
             redraw
             if getchar(1)
                 break
@@ -637,11 +624,6 @@ function! SlimvRefreshReplBuffer()
             if ftime != lastftime || ftime == localtime() || ftime == localtime()-1
                 " REPL buffer file changed recently, reload it
                 call SlimvRefreshReplBufferNow()
-                if s:insertmode
-                    " We are in insert mode, let's fake a movement to the right
-                    " in order to display the cursor at the right place.
-                    normal! l
-                endif
             endif
             if g:slimv_repl_wait != 0
                 let wait = wait - 1
@@ -665,9 +647,12 @@ function! SlimvRefreshReplBuffer()
     endwhile
 
     " Restore everything
-    silent! execute 'match None ' . m
+    if synIDattr( synIDtrans( hlID( 'Normal' ) ), 'bg' ) != ''
+        silent! execute 'match Normal ' . m
+    else
+        silent! execute 'match SlimvNormal ' . m
+    endif
     echon '            '
-    let &ve = save_ve
 
     if wait == 0 && ftime != lastftime
         " Time is up and Lisp REPL still did not finish output
@@ -690,8 +675,8 @@ endfunction
 
 " Called when entering REPL buffer
 function! SlimvReplEnter()
+    call SlimvAddReplMenu()
     if s:last_refresh < localtime()
-        call SlimvAddReplMenu()
         call SlimvRefreshReplBufferNow()
     endif
 endfunction
@@ -778,6 +763,9 @@ function! SlimvOpenReplBuffer()
         noremap  <buffer> <silent>        $      g$
         set wrap
     endif
+
+    hi SlimvNormal term=none cterm=none gui=none
+    hi SlimvCursor term=reverse cterm=reverse gui=reverse
 
     " Add autocommands specific to the REPL buffer
     execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvFileChangedShell()"
