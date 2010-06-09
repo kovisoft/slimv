@@ -1,13 +1,13 @@
-*slimv.txt*                    Slimv                 Last Change: 27 Apr 2010
+*slimv.txt*                    Slimv                 Last Change: 09 Jun 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.6.1
+                               Version 0.6.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
 the Lisp REPL, similarly to Emacs/SLIME.
-Slimv works on Windows and Linux, however the newly introduced paredit mode
-is operating system independent.
+Slimv works on Windows, Linux, and Mac OS X, however the newly introduced
+paredit mode is operating system independent.
 
 |slimv-installation|         Installation
 |slimv-customization|        Customization
@@ -1255,6 +1255,16 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.6.2  - Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta).
+       - Added string "clj" as a detector for Clojure (by Vlad Hanciuta).
+       - Bugfix: paredit wrap function missed last character when 'selection'
+         was not "exclusive" (thanks to Marcin Fatyga).
+       - Bugfix: input was stuck inside SBCL debugger
+         (on behalf of Philipp Marek and Dmitry Petukhov).
+       - Bugfix: occasional error messages during REPL buffer update.
+       - Bugfix: REPL menu was sometimes missing.
+       - Bugfix: occasional command line color problems.
+
 0.6.1  - Added Split, Join, Wrap, Splice functions to Paredit Mode.
        - Added g:paredit_shortmaps to select short/long paredit keymaps.
        - Bugfix: delete commands put erased characters into yank buffer.
@@ -1407,7 +1417,9 @@ Rob MacLachlan for creating the Metering System.
 Also special thanks to Erik Naggum, Yuji Minejima and others for making the
 Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
-Thanks to the Vim community for testing and commenting the script.
+Thanks to the Vim community for testing, commenting and patching the script,
+especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
+Daniel Solano Gómez.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
