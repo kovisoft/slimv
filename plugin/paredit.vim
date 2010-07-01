@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.6.2
-" Last Change:  26 May 2010
+" Version:      0.6.3
+" Last Change:  30 Jun 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -131,10 +131,10 @@ function! PareditToggle()
 endfunction
 
 " Does the current syntax item match the given regular expression?
-function! s:SynIDMatch( regexp )
+function! s:SynIDMatch( regexp, match_eol )
     let line = line('.')
     let col  = col('.')
-    if col > len( getline( line ) )
+    if a:match_eol && col > len( getline( line ) )
         let col = col - 1
     endif
     return synIDattr( synID( line, col, 0), 'name' ) =~ a:regexp
@@ -142,17 +142,12 @@ endfunction
 
 " Is the current cursor position inside a comment?
 function! s:InsideComment()
-    return s:SynIDMatch( 'comment' )
+    return s:SynIDMatch( 'comment', 1 )
 endfunction
 
 " Is the current cursor position inside a string?
 function! s:InsideString()
-    return s:SynIDMatch( 'string' )
-endfunction
-
-" Is the current cursor position inside a comment or string?
-function! s:InsideCommentOrString()
-    return s:SynIDMatch( 'string\|comment' )
+    return s:SynIDMatch( 'string', 0 )
 endfunction
 
 " Autoindent current top level form
@@ -258,13 +253,12 @@ endfunction
 
 " Insert opening type of a paired character, like ( or [.
 function! PareditInsertOpening( open, close )
-    if !g:paredit_mode || s:InsideCommentOrString() || !s:IsBalanced()
+    if !g:paredit_mode || s:InsideComment() || s:InsideString() || !s:IsBalanced()
         return a:open
     endif
-    let retval = a:open . a:close . "\<Left>"
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] !~ s:any_wsclose_char
+    if line[pos] !~ s:any_wsclose_char && pos < len( line )
         " Add a space after if needed
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
@@ -279,7 +273,7 @@ endfunction
 
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
-    if !g:paredit_mode || s:InsideCommentOrString() || !s:IsBalanced()
+    if !g:paredit_mode || s:InsideComment() || s:InsideString() || !s:IsBalanced()
         return a:close
     endif
     let line = getline( '.' )
@@ -303,10 +297,13 @@ function! PareditInsertQuotes()
         let line = getline( '.' )
         let pos = col( '.' ) - 1
         "TODO: skip comments in search(...)
-        if line[pos] == '"'
+        if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
+            " About to enter a \" inside a string
+            return '"'
+        elseif line[pos] == '"'
             " Standing on a ", just move to the right
             return "\<Right>"
-        elseif (pos > 0 && line[pos-1] == '\') || search('[^\\]"\|^"', 'nW') == 0
+        elseif search('[^\\]"\|^"', 'nW') == 0
             " We don't have any closing ", insert one
             return '"'
         else
@@ -969,7 +966,7 @@ endfunction
 
 " Join two neighboring lists or strings
 function! PareditJoin()
-    if !g:paredit_mode || s:InsideCommentOrString()
+    if !g:paredit_mode || s:InsideComment() || s:InsideString()
         return
     endif
 
@@ -1033,11 +1030,16 @@ function! PareditWrapSelection( open, close )
 endfunction
 
 " Wrap current symbol in parens of the given kind
+" If standing on a paren then wrap the whole s-expression
 " Stand on the opening paren (if not wrapping in "")
 function! PareditWrap( open, close )
     let sel = &selection
     let &selection = 'exclusive'
-    execute "normal! " . "viw\<Esc>"
+    if a:open != '"' && getline('.')[col('.') - 1] =~ s:any_openclose_char
+        execute "normal! " . "v%\<Esc>"
+    else
+        execute "normal! " . "viw\<Esc>"
+    endif
     call s:WrapSelection( a:open, a:close )
     if a:open != '"'
         normal! %
