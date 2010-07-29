@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.6.3
-" Last Change:  30 Jun 2010
+" Last Change:  29 Jul 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -685,8 +685,8 @@ function! SlimvRefreshReplBuffer()
         let s:insertmode = 0
     endif
 
-    if s:last_winnr != -1 && g:slimv_repl_return
-        execute s:last_winnr . "wincmd w"
+    if g:slimv_repl_return && g:slimv_repl_split && s:last_winnr != -1
+        execute "normal! \<C-w>p"
     endif
     let s:last_winnr = -1
 endfunction
@@ -728,7 +728,7 @@ function! SlimvOpenReplBuffer()
             let repl_win = bufwinnr( repl_buf )
             if repl_win == -1
                 " Create windows
-                execute "split +buffer " . repl_buf
+                execute "split " . s:repl_name
             else
                 " Switch to the REPL window
                 if winnr() != repl_win
