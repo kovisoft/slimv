@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.3
-" Last Change:  30 Jun 2010
+" Last Change:  16 Jul 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -529,7 +529,15 @@ function! s:EraseFwdLine( startcol )
     while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
         let lastcol = col( '.' )
         let lastlen = len( getline( '.' ) )
-        call s:EraseFwd( 1, a:startcol )
+        let line = getline( '.' )
+        if s:InsideComment()
+            normal! D
+            if v:count == 0
+                return
+            endif
+        else
+            call s:EraseFwd( 1, a:startcol )
+        endif
     endwhile
 endfunction
 
