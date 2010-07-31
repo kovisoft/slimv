@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 09 Jun 2010
+*slimv.txt*                    Slimv                 Last Change: 31 Jul 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.6.2
+                               Version 0.6.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -199,6 +199,9 @@ Below that list follows the detailed explanation on each option.
 
 |g:slimv_repl_open|          If nonzero, Slimv opens the Lisp REPL buffer
                              inside Vim when the server is started.
+
+|g:slimv_repl_return|        If nonzero, the cursor is returned to the editor
+                             window from the REPL buffer after evaluation.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
@@ -400,6 +403,12 @@ separate REPL window can be used for checking the output.
 The |g:slimv_repl_open| = 0 option can be used to disable the built-in REPL
 buffer, so that only the separate REPL window is opened.
 
+                                                          *g:slimv_repl_return*
+By default the cursor is placed in the REPL buffer and it stays there when
+evaluating a form in the editor window. If |g:slimv_repl_open| is set then
+the cursor is returned to the editor window after the evaluation is performed
+and the timeout defined in |g:slimv_repl_wait| elapsed.
+
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
 Used only when |g:slimv_repl_open| is nonzero.
@@ -558,6 +567,10 @@ The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
 built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
 Please note that the leading ',' key below refers to <Leader>, which is set
 by Slimv to ',' by default.
+Vim defines timeout values for mapped key sequences. If you find that Vim does
+not allow you enough time between pressing ',' and the last key(s) of the
+sequence, then you may want to fine tune these Vim options:
+|timeout|, |ttimeout|, |timeoutlen|, |ttimeoutlen|.
 
     Set#1   Set#2    Command
     ---------------------------------------------------
@@ -568,10 +581,10 @@ by Slimv to ',' by default.
     <C-X><C-O>       Complete-Symbol
 
     Evaluation commands:
-    ,d      ,ed      Eval Defun
-    ,e      ,ee      Eval Last Expression
+    ,d      ,ed      Eval Defun (current top level form)
+    ,e      ,ee      Eval Last Expression (current subform)
     ,E      ,ep      Pprint Eval Last Expression
-    ,r      ,er      Eval Region
+    ,r      ,er      Eval Region (visual selection)
     ,b      ,eb      Eval Buffer
     ,v      ,ei      Interactive Eval
     ,u      ,eu      Undefine Function
@@ -1254,6 +1267,13 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.6.3  - Added option g:slimv_repl_return to return cursor to the editor window
+         from REPL buffer after evaluating an s-expression.
+       - Wrap: if standing on a paren then wrap the whole s-expression.
+       - Bugfix: inserting double quotes in paredit mode (like "\"").
+       - Bugfix: dd in paredit mode when unbalanced form is inside comment.
+       - Bugfix: reopen REPL buffer after closing it via :q.
 
 0.6.2  - Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta).
        - Added string "clj" as a detector for Clojure (by Vlad Hanciuta).
