@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 31 Jul 2010
+*slimv.txt*                    Slimv                 Last Change: 19 Aug 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.3
@@ -88,6 +88,16 @@ To install the script:
   - Enter path definitions into your vimrc (if the default values are not
     valid for your Vim/Python/Lisp installation, which is highly probable).
     See |slimv-customization| below on how to do this.
+  - On Linux some login shells (like fish) might be incompatible with the Vim
+    temporary file generation, which results in getting random E484 errors.
+    This is because Vim expects a POSIX-compliant shell and the problem might
+    occur in other Vim scripts as well.
+    One solution is to add a similar block to the top of .vimrc:
+
+        if $SHELL =~ 'bin/fish'
+            set shell=/bin/sh
+        endif
+
 
 Upgrade from previous script versions:
 
@@ -636,7 +646,7 @@ sequence, then you may want to fine tune these Vim options:
     ,Z      ,rw      Refresh REPL Now
 
 
-Also see *slimv-repl* for additional keybindings valid only in the REPL buffer.
+Also see |slimv-repl| for additional keybindings valid only in the REPL buffer.
 
 
 ===============================================================================
@@ -1272,8 +1282,12 @@ CHANGE LOG                                                    *slimv-changelog*
          from REPL buffer after evaluating an s-expression.
        - Wrap: if standing on a paren then wrap the whole s-expression.
        - Bugfix: inserting double quotes in paredit mode (like "\"").
+       - Bugfix: press " when right before the closing double quote did not go
+         to the end of string, rather inserted another "" pair.
        - Bugfix: dd in paredit mode when unbalanced form is inside comment.
        - Bugfix: reopen REPL buffer after closing it via :q.
+       - Bugfix: comment and string detection error with noignorecase setting.
+       - Bugfix: 
 
 0.6.2  - Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta).
        - Added string "clj" as a detector for Clojure (by Vlad Hanciuta).
