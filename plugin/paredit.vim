@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.3
-" Last Change:  16 Jul 2010
+" Last Change:  18 Aug 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -46,8 +46,8 @@ endif
 " =====================================================================
 
 " Skip matches inside string or comment
-let s:skip_c  = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "comment"'
-let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "string\\|comment"'
+let s:skip_c  = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Cc]omment"'
+let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
 
 " Regular expressions to identify special characters combinations used by paredit
 "TODO: add curly brace
@@ -142,12 +142,12 @@ endfunction
 
 " Is the current cursor position inside a comment?
 function! s:InsideComment()
-    return s:SynIDMatch( 'comment', 1 )
+    return s:SynIDMatch( '[Cc]omment', 1 )
 endfunction
 
 " Is the current cursor position inside a string?
 function! s:InsideString()
-    return s:SynIDMatch( 'string', 0 )
+    return s:SynIDMatch( '[Ss]tring', 0 )
 endfunction
 
 " Autoindent current top level form
@@ -692,7 +692,7 @@ function! s:NextElement( skip_whitespc )
                 if !a:skip_whitespc && !s:InsideString()
                     " Next symbol ended with comment
                     call setpos( '.', [0, l0, c0, 0] )
-                    return [l, c]
+                    return [l, c + ([l, c] == [l1, c1])]
                 endif
             endif
             normal! 0j0
