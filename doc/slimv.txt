@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Aug 2010
+*slimv.txt*                    Slimv                 Last Change: 22 Aug 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.3
@@ -1281,13 +1281,16 @@ CHANGE LOG                                                    *slimv-changelog*
 0.6.3  - Added option g:slimv_repl_return to return cursor to the editor window
          from REPL buffer after evaluating an s-expression.
        - Wrap: if standing on a paren then wrap the whole s-expression.
+       - Wrap selection: exit visual mode after command.
        - Bugfix: inserting double quotes in paredit mode (like "\"").
-       - Bugfix: press " when right before the closing double quote did not go
-         to the end of string, rather inserted another "" pair.
        - Bugfix: dd in paredit mode when unbalanced form is inside comment.
        - Bugfix: reopen REPL buffer after closing it via :q.
-       - Bugfix: comment and string detection error with noignorecase setting.
-       - Bugfix: 
+       - Bugfix: comment and string detection error with noignorecase setting
+         (thanks to Brian Kropf).
+       - Bugfix: wrong positioning when moving parenthesis to the right.
+       - Bugfix: defmacro detection problem (thanks to Philipp Marek).
+       - Bugfix: paredit wrap selection missed last character when 'selection'
+         was not "exclusive".
 
 0.6.2  - Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta).
        - Added string "clj" as a detector for Clojure (by Vlad Hanciuta).
@@ -1453,7 +1456,7 @@ Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
-Daniel Solano Gómez.
+Daniel Solano Gómez, Brian Kropf, Len Weincier.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
