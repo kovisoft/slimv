@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.6.3
-" Last Change:  18 Aug 2010
+" Last Change:  04 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -875,7 +875,7 @@ function! PareditMoveRight()
         " Do not go after the last command prompt in the REPL buffer
         return
     endif
-    if opening && c0 > 0 && line[c0-2] =~ s:any_macro_prefix
+    if opening && c0 > 1 && line[c0-2] =~ s:any_macro_prefix
         call s:MoveChar( l0, c0-1, l1, c1 )
         call s:MoveChar( l0, c0-1, l1, c1 + (l0 != l1) )
         let len = 2
@@ -900,7 +900,6 @@ function! PareditMoveRight()
         execute "normal! a "
         normal! h
     endif
-    return
 endfunction
 
 " Find closing of the innermost structure: (...) or [...]
@@ -1007,6 +1006,9 @@ function! s:WrapSelection( open, close )
     let l1 = line( "'>" )
     let c0 = col( "'<" )
     let c1 = col( "'>" )
+    if &selection == 'inclusive'
+        let c1 = c1 + 1
+    endif
     if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
         " No selection
         return
@@ -1030,19 +1032,12 @@ endfunction
 " Keep visual mode
 function! PareditWrapSelection( open, close )
     call s:WrapSelection( a:open, a:close )
-    if line( "'<" ) == line( "'>" )
-        normal! gvolol
-    else
-        normal! gvolo
-    endif
 endfunction
 
 " Wrap current symbol in parens of the given kind
 " If standing on a paren then wrap the whole s-expression
 " Stand on the opening paren (if not wrapping in "")
 function! PareditWrap( open, close )
-    let sel = &selection
-    let &selection = 'exclusive'
     if a:open != '"' && getline('.')[col('.') - 1] =~ s:any_openclose_char
         execute "normal! " . "v%\<Esc>"
     else
@@ -1052,7 +1047,6 @@ function! PareditWrap( open, close )
     if a:open != '"'
         normal! %
     endif
-    let &selection = sel
 endfunction
 
 " Splice current list into the containing list
