@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.6.3
-" Last Change:  29 Jul 2010
+" Last Change:  20 Aug 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1273,7 +1273,7 @@ endfunction
 function! SlimvMacroexpandGeneral( command )
     normal! 99[(
     let line = getline( "." )
-    if match( line, 'defmacro' ) < 0
+    if match( line, 'defmacro\s' ) < 0
         " The form does not contain 'defmacro', put it in a macroexpand block
         call SlimvSelectForm()
         let m = "(" . a:command . " '" . SlimvGetSelection() . ")"
