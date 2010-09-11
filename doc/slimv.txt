@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Aug 2010
+*slimv.txt*                    Slimv                 Last Change: 11 Sep 2010
 
 Slimv                                                                  *slimv*
                                Version 0.6.3
@@ -1423,20 +1423,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Add Compile System.
-- Add Cross Reference functions.
-- Add Debugger.
-- Start client and server separately having two simpler commands for client
-  and server startup, instead of the existing g:slimv_client solution.
-- Implement an own main loop in Vim for the REPL buffer, poll REPL output
-  regularly, handle all Vim keypresses and commands inside the main loop,
-  continuously update the REPL buffer.
+- Add package and namespace support.
+- Add a new way of refreshing the REPL buffer via checktime and autoread.
+- Update to Clojure 1.2.
 - Add Swank support, i.e. send commands to SLIME's Swank server.
-- Rewrite client/server in Lisp, so that no Python would be needed,
-- Or put the (Python) client part back into the .vim script, rewrite only the
-  server part in Lisp.
-- Handle specific REPL output in Vim (like compilation notes).
-- Add all paredit.el functions.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
