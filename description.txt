@@ -129,6 +129,8 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
+0.6.3: Added option to return cursor to the editor window from REPL buffer after evaluating an s-expression, Wrap: if standing on a paren then wrap the whole s-expression, Wrap selection: exit visual mode after command, Bugfixes: inserting double quotes in paredit mode (like "\""), dd in paredit mode when unbalanced form is inside comment, reopen REPL buffer after closing it via ":q", comment and string detection error with noignorecase setting, wrong positioning when moving parenthesis to the right, defmacro detection problem, paredit wrap selection missed last character when 'selection' was not "exclusive".
+
 0.6.2: Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta), added string "clj" as a detector for Clojure (by Vlad Hanciuta), bugfixes: paredit wrap function missed last character when 'selection' was not "exclusive" (thanks to Marcin Fatyga), input was stuck inside SBCL debugger (on behalf of Philipp Marek and Dmitry Petukhov), occasional error messages during REPL buffer update, REPL menu was sometimes missing, occasional command line color problems.
 
 0.6.1: Added Split/Join/Wrap/Splice functions to Paredit Mode, bugfixes: delete commands put erased characters into yank buffer, D does not delete whole line.
