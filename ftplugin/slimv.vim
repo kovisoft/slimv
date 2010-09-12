@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.6.3
-" Last Change:  20 Aug 2010
+" Version:      0.6.4
+" Last Change:  12 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -345,6 +345,11 @@ if !exists( 'g:slimv_ctags' )
         " Remove -a option to regenerate every time
         let g:slimv_ctags = '"' . ctags[0] . '" -a --language-force=lisp *.lisp *.clj'
     endif
+endif
+
+" Package/namespace handling
+if !exists( 'g:slimv_package' )
+    let g:slimv_package = 1
 endif
 
 
@@ -840,6 +845,41 @@ function! SlimvGetSelection()
     return getreg( '"s' )
 endfunction
 
+" Find the given string backwards and put it in front of the current selection
+" if it is a valid Lisp form (i.e. not inside comment or string)
+function! SlimvFindAddSel( string )
+    normal ms
+    let found = 0
+    while search( '(\s*' . a:string . '\s', 'bcW' )
+        " Search for the previos occurrence
+        if synIDattr( synID( line('.'), col('.'), 0), 'name' ) !~ '[Ss]tring\|[Cc]omment'
+            " It is not inside a comment or string
+            let found = 1
+            break
+        endif
+    endwhile
+    if found
+        " Put the form just found at the beginning of the selection
+        let sel = SlimvGetSelection()
+        normal! v%"sy
+        call setreg( '"s', SlimvGetSelection() . "\n" . sel )
+        normal `s
+    endif
+endfunction
+
+" Find and add language specific package/namespace definition before the
+" cursor position and if exists then add it in front of the current selection
+function! SlimvFindPackage()
+    if !g:slimv_package
+        return
+    endif
+    if SlimvGetFiletype() == 'clojure'
+        call SlimvFindAddSel( 'in-ns' )
+    else
+        call SlimvFindAddSel( 'in-package' )
+    endif
+endfunction
+
 " Send argument to Lisp server for evaluation
 function! SlimvSend( args, open_buffer )
     call SlimvClientCommand()
@@ -1181,6 +1221,16 @@ function! SlimvGetRegion() range
         let lines[len(lines)-1] = ''
     endif
     let lines[0] = lines[0][firstcol : ]
+
+    " Find and add package/namespace definition in front of the region
+    if g:slimv_package
+        call setreg( '"s', '' )
+        call SlimvFindPackage()
+        let sel = SlimvGetSelection()
+        if sel != ''
+            let lines = [sel] + lines
+        endif
+    endif
     return lines
 endfunction
 
@@ -1232,6 +1282,7 @@ endfunction
 " Evaluate top level form at the cursor pos
 function! SlimvEvalDefun()
     call SlimvSelectToplevelForm()
+    call SlimvFindPackage()
     call SlimvEvalSelection()
 endfunction
 
@@ -1244,12 +1295,14 @@ endfunction
 " Evaluate last expression
 function! SlimvEvalLastExp()
     call SlimvSelectForm()
+    call SlimvFindPackage()
     call SlimvEvalSelection()
 endfunction
 
 " Evaluate and pretty print last expression
 function! SlimvPprintEvalLastExp()
     call SlimvSelectForm()
+    call SlimvFindPackage()
     call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
 endfunction
 
@@ -1439,6 +1492,7 @@ endfunction
 function! SlimvCompileDefun()
     "TODO: handle double quote characters in form
     call SlimvSelectToplevelForm()
+    call SlimvFindPackage()
     call SlimvEvalForm1( g:slimv_template_compile_string, SlimvGetSelection() )
 endfunction
 
