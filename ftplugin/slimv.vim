@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.6.4
-" Last Change:  12 Sep 2010
+" Last Change:  13 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -813,9 +813,9 @@ endfunction
 function! SlimvSelectSymbolExt()
     let oldkw = &iskeyword
     if SlimvGetFiletype() == 'clojure'
-        let &iskeyword = oldkw . ',~,#,&,|,{,}'
+        let &iskeyword += ',~,#,&,|,{,},!,?'
     else
-        let &iskeyword = oldkw . ',~,#,&,|,{,},[,]'
+        let &iskeyword += ',~,#,&,|,{,},[,],!,?'
     endif
     normal! viw"sy
     let &iskeyword = oldkw
@@ -1326,7 +1326,7 @@ endfunction
 function! SlimvMacroexpandGeneral( command )
     normal! 99[(
     let line = getline( "." )
-    if match( line, 'defmacro\s' ) < 0
+    if match( line, '(\s*defmacro\s' ) < 0
         " The form does not contain 'defmacro', put it in a macroexpand block
         call SlimvSelectForm()
         let m = "(" . a:command . " '" . SlimvGetSelection() . ")"
