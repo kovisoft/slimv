@@ -1,5 +1,5 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.6.4
+" Version:      0.7.0
 " Last Change:  23 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.

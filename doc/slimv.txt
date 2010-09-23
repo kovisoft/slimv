@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 11 Sep 2010
+*slimv.txt*                    Slimv                 Last Change: 23 Sep 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.6.3
+                               Version 0.7.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -210,14 +210,8 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_repl_open|          If nonzero, Slimv opens the Lisp REPL buffer
                              inside Vim when the server is started.
 
-|g:slimv_repl_return|        If nonzero, the cursor is returned to the editor
-                             window from the REPL buffer after evaluation.
-
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
-
-|g:slimv_repl_wait|          Number of seconds to wait for the REPL output
-                             to finish. Zero means inifinity.
 
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
@@ -413,21 +407,9 @@ separate REPL window can be used for checking the output.
 The |g:slimv_repl_open| = 0 option can be used to disable the built-in REPL
 buffer, so that only the separate REPL window is opened.
 
-                                                          *g:slimv_repl_return*
-By default the cursor is placed in the REPL buffer and it stays there when
-evaluating a form in the editor window. If |g:slimv_repl_open| is set then
-the cursor is returned to the editor window after the evaluation is performed
-and the timeout defined in |g:slimv_repl_wait| elapsed.
-
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
 Used only when |g:slimv_repl_open| is nonzero.
-
-                                                            *g:slimv_repl_wait*
-Number of seconds to wait for the REPL output to finish. Zero means inifinity.
-While waiting, the output is displayed continuously. During that time the
-regular Vim commands are not available. For the posssible commands see
-|slimv-repl|.
 
                                                             *g:slimv_repl_wrap*
 Set wrap mode for the REPL buffer, which means the lines longer than the
@@ -643,7 +625,6 @@ sequence, then you may want to fine tune these Vim options:
     ,<Up>   ,rp      Previous Input
     ,<Down> ,rn      Next Input
     ,z      ,rr      Refresh REPL Buffer
-    ,Z      ,rw      Refresh REPL Now
 
 
 Also see |slimv-repl| for additional keybindings valid only in the REPL buffer.
@@ -725,18 +706,6 @@ Insert Mode:
 
     <Down>         Brings up the next command typed and sent to the Lisp REPL
                    when in the command line.
-
-While waiting for REPL output:
-
-    CTRL-C         Sends a Ctrl-C (SIGINT) signal to the Lisp REPL. Useful for
-                   interrupting a runaway Lisp program from the Lisp REPL
-                   buffer.
-
-    any other key  Stops waiting for REPL output, returns to regular Vim mode.
-                   The key that was pressed is translated and processed by Vim,
-                   according to current the Vim mode.
-                   It is possible to return to the continuous refresh mode
-                   by selecting the "Refresh REPL Buffer" command.
 
 
 ===============================================================================
@@ -1277,6 +1246,15 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.7.0  - Added package/namespace support.
+       - New way of refreshing the REPL buffer via autocommands, removed
+         'RUNNING' mode, cursor stays in the current buffer at evaluation.
+       - Removed options related to the old way of refreshing:
+         g:slimv_repl_return and g:slimv_repl_wait.
+       - Updated Clojure API to version 1.2.
+       - Extended keyword definition when selecting symbols.
+       - Bugfix: defmacro detection problem (again).
 
 0.6.3  - Added option g:slimv_repl_return to return cursor to the editor window
          from REPL buffer after evaluating an s-expression.
