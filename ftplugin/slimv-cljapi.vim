@@ -1,7 +1,7 @@
 " slimv-cljapi.vim:
 "               Clojure API lookup support for Slimv
-" Version:      0.5.5
-" Last Change:  04 Jan 2010
+" Version:      0.6.4
+" Last Change:  23 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -18,7 +18,7 @@ let g:slimv_cljapi_loaded = 1
 
 " Root of the Clojure API
 if !exists( 'g:slimv_cljapi_root' )
-    let g:slimv_cljapi_root = 'http://richhickey.github.com/clojure/'
+    let g:slimv_cljapi_root = 'http://clojure.github.com/clojure/'
 endif
  
 if !exists( 'g:slimv_cljapi_db' )
@@ -301,6 +301,7 @@ if !exists( 'g:slimv_cljapi_db' )
     \["mod", "clojure.core-api.html\\#clojure.core/mod"],
     \["name", "clojure.core-api.html\\#clojure.core/name"],
     \["namespace", "clojure.core-api.html\\#clojure.core/namespace"],
+    \["namespace-munge", "clojure.core-api.html\\#clojure.core/namespace-munge"],
     \["neg?", "clojure.core-api.html\\#clojure.core/neg?"],
     \["newline", "clojure.core-api.html\\#clojure.core/newline"],
     \["next", "clojure.core-api.html\\#clojure.core/next"],
@@ -495,9 +496,6 @@ if !exists( 'g:slimv_cljapi_db' )
     \["xml-seq", "clojure.core-api.html\\#clojure.core/xml-seq"],
     \["zero?", "clojure.core-api.html\\#clojure.core/zero?"],
     \["zipmap", "clojure.core-api.html\\#clojure.core/zipmap"],
-    \["inspect", "clojure.inspector-api.html\\#clojure.inspector/inspect"],
-    \["inspect-table", "clojure.inspector-api.html\\#clojure.inspector/inspect-table"],
-    \["inspect-tree", "clojure.inspector-api.html\\#clojure.inspector/inspect-tree"],
     \["load-script", "clojure.main-api.html\\#clojure.main/load-script"],
     \["main", "clojure.main-api.html\\#clojure.main/main"],
     \["repl", "clojure.main-api.html\\#clojure.main/repl"],
@@ -508,6 +506,11 @@ if !exists( 'g:slimv_cljapi_db' )
     \["skip-if-eol", "clojure.main-api.html\\#clojure.main/skip-if-eol"],
     \["skip-whitespace", "clojure.main-api.html\\#clojure.main/skip-whitespace"],
     \["with-bindings", "clojure.main-api.html\\#clojure.main/with-bindings"],
+    \["apropos", "clojure.repl-api.html\\#clojure.repl/apropos"],
+    \["dir", "clojure.repl-api.html\\#clojure.repl/dir"],
+    \["dir-fn", "clojure.repl-api.html\\#clojure.repl/dir-fn"],
+    \["source", "clojure.repl-api.html\\#clojure.repl/source"],
+    \["source-fn", "clojure.repl-api.html\\#clojure.repl/source-fn"],
     \["difference", "clojure.set-api.html\\#clojure.set/difference"],
     \["index", "clojure.set-api.html\\#clojure.set/index"],
     \["intersection", "clojure.set-api.html\\#clojure.set/intersection"],
@@ -518,61 +521,6 @@ if !exists( 'g:slimv_cljapi_db' )
     \["rename-keys", "clojure.set-api.html\\#clojure.set/rename-keys"],
     \["select", "clojure.set-api.html\\#clojure.set/select"],
     \["union", "clojure.set-api.html\\#clojure.set/union"],
-    \["e", "clojure.stacktrace-api.html\\#clojure.stacktrace/e"],
-    \["print-cause-trace", "clojure.stacktrace-api.html\\#clojure.stacktrace/print-cause-trace"],
-    \["print-stack-trace", "clojure.stacktrace-api.html\\#clojure.stacktrace/print-stack-trace"],
-    \["print-throwable", "clojure.stacktrace-api.html\\#clojure.stacktrace/print-throwable"],
-    \["print-trace-element", "clojure.stacktrace-api.html\\#clojure.stacktrace/print-trace-element"],
-    \["root-cause", "clojure.stacktrace-api.html\\#clojure.stacktrace/root-cause"],
-    \["apply-template", "clojure.template-api.html\\#clojure.template/apply-template"],
-    \["do-template", "clojure.template-api.html\\#clojure.template/do-template"],
-    \["*load-tests*", "clojure.test-api.html\\#clojure.test/*load-tests*"],
-    \["*stack-trace-depth*", "clojure.test-api.html\\#clojure.test/*stack-trace-depth*"],
-    \["are", "clojure.test-api.html\\#clojure.test/are"],
-    \["assert-any", "clojure.test-api.html\\#clojure.test/assert-any"],
-    \["assert-predicate", "clojure.test-api.html\\#clojure.test/assert-predicate"],
-    \["compose-fixtures", "clojure.test-api.html\\#clojure.test/compose-fixtures"],
-    \["deftest", "clojure.test-api.html\\#clojure.test/deftest"],
-    \["deftest-", "clojure.test-api.html\\#clojure.test/deftest-"],
-    \["file-position", "clojure.test-api.html\\#clojure.test/file-position"],
-    \["function?", "clojure.test-api.html\\#clojure.test/function?"],
-    \["get-possibly-unbound-var", "clojure.test-api.html\\#clojure.test/get-possibly-unbound-var"],
-    \["inc-report-counter", "clojure.test-api.html\\#clojure.test/inc-report-counter"],
-    \["is", "clojure.test-api.html\\#clojure.test/is"],
-    \["join-fixtures", "clojure.test-api.html\\#clojure.test/join-fixtures"],
-    \["report", "clojure.test-api.html\\#clojure.test/report"],
-    \["run-all-tests", "clojure.test-api.html\\#clojure.test/run-all-tests"],
-    \["run-tests", "clojure.test-api.html\\#clojure.test/run-tests"],
-    \["set-test", "clojure.test-api.html\\#clojure.test/set-test"],
-    \["successful?", "clojure.test-api.html\\#clojure.test/successful?"],
-    \["test-all-vars", "clojure.test-api.html\\#clojure.test/test-all-vars"],
-    \["test-ns", "clojure.test-api.html\\#clojure.test/test-ns"],
-    \["test-var", "clojure.test-api.html\\#clojure.test/test-var"],
-    \["testing", "clojure.test-api.html\\#clojure.test/testing"],
-    \["testing-contexts-str", "clojure.test-api.html\\#clojure.test/testing-contexts-str"],
-    \["testing-vars-str", "clojure.test-api.html\\#clojure.test/testing-vars-str"],
-    \["try-expr", "clojure.test-api.html\\#clojure.test/try-expr"],
-    \["use-fixtures", "clojure.test-api.html\\#clojure.test/use-fixtures"],
-    \["with-test", "clojure.test-api.html\\#clojure.test/with-test"],
-    \["with-test-out", "clojure.test-api.html\\#clojure.test/with-test-out"],
-    \["clojure.test.junit", "clojure.test-api.html\\#clojure.test/clojure.test.junit"],
-    \["with-junit-output", "clojure.test-api.html\\#clojure.test/with-junit-output"],
-    \["clojure.test.tap", "clojure.test-api.html\\#clojure.test/clojure.test.tap"],
-    \["print-tap-diagnostic", "clojure.test-api.html\\#clojure.test/print-tap-diagnostic"],
-    \["print-tap-fail", "clojure.test-api.html\\#clojure.test/print-tap-fail"],
-    \["print-tap-pass", "clojure.test-api.html\\#clojure.test/print-tap-pass"],
-    \["print-tap-plan", "clojure.test-api.html\\#clojure.test/print-tap-plan"],
-    \["with-tap-output", "clojure.test-api.html\\#clojure.test/with-tap-output"],
-    \["keywordize-keys", "clojure.walk-api.html\\#clojure.walk/keywordize-keys"],
-    \["macroexpand-all", "clojure.walk-api.html\\#clojure.walk/macroexpand-all"],
-    \["postwalk", "clojure.walk-api.html\\#clojure.walk/postwalk"],
-    \["postwalk-demo", "clojure.walk-api.html\\#clojure.walk/postwalk-demo"],
-    \["postwalk-replace", "clojure.walk-api.html\\#clojure.walk/postwalk-replace"],
-    \["prewalk", "clojure.walk-api.html\\#clojure.walk/prewalk"],
-    \["prewalk-demo", "clojure.walk-api.html\\#clojure.walk/prewalk-demo"],
-    \["prewalk-replace", "clojure.walk-api.html\\#clojure.walk/prewalk-replace"],
-    \["stringify-keys", "clojure.walk-api.html\\#clojure.walk/stringify-keys"],
-    \["walk", "clojure.walk-api.html\\#clojure.walk/walk"],
     \["parse", "clojure.xml-api.html\\#clojure.xml/parse"],
     \["append-child", "clojure.zip-api.html\\#clojure.zip/append-child"],
     \["branch?", "clojure.zip-api.html\\#clojure.zip/branch?"],
