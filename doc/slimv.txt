@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 23 Sep 2010
+*slimv.txt*                    Slimv                 Last Change: 24 Sep 2010
 
 Slimv                                                                  *slimv*
                                Version 0.7.0
@@ -14,8 +14,9 @@ paredit mode is operating system independent.
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
 |slimv-clojure|              Clojure support
+|slimv-package|              Package and Namespace handling
 |slimv-profiling|            Profiling
-|slimv-hyperspec|            Hyperspec lookup and Completion
+|slimv-hyperspec|            Hyperspec Lookup and Completion
 |slimv-paredit|              Paredit mode
 |slimv-external|             External utilities
 |slimv-faq|                  Frequently Asked Questions
@@ -197,6 +198,9 @@ Below that list follows the detailed explanation on each option.
 |g:slimv_logfreq|            Flushing frequency to logfile.
 
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
+
+|g:slimv_package|            If nonzero, Slimv package/namespace handling is
+                             switched on.
 
 |g:slimv_port|               TCP/IP port number to use in the Slimv client-
                              server communication.
@@ -410,6 +414,10 @@ buffer, so that only the separate REPL window is opened.
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
 Used only when |g:slimv_repl_open| is nonzero.
+
+                                                              *g:slimv_package*
+If nonzero then Slimv package/namespace handling is switched on. Please find
+details in the |slimv-package| section.
 
                                                             *g:slimv_repl_wrap*
 Set wrap mode for the REPL buffer, which means the lines longer than the
@@ -733,9 +741,23 @@ Remember to escape the backslashes:
 
 
 ===============================================================================
+PACKAGE AND NAMESPACE HANDLING                                  *slimv-package*
+
+Slimv has a basic support for handling Lisp packages and Clojure namespaces.
+This means that at every form evaluation Slimv first searches the source file
+for any preceding '(in-package ...)' form for Lisp and '(in-ns ...)' form for
+Clojure. If found then each time the package/namespace definition is evaluated
+first. This way it is possible to randomly re-evaluate forms in a source (or
+multiple sources) that use multiple packages/namespaces, each time the correct
+package/namespace will be used.
+The package/namespace handling can be switched off via the |g:slimv_package|
+option.
+
+
+===============================================================================
 PROFILING                                                     *slimv-profiling*
 
-Slimv is capable pf utilizing SBCL's built-in profiler, and also the same
+Slimv is capable of utilizing SBCL's built-in profiler, and also the same
 monitoring/profiling package (metering.lisp) that is used by SLIME, at least
 for CLISP and maybe for some other Common Lisp implementations.
 Fortunately SLIME's metering.lisp is in public domain, so its current version
@@ -1401,9 +1423,6 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Add package and namespace support.
-- Add a new way of refreshing the REPL buffer via checktime and autoread.
-- Update to Clojure 1.2.
 - Add Swank support, i.e. send commands to SLIME's Swank server.
 
 ===============================================================================
@@ -1429,4 +1448,4 @@ Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
 ===============================================================================
-vim:tw=78:noet:wrap:ts=8:ft=help:norl:
+vim:tw=80:noet:wrap:ts=8:ft=help:norl:
