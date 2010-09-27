@@ -525,12 +525,21 @@ function! SlimvEndOfReplBuffer( markit, insert )
 endfunction
 
 " Reload the contents of the REPL buffer from the output file if changed
-function! SlimvRefreshReplBuffer()
+function! SlimvRefreshReplBuffer( wait )
 "    if !g:slimv_repl_open || !g:slimv_repl_split
     if !g:slimv_repl_open
         " User does not want to display REPL in Vim
         " or does not display it in a split window
         return
+    endif
+
+    if a:wait
+        try
+            sleep 200m
+        catch /.*/
+            " Some Vim versions give an E303 while waiting for refresh
+            " but we don't need a swapfile for the REPL buffer anyway
+        endtry
     endif
 
     let size = getfsize( s:repl_name )
@@ -548,11 +557,16 @@ function! SlimvRefreshReplBuffer()
     let this_buf = bufnr( "%" )
     if repl_buf != this_buf
         " Switch to the REPL buffer/window
-        if g:slimv_repl_split
-            wincmd w
-        else
-            buf #
-        endif
+        try
+            if g:slimv_repl_split
+                wincmd w
+            else
+                buf #
+            endif
+        catch /.*/
+            " Some Vim versions give an E303 error here
+            " but we don't need a swapfile for the REPL buffer anyway
+        endtry
     endif
 
     try
@@ -583,7 +597,7 @@ endfunction
 " This function re-triggers the CursorHold event
 " after refreshing the REPL buffer
 function! SlimvTimer()
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshReplBuffer(0)
     if g:slimv_repl_open
         if mode() == 'i' || mode() == 'I'
             " Put an incomplete '<C-O>' command and an Esc into the typeahead buffer
@@ -600,8 +614,8 @@ endfunction
 function! SlimvRefreshModeOn()
     set readonly
     setlocal autoread
-    execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
-    execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
+    execute "au CursorMoved  * :call SlimvRefreshReplBuffer(0)"
+    execute "au CursorMovedI * :call SlimvRefreshReplBuffer(0)"
     execute "au CursorHold   * :call SlimvTimer()"
     execute "au CursorHoldI  * :call SlimvTimer()"
 endfunction
@@ -618,7 +632,6 @@ endfunction
 " Called when entering REPL buffer
 function! SlimvReplEnter()
     call SlimvAddReplMenu()
-    "call SlimvRefreshReplBuffer()
     execute "au FileChangedRO " . g:slimv_repl_file . " :call SlimvRefreshModeOff()"
     call SlimvRefreshModeOn()
 endfunction
@@ -708,8 +721,8 @@ function! SlimvOpenReplBuffer()
     hi SlimvCursor term=reverse cterm=reverse gui=reverse
 
     " Add autocommands specific to the REPL buffer
-    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
-    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
+    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer(0)"
+    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer(0)"
     execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
@@ -719,8 +732,7 @@ function! SlimvOpenReplBuffer()
     let s:last_size = 0
 
     call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
-    sleep 200m
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshReplBuffer(1)
 endfunction
 
 " Select symbol under cursor and copy it to register 's'
@@ -840,8 +852,7 @@ function! SlimvSend( args, open_buffer )
     if a:open_buffer
         " Wait a little for the REPL output and refresh REPL buffer
         " then return to the caller buffer/window
-        sleep 200m
-        call SlimvRefreshReplBuffer()
+        call SlimvRefreshReplBuffer(1)
         if g:slimv_repl_split && repl_win == -1
             execute "normal! \<C-w>p"
         elseif repl_buf == -1
@@ -858,8 +869,7 @@ endfunction
 " Send interrupt command to REPL
 function! SlimvInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-    sleep 200m
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshReplBuffer(1)
     startinsert!
 endfunction
 
@@ -1099,8 +1109,7 @@ endfunction
 " Handle interrupt (Ctrl-C) keypress in the REPL buffer
 function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-    sleep 200m
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshReplBuffer(1)
 endfunction
 
 " Start and connect slimv server
