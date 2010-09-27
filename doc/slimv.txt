@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 24 Sep 2010
+*slimv.txt*                    Slimv                 Last Change: 27 Sep 2010
 
 Slimv                                                                  *slimv*
                                Version 0.7.0
@@ -406,8 +406,14 @@ The reason behind this is that the simulation is not perfect, which is caused
 by the lack of asynchronous update possibilities in Vim. Sometimes the REPL
 buffer is not perfectly updated, this is the case for example when a Lisp
 program is running too long and it has infrequent outputs only.
-In these situations the REPL buffer can be refreshed manually or the
-separate REPL window can be used for checking the output.
+Slimv refreshes the REPL buffer at every keystroke or when the user doesn't
+press a key for the time specified with 'updatetime'. It is also possible
+to manually refresh the REPL buffer. The default value for 'updatetime' is
+4 secs (=4000 ms), in cases when more precise refreshing is needed you can
+lower the 'updatetime' option, e.g. to one second (=1000 ms):
+    set updatetime=1000
+However, it is not recommended to set this to a much lower value.
+Optionally one may check the output of the separate REPL window.
 The |g:slimv_repl_open| = 0 option can be used to disable the built-in REPL
 buffer, so that only the separate REPL window is opened.
 
