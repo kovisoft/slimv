@@ -745,9 +745,9 @@ endfunction
 function! SlimvSelectSymbolExt()
     let oldkw = &iskeyword
     if SlimvGetFiletype() == 'clojure'
-        let &iskeyword += ',~,#,&,|,{,},!,?'
+        setlocal iskeyword+=~,#,&,\|,{,},!,?
     else
-        let &iskeyword += ',~,#,&,|,{,},[,],!,?'
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
     endif
     normal! viw"sy
     let &iskeyword = oldkw
