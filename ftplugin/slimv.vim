@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.0
-" Last Change:  23 Sep 2010
+" Last Change:  27 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -580,6 +580,21 @@ function! SlimvRefreshReplBuffer()
     endif
 endfunction
 
+" This function re-triggers the CursorHold event
+" after refreshing the REPL buffer
+function! SlimvTimer()
+    call SlimvRefreshReplBuffer()
+    if g:slimv_repl_open
+        if mode() == 'i' || mode() == 'I'
+            " Put an incomplete '<C-O>' command and an Esc into the typeahead buffer
+            call feedkeys("\x0F\e")
+        else
+            " Put an incomplete 'f' command and an Esc into the typeahead buffer
+            call feedkeys("f\e")
+        endif
+    endif
+endfunction
+
 " Switch refresh mode on:
 " refresh REPL buffer on frequent Vim events
 function! SlimvRefreshModeOn()
@@ -587,8 +602,8 @@ function! SlimvRefreshModeOn()
     setlocal autoread
     execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
     execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
-    execute "au CursorHold   * :call SlimvRefreshReplBuffer()"
-    execute "au CursorHoldI  * :call SlimvRefreshReplBuffer()"
+    execute "au CursorHold   * :call SlimvTimer()"
+    execute "au CursorHoldI  * :call SlimvTimer()"
 endfunction
 
 " Switch refresh mode off
