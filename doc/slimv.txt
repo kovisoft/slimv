@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 27 Sep 2010
+*slimv.txt*                    Slimv                 Last Change: 30 Sep 2010
 
 Slimv                                                                  *slimv*
                                Version 0.7.0
@@ -82,7 +82,9 @@ To install the script:
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
 >
-      :helptags <your runtime directory/doc
+       :helptags <your runtime directory>/doc
+
+    (e.g :helptags $VIMRUNTIME/doc)
 <
     This will generate all the help tags for any file located in the doc
     directory.
@@ -218,6 +220,9 @@ Below that list follows the detailed explanation on each option.
                              or in a separate buffer.
 
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
+
+|g:slimv_updatetime|         Alternative value for 'updatetime' during REPL
+                             refresh.
 
 
 Note: Most options require to restart the Vim session when modified.
@@ -420,6 +425,17 @@ buffer, so that only the separate REPL window is opened.
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
 Used only when |g:slimv_repl_open| is nonzero.
+
+                                                           *g:slimv_updatetime*
+The REPL buffer is refreshed at every keystroke or when the user doesn't press
+a key for the time specified with 'updatetime'. Slimv alters the value for
+'updatetime' to a lower value when the REPL buffer is changed, so that the
+update frequency gets higher while there is new REPL output. The original
+value for 'updatetime' is restored when there is no REPL output.
+The g:slimv_updatetime option defines the alternative (lower) value for
+'updatetime' during REPL refresh. If you don't want that Slimv changes
+'updatetime', then set g:slimv_updatetime to zero.
+The default value is 200 (=0.2 sec).
 
                                                               *g:slimv_package*
 If nonzero then Slimv package/namespace handling is switched on. Please find
@@ -1278,6 +1294,7 @@ CHANGE LOG                                                    *slimv-changelog*
 0.7.0  - Added package/namespace support.
        - New way of refreshing the REPL buffer via autocommands, removed
          'RUNNING' mode, cursor stays in the current buffer at evaluation.
+       - Added option g:slimv_updatetime.
        - Removed options related to the old way of refreshing:
          g:slimv_repl_return and g:slimv_repl_wait.
        - Updated Clojure API to version 1.2.
