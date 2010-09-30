@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.0
-" Last Change:  27 Sep 2010
+" Last Change:  30 Sep 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -303,6 +303,11 @@ if !exists( 'g:slimv_repl_wrap' )
     let g:slimv_repl_wrap = 1
 endif
 
+" Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
+if !exists( 'g:slimv_updatetime' )
+    let g:slimv_updatetime = 200
+endif
+
 " Build client command (if not given in vimrc)
 if !exists( 'g:slimv_client' )
     let g:slimv_client = SlimvMakeClientCommand()
@@ -477,8 +482,14 @@ let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file
 " Lisp prompt in the last line
 let s:prompt = ''
 
+" The last update time for the REPL buffer
+let s:last_update = 0
+
 " The last size of the REPL buffer
 let s:last_size = 0
+
+" The original value for 'updatetime'
+let s:save_updatetime = &updatetime
 
 " Debug log buffer
 let s:debug_list = []
@@ -545,6 +556,9 @@ function! SlimvRefreshReplBuffer( wait )
     let size = getfsize( s:repl_name )
     if size == s:last_size
         " REPL output file did not change since the last refresh
+        if g:slimv_updatetime > 0 && s:last_update < localtime() - 1
+            let &updatetime = s:save_updatetime
+        endif
         return
     endif
     let s:last_size = size
@@ -568,6 +582,11 @@ function! SlimvRefreshReplBuffer( wait )
             " but we don't need a swapfile for the REPL buffer anyway
         endtry
     endif
+
+    if g:slimv_updatetime > 0
+        let &updatetime = g:slimv_updatetime
+    endif
+    let s:last_update = localtime()
 
     try
         "execute "silent edit! " . s:repl_name
