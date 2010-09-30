@@ -129,6 +129,8 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
+0.7.0: Added package/namespace support, new way of refreshing the REPL buffer via autocommands, removed 'RUNNING' mode, cursor stays in the current buffer at evaluation, added option g:slimv_updatetime, removed options related to the old way of refreshing (g:slimv_repl_return and g:slimv_repl_wait), updated Clojure API to version 1.2, extended keyword definition when selecting symbols, bugfix: defmacro detection problem (again).
+
 0.6.3: Added option to return cursor to the editor window from REPL buffer after evaluating an s-expression, Wrap: if standing on a paren then wrap the whole s-expression, Wrap selection: exit visual mode after command, Bugfixes: inserting double quotes in paredit mode (like "\""), dd in paredit mode when unbalanced form is inside comment, reopen REPL buffer after closing it via ":q", comment and string detection error with noignorecase setting, wrong positioning when moving parenthesis to the right, defmacro detection problem, paredit wrap selection missed last character when 'selection' was not "exclusive".
 
 0.6.2: Added support for Mac OS X via Terminal.app (on behalf of Vlad Hanciuta), added string "clj" as a detector for Clojure (by Vlad Hanciuta), bugfixes: paredit wrap function missed last character when 'selection' was not "exclusive" (thanks to Marcin Fatyga), input was stuck inside SBCL debugger (on behalf of Philipp Marek and Dmitry Petukhov), occasional error messages during REPL buffer update, REPL menu was sometimes missing, occasional command line color problems.
@@ -186,8 +188,6 @@ Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to 
 
 Issues
 
-- REPL buffer refresh on Vim focus gain works only in gvim, not in console vim
-- REPL buffer refresh sometimes does not work first time after the server Lisp windows was just opened
 - Ctrl+C works in server Lisp window (but only in Lisp implementations that support it, so not in SBCL)
 
 ---------------------------------------------------------------------------------------------
