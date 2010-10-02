@@ -27,48 +27,6 @@ endif
 "  Functions used by global variable definitions
 " =====================================================================
 
-" Flush log message buffer to logfile
-function! SlimvLogFlush()
-    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && s:debug_list != []
-        " We need to make a hack: write things into a temporary file
-        " then append temp file contents to the logfile
-        let tmp = tempname()
-        try
-            call writefile( s:debug_list, tmp )
-        finally
-            if g:slimv_windows
-                silent execute '!type ' . tmp . ' >> ' . g:slimv_logfile
-            else
-                silent execute '!cat ' . tmp . ' >> ' . g:slimv_logfile
-            endif
-            call delete(tmp)
-        endtry
-        " Unfortunately I know no way to tell writefile to append the text
-        "call writefile( a:message, g:slimv_logfile )
-        let s:debug_list = []
-    endif
-endfunction
-
-" Write debug message to logfile (message must be a list)
-function! SlimvLogWrite( level, message, immediate )
-    if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && g:slimv_debug >= a:level
-        let s:debug_list = s:debug_list + a:message
-        if len( s:debug_list ) >= g:slimv_logfreq || a:immediate
-            call SlimvLogFlush()
-        endif
-    endif
-endfunction
-
-" Write debug message to logfile with a timestamp
-function! SlimvLog( level, message )
-    if exists( '*strftime' )
-        let time = strftime( '%Y %b %d %X' )
-    else
-        let time = localtime()
-    endif
-    call SlimvLogWrite( a:level, ['***** ' . time] + a:message + [''], 0 )
-endfunction
-
 " Try to autodetect Python executable
 function! SlimvAutodetectPython()
     if executable( 'python' )
@@ -159,96 +117,15 @@ function! SlimvGetFiletype()
     return 'lisp'
 endfunction
 
-" Log global variables to logfile (if debug log set)
-function! SlimvLogGlobals()
-    let info = [ 'Loaded file: ' . fnamemodify( bufname(''), ':p' ) ]
-
-    if exists( 'g:slimv_debug' )
-        call add( info,  printf( 'g:slimv_debug         = %d',    g:slimv_debug ) )
-    endif
-    if exists( 'g:slimv_debug_client' )
-        call add( info,  printf( 'g:slimv_debug_client  = %d',    g:slimv_debug_client ) )
-    endif
-    if exists( 'g:slimv_logfile' )
-        call add( info,  printf( 'g:slimv_logfile       = %s',    g:slimv_logfile ) )
-    endif
-    if exists( 'g:slimv_port' )
-        call add( info,  printf( 'g:slimv_port          = %d',    g:slimv_port ) )
-    endif
-    if exists( 'g:slimv_python' )
-        call add( info,  printf( 'g:slimv_python        = %s',    g:slimv_python ) )
-    endif
-    if exists( 'g:slimv_lisp' )
-        call add( info,  printf( 'g:slimv_lisp          = %s',    g:slimv_lisp ) )
-    endif
-    if exists( 'g:slimv_client' )
-        call add( info,  printf( 'g:slimv_client        = %s',    g:slimv_client ) )
-    endif
-    if exists( 'g:slimv_impl' )
-        call add( info,  printf( 'g:slimv_impl          = %s',    g:slimv_impl ) )
-    endif
-    if exists( 'g:slimv_repl_open' )
-        call add( info,  printf( 'g:slimv_repl_open     = %d',    g:slimv_repl_open ) )
-    endif
-    if exists( 'g:slimv_repl_dir' )
-        call add( info,  printf( 'g:slimv_repl_dir      = %s',    g:slimv_repl_dir ) )
-    endif
-    if exists( 'g:slimv_repl_file' )
-        call add( info,  printf( 'g:slimv_repl_file     = %s',    g:slimv_repl_file ) )
-    endif
-    if exists( 'g:slimv_repl_split' )
-        call add( info,  printf( 'g:slimv_repl_split    = %d',    g:slimv_repl_split ) )
-    endif
-    if exists( 'g:slimv_repl_wrap' )
-        call add( info,  printf( 'g:slimv_repl_wrap     = %d',    g:slimv_repl_wrap ) )
-    endif
-    if exists( 'g:slimv_keybindings' )
-        call add( info,  printf( 'g:slimv_keybindings   = %d',    g:slimv_keybindings ) )
-    endif
-    if exists( 'g:slimv_menu' )
-        call add( info,  printf( 'g:slimv_menu          = %d',    g:slimv_menu ) )
-    endif
-    if exists( 'g:slimv_ctags' )
-        call add( info,  printf( 'g:slimv_ctags         = %d',    g:slimv_ctags ) )
-    endif
-    if exists( 'g:paredit_mode' )
-        call add( info,  printf( 'g:paredit_mode        = %d',    g:paredit_mode ) )
-    endif
-
-    call SlimvLog( 1, info )
-endfunction
-
-if exists( 'g:slimv_debug' ) && exists( 'g:slimv_logfile' ) && g:slimv_debug > 0
-    au VimEnter,BufNewFile,BufRead *.lisp call SlimvLogGlobals()
-    au VimEnter,BufNewFile,BufRead *.clj  call SlimvLogGlobals()
-    au VimLeave *.lisp call SlimvLogFlush()
-    au VimLeave *.clj  call SlimvLogFlush()
-endif
-
 
 " =====================================================================
 "  Global variable definitions
 " =====================================================================
 
-" Debug level (0 = no debug messages)
-if !exists( 'g:slimv_debug' )
-    let g:slimv_debug = 0
-endif
-
 " Leave client window open for debugging purposes
 " (works only on Windows at the moment)
 if !exists( 'g:slimv_debug_client' )
     let g:slimv_debug_client = 0
-endif
-
-" Logfile name for debug messages
-if !exists( 'g:slimv_logfile' )
-    let g:slimv_logfile = 'slimv.log'
-endif
-
-" Flushing frequency into debug logfile
-if !exists( 'g:slimv_logfreq' )
-    let g:slimv_logfreq = 1
 endif
 
 " TCP port number to use
@@ -492,9 +369,6 @@ let s:last_size = 0
 
 " The original value for 'updatetime'
 let s:save_updatetime = &updatetime
-
-" Debug log buffer
-let s:debug_list = []
 
 
 " =====================================================================
@@ -851,7 +725,6 @@ function! SlimvSend( args, open_buffer )
 
     let tmp = tempname()
     try
-        call SlimvLog( 2, a:args )
         call writefile( ar, tmp )
 
         " Send the file to the client for evaluation
