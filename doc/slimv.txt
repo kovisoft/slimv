@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 30 Sep 2010
+*slimv.txt*                    Slimv                 Last Change: 02 Oct 2010
 
 Slimv                                                                  *slimv*
                                Version 0.7.0
@@ -181,8 +181,6 @@ Below that list follows the detailed explanation on each option.
 
 |g:slimv_ctags|              OS command to generate tags file.
 
-|g:slimv_debug|              Debug log level. Set zero for no debug messages.
-
 |g:slimv_debug_client|       Display the command to start client.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
@@ -193,11 +191,6 @@ Below that list follows the detailed explanation on each option.
                              1 = set #1, 2 = set #2, other = no keybindings
 
 |g:slimv_lisp|               Path for the Lisp interpreter.
-
-|g:slimv_logfile|            Name of the logfile to use for debug messages.
-                             Also see |g:slimv_debug|.
-
-|g:slimv_logfreq|            Flushing frequency to logfile.
 
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
 
@@ -330,25 +323,11 @@ And this can be for Konsole:
   let g:slimv_client =
   \ 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
 
-                                                                *g:slimv_debug*
-Defines the debug log level. Level 0 means no debug messages at all. The debug
-messages go into the logfile defined by |slimv-logfile|.
-
                                                          *g:slimv_debug_client*
 Set this to nonzero if you want to make Vim display the command used to start
 the client and any occurrent error messages. This also makes Slimv keep the
 Slimv client window open on Windows. This setting is useful to debug problems
 when setting up a custom |g:slimv_client| command.
-
-                                                              *g:slimv_logfile*
-Name of the Slimv logfile. Defaults to slimv.log.
-Used only when |g:slimv_debug| level is nonzero.
-
-                                                              *g:slimv_logfreq*
-Flushing frequency to logfile.
-Writing to logfile generates extra Vim messages, so setting a relatively high
-flush frequency helps to get rid of them. The log messages are flushed when
-exiting Vim.
 
                                                                 *g:slimv_ctags*
 It is possible to generate tags file from within Vim. By default Slimv assumes
@@ -1297,6 +1276,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added option g:slimv_updatetime.
        - Removed options related to the old way of refreshing:
          g:slimv_repl_return and g:slimv_repl_wait.
+       - Removed debug logging.
        - Updated Clojure API to version 1.2.
        - Extended keyword definition when selecting symbols.
        - Bugfix: defmacro detection problem (again).
