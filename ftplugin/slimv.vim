@@ -514,6 +514,10 @@ function! SlimvRefreshModeOff()
     execute "au! CursorHold"
     execute "au! CursorHoldI"
     set noreadonly
+
+    " Remember the end of the buffer and the actual prompt
+    call setpos( "'s", [0, line('$'), col('$'), 0] )
+    let s:prompt = getline( "'s" )
 endfunction
 
 " Called when entering REPL buffer
