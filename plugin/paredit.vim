@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.6.3
-" Last Change:  04 Sep 2010
+" Version:      0.7.1
+" Last Change:  17 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -425,7 +425,7 @@ function! s:EraseFwd( count, startcol )
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
-            if pos > a:startcol
+            if pos - 1 > a:startcol
                 " Erasing an empty character-pair
                 let p2 = s:RemoveYankPos()
                 let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
@@ -443,7 +443,7 @@ function! s:EraseFwd( count, startcol )
             call s:AddYankPos( len(reg) )
             let pos = pos + 1
             normal! l
-        elseif pos < len(line)
+        elseif pos < len(line) && pos >= a:startcol
             " Erasing a non-special character
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
