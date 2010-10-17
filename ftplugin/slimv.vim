@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.0
-" Last Change:  02 Oct 2010
+" Version:      0.7.1
+" Last Change:  03 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1432,20 +1432,28 @@ function! SlimvLookup( word )
     endwhile
     if symbol != []
         " Symbol found, open HS page in browser
-        if match( symbol[1], ':' ) < 0
+        if match( symbol[1], ':' ) < 0 && exists( g:slimv_hs_root )
             let page = g:slimv_hs_root . symbol[1]
         else
             " URL is already a fully qualified address
             let page = symbol[1]
         endif
-        if g:slimv_windows
-            silent execute '! start ' . page
+        if exists( "g:slimv_browser_cmd" )
+            " We have an given command to start the browser
+            silent execute '! ' . g:slimv_browser_cmd . ' ' . page
         else
-            " On Linux it's not easy to determine the default browser
-            " Ask help from Python webbrowser package
-            let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
-            silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
+            if g:slimv_windows
+                " Run the program associated with the .html extension
+                silent execute '! start ' . page
+            else
+                " On Linux it's not easy to determine the default browser
+                " Ask help from Python webbrowser package
+                let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
+                silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
+            endif
         endif
+        " This is needed especially when using text browsers
+        redraw!
     endif
 endfunction
 
