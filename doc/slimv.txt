@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Oct 2010
+*slimv.txt*                    Slimv                 Last Change: 05 Oct 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.7.0
+                               Version 0.7.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -159,6 +159,9 @@ Below that list follows the detailed explanation on each option.
 
 |g:paredit_shortmaps|        If nonzero, paredit is remapping some one-letter
                              Vim commands that are not frequently used.
+
+|g:slimv_browser_cmd|        If nonempty, this command is used to open the
+                             Common Lisp Hyperspec. 
 
 |g:slimv_clhs_root|          Base URL for the Common Lisp Hyperspec.
 
@@ -350,16 +353,13 @@ The <Leader> is set to ',' by default.
 If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
-
                                                          *g:paredit_matchlines*
 Number of lines to look backward and forward when checking if the current
 top level form is balanced in paredit mode. Default is 100.
 
-
                                                                *g:paredit_mode*
 If nonzero then paredit mode is switched on, i.e. Slimv tries to keep the
 balanced state of parens. See |g:slimv-paredit|.
-
 
                                                           *g:paredit_shortmaps*
 If nonzero, paredit is remapping some one-letter normal mode Vim commands that
@@ -368,6 +368,13 @@ these maps then can be reached via the <Leader> prefix (which is the ","
 character by default in Slimv).
 Otherwise these paredit functions can be reached via the <Leader> prefix.
 
+                                                          *g:slimv_browser_cmd*
+Specifies the command to start the browser in order to display the Common Lisp
+Hyperspec or the Clojure API. If the command contains spaces then enclose the
+whole string in double quotes or escape the spaces with a backslash.
+This option is empty by default, which means that the command associated with
+the .html extension (on Windows) or returned by the Python webbrowser package
+(on Linux) is used to start the browser.
 
                                                              *g:slimv_repl_dir*
 Directory path for the Lisp REPL buffer file. By default this is a directory
@@ -434,8 +441,11 @@ will move the cursor one line on the display and not one line in the document.
                                                          *g:slimv_javadoc_root*
 Base URL for the Common Lisp Hyperspec, Clojure API, and JavaDoc.
 If the Hyperspec/API is downloaded to the hard disk, then set these variables
-to the base path of the local copy, something like
-"file:/usr/local/doc/HyperSpec/".
+to the base path of the local copy, something like (where file:// specifies
+the file protocol):
+"file:///c:/doc/HyperSpec/" (Windows).
+or
+"file:///usr/local/doc/HyperSpec/" (Linux).
 It is possible to extend the Hyperspec symbol database with user defined
 symbols, see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
 
@@ -1246,6 +1256,21 @@ FAQ                                                                 *slimv-faq*
      minor  version: New functionalities added, that are worth mentioning.
      bugfix release: Only bugfixes or tiny additions.
 
+- Q: Why is the plugin distributed in zip file?
+- A: I want that Windows/Linux/Mac users all can easily extract the plugin
+     files. For this reason the vimball or zip format seems to be a good
+     choice. There is no native .tar, .tar.gz, .tar.bz2 decompressors on
+     Windows (however there exist free tools for the job, like 7zip).
+     I'm relatively new to vimball and it looks like a good candidate, but
+     I have some problems with it:
+     1. It is uncompressed, and if I want to compress it then I will end up
+        having it zipped.
+     2. The .vba extension is also used for Visual Basic scripts on Windows
+        and this frequently contains virus, so Windows users may dislike it.
+        And remembering the very first time I met a vba file I was thinking
+        that someone had created a Visual Basic installer for the script.
+     3. Many Vim users don't know vimball but most of them know zip files.
+
 - Q: Are you a Lisp expert?
 - A: No, not at all. I'm just learning Lisp. Also just learning Vim
      scripting. And I'm not a Python expert either, however (at the moment)
@@ -1269,6 +1294,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.7.1  - Added option g:slimv_browser_cmd for opening hyperspec in a custom
+         webbrowser.
 
 0.7.0  - Added package/namespace support.
        - New way of refreshing the REPL buffer via autocommands, removed
