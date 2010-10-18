@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  17 Oct 2010
+" Last Change:  18 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -88,6 +88,18 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> C            :<C-U>call PareditEraseFwdLine()<CR>A
     nnoremap <buffer> <silent> dd           :<C-U>call PareditEraseLine()<CR>
     nnoremap <buffer> <silent> cc           0:<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> dw           :<C-U>call PareditDelCmdFwd("dw")<CR>
+    nnoremap <buffer> <silent> dW           :<C-U>call PareditDelCmdFwd("dW")<CR>
+    nnoremap <buffer> <silent> de           :<C-U>call PareditDelCmdFwd("de")<CR>
+    nnoremap <buffer> <silent> dE           :<C-U>call PareditDelCmdFwd("dE")<CR>
+    nnoremap <buffer> <silent> db           :<C-U>call PareditDelCmdBck("db")<CR>
+    nnoremap <buffer> <silent> dB           :<C-U>call PareditDelCmdBck("dB")<CR>
+    nnoremap <buffer> <silent> cw           :<C-U>call PareditDelCmdFwd("cw")<CR>a
+    nnoremap <buffer> <silent> cW           :<C-U>call PareditDelCmdFwd("cW")<CR>a
+    nnoremap <buffer> <silent> ce           :<C-U>call PareditDelCmdFwd("ce")<CR>a
+    nnoremap <buffer> <silent> cE           :<C-U>call PareditDelCmdFwd("cE")<CR>a
+    nnoremap <buffer> <silent> cb           :<C-U>call PareditDelCmdBck("cb")<CR>a
+    nnoremap <buffer> <silent> cB           :<C-U>call PareditDelCmdBck("cB")<CR>a
     nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
     vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
     nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
@@ -148,6 +160,31 @@ endfunction
 " Is the current cursor position inside a string?
 function! s:InsideString()
     return s:SynIDMatch( '[Ss]tring', 0 )
+endfunction
+
+" Override forward delete command to maintain matched character balance
+function! PareditDelCmdFwd( cmd )
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if line[pos] =~ s:any_matched_char
+        call PareditEraseFwd()
+        if a:cmd[0] == 'c'
+            normal! h
+        endif
+    else
+        execute "normal! " . a:cmd
+    endif
+endfunction
+
+" Override backward delete command to maintain matched character balance
+function! PareditDelCmdBck( cmd )
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if pos > 0 && line[pos-1] =~ s:any_matched_char
+        call PareditEraseBck()
+    else
+        execute "normal! " . a:cmd
+    endif
 endfunction
 
 " Autoindent current top level form
@@ -425,7 +462,7 @@ function! s:EraseFwd( count, startcol )
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
         elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
-            if pos - 1 > a:startcol
+            if pos > a:startcol
                 " Erasing an empty character-pair
                 let p2 = s:RemoveYankPos()
                 let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
