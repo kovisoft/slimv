@@ -1,0 +1,16 @@
+2010.08.22.
+-----------
+Did you see that the 1.2 release of Clojure seems to listen on a port, well when i start it under Leiningen anyways.
+I use leiningen (http://github.com/technomancy/leiningen) to manage my closure projects. Last week Clojure 1.2 was release and I updated my dependencies. The usual way for me to get a REPL is it use the command "lein repl" in my project. Now since the upgrade I see the following : 
+
+len$ lein repl
+"REPL started; server listening on localhost:1963."
+clojure.core=> 
+
+
+And I can telnet to that port and get a REPL !
+
+So i was thinking that might help you with Slimv ?
+
+
+
