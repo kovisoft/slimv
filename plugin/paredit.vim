@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  18 Oct 2010
+" Last Change:  30 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -86,20 +86,12 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
     nnoremap <buffer> <silent> D            :<C-U>call PareditEraseFwdLine()<CR>
     nnoremap <buffer> <silent> C            :<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
+    vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
+    nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
+    vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
     nnoremap <buffer> <silent> dd           :<C-U>call PareditEraseLine()<CR>
     nnoremap <buffer> <silent> cc           0:<C-U>call PareditEraseFwdLine()<CR>A
-    nnoremap <buffer> <silent> dw           :<C-U>call PareditDelCmdFwd("dw")<CR>
-    nnoremap <buffer> <silent> dW           :<C-U>call PareditDelCmdFwd("dW")<CR>
-    nnoremap <buffer> <silent> de           :<C-U>call PareditDelCmdFwd("de")<CR>
-    nnoremap <buffer> <silent> dE           :<C-U>call PareditDelCmdFwd("dE")<CR>
-    nnoremap <buffer> <silent> db           :<C-U>call PareditDelCmdBck("db")<CR>
-    nnoremap <buffer> <silent> dB           :<C-U>call PareditDelCmdBck("dB")<CR>
-    nnoremap <buffer> <silent> cw           :<C-U>call PareditDelCmdFwd("cw")<CR>a
-    nnoremap <buffer> <silent> cW           :<C-U>call PareditDelCmdFwd("cW")<CR>a
-    nnoremap <buffer> <silent> ce           :<C-U>call PareditDelCmdFwd("ce")<CR>a
-    nnoremap <buffer> <silent> cE           :<C-U>call PareditDelCmdFwd("cE")<CR>a
-    nnoremap <buffer> <silent> cb           :<C-U>call PareditDelCmdBck("cb")<CR>a
-    nnoremap <buffer> <silent> cB           :<C-U>call PareditDelCmdBck("cB")<CR>a
     nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
     vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
     nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
@@ -136,6 +128,74 @@ function! PareditInitBuffer()
     endif
 endfunction
 
+" General Paredit operator function
+function! PareditOpfunc( func, type, visualmode )
+    let sel_save = &selection
+    let &selection = "inclusive"
+    let reg_save = @@
+
+    if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
+        silent exe "normal! `<" . a:type . "`>"
+    elseif a:type == 'line'
+        silent exe "normal! '[V']"
+    elseif a:type == 'block'
+        silent exe "normal! `[\<C-V>`]"
+    else
+        silent exe "normal! `[v`]"
+    endif
+
+    if !g:paredit_mode
+        silent exe "normal! d"
+    else
+        silent exe "normal! y"
+        let lines = getline( "'<", "'>" )
+        let firstcol = col( "'<" ) - 1
+        let lastcol  = col( "'>" ) - 1
+        if lastcol >= 0
+            let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+        else
+            let lines[len(lines)-1] = ''
+        endif
+        let lines[0] = lines[0][firstcol : ]
+
+        " Find out what matched characters are in the region
+        let matched = s:GetMatchedChars( lines )
+
+        " Eliminate all paired matching characters
+        let tmp = matched
+        while 1
+            let matched = tmp
+            let tmp = substitute( tmp, '()', '', 'g')
+            let tmp = substitute( tmp, '[]', '', 'g')
+            let tmp = substitute( tmp, '""', '', 'g')
+            if tmp == matched
+                " All paired chars eliminated
+                break
+            endif
+        endwhile
+
+        " Do not delete matched characters having no pair in the selected region
+        silent exe "normal! gvc" . matched
+        silent exe "normal! l"
+    endif
+
+    let &selection = sel_save
+    let @@ = reg_save
+    if a:func == 'c'
+        startinsert
+    endif
+endfunction
+
+" General delete operator handling
+function! PareditDelete( type, ... )
+    call PareditOpfunc( 'd', a:type, a:0 )
+endfunction
+
+" General change operator handling
+function! PareditChange( type, ... )
+    call PareditOpfunc( 'c', a:type, a:0 )
+endfunction
+
 " Toggle paredit mode
 function! PareditToggle()
     let g:paredit_mode = 1 - g:paredit_mode
@@ -160,31 +220,6 @@ endfunction
 " Is the current cursor position inside a string?
 function! s:InsideString()
     return s:SynIDMatch( '[Ss]tring', 0 )
-endfunction
-
-" Override forward delete command to maintain matched character balance
-function! PareditDelCmdFwd( cmd )
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    if line[pos] =~ s:any_matched_char
-        call PareditEraseFwd()
-        if a:cmd[0] == 'c'
-            normal! h
-        endif
-    else
-        execute "normal! " . a:cmd
-    endif
-endfunction
-
-" Override backward delete command to maintain matched character balance
-function! PareditDelCmdBck( cmd )
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    if pos > 0 && line[pos-1] =~ s:any_matched_char
-        call PareditEraseBck()
-    else
-        execute "normal! " . a:cmd
-    endif
 endfunction
 
 " Autoindent current top level form
@@ -252,6 +287,44 @@ function! s:IsBalanced()
         return 0
     endif
     return 1
+endfunction
+
+" Filter out all non-matched characters from the lines given as argument
+function! s:GetMatchedChars( lines )
+    let matched = ''
+    let inside_string  = s:InsideString()
+    let inside_comment = s:InsideComment()
+    let i = 0
+    while i < len( a:lines )
+        let j = 0
+        while j < len( a:lines[i] )
+            if inside_string
+                " We are inside a string, skip parens, wait for closing '"'
+                if a:lines[i][j] == '"'
+                    let matched = matched . a:lines[i][j]
+                    let inside_string = 0
+                endif
+            elseif inside_comment
+                " We are inside a comment, skip parens, wait for end of line
+            else
+                " We are outside of strings and comments, now we shall count parens
+                if a:lines[i][j] == '"'
+                    let matched = matched . a:lines[i][j]
+                    let inside_string = 1
+                endif
+                if a:lines[i][j] == ';'
+                    let inside_comment = 1
+                endif
+                if a:lines[i][j] == '(' || a:lines[i][j] == '[' || a:lines[i][j] == ')' || a:lines[i][j] == ']'
+                    let matched = matched . a:lines[i][j]
+                endif
+            endif
+            let j = j + 1
+        endwhile
+        let inside_comment = 0
+        let i = i + 1
+    endwhile
+    return matched
 endfunction
 
 " Find opening matched character
