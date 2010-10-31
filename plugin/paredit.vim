@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  30 Oct 2010
+" Last Change:  31 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -146,20 +146,13 @@ function! PareditOpfunc( func, type, visualmode )
 
     if !g:paredit_mode
         silent exe "normal! d"
+        let putreg = getreg( '"' ) 
     else
         silent exe "normal! y"
-        let lines = getline( "'<", "'>" )
-        let firstcol = col( "'<" ) - 1
-        let lastcol  = col( "'>" ) - 1
-        if lastcol >= 0
-            let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
-        else
-            let lines[len(lines)-1] = ''
-        endif
-        let lines[0] = lines[0][firstcol : ]
+        let putreg = getreg( '"' ) 
 
         " Find out what matched characters are in the region
-        let matched = s:GetMatchedChars( lines )
+        let matched = s:GetMatchedChars()
 
         " Eliminate all paired matching characters
         let tmp = matched
@@ -181,6 +174,7 @@ function! PareditOpfunc( func, type, visualmode )
 
     let &selection = sel_save
     let @@ = reg_save
+    call setreg( '"', putreg ) 
     if a:func == 'c'
         startinsert
     endif
@@ -203,9 +197,9 @@ function! PareditToggle()
 endfunction
 
 " Does the current syntax item match the given regular expression?
-function! s:SynIDMatch( regexp, match_eol )
-    let line = line('.')
-    let col  = col('.')
+function! s:SynIDMatch( regexp, pos, match_eol )
+    let line = line( a:pos )
+    let col  = col ( a:pos )
     if a:match_eol && col > len( getline( line ) )
         let col = col - 1
     endif
@@ -213,13 +207,13 @@ function! s:SynIDMatch( regexp, match_eol )
 endfunction
 
 " Is the current cursor position inside a comment?
-function! s:InsideComment()
-    return s:SynIDMatch( '[Cc]omment', 1 )
+function! s:InsideComment( ... )
+    return s:SynIDMatch( '[Cc]omment', a:0 ? a:1 : '.', 1 )
 endfunction
 
 " Is the current cursor position inside a string?
-function! s:InsideString()
-    return s:SynIDMatch( '[Ss]tring', 0 )
+function! s:InsideString( ... )
+    return s:SynIDMatch( '[Ss]tring', a:0 ? a:1 : '.', 0 )
 endfunction
 
 " Autoindent current top level form
@@ -289,34 +283,48 @@ function! s:IsBalanced()
     return 1
 endfunction
 
-" Filter out all non-matched characters from the lines given as argument
-function! s:GetMatchedChars( lines )
+" Filter out all non-matched characters from the region
+function! s:GetMatchedChars()
+    " Get the text between the marks
+    let lines = getline( "'<", "'>" )
+    let firstcol = col( "'<" ) - 1
+    let lastcol  = col( "'>" ) - 1
+    if lastcol >= 0
+        let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
+    else
+        let lines[len(lines)-1] = ''
+    endif
+    let lines[0] = lines[0][firstcol : ]
+
+    " Check if the text starts inside comment or string
+    let inside_string  = s:InsideString ( "'<" )
+    let inside_comment = s:InsideComment( "'<" )
+
     let matched = ''
-    let inside_string  = s:InsideString()
-    let inside_comment = s:InsideComment()
     let i = 0
-    while i < len( a:lines )
+    while i < len( lines )
         let j = 0
-        while j < len( a:lines[i] )
+        while j < len( lines[i] )
             if inside_string
                 " We are inside a string, skip parens, wait for closing '"'
-                if a:lines[i][j] == '"'
-                    let matched = matched . a:lines[i][j]
+                " but skip escaped \" characters
+                if lines[i][j] == '"' && ( j < 1 || lines[i][j-1] != '\' )
+                    let matched = matched . lines[i][j]
                     let inside_string = 0
                 endif
             elseif inside_comment
                 " We are inside a comment, skip parens, wait for end of line
             else
                 " We are outside of strings and comments, now we shall count parens
-                if a:lines[i][j] == '"'
-                    let matched = matched . a:lines[i][j]
+                if lines[i][j] == '"'
+                    let matched = matched . lines[i][j]
                     let inside_string = 1
                 endif
-                if a:lines[i][j] == ';'
+                if lines[i][j] == ';'
                     let inside_comment = 1
                 endif
-                if a:lines[i][j] == '(' || a:lines[i][j] == '[' || a:lines[i][j] == ')' || a:lines[i][j] == ']'
-                    let matched = matched . a:lines[i][j]
+                if lines[i][j] == '(' || lines[i][j] == '[' || lines[i][j] == ')' || lines[i][j] == ']'
+                    let matched = matched . lines[i][j]
                 endif
             endif
             let j = j + 1
@@ -500,7 +508,6 @@ endfunction
 
 " Add position to the yank list
 function! s:AddYankPos( pos )
-"echo input('111 '.a:pos)
     let s:yank_pos = [a:pos] + s:yank_pos
 endfunction
 
