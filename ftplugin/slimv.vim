@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.1
-" Last Change:  03 Oct 2010
+" Last Change:  31 Oct 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -817,7 +817,7 @@ function! s:GetParenCount( lines )
         while j < len( a:lines[i] )
             if inside_string
                 " We are inside a string, skip parens, wait for closing '"'
-                if a:lines[i][j] == '"'
+                if a:lines[i][j] == '"' && ( j < 1 || a:lines[i][j-1] != '\' )
                     let inside_string = 0
                 endif
             elseif inside_comment
