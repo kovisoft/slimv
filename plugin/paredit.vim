@@ -88,16 +88,14 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
     nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
     nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
-    nnoremap <buffer> <silent> D            :<C-U>call PareditEraseFwdLine()<CR>
-"    nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> C            :<C-U>call PareditEraseFwdLine()<CR>A
-"    nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
+    nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
+    nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
     nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
     vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
     nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
     vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> dd           V:<C-U>call PareditDelete(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> cc           V:<C-U>call PareditChange(visualmode(),1)<CR>
+    nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
+    nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
     nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
     vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
     nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
@@ -137,20 +135,25 @@ endfunction
 " General Paredit operator function
 function! PareditOpfunc( func, type, visualmode )
     let sel_save = &selection
-    let &selection = "inclusive"
+    let ve_save = &virtualedit
+    set virtualedit=all
     let reg_save = @@
 
     if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
         silent exe "normal! `<" . a:type . "`>"
     elseif a:type == 'line'
+        let &selection = "inclusive"
         silent exe "normal! '[V']"
     elseif a:type == 'block'
+        let &selection = "inclusive"
         silent exe "normal! `[\<C-V>`]"
     else
+        let &selection = "inclusive"
         silent exe "normal! `[v`]"
     endif
 
-    if !g:paredit_mode
+    if !g:paredit_mode || a:visualmode && a:type == 'block' || a:type == "\<C-V>"
+        " Block mode is too difficult to handle at the moment
         silent exe "normal! d"
         let putreg = getreg( '"' ) 
     else
@@ -188,6 +191,7 @@ function! PareditOpfunc( func, type, visualmode )
     endif
 
     let &selection = sel_save
+    let &virtualedit = ve_save
     let @@ = reg_save
     call setreg( '"', putreg ) 
 endfunction
@@ -201,6 +205,26 @@ endfunction
 function! PareditChange( type, ... )
     call PareditOpfunc( 'c', a:type, a:0 )
     startinsert
+endfunction
+
+" Delete v:count number of lines
+function! PareditDeleteLines()
+    if v:count > 1
+        silent exe "normal! V" . (v:count-1) . "j\<Esc>"
+    else
+        silent exe "normal! V\<Esc>"
+    endif
+    call PareditDelete(visualmode(),1)
+endfunction
+
+" Change v:count number of lines
+function! PareditChangeLines()
+    if v:count > 1
+        silent exe "normal! V" . (v:count-1) . "j\<Esc>"
+    else
+        silent exe "normal! V\<Esc>"
+    endif
+    call PareditChange(visualmode(),1)
 endfunction
 
 " Toggle paredit mode
@@ -302,15 +326,7 @@ endfunction
 " Filter out all non-matched characters from the region
 function! s:GetMatchedChars()
     " Get the text between the marks
-    let lines = getline( "'<", "'>" )
-    let firstcol = col( "'<" ) - 1
-    let lastcol  = col( "'>" ) - 1
-    if lastcol >= 0
-        let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
-    else
-        let lines[len(lines)-1] = ''
-    endif
-    let lines[0] = lines[0][firstcol : ]
+    let lines = getreg( '"' )
 
     " Check if the text starts inside comment or string
     let inside_string  = s:InsideString ( "'<" )
@@ -319,33 +335,31 @@ function! s:GetMatchedChars()
     let matched = ''
     let i = 0
     while i < len( lines )
-        let j = 0
-        while j < len( lines[i] )
-            if inside_string
-                " We are inside a string, skip parens, wait for closing '"'
-                " but skip escaped \" characters
-                if lines[i][j] == '"' && ( j < 1 || lines[i][j-1] != '\' )
-                    let matched = matched . lines[i][j]
-                    let inside_string = 0
-                endif
-            elseif inside_comment
-                " We are inside a comment, skip parens, wait for end of line
-            else
-                " We are outside of strings and comments, now we shall count parens
-                if lines[i][j] == '"'
-                    let matched = matched . lines[i][j]
-                    let inside_string = 1
-                endif
-                if lines[i][j] == ';'
-                    let inside_comment = 1
-                endif
-                if lines[i][j] == '(' || lines[i][j] == '[' || lines[i][j] == ')' || lines[i][j] == ']'
-                    let matched = matched . lines[i][j]
-                endif
+        if inside_string
+            " We are inside a string, skip parens, wait for closing '"'
+            " but skip escaped \" characters
+            if lines[i] == '"' && lines[i-1] != '\'
+                let matched = matched . lines[i]
+                let inside_string = 0
             endif
-            let j = j + 1
-        endwhile
-        let inside_comment = 0
+        elseif inside_comment
+            " We are inside a comment, skip parens, wait for end of line
+            if lines[i] == "\n"
+                let inside_comment = 0
+            endif
+        else
+            " We are outside of strings and comments, now we shall count parens
+            if lines[i] == '"'
+                let matched = matched . lines[i]
+                let inside_string = 1
+            endif
+            if lines[i] == ';'
+                let inside_comment = 1
+            endif
+            if lines[i] == '(' || lines[i] == '[' || lines[i] == ')' || lines[i] == ']'
+                let matched = matched . lines[i]
+            endif
+        endif
         let i = i + 1
     endwhile
     return matched
@@ -652,42 +666,6 @@ function! PareditEraseBck()
 
     call s:InitYankPos()
     call s:EraseBck( v:count1 )
-endfunction
-
-" Forward erasing character till the end of line in normal mode
-" Keeping the balanced state
-function! s:EraseFwdLine( startcol )
-    let lastcol = -1
-    let lastlen = -1
-    while col( '.' ) != lastcol || len( getline( '.' ) ) != lastlen
-        let lastcol = col( '.' )
-        let lastlen = len( getline( '.' ) )
-        let line = getline( '.' )
-        if s:InsideComment()
-            normal! D
-            if v:count == 0
-                return
-            endif
-        else
-            call s:EraseFwd( 1, a:startcol )
-        endif
-    endwhile
-endfunction
-
-" Forward erasing character till the end of line in normal mode
-" But first check if we are allowed to do it in paredit way
-function! PareditEraseFwdLine()
-    if !g:paredit_mode || !s:IsBalanced()
-        if v:count > 0
-            silent execute 'normal! ' . v:count . 'D'
-        else
-            normal! D
-        endif
-        return
-    endif
-
-    call s:InitYankPos()
-    call s:EraseFwdLine( col( '.' ) - 1 )
 endfunction
 
 " Find beginning of previous element (atom or sub-expression) in a form
