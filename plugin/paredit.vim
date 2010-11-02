@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  31 Oct 2010
+" Last Change:  02 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -68,6 +68,10 @@ let s:yank_pos           = []
 
 " Buffer specific initialization
 function! PareditInitBuffer()
+    if !g:paredit_mode
+        return
+    endif
+
     "  Buffer specific keybindings
     inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
     inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
@@ -85,13 +89,15 @@ function! PareditInitBuffer()
     nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
     nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
     nnoremap <buffer> <silent> D            :<C-U>call PareditEraseFwdLine()<CR>
+"    nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
     nnoremap <buffer> <silent> C            :<C-U>call PareditEraseFwdLine()<CR>A
+"    nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
     nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
     vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
     nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
     vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> dd           :<C-U>call PareditEraseLine()<CR>
-    nnoremap <buffer> <silent> cc           0:<C-U>call PareditEraseFwdLine()<CR>A
+    nnoremap <buffer> <silent> dd           V:<C-U>call PareditDelete(visualmode(),1)<CR>
+    nnoremap <buffer> <silent> cc           V:<C-U>call PareditChange(visualmode(),1)<CR>
     nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
     vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
     nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
@@ -117,7 +123,7 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> <Leader>S    :<C-U>normal! S<CR>
     else
         " Longer keymaps with <Leader> prefix
-        nnoremap <buffer> <silent> S            0:<C-U>call PareditEraseFwdLine()<CR>A
+        nnoremap <buffer> <silent> S            V:<C-U>call PareditChange(visualmode(),1)<CR>
         nnoremap <buffer> <silent> <Leader><    :<C-U>call PareditMoveLeft()<CR>
         nnoremap <buffer> <silent> <Leader>>    :<C-U>call PareditMoveRight()<CR>
         nnoremap <buffer> <silent> <Leader>O    :<C-U>call PareditSplit()<CR>
@@ -163,21 +169,27 @@ function! PareditOpfunc( func, type, visualmode )
             let tmp = substitute( tmp, '""', '', 'g')
             if tmp == matched
                 " All paired chars eliminated
-                break
+                let tmp = substitute( tmp, ')(', '', 'g')
+                let tmp = substitute( tmp, '][', '', 'g')
+                if tmp == matched
+                    " Also no more inverse pairs can be eliminated
+                    break
+                endif
             endif
         endwhile
 
         " Do not delete matched characters having no pair in the selected region
-        silent exe "normal! gvc" . matched
-        silent exe "normal! l"
+        if matched == ''
+            silent exe "normal! gvx"
+        else
+            silent exe "normal! gvc" . matched
+            silent exe "normal! l"
+        endif
     endif
 
     let &selection = sel_save
     let @@ = reg_save
     call setreg( '"', putreg ) 
-    if a:func == 'c'
-        startinsert
-    endif
 endfunction
 
 " General delete operator handling
@@ -188,12 +200,16 @@ endfunction
 " General change operator handling
 function! PareditChange( type, ... )
     call PareditOpfunc( 'c', a:type, a:0 )
+    startinsert
 endfunction
 
 " Toggle paredit mode
 function! PareditToggle()
     let g:paredit_mode = 1 - g:paredit_mode
     echo g:paredit_mode ? 'Paredit mode on' : 'Paredit mode off'
+    if g:paredit_mode
+        call PareditInitBuffer()
+    endif
 endfunction
 
 " Does the current syntax item match the given regular expression?
@@ -672,37 +688,6 @@ function! PareditEraseFwdLine()
 
     call s:InitYankPos()
     call s:EraseFwdLine( col( '.' ) - 1 )
-endfunction
-
-" Erasing all characters in the line in normal mode
-" Keeping the balanced state
-function! PareditEraseLine()
-    if !g:paredit_mode || !s:IsBalanced()
-        if v:count > 0
-            silent execute 'normal! ' . v:count . 'dd'
-        else
-            normal! dd
-        endif
-        return
-    endif
-
-    normal! 0
-    call s:InitYankPos()
-    let c = v:count1
-    while c > 0
-        call s:EraseFwdLine( -1 )
-        if len( getline( '.' ) ) == 0
-            let reg = @"
-            normal! dd
-            let @" = reg . "\n"
-        elseif c > 1
-            normal! J
-            let @" = @" . "\n"
-        endif
-        let c = c - 1
-    endwhile
-
-    normal! ==
 endfunction
 
 " Find beginning of previous element (atom or sub-expression) in a form
