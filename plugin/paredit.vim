@@ -68,67 +68,86 @@ let s:yank_pos           = []
 
 " Buffer specific initialization
 function! PareditInitBuffer()
-    if !g:paredit_mode
-        return
-    endif
+    if g:paredit_mode
+        " Paredit mode is on: add buffer specific keybindings
+        inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
+        inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
+        inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
+        inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
+        inoremap <buffer> <expr>   "            PareditInsertQuotes()
+        inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
+        inoremap <buffer> <expr>   <Del>        PareditDel()
+        nnoremap <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
+        nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
+        vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+        vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+        nnoremap <buffer> <silent> x            :<C-U>call PareditEraseFwd()<CR>
+        nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
+        nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
+        nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
+        nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
+        nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
+        nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
+        vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
+        nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
+        vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
+        nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
+        nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
+        nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
+        vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
+        nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
+        vnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrapSelection('[',']')<CR>
+        nnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrap('"','"')<CR>
+        vnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrapSelection('"','"')<CR>
 
-    "  Buffer specific keybindings
-    inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
-    inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
-    inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
-    inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
-    inoremap <buffer> <expr>   "            PareditInsertQuotes()
-    inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
-    inoremap <buffer> <expr>   <Del>        PareditDel()
-    nnoremap <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
-    nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
-    vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-    vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
-    nnoremap <buffer> <silent> x            :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
-    nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
-    nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
-    nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
-    vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
-    vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
-    nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
-    nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
-    nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
-    vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
-    nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
-    vnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrapSelection('[',']')<CR>
-    nnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrap('"','"')<CR>
-    vnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrapSelection('"','"')<CR>
-
-    if g:paredit_shortmaps
-        " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
-        nnoremap <buffer> <silent> <            :<C-U>call PareditMoveLeft()<CR>
-        nnoremap <buffer> <silent> >            :<C-U>call PareditMoveRight()<CR>
-        nnoremap <buffer> <silent> O            :<C-U>call PareditSplit()<CR>
-        nnoremap <buffer> <silent> J            :<C-U>call PareditJoin()<CR>
-        nnoremap <buffer> <silent> W            :<C-U>call PareditWrap()<CR>
-        vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection()<CR>
-        nnoremap <buffer> <silent> S            :<C-U>call PareditSplice()<CR>
-        nnoremap <buffer> <silent> <Leader><    :<C-U>normal! <<CR>
-        nnoremap <buffer> <silent> <Leader>>    :<C-U>normal! ><CR>
-        nnoremap <buffer> <silent> <Leader>O    :<C-U>normal! O<CR>
-        nnoremap <buffer> <silent> <Leader>J    :<C-U>normal! J<CR>
-        nnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
-        vnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
-        nnoremap <buffer> <silent> <Leader>S    :<C-U>normal! S<CR>
+        if g:paredit_shortmaps
+            " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
+            nnoremap <buffer> <silent> <            :<C-U>call PareditMoveLeft()<CR>
+            nnoremap <buffer> <silent> >            :<C-U>call PareditMoveRight()<CR>
+            nnoremap <buffer> <silent> O            :<C-U>call PareditSplit()<CR>
+            nnoremap <buffer> <silent> J            :<C-U>call PareditJoin()<CR>
+            nnoremap <buffer> <silent> W            :<C-U>call PareditWrap()<CR>
+            vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection()<CR>
+            nnoremap <buffer> <silent> S            :<C-U>call PareditSplice()<CR>
+            nnoremap <buffer> <silent> <Leader><    :<C-U>normal! <<CR>
+            nnoremap <buffer> <silent> <Leader>>    :<C-U>normal! ><CR>
+            nnoremap <buffer> <silent> <Leader>O    :<C-U>normal! O<CR>
+            nnoremap <buffer> <silent> <Leader>J    :<C-U>normal! J<CR>
+            nnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
+            vnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
+            nnoremap <buffer> <silent> <Leader>S    :<C-U>normal! S<CR>
+        else
+            " Longer keymaps with <Leader> prefix
+            nnoremap <buffer> <silent> S            V:<C-U>call PareditChange(visualmode(),1)<CR>
+            nnoremap <buffer> <silent> <Leader><    :<C-U>call PareditMoveLeft()<CR>
+            nnoremap <buffer> <silent> <Leader>>    :<C-U>call PareditMoveRight()<CR>
+            nnoremap <buffer> <silent> <Leader>O    :<C-U>call PareditSplit()<CR>
+            nnoremap <buffer> <silent> <Leader>J    :<C-U>call PareditJoin()<CR>
+            nnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrap('(',')')<CR>
+            vnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrapSelection('(',')')<CR>
+            nnoremap <buffer> <silent> <Leader>S    :<C-U>call PareditSplice()<CR>
+        endif
     else
-        " Longer keymaps with <Leader> prefix
-        nnoremap <buffer> <silent> S            V:<C-U>call PareditChange(visualmode(),1)<CR>
-        nnoremap <buffer> <silent> <Leader><    :<C-U>call PareditMoveLeft()<CR>
-        nnoremap <buffer> <silent> <Leader>>    :<C-U>call PareditMoveRight()<CR>
-        nnoremap <buffer> <silent> <Leader>O    :<C-U>call PareditSplit()<CR>
-        nnoremap <buffer> <silent> <Leader>J    :<C-U>call PareditJoin()<CR>
-        nnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrap('(',')')<CR>
-        vnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrapSelection('(',')')<CR>
-        nnoremap <buffer> <silent> <Leader>S    :<C-U>call PareditSplice()<CR>
+        " Paredit mode is off: remove keybindings
+        iunmap <buffer> (
+        iunmap <buffer> )
+        iunmap <buffer> [
+        iunmap <buffer> ]
+        iunmap <buffer> "
+        iunmap <buffer> <BS>
+        iunmap <buffer> <Del>
+        unmap  <buffer> (
+        unmap  <buffer> )
+        unmap  <buffer> x
+        unmap  <buffer> <Del>
+        unmap  <buffer> X
+        unmap  <buffer> s
+        unmap  <buffer> D
+        unmap  <buffer> C
+        unmap  <buffer> d
+        unmap  <buffer> c
+        unmap  <buffer> dd
+        unmap  <buffer> cc
     endif
 endfunction
 
@@ -231,9 +250,7 @@ endfunction
 function! PareditToggle()
     let g:paredit_mode = 1 - g:paredit_mode
     echo g:paredit_mode ? 'Paredit mode on' : 'Paredit mode off'
-    if g:paredit_mode
-        call PareditInitBuffer()
-    endif
+    call PareditInitBuffer()
 endfunction
 
 " Does the current syntax item match the given regular expression?
