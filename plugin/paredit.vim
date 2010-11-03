@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  02 Nov 2010
+" Last Change:  03 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -89,10 +89,14 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
         nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
         vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
+        vnoremap <buffer> <silent> x            :<C-U>call PareditDelete(visualmode(),1)<CR>
+        vnoremap <buffer> <silent> <Del>        :<C-U>call PareditDelete(visualmode(),1)<CR>
         nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
         vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
         nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
         nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
+        nnoremap <buffer> <silent> p            :<C-U>call PareditPut('p')<CR>
+        nnoremap <buffer> <silent> P            :<C-U>call PareditPut('P')<CR>
         nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
         vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
         nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
@@ -174,33 +178,16 @@ function! PareditOpfunc( func, type, visualmode )
     if !g:paredit_mode || a:visualmode && a:type == 'block' || a:type == "\<C-V>"
         " Block mode is too difficult to handle at the moment
         silent exe "normal! d"
-        let putreg = getreg( '"' ) 
+        let putreg = getreg( '"' )
     else
         silent exe "normal! y"
-        let putreg = getreg( '"' ) 
+        let putreg = getreg( '"' )
 
-        " Find out what matched characters are in the region
-        let matched = s:GetMatchedChars()
+        " Find and keep unbalanced matched characters in the region
+        let matched = s:GetMatchedChars( putreg, s:InsideString( "'<" ), s:InsideComment( "'<" ) )
+        let matched = s:Unbalanced( matched )
+        let matched = substitute( matched, '\s', '', 'g' )
 
-        " Eliminate all paired matching characters
-        let tmp = matched
-        while 1
-            let matched = tmp
-            let tmp = substitute( tmp, '()', '', 'g')
-            let tmp = substitute( tmp, '[]', '', 'g')
-            let tmp = substitute( tmp, '""', '', 'g')
-            if tmp == matched
-                " All paired chars eliminated
-                let tmp = substitute( tmp, ')(', '', 'g')
-                let tmp = substitute( tmp, '][', '', 'g')
-                if tmp == matched
-                    " Also no more inverse pairs can be eliminated
-                    break
-                endif
-            endif
-        endwhile
-
-        " Do not delete matched characters having no pair in the selected region
         if matched == ''
             silent exe "normal! gvx"
         else
@@ -244,6 +231,34 @@ function! PareditChangeLines()
         silent exe "normal! V\<Esc>"
     endif
     call PareditChange(visualmode(),1)
+endfunction
+
+" Paste text from put register in a balanced way
+function! PareditPut( cmd )
+    let reg_save = @@
+    let putreg = getreg( '"' )
+
+    " Find unpaired matched characters by eliminating paired ones
+    let matched = s:GetMatchedChars( putreg, s:InsideString( '.' ), s:InsideComment( '.' ) )
+    let matched = s:Unbalanced( matched )
+
+    " Replace all unpaired matched characters with a space in order to keep balance
+    let i = 0
+    while i < len( putreg )
+        if matched[i] !~ '\s'
+            let putreg = strpart( putreg, 0, i ) . ' ' . strpart( putreg, i+1 )
+        endif
+        let i = i + 1
+    endwhile
+
+    " Store balanced text in put register and call the appropriate put command
+    call setreg( '"', putreg ) 
+    if v:count > 1
+        silent exe "normal! " . v:count . a:cmd
+    else
+        silent exe "normal! " . a:cmd
+    endif
+    let @@ = reg_save
 endfunction
 
 " Toggle paredit mode
@@ -341,43 +356,60 @@ function! s:IsBalanced()
 endfunction
 
 " Filter out all non-matched characters from the region
-function! s:GetMatchedChars()
-    " Get the text between the marks
-    let lines = getreg( '"' )
-
-    " Check if the text starts inside comment or string
-    let inside_string  = s:InsideString ( "'<" )
-    let inside_comment = s:InsideComment( "'<" )
-
-    let matched = ''
+function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
+    let inside_string  = a:start_in_string
+    let inside_comment = a:start_in_comment
+    let matched = repeat( ' ', len( a:lines ) )
     let i = 0
-    while i < len( lines )
+    while i < len( a:lines )
         if inside_string
             " We are inside a string, skip parens, wait for closing '"'
             " but skip escaped \" characters
-            if lines[i] == '"' && lines[i-1] != '\'
-                let matched = matched . lines[i]
+            if a:lines[i] == '"' && a:lines[i-1] != '\'
+                let matched = strpart( matched, 0, i ) . a:lines[i] . strpart( matched, i+1 )
                 let inside_string = 0
             endif
         elseif inside_comment
             " We are inside a comment, skip parens, wait for end of line
-            if lines[i] == "\n"
+            if a:lines[i] == "\n"
                 let inside_comment = 0
             endif
         else
             " We are outside of strings and comments, now we shall count parens
-            if lines[i] == '"'
-                let matched = matched . lines[i]
+            if a:lines[i] == '"'
+                let matched = strpart( matched, 0, i ) . a:lines[i] . strpart( matched, i+1 )
                 let inside_string = 1
             endif
-            if lines[i] == ';'
+            if a:lines[i] == ';'
                 let inside_comment = 1
             endif
-            if lines[i] == '(' || lines[i] == '[' || lines[i] == ')' || lines[i] == ']'
-                let matched = matched . lines[i]
+            if a:lines[i] == '(' || a:lines[i] == '[' || a:lines[i] == ')' || a:lines[i] == ']'
+                let matched = strpart( matched, 0, i ) . a:lines[i] . strpart( matched, i+1 )
             endif
         endif
         let i = i + 1
+    endwhile
+    return matched
+endfunction
+
+" Find unpaired matched characters by eliminating paired ones
+function! s:Unbalanced( matched )
+    let matched = a:matched
+    let tmp = matched
+    while 1
+        let matched = tmp
+        let tmp = substitute( tmp, '(\(\s*\))',   ' \1 ', 'g')
+        let tmp = substitute( tmp, '\[\(\s*\)\]', ' \1 ', 'g')
+        let tmp = substitute( tmp, '"\(\s*\)"',   ' \1 ', 'g')
+        if tmp == matched
+            " All paired chars eliminated
+            let tmp = substitute( tmp, ')\(\s*\)(',   ' \1 ', 'g')
+            let tmp = substitute( tmp, '\]\(\s*\)\[', ' \1 ', 'g')
+            if tmp == matched
+                " Also no more inverse pairs can be eliminated
+                break
+            endif
+        endif
     endwhile
     return matched
 endfunction
