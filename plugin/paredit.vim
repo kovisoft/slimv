@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.1
-" Last Change:  03 Nov 2010
+" Last Change:  07 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -60,6 +60,9 @@ let s:any_wsopen_char    = '\s\|(\|\['
 let s:any_wsclose_char   = '\s\|)\|\]'
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
 
+" Repeat count for some remapped edit functions (like 'd')
+let s:repeat             = 0
+
 let s:yank_pos           = []
 
 " =====================================================================
@@ -87,7 +90,7 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
         nnoremap <buffer> <silent> D            v$:<C-U>call PareditDelete(visualmode(),1)<CR>
         nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
-        nnoremap <buffer> <silent> d            :set opfunc=PareditDelete<CR>g@
+        nnoremap <buffer> <silent> d            :<C-U>call PareditSetDelete(v:count)<CR>g@
         vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
         vnoremap <buffer> <silent> x            :<C-U>call PareditDelete(visualmode(),1)<CR>
         vnoremap <buffer> <silent> <Del>        :<C-U>call PareditDelete(visualmode(),1)<CR>
@@ -202,9 +205,19 @@ function! PareditOpfunc( func, type, visualmode )
     call setreg( '"', putreg ) 
 endfunction
 
+" Set delete mode also saving repeat count
+function! PareditSetDelete( count )
+    let s:repeat = a:count
+    set opfunc=PareditDelete
+endfunction
+
 " General delete operator handling
 function! PareditDelete( type, ... )
     call PareditOpfunc( 'd', a:type, a:0 )
+    if s:repeat > 1
+        call feedkeys( (s:repeat-1) . "." )
+    endif
+    let s:repeat = 0
 endfunction
 
 " General change operator handling
