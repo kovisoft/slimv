@@ -1317,7 +1317,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.7.1  - Added option g:slimv_browser_cmd for opening hyperspec in a custom
-         webbrowser.
+         webbrowser (on behalf of Andreas Salwasser).
        - Added paredit handling for d<motion>, c<motion>, p and P commands:
          keep paren balance when deleting and pasting text.
        - Paredit Toggle function removes and re-adds paredit keybindings.
@@ -1500,7 +1500,7 @@ Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
-Daniel Solano Gómez, Brian Kropf, Len Weincier.
+Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
