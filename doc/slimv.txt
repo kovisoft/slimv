@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Oct 2010
+*slimv.txt*                    Slimv                 Last Change: 07 Nov 2010
 
 Slimv                                                                  *slimv*
                                Version 0.7.1
@@ -587,9 +587,10 @@ sequence, then you may want to fine tune these Vim options:
     ---------------------------------------------------
     ,,      ,,       Slimv Menu
 
-    Edit commands (Insert mode):
-    <C-X>0           Close-Form
-    <C-X><C-O>       Complete-Symbol
+    Edit commands:
+    <C-X>0           Close-Form (Insert mode)
+    <C-X><C-O>       Complete-Symbol (Insert mode)
+    ,(      ,(t      Paredit Toggle
 
     Evaluation commands:
     ,d      ,ed      Eval Defun (current top level form)
@@ -1068,6 +1069,19 @@ Normal Mode:
 
     <Leader>S      Same as 'dd' but go to insert mode at the end.
 
+    d{motion}      Delete text till {motion}. Keeps text balanced, so if the
+                   surrounded text contains unpaired matched characters then
+                   they are not removed.
+
+    c{motion}      Delete text till {motion} and start insert mode. Keeps text
+                   balanced just like d{motion}.
+
+    p              Put the text after the cursor with all unbalanced matched
+                   characters removed.
+
+    P              Put the text before the cursor with all unbalanced matched
+                   characters removed.
+
 
 Visual Mode:
 
@@ -1078,6 +1092,13 @@ Visual Mode:
     )              Finds closing ')' of the current list and selects the whole
                    list. Can be pressed repeatedly until the top level form
                    selected.
+
+    d              Delete the current visual selection. Keeps text balanced,
+    x              so the the selection contains unpaired matched characters
+    <Del>          then they are not removed.
+
+    c              Delete the current visual selection and start insert mode.
+                   Keeps text balanced just like the 'd' command.
 
     <Leader>W      Wrap the current visual selection in a pair of parentheses.
     <Leader>w(     The visual selection is kept.
@@ -1297,6 +1318,11 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.7.1  - Added option g:slimv_browser_cmd for opening hyperspec in a custom
          webbrowser.
+       - Added paredit handling for d<motion>, c<motion>, p and P commands:
+         keep paren balance when deleting and pasting text.
+       - Paredit Toggle function removes and re-adds paredit keybindings.
+       - Bugfix: D and C deleted till beginning of line if () or [] found.
+       - Bugfix: handle escaped \" characters inside string.
 
 0.7.0  - Added package/namespace support.
        - New way of refreshing the REPL buffer via autocommands, removed
