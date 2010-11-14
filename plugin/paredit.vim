@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.7.1
-" Last Change:  07 Nov 2010
+" Version:      0.7.2
+" Last Change:  13 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -71,6 +71,14 @@ let s:yank_pos           = []
 
 " Buffer specific initialization
 function! PareditInitBuffer()
+    " Make sure to include special characters in 'iskeyword'
+    " in case they are accidentally removed
+    if &ft == 'clojure'
+        setlocal iskeyword+=~,#,&,\|,{,},!,?
+    else
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+    endif
+
     if g:paredit_mode
         " Paredit mode is on: add buffer specific keybindings
         inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
@@ -113,8 +121,8 @@ function! PareditInitBuffer()
             nnoremap <buffer> <silent> >            :<C-U>call PareditMoveRight()<CR>
             nnoremap <buffer> <silent> O            :<C-U>call PareditSplit()<CR>
             nnoremap <buffer> <silent> J            :<C-U>call PareditJoin()<CR>
-            nnoremap <buffer> <silent> W            :<C-U>call PareditWrap()<CR>
-            vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection()<CR>
+            nnoremap <buffer> <silent> W            :<C-U>call PareditWrap('(',')')<CR>
+            vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection('(',')')<CR>
             nnoremap <buffer> <silent> S            :<C-U>call PareditSplice()<CR>
             nnoremap <buffer> <silent> <Leader><    :<C-U>normal! <<CR>
             nnoremap <buffer> <silent> <Leader>>    :<C-U>normal! ><CR>
@@ -136,25 +144,25 @@ function! PareditInitBuffer()
         endif
     else
         " Paredit mode is off: remove keybindings
-        iunmap <buffer> (
-        iunmap <buffer> )
-        iunmap <buffer> [
-        iunmap <buffer> ]
-        iunmap <buffer> "
-        iunmap <buffer> <BS>
-        iunmap <buffer> <Del>
-        unmap  <buffer> (
-        unmap  <buffer> )
-        unmap  <buffer> x
-        unmap  <buffer> <Del>
-        unmap  <buffer> X
-        unmap  <buffer> s
-        unmap  <buffer> D
-        unmap  <buffer> C
-        unmap  <buffer> d
-        unmap  <buffer> c
-        unmap  <buffer> dd
-        unmap  <buffer> cc
+        silent! iunmap <buffer> (
+        silent! iunmap <buffer> )
+        silent! iunmap <buffer> [
+        silent! iunmap <buffer> ]
+        silent! iunmap <buffer> "
+        silent! iunmap <buffer> <BS>
+        silent! iunmap <buffer> <Del>
+        silent! unmap  <buffer> (
+        silent! unmap  <buffer> )
+        silent! unmap  <buffer> x
+        silent! unmap  <buffer> <Del>
+        silent! unmap  <buffer> X
+        silent! unmap  <buffer> s
+        silent! unmap  <buffer> D
+        silent! unmap  <buffer> C
+        silent! unmap  <buffer> d
+        silent! unmap  <buffer> c
+        silent! unmap  <buffer> dd
+        silent! unmap  <buffer> cc
     endif
 endfunction
 
