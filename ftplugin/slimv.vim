@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.2
-" Last Change:  13 Nov 2010
+" Last Change:  14 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -420,6 +420,11 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
+    let repl_buf = bufnr( s:repl_name )
+    if repl_buf == -1
+        " REPL buffer not loaded
+        return
+    endif
     let size = getfsize( s:repl_name )
     if size == s:last_size
         " REPL output file did not change since the last refresh
@@ -429,12 +434,6 @@ function! SlimvRefreshReplBuffer()
         return
     endif
     let s:last_size = size
-
-    let repl_buf = bufnr( s:repl_name )
-    if repl_buf == -1
-        " REPL buffer not loaded
-        return
-    endif
     let this_buf = bufnr( "%" )
     if repl_buf != this_buf
         " Switch to the REPL buffer/window
@@ -456,8 +455,6 @@ function! SlimvRefreshReplBuffer()
     let s:last_update = localtime()
 
     try
-        "execute "silent edit! " . s:repl_name
-        "silent execute "view! " . s:repl_name
         execute "silent view! " . s:repl_name
     catch /.*/
         " Oops, something went wrong, the buffer will not be refreshed this time
