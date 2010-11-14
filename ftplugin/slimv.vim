@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.1
-" Last Change:  31 Oct 2010
+" Version:      0.7.2
+" Last Change:  13 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -636,14 +636,14 @@ endfunction
 
 " Select extended symbol under cursor and copy it to register 's'
 function! SlimvSelectSymbolExt()
-    let oldkw = &iskeyword
+    " Make sure to include special characters in 'iskeyword'
+    " in case they are accidentally removed
     if SlimvGetFiletype() == 'clojure'
         setlocal iskeyword+=~,#,&,\|,{,},!,?
     else
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
     endif
     normal! viw"sy
-    let &iskeyword = oldkw
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
@@ -748,7 +748,7 @@ function! SlimvSend( args, open_buffer )
         if g:slimv_repl_split && repl_win == -1
             execute "normal! \<C-w>p"
         elseif repl_buf == -1
-            buf #
+            execute "buf " . s:repl_name
         endif
     endif
 endfunction
@@ -1020,6 +1020,12 @@ function! SlimvRefresh()
     if bufnr( s:repl_name ) != bufnr( "%" )
         " REPL is not the current window, activate it
         call SlimvOpenReplBuffer()
+    else
+        try
+            execute "silent view! " . s:repl_name
+        catch /.*/
+            " Oops, something went wrong, the buffer will not be refreshed this time
+        endtry
     endif
 endfunction
 
@@ -1586,7 +1592,7 @@ elseif g:slimv_keybindings == 2
     noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
     noremap <Leader>da  :call SlimvApropos()<CR>
     noremap <Leader>dh  :call SlimvHyperspec()<CR>
-    noremap <Leader>dt  :call SlimvGenerateTags()<CR>
+    noremap <Leader>dg  :call SlimvGenerateTags()<CR>
 
     " REPL commands
     noremap <Leader>rc  :call SlimvConnectServer()<CR>
