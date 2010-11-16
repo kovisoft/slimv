@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 07 Nov 2010
+*slimv.txt*                    Slimv                 Last Change: 16 Nov 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.7.1
+                               Version 0.7.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1316,6 +1316,16 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.7.2  - Added autodetection for /usr/local/bin/clojure on Linux.
+       - Added special characters to Lisp keyword selection (iskeyword).
+       - Run Vim's original ftplugin/lisp.vim for Clojure filetype.
+       - Bugfix: PareditWrap error when g:paredit_shortmaps=1 (thanks to
+         Jon Thacker).
+       - Bugfix: buffer selection problems in case of three of more buffers
+         (thanks to Philipp Marek).
+       - Bugfix: conflicting keybindings for SlimvGenerateTags.
+       - Bugfix: unmap error messages when g:paredit_mode=0.
+
 0.7.1  - Added option g:slimv_browser_cmd for opening hyperspec in a custom
          webbrowser (on behalf of Andreas Salwasser).
        - Added paredit handling for d<motion>, c<motion>, p and P commands:
@@ -1500,7 +1510,7 @@ Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
-Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser.
+Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser, Jon Thacker.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
