@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.2
-" Last Change:  14 Nov 2010
+" Version:      0.7.3
+" Last Change:  27 Nov 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -60,8 +60,8 @@ function! SlimvMakeClientCommand()
     " Start with the Python path
     let cmd = g:slimv_python
 
-    " Add path of Slimv script, on Windows enclose in double quotes
-    if g:slimv_windows
+    " Add path of Slimv script, enclose it in double quotes if path contains spaces
+    if match( g:slimv_path, ' ' ) >= 0
         let cmd = cmd . ' "' . g:slimv_path . '"'
     else
         let cmd = cmd . ' ' . g:slimv_path
@@ -645,11 +645,16 @@ endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm()
+    " Search the opening '(' if we are standing on a special form prefix character
+    let c = col( '.' ) - 1
+    while match( "'`#", getline( '.' )[c] ) >= 0
+        normal! l
+        let c = c + 1
+    endwhile
     normal! va(o
     " Handle '() or #'() etc. type special syntax forms
-    " TODO: what to do with ` operator?
     let c = col( '.' ) - 2
-    while c > 0 && match( ' \t()', getline( '.' )[c] ) < 0
+    while c >= 0 && match( ' \t()', getline( '.' )[c] ) < 0
         normal! h
         let c = c - 1
     endwhile
