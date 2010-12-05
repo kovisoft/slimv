@@ -129,6 +129,8 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
+0.7.3: Added compatibility with Python 3.x, bugfixes: evaluated forms were doubled on Linux (thanks to Andrew Hills, not yet fixed for SBCL), enclose Slimv path in double quotes if contains space, select form when standing on prefix character (e.g. ' or `).
+
 0.7.2: Added autodetection for /usr/local/bin/clojure on Linux, added special characters to Lisp keyword selection (iskeyword), run Vim's original ftplugin/lisp.vim for Clojure filetype, bugfixes: PareditWrap error when g:paredit_shortmaps=1 (thanks to Jon Thacker), buffer selection problems in case of three of more buffers (thanks to Philipp Marek), conflicting keybindings for SlimvGenerateTags, unmap error messages when g:paredit_mode=0.
 
 0.7.1: Added option g:slimv_browser_cmd for opening hyperspec in a custom webbrowser (on behalf of Andreas Salwasser), added paredit handling for d<motion>, c<motion>, p and P commands: keep paren balance when deleting and pasting text, Paredit Toggle function removes and re-adds paredit keybindings, bugfix: D and C deleted till beginning of line if () or [] found, handle escaped \" characters inside string.
