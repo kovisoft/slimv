@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.7.3
-# Last Change:  27 Nov 2010
+# Last Change:  04 Dec 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -36,8 +36,6 @@ lisp_path   = 'clisp.exe'   # Path of the Lisp interpreter (overridden via comma
 slimv_path  = 'slimv.py'    # Path of this script (determined later)
 run_cmd     = ''            # Complex server-run command (if given via command line args)
 
-newline     = '\n'
-
 # Check if we're running Windows or Mac OS X, otherwise assume Linux
 mswindows = (sys.platform == 'win32')
 darwin = (sys.platform == 'darwin')
@@ -49,7 +47,7 @@ def log( s, level ):
     """Print diagnostic messages according to the actual debug level.
     """
     if debug_level >= level:
-        print ( s )
+        sys.stdout.write( s + "\n" )
 
 def str2stream( str ):
     """Converts string to stream format. Needed for Python 3.x compatibility.
@@ -126,7 +124,7 @@ def connect_server():
                 s.close()
                 s =  None
         else:   # not autoconnect
-            print ( "Server not found" )
+            sys.stdout.write( "Server not found\n" )
             s = None
     return s
 
@@ -194,16 +192,16 @@ class repl_buffer:
             except:
                 # OK, at least we tried
                 pass
-            self.write_nolock( newline + ';;; Slimv client is connected to REPL on port ' + str(PORT) + '.' + newline, True )
+            self.write_nolock( '\n;;; Slimv client is connected to REPL on port ' + str(PORT) + '.\n', True )
             user = None
             if mswindows:
                 user = os.getenv('USERNAME')
             else:
                 user = os.getenv('USER')
             if not user:
-                self.write_nolock( ';;; This could be the start of a beautiful program.' + newline + newline, True )
+                self.write_nolock( ';;; This could be the start of a beautiful program.\n\n', True )
             else:
-                self.write_nolock( ';;; ' + user + ', this could be the start of a beautiful program.' + newline + newline, True )
+                self.write_nolock( ';;; ' + user + ', this could be the start of a beautiful program.\n\n', True )
         self.sema.release()
 
     def writebegin( self ):
@@ -400,7 +398,7 @@ def server():
     else:
         # Server found, nothing to do here
         s.close()
-        print ( "Server is already running" )
+        sys.stdout.write( "Server is already running\n" )
         return
 
     # Build Lisp-starter command
@@ -435,10 +433,9 @@ def server():
     ol.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
-    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) + newline )
-    sys.stdout.write( ";;; Slimv is spawning REPL..." + newline + newline )
+    sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) )
+    sys.stdout.write( "\n;;; Slimv is spawning REPL...\n\n" )
     time.sleep(0.5)             # wait for Lisp to start
-    #sys.stdout.write( ";;; Slimv connection established" + newline )
 
     # Main server loop
     while not terminate:
@@ -449,8 +446,8 @@ def server():
                 text = raw_input()
             else:
                 text = input()
-            os.write( repl_stdin.fileno(), str2stream( text + newline ) )
-            buffer.write( text + newline, True )
+            os.write( repl_stdin.fileno(), str2stream( text + "\n" ) )
+            buffer.write( text + "\n", True )
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
             terminate = 1
@@ -479,7 +476,7 @@ def server():
         pass
 
     # Be nice
-    print ( 'Thank you for using Slimv.' )
+    sys.stdout.write( 'Thank you for using Slimv.\n' )
 
     # Wait for the child process to exit
     time.sleep(1)
@@ -503,17 +500,16 @@ def usage():
     """Displays program usage information.
     """
     progname = os.path.basename( sys.argv[0] )
-    print ( 'Usage: ' + progname + ' [-d LEVEL] [-s] [-f INFILE]' )
-    print ( '' )
-    print ( 'Options:' )
-    print ( '  -?, -h, --help                show this help message and exit' )
-    print ( '  -l PATH, --lisp=PATH          path of Lisp interpreter' )
-    print ( '  -r PATH, --run=PATH           full command to run the server' )
-    print ( '  -p PORT, --port=PORT          port number to use by the server/client' )
-    print ( '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)' )
-    print ( '  -s                            start server' )
-    print ( '  -f FILENAME, --file=FILENAME  start client and send contents of file' )
-    print ( '                                named FILENAME to server' )
+    sys.stdout.write( 'Usage: ' + progname + ' [-d LEVEL] [-s] [-f INFILE]\n\n' )
+    sys.stdout.write( 'Options:\n' )
+    sys.stdout.write( '  -?, -h, --help                show this help message and exit\n' )
+    sys.stdout.write( '  -l PATH, --lisp=PATH          path of Lisp interpreter\n' )
+    sys.stdout.write( '  -r PATH, --run=PATH           full command to run the server\n' )
+    sys.stdout.write( '  -p PORT, --port=PORT          port number to use by the server/client\n' )
+    sys.stdout.write( '  -d LEVEL, --debug=LEVEL       set debug LEVEL (0..3)\n' )
+    sys.stdout.write( '  -s                            start server\n' )
+    sys.stdout.write( '  -f FILENAME, --file=FILENAME  start client and send contents of file\n' )
+    sys.stdout.write( '                                named FILENAME to server\n' )
 
 
 ###############################################################################
