@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 16 Nov 2010
+*slimv.txt*                    Slimv                 Last Change: 05 Dec 2010
 
 Slimv                                                                  *slimv*
-                               Version 0.7.2
+                               Version 0.7.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1316,6 +1316,12 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.7.3  - Added compatibility with Python 3.x.
+       - Bugfix: evaluated forms were doubled on Linux
+         (thanks to Andrew Hills, not yet fixed for SBCL).
+       - Bugfix: enclose Slimv path in double quotes if contains space.
+       - Bugfix: select form when standing on prefix character (e.g. ' or `).
+
 0.7.2  - Added autodetection for /usr/local/bin/clojure on Linux.
        - Added special characters to Lisp keyword selection (iskeyword).
        - Run Vim's original ftplugin/lisp.vim for Clojure filetype.
@@ -1510,7 +1516,8 @@ Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
-Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser, Jon Thacker.
+Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser, Jon Thacker,
+Andrew Hills.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
