@@ -1317,9 +1317,9 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.7.3  - Added compatibility with Python 3.x.
-       - Bugfix: evaluated forms were doubled on Linux
-         (thanks to Andrew Hills, not yet fixed for SBCL).
-       - Bugfix: enclose Slimv path in double quotes if contains space.
+       - Bugfix: input lines for REPL were doubled on Linux (thanks to
+         Andrew Hills), however not yet fixed for SBCL.
+       - Bugfix: enclose Slimv path in double quotes if it contains space.
        - Bugfix: select form when standing on prefix character (e.g. ' or `).
 
 0.7.2  - Added autodetection for /usr/local/bin/clojure on Linux.
