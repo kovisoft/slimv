@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.7.3
-# Last Change:  04 Dec 2010
+# Version:      0.7.4
+# Last Change:  06 Dec 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -39,9 +39,6 @@ run_cmd     = ''            # Complex server-run command (if given via command l
 # Check if we're running Windows or Mac OS X, otherwise assume Linux
 mswindows = (sys.platform == 'win32')
 darwin = (sys.platform == 'darwin')
-
-if not (mswindows or darwin):
-    import pty
 
 def log( s, level ):
     """Print diagnostic messages according to the actual debug level.
@@ -411,30 +408,27 @@ def server():
     cmd = shlex.split( lisp_exp )
 
     # Start Lisp
-    if mswindows or darwin or lisp_path.lower().find( 'sbcl' ) < 0:
-        repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
-        repl_stdin = repl.stdin
-        repl_stdout = repl.stdout
-        repl_pid = repl.pid
-    else:
-        # Special handling for SBCL on Linux
-        repl_pid, repl_fd = pty.fork()
-        if repl_pid == 0:
-            os.execvp( cmd[0], cmd )
-            os._exit(1)
-        repl_stdin = repl_stdout = os.fdopen( repl_fd )
+    repl = Popen( cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
 
     buffer = repl_buffer( sys.stdout )
 
     # Create and start helper threads
-    sl = socket_listener( repl_stdin, buffer, repl_pid )
+    sl = socket_listener( repl.stdin, buffer, repl.pid )
     sl.start()
-    ol = output_listener( repl_stdout, buffer )
+    ol = output_listener( repl.stdout, buffer )
     ol.start()
 
     # Allow Lisp to start, confuse it with some fancy Slimv messages
     sys.stdout.write( ";;; Slimv server is started on port " + str(PORT) )
     sys.stdout.write( "\n;;; Slimv is spawning REPL...\n\n" )
+
+    # SBCL on Linux takes input from *debug-io* when in the debugger
+    # let't tie this to the standard input
+    if not mswindows and not darwin and lisp_path.lower().find( 'sbcl' ) >= 0:
+        text = "(setf *debug-io* (make-two-way-stream *standard-input* *standard-output*))\n"
+        os.write( repl.stdin.fileno(), str2stream( text ) )
+        buffer.write( text, True )
+
     time.sleep(0.5)             # wait for Lisp to start
 
     # Main server loop
@@ -446,7 +440,7 @@ def server():
                 text = raw_input()
             else:
                 text = input()
-            os.write( repl_stdin.fileno(), str2stream( text + "\n" ) )
+            os.write( repl.stdin.fileno(), str2stream( text + "\n" ) )
             buffer.write( text + "\n", True )
         except EOFError:
             # EOF (Ctrl+Z on Windows, Ctrl+D on Linux) pressed?
@@ -470,7 +464,7 @@ def server():
     # Send exit command to child process and
     # wake output listener up at the same time
     try:
-        repl_stdin.close()
+        repl.stdin.close()
     except:
         # We don't care if this above fails, we'll exit anyway
         pass
