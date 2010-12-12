@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.3
-" Last Change:  27 Nov 2010
+" Version:      0.7.4
+" Last Change:  11 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -392,23 +392,19 @@ endfunction
 
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
-function! SlimvEndOfReplBuffer( markpos, insert )
+function! SlimvEndOfReplBuffer()
     if !g:slimv_repl_open
         " User does not want to display REPL in Vim
         return
     endif
     normal! G$
-    if a:markpos
-        " Remember the end of the buffer: user may enter commands here
-        " Also remember the prompt, because the user may overwrite it
-        call setpos( "'s", [0, line('$'), col('$'), 0] )
-        let s:prompt = getline( "'s" )
-        if a:insert
-            " We are in insert mode, so we end up appending to the last line
-            startinsert!
-        endif
-    endif
-    set nomodified
+endfunction
+
+" Remember the end of the REPL buffer: user may enter commands here
+" Also remember the prompt, because the user may overwrite it
+function! SlimvMarkBufferEnd()
+    call setpos( "'s", [0, line('$'), col('$'), 0] )
+    let s:prompt = getline( "'s" )
 endfunction
 
 " Reload the contents of the REPL buffer from the output file if changed
@@ -433,7 +429,6 @@ function! SlimvRefreshReplBuffer()
         endif
         return
     endif
-    let s:last_size = size
     let this_buf = bufnr( "%" )
     if repl_buf != this_buf
         " Switch to the REPL buffer/window
@@ -452,20 +447,18 @@ function! SlimvRefreshReplBuffer()
     if g:slimv_updatetime > 0
         let &updatetime = g:slimv_updatetime
     endif
-    let s:last_update = localtime()
 
     try
         execute "silent view! " . s:repl_name
+        let s:last_size = size
+        let s:last_update = localtime()
     catch /.*/
         " Oops, something went wrong, the buffer will not be refreshed this time
     endtry
     syntax on
     setlocal autoread
-    let insert = 0
-    if mode() == 'i' || mode() == 'I'
-        let insert = 1
-    endif
-    call SlimvEndOfReplBuffer( 0, insert )
+    call SlimvEndOfReplBuffer()
+    set nomodified
 
     if repl_buf != this_buf
         " Switch back to the caller buffer/window
@@ -511,10 +504,6 @@ function! SlimvRefreshModeOff()
     execute "au! CursorHold"
     execute "au! CursorHoldI"
     set noreadonly
-
-    " Remember the end of the buffer and the actual prompt
-    call setpos( "'s", [0, line('$'), col('$'), 0] )
-    let s:prompt = getline( "'s" )
 endfunction
 
 " Called when entering REPL buffer
@@ -522,7 +511,8 @@ function! SlimvReplEnter()
     call SlimvAddReplMenu()
     execute "au FileChangedRO " . g:slimv_repl_file . " :call SlimvRefreshModeOff()"
     call SlimvRefreshModeOn()
-    call SlimvEndOfReplBuffer( 1, 0 )
+    call SlimvRefreshReplBuffer()
+    call SlimvMarkBufferEnd()
 endfunction
 
 " Called when leaving REPL buffer
@@ -535,12 +525,12 @@ function! SlimvReplLeave()
         " REPL menu not found, we cannot remove it
     endtry
     call SlimvRefreshModeOn()
-    call SlimvEndOfReplBuffer( 1, 0 )
+    call SlimvRefreshReplBuffer()
+    call SlimvMarkBufferEnd()
 endfunction
 
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
-    "TODO: check if this works without 'set hidden'
     let repl_buf = bufnr( s:repl_name )
     if repl_buf == -1
         " Create a new REPL buffer
@@ -781,7 +771,8 @@ function! SlimvSetCommandLine( cmd )
     endif
     let line = line . a:cmd
     call setline( ".", line )
-    call SlimvEndOfReplBuffer( 0, 0 )
+    call SlimvEndOfReplBuffer()
+    set nomodified
 endfunction
 
 " Add command list to the command history
@@ -793,7 +784,10 @@ function! SlimvAddHistory( cmd )
     while i < len( a:cmd )
         " Trim trailing whitespaces from the command
         let command = substitute( a:cmd[i], "\\(.*[^ ]\\)\\s*", "\\1", "g" )
-        call add( g:slimv_cmdhistory, command )
+        if len( a:cmd ) > 1 || len( g:slimv_cmdhistory ) == 0 || command != g:slimv_cmdhistory[-1]
+            " Add command only if differs from the last one
+            call add( g:slimv_cmdhistory, command )
+        endif
         let i = i + 1
     endwhile
     let g:slimv_cmdhistorypos = len( g:slimv_cmdhistory )
@@ -901,13 +895,15 @@ function! SlimvSendCommand( close )
                     let i = i - 1
                 endwhile
                 call setline( ".", indent )
-                call SlimvEndOfReplBuffer( 0, 0 )
+                call SlimvEndOfReplBuffer()
             endif
         endif
     else
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
         call append( '$', "" )
-        call SlimvEndOfReplBuffer( 1, 0 )
+        call SlimvEndOfReplBuffer()
+        call SlimvMarkBufferEnd()
+        set nomodified
     endif
 endfunction
 
@@ -969,6 +965,12 @@ endfunction
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
     if line( "." ) >= line( "'s" )
+        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos == len( g:slimv_cmdhistory )
+            call SlimvRefresh()
+            call SlimvEndOfReplBuffer()
+            call SlimvMarkBufferEnd()
+            startinsert!
+        endif
         call s:PreviousCommand()
     else
         normal! gk
@@ -986,7 +988,7 @@ endfunction
 
 " Go to command line and recall previous command from command history
 function! SlimvPreviousCommand()
-    call SlimvEndOfReplBuffer( 0, 0 )
+    call SlimvEndOfReplBuffer()
     if line( "." ) >= line( "'s" )
         call s:PreviousCommand()
     endif
@@ -994,7 +996,7 @@ endfunction
 
 " Go to command line and recall next command from command history
 function! SlimvNextCommand()
-    call SlimvEndOfReplBuffer( 0, 0 )
+    call SlimvEndOfReplBuffer()
     if line( "." ) >= line( "'s" )
         call s:NextCommand()
     endif
@@ -1025,6 +1027,8 @@ function! SlimvRefresh()
     else
         try
             execute "silent view! " . s:repl_name
+            let s:last_size = getfsize( s:repl_name )
+            let s:last_update = localtime()
         catch /.*/
             " Oops, something went wrong, the buffer will not be refreshed this time
         endtry
