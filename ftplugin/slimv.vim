@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.4
-" Last Change:  11 Dec 2010
+" Last Change:  12 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -667,21 +667,23 @@ endfunction
 function! SlimvFindAddSel( string )
     normal ms
     let found = 0
-    while search( '(\s*' . a:string . '\s', 'bcW' )
+    let searching = search( '(\s*' . a:string . '\s', 'bcW' )
+    while searching
         " Search for the previos occurrence
         if synIDattr( synID( line('.'), col('.'), 0), 'name' ) !~ '[Ss]tring\|[Cc]omment'
             " It is not inside a comment or string
             let found = 1
             break
         endif
+        let searching = search( '(\s*' . a:string . '\s', 'bW' )
     endwhile
     if found
         " Put the form just found at the beginning of the selection
         let sel = SlimvGetSelection()
         normal! v%"sy
         call setreg( '"s', SlimvGetSelection() . "\n" . sel )
-        normal `s
     endif
+    normal `s
 endfunction
 
 " Find and add language specific package/namespace definition before the
