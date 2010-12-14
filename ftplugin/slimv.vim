@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.4
-" Last Change:  12 Dec 2010
+" Last Change:  14 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -636,11 +636,13 @@ endfunction
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm()
     " Search the opening '(' if we are standing on a special form prefix character
+    let save_cpo = &cpoptions
     let c = col( '.' ) - 1
     while match( "'`#", getline( '.' )[c] ) >= 0
         normal! l
         let c = c + 1
     endwhile
+    set cpoptions+=%    " Needed for correct () handling
     normal! va(o
     " Handle '() or #'() etc. type special syntax forms
     let c = col( '.' ) - 2
@@ -649,6 +651,7 @@ function! SlimvSelectForm()
         let c = c - 1
     endwhile
     normal! "sy
+    let &cpoptions = save_cpo
 endfunction
 
 " Select top level form the cursor is inside and copy it to register 's'

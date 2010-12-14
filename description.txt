@@ -129,7 +129,7 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
-0.7.4: Added autodetection for simple 'clojure' command on Linux, removed duplicates from history of commands entered in REPL buffer (those recallable with <Up>), bugfixes: infinite loop during eval when 'in-package' or 'in-ns' was in comment, Lisp prompt identification problems in REPL buffer, input line duplication in SBCL on Linux (assigned "*debug-io*" to stdin).
+0.7.4: Added autodetection for simple 'clojure' command on Linux, removed duplicates from history of commands entered in REPL buffer (those recallable with <Up>), bugfixes: infinite loop during eval when 'in-package' or 'in-ns' was in comment, Lisp prompt identification problems in REPL buffer, input line duplication in SBCL on Linux (assigned "*debug-io*" to stdin), Eval Defun sometimes missed last ")".
 
 0.7.3: Added compatibility with Python 3.x, bugfixes: input lines for REPL were doubled on Linux (thanks to Andrew Hills), however not yet fixed for SBCL, enclose Slimv path in double quotes if contains space, select form when standing on prefix character (e.g. ' or `).
 
