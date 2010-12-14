@@ -1324,6 +1324,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: Lisp prompt identification problems in REPL buffer.
        - Bugfix: input line duplication in SBCL on Linux
          (assigned "*debug-io*" to stdin).
+       - Bugfix: Eval Defun missed last ")" if form contained "'('".
 
 0.7.3  - Added compatibility with Python 3.x.
        - Bugfix: input lines for REPL were doubled on Linux (thanks to
