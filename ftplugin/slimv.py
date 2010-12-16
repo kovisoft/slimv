@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.7.4
-# Last Change:  06 Dec 2010
+# Version:      0.7.5
+# Last Change:  16 Dec 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -96,6 +96,7 @@ def start_server():
         server = Popen( cmd )
 
     # Allow subprocess (server) to start
+    sys.stdout.write( "start_server\n" )
     time.sleep( 2.0 )
 
 
@@ -121,7 +122,6 @@ def connect_server():
                 s.close()
                 s =  None
         else:   # not autoconnect
-            sys.stdout.write( "Server not found\n" )
             s = None
     return s
 
@@ -136,7 +136,7 @@ def send_line( server, line ):
     server.send( str2stream( line ) )     # then the message itself
 
 
-def client_file( input_filename ):
+def client_file( input_filename, output_filename ):
     """Main client routine - input file version:
        starts server if needed then send text to server.
        Input is read from input file.
@@ -146,7 +146,10 @@ def client_file( input_filename ):
         return
 
     try:
-        file = open( input_filename, 'rt' )
+        if input_filename != '':
+            file = open( input_filename, 'rt' )
+        else:
+            file = sys.stdin
         try:
             # Send contents of the file to the server
             lines = ''
@@ -154,7 +157,8 @@ def client_file( input_filename ):
                 lines = lines + line
             send_line( s, lines )
         finally:
-            file.close()
+            if input_filename != '':
+                file.close()
     except:
         return
 
@@ -515,10 +519,11 @@ def usage():
 if __name__ == '__main__':
 
     EXIT, SERVER, CLIENT = list( range( 3 ) )
-    mode = EXIT
+    mode = CLIENT
     slimv_path = sys.argv[0]
     python_path = sys.executable
     input_filename = ''
+    output_filename = ''
 
     # Always this trouble with the path/filenames containing spaces:
     # enclose them in double quotes
@@ -527,13 +532,14 @@ if __name__ == '__main__':
 
     # Get command line options
     try:
-        opts, args = getopt.getopt( sys.argv[1:], '?hcsf:p:l:r:d:', \
-                                    ['help', 'client', 'server', 'file=', 'port=', 'lisp=', 'run=', 'debug='] )
+        opts, args = getopt.getopt( sys.argv[1:], '?hsf:o:p:l:r:d:', \
+                                    ['help', 'server', 'file=', 'output=', 'port=', 'lisp=', 'run=', 'debug='] )
 
         # Process options
         for o, a in opts:
             if o in ('-?', '-h', '--help'):
                 usage()
+                mode = EXIT
                 break
             if o in ('-p', '--port'):
                 try:
@@ -553,11 +559,10 @@ if __name__ == '__main__':
                     pass
             if o in ('-s', '--server'):
                 mode = SERVER
-            if o in ('-c', '--client'):
-                mode = CLIENT
             if o in ('-f', '--file'):
-                mode = CLIENT
                 input_filename = a
+            if o in ('-o', '--output'):
+                output_filename = a
 
     except getopt.GetoptError:
         # print help information and exit:
@@ -576,9 +581,6 @@ if __name__ == '__main__':
             run_cmd = run_cmd.replace( '@l', escape_path( lisp_path ) )
             run_cmd = run_cmd.replace( '@@', '@' )
             log( run_cmd, 1 )
-        if input_filename != '':
-            client_file( input_filename )
-        else:
-            start_server()
+        client_file( input_filename, output_filename )
 
 # --- END OF FILE ---
