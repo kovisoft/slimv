@@ -96,11 +96,20 @@ def start_server():
         server = Popen( cmd )
 
     # Allow subprocess (server) to start
-    sys.stdout.write( "start_server\n" )
     time.sleep( 2.0 )
 
 
-def connect_server():
+def send_line( server, line ):
+    """Send a line to the server:
+       first send line length in 4 bytes, then send the line itself.
+    """
+    l = len(line)
+    lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
+    server.send( str2stream( lstr ) )     # send message length first
+    server.send( str2stream( line ) )     # then the message itself
+
+
+def connect_server( output_filename ):
     """Try to connect server, if server not found then spawn it.
        Return socket object on success, None on failure.
     """
@@ -118,22 +127,15 @@ def connect_server():
             s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             try:
                 s.connect( ( 'localhost', PORT ) )
+                if output_filename != '':
+                    send_line( s, 'SLIMV::OUTPUT::' + output_filename )
             except socket.error:
                 s.close()
                 s =  None
         else:   # not autoconnect
+            sys.stdout.write( "Server not found\n" )
             s = None
     return s
-
-
-def send_line( server, line ):
-    """Send a line to the server:
-       first send line length in 4 bytes, then send the line itself.
-    """
-    l = len(line)
-    lstr = chr(l&255) + chr((l>>8)&255) + chr((l>>16)&255) + chr((l>>24)&255)
-    server.send( str2stream( lstr ) )     # send message length first
-    server.send( str2stream( line ) )     # then the message itself
 
 
 def client_file( input_filename, output_filename ):
@@ -141,7 +143,7 @@ def client_file( input_filename, output_filename ):
        starts server if needed then send text to server.
        Input is read from input file.
     """
-    s = connect_server()
+    s = connect_server( output_filename )
     if s is None:
         return
 
