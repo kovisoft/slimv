@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.4
-" Last Change:  14 Dec 2010
+" Version:      0.7.5
+" Last Change:  16 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -121,12 +121,6 @@ endfunction
 " =====================================================================
 "  Global variable definitions
 " =====================================================================
-
-" Leave client window open for debugging purposes
-" (works only on Windows at the moment)
-if !exists( 'g:slimv_debug_client' )
-    let g:slimv_debug_client = 0
-endif
 
 " TCP port number to use
 if !exists( 'g:slimv_port' )
@@ -611,7 +605,7 @@ function! SlimvOpenReplBuffer()
     redraw
     let s:last_size = 0
 
-    call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
+    call SlimvConnectServer()
     call SlimvRefreshReplBuffer()
 endfunction
 
@@ -712,31 +706,32 @@ function! SlimvSend( args, open_buffer )
     let repl_buf = bufnr( s:repl_name )
     let repl_win = bufwinnr( repl_buf )
 
+    let opened = 0
     if a:open_buffer && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
         call SlimvOpenReplBuffer()
+        let opened = 1
     endif
 
     " Build a temporary file from the form to be evaluated
     let ar = []
     let i = 0
     while i < len( a:args )
-        call extend( ar, split( a:args[i], '\n' ) )
+        if a:args[i] == ''
+            call add( ar, a:args[i] )
+        else
+            call extend( ar, split( a:args[i], '\n' ) )
+        endif
         let i = i + 1
     endwhile
 
-    let tmp = tempname()
-    try
-        call writefile( ar, tmp )
-
         " Send the file to the client for evaluation
-        if g:slimv_debug_client == 0
-            let result = system( g:slimv_client . ' -f ' . tmp )
-        else
-            execute '!' . g:slimv_client . ' -f ' . tmp
-        endif
-    finally
-        call delete(tmp)
-    endtry
+    let text = join( ar, "\n" ) . "\n"
+    let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
+
+    if match( result, 'start_server' ) >= 0 && opened == 0
+        " Server was not run, it was started by this client
+        call SlimvConnectServer()
+    endif
 
     if a:open_buffer
         " Wait a little for the REPL output and refresh REPL buffer
@@ -1016,7 +1011,6 @@ endfunction
 " Start and connect slimv server
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
-    "call SlimvEval( [''] )
     call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
 endfunction
 
