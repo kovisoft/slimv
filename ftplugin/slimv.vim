@@ -605,7 +605,6 @@ function! SlimvOpenReplBuffer()
     redraw
     let s:last_size = 0
 
-    call SlimvConnectServer()
     call SlimvRefreshReplBuffer()
 endfunction
 
@@ -706,36 +705,20 @@ function! SlimvSend( args, open_buffer )
     let repl_buf = bufnr( s:repl_name )
     let repl_win = bufwinnr( repl_buf )
 
-    let opened = 0
     if a:open_buffer && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
         call SlimvOpenReplBuffer()
-        let opened = 1
     endif
 
-    " Build a temporary file from the form to be evaluated
-    let ar = []
-    let i = 0
-    while i < len( a:args )
-        if a:args[i] == ''
-            call add( ar, a:args[i] )
-        else
-            call extend( ar, split( a:args[i], '\n' ) )
-        endif
-        let i = i + 1
-    endwhile
-
-        " Send the file to the client for evaluation
-    let text = join( ar, "\n" ) . "\n"
+    " Send the lines to the client for evaluation
+    let text = join( a:args, "\n" ) . "\n"
     let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
-
-    if match( result, 'start_server' ) >= 0 && opened == 0
-        " Server was not run, it was started by this client
-        call SlimvConnectServer()
+    if result != ''
+        " Treat any output as error message
+        call SlimvErrorWait( result )
     endif
 
     if a:open_buffer
-        " Wait a little for the REPL output and refresh REPL buffer
-        " then return to the caller buffer/window
+        " Refresh REPL buffer then return to the caller buffer/window
         call SlimvRefreshReplBuffer()
         if g:slimv_repl_split && repl_win == -1
             execute "normal! \<C-w>p"
