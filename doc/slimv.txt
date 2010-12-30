@@ -1319,6 +1319,7 @@ CHANGE LOG                                                    *slimv-changelog*
 0.7.5  - Display client error message when eval was not successful.
        - Form is passed to client via stdin instead of temp file.
        - Bugfix: automatic reconnection when server closed and reopened.
+       - Bugfix: delete and yank also via named registers in paredit.vim.
 
 0.7.4  - Added autodetection for simple 'clojure' command on Linux.
        - Removed duplicates from history of commands entered in REPL buffer

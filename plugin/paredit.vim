@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.7.2
-" Last Change:  13 Nov 2010
+" Version:      0.7.5
+" Last Change:  28 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -171,6 +171,7 @@ function! PareditOpfunc( func, type, visualmode )
     let sel_save = &selection
     let ve_save = &virtualedit
     set virtualedit=all
+    let regname = v:register
     let reg_save = @@
 
     if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
@@ -210,7 +211,7 @@ function! PareditOpfunc( func, type, visualmode )
     let &selection = sel_save
     let &virtualedit = ve_save
     let @@ = reg_save
-    call setreg( '"', putreg ) 
+    call setreg( regname, putreg ) 
 endfunction
 
 " Set delete mode also saving repeat count
@@ -257,7 +258,7 @@ endfunction
 " Paste text from put register in a balanced way
 function! PareditPut( cmd )
     let reg_save = @@
-    let putreg = getreg( '"' )
+    let putreg = getreg( v:register )
 
     " Find unpaired matched characters by eliminating paired ones
     let matched = s:GetMatchedChars( putreg, s:InsideString( '.' ), s:InsideComment( '.' ) )
