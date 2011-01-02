@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Dec 2010
+*slimv.txt*                    Slimv                 Last Change: 02 Jan 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.7.4
+                               Version 0.7.5
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -38,7 +38,9 @@ Prerequisites:
   Required components:
   - Lisp (any console Common Lisp implementation should be OK) or
     Clojure installed.
-  - Python 2.4 or later installed.
+  - Python 2.4 or later installed. Please note that due to a Popen bug in the
+    Cygwin Python implementation Cygwin users should install Windows Python,
+    which is autodetected by the script.
 
   Optional components:
   - The interrupt functionality needs the pywin32 extension on Windows.
@@ -1259,6 +1261,21 @@ FAQ                                                                 *slimv-faq*
      The plugin resides in 'slimv.vim', the client and the server both
      located in 'slimv.py'.
 
+- Q: There is no Slimv server opened when I evaluate a form in Vim.
+- A: There may be many reasons for that. Try to run the server manually by
+     opening a new terminal console window and running this command:
+         {python command} {slimv.py path} -l {lisp command} -s
+     where
+         {python command} is the command to start the Python interpreter,
+         {slimv.py} is the path for slimv.py (usually in Vim's ftplugin dir),
+         {lisp command} is the command to start Lisp (or Clojure).
+     Please remember to enclose each parameter in double quotes if that
+     parameter contains spaces.
+     Also check the following Slimv variables in Vim:
+         :echo g:slimv_python
+         :echo g:slimv_lisp
+         :echo g:slimv_client         
+
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: There are two possible reasons:
      1. The dataflow of Slimv is one-directional: from client to server.
@@ -1316,7 +1333,9 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.7.5  - Display client error message when eval was not successful.
+0.7.5  - Added Cygwin compatibility using the Windows Python
+         (thanks to Jerome Baum).
+       - Display client error message when eval was not successful.
        - Form is passed to client via stdin instead of temp file.
        - Bugfix: automatic reconnection when server closed and reopened.
        - Bugfix: delete and yank also via named registers in paredit.vim.
@@ -1486,7 +1505,6 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 
 - Works only with the console Lisp and Python versions, does not work with the
   GUI Lisp versions or with a Python IDE (like IDLE).
-- Does not work from within Cygwin.
 - Vim register "s is used for all form selections, so its original content is
   destroyed.
 - Vim mark 's is used to mark the end of the REPL buffer, i.e. the beginning
@@ -1532,7 +1550,7 @@ Taylor R. Campbell for the Emacs paredit.el script.
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser, Jon Thacker,
-Andrew Hills.
+Andrew Hills, Jerome Baum.
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
