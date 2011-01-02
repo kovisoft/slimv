@@ -5,7 +5,7 @@
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
 # Version:      0.7.5
-# Last Change:  16 Dec 2010
+# Last Change:  30 Dec 2010
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -37,7 +37,8 @@ slimv_path  = 'slimv.py'    # Path of this script (determined later)
 run_cmd     = ''            # Complex server-run command (if given via command line args)
 
 # Check if we're running Windows or Mac OS X, otherwise assume Linux
-mswindows = (sys.platform == 'win32')
+# Under Cygwin we run the Windows Python
+mswindows = (sys.platform == 'win32' or sys.platform == 'cygwin')
 darwin = (sys.platform == 'darwin')
 
 def log( s, level ):

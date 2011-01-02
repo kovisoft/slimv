@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.5
-" Last Change:  16 Dec 2010
+" Last Change:  30 Dec 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -15,11 +15,13 @@ endif
 
 let g:slimv_loaded = 1
 
+let g:slimv_windows = 0
+let g:slimv_cygwin  = 0
+
 if has( 'win32' ) || has( 'win95' ) || has( 'win64' ) || has( 'win16' )
     let g:slimv_windows = 1
-else
-    " This means Linux only at the moment
-    let g:slimv_windows = 0
+elseif has( 'win32unix' )
+    let g:slimv_cygwin = 1
 endif
 
 
@@ -29,12 +31,13 @@ endif
 
 " Try to autodetect Python executable
 function! SlimvAutodetectPython()
-    if executable( 'python' )
+    if !g:slimv_cygwin && executable( 'python' )
         return 'python'
     endif
 
-    if g:slimv_windows
+    if g:slimv_windows || g:slimv_cygwin
         " Try to find Python on the standard installation places
+        " For Cygwin we need to use the Windows Python instead of the Cygwin Python
         let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
         if len( pythons ) > 0
             return pythons[0]
@@ -91,11 +94,22 @@ function! SlimvClientCommand()
     endif
 endfunction
 
+" Convert Cygwin path to Windows path, if needed
+function! s:Cygpath( path )
+    let path = a:path
+    if g:slimv_cygwin
+        let path = system( 'cygpath -w ' . path )
+        let path = substitute( path, "\n", "", "g" )
+        let path = substitute( path, "\\", "/", "g" )
+    endif
+    return path
+endfunction
+
 " Find slimv.py in the Vim ftplugin directory (if not given in vimrc)
 if !exists( 'g:slimv_path' )
     let plugins = split( globpath( &runtimepath, 'ftplugin/**/slimv.py'), '\n' )
     if len( plugins ) > 0
-        let g:slimv_path = plugins[0]
+        let g:slimv_path = s:Cygpath( plugins[0] )
     else
         let g:slimv_path = 'slimv.py'
     endif
@@ -157,7 +171,7 @@ if !exists( 'g:slimv_repl_dir' )
     if g:slimv_windows
         let g:slimv_repl_dir = matchstr( tempname(), '.*\\' )
     else
-        let g:slimv_repl_dir = '/tmp/'
+        let g:slimv_repl_dir = s:Cygpath( '/tmp/' )
     endif
 endif
 
