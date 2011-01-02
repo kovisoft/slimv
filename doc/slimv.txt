@@ -1339,6 +1339,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Form is passed to client via stdin instead of temp file.
        - Bugfix: automatic reconnection when server closed and reopened.
        - Bugfix: delete and yank also via named registers in paredit.vim.
+       - Bugfix: handle double quotes in Compile-Defun and Compile-Region.
 
 0.7.4  - Added autodetection for simple 'clojure' command on Linux.
        - Removed duplicates from history of commands entered in REPL buffer

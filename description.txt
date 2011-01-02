@@ -129,7 +129,7 @@ See the included documentation for more complete installation and customization 
 Script versions
 ---------------------------------------------------------------------------------------------
 
-0.7.5: Added Cygwin compatibility using the Windows Python (thanks to Jerome Baum), display client error message when eval was not successful, form is passed to client via stdin instead of temp file, bugfixes: automatic reconnection when server closed and reopened, delete and yank also via named registers in paredit.vim.
+0.7.5: Added Cygwin compatibility using the Windows Python (thanks to Jerome Baum), display client error message when eval was not successful, form is passed to client via stdin instead of temp file, bugfixes: automatic reconnection when server closed and reopened, delete and yank also via named registers in paredit.vim, handle double quotes in Compile-Defun and Compile-Region.
 
 0.7.4: Added autodetection for simple 'clojure' command on Linux, removed duplicates from history of commands entered in REPL buffer (those recallable with <Up>), bugfixes: infinite loop during eval when 'in-package' or 'in-ns' was in comment, Lisp prompt identification problems in REPL buffer, input line duplication in SBCL on Linux (assigned "*debug-io*" to stdin), Eval Defun sometimes missed last ")".
 
