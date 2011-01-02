@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.5
-" Last Change:  30 Dec 2010
+" Last Change:  02 Jan 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1317,10 +1317,11 @@ endfunction
 
 " Compile the current top-level form
 function! SlimvCompileDefun()
-    "TODO: handle double quote characters in form
     call SlimvSelectToplevelForm()
     call SlimvFindPackage()
-    call SlimvEvalForm1( g:slimv_template_compile_string, SlimvGetSelection() )
+    let form = SlimvGetSelection()
+    let form = substitute( form, '"', '\\\\"', 'g' )
+    call SlimvEvalForm1( g:slimv_template_compile_string, form )
 endfunction
 
 " Compile and load whole file
@@ -1338,9 +1339,9 @@ function! SlimvCompileFile()
 endfunction
 
 function! SlimvCompileRegion() range
-    "TODO: handle double quote characters in form
     let lines = SlimvGetRegion()
     let region = join( lines, ' ' )
+    let region = substitute( region, '"', '\\\\"', 'g' )
     call SlimvEvalForm1( g:slimv_template_compile_string, region )
 endfunction
 
