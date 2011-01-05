@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Jan 2011
+*slimv.txt*                    Slimv                 Last Change: 05 Jan 2011
 
 Slimv                                                                  *slimv*
                                Version 0.7.5
@@ -186,8 +186,6 @@ Below that list follows the detailed explanation on each option.
 
 |g:slimv_ctags|              OS command to generate tags file.
 
-|g:slimv_debug_client|       Display the command to start client.
-
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
 |g:slimv_javadoc_root|       Base URL for the JavaDoc.
@@ -327,12 +325,6 @@ And this can be for Konsole:
 
   let g:slimv_client =
   \ 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
-
-                                                         *g:slimv_debug_client*
-Set this to nonzero if you want to make Vim display the command used to start
-the client and any occurrent error messages. This also makes Slimv keep the
-Slimv client window open on Windows. This setting is useful to debug problems
-when setting up a custom |g:slimv_client| command.
 
                                                                 *g:slimv_ctags*
 It is possible to generate tags file from within Vim. By default Slimv assumes
@@ -1269,9 +1261,13 @@ FAQ                                                                 *slimv-faq*
          {python command} is the command to start the Python interpreter,
          {slimv.py} is the path for slimv.py (usually in Vim's ftplugin dir),
          {lisp command} is the command to start Lisp (or Clojure).
+     Examples:
+         c:\python24\python "c:\Program Files\Vim\vimfiles\ftplugin\slimv.py" -l c:\clisp\clisp.exe -s
+         python /home/username/.vim/ftplugin/slimv.py -l sbcl -s
      Please remember to enclose each parameter in double quotes if that
      parameter contains spaces.
-     Also check the following Slimv variables in Vim:
+     Also check the following Slimv variables in Vim, maybe they are not
+     correctly autodetected and you need to override them in your .vimrc:
          :echo g:slimv_python
          :echo g:slimv_lisp
          :echo g:slimv_client         
@@ -1515,11 +1511,10 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - Needs Python 2.4 or higher (uses the subprocess module)
 - Sometimes a Python exception happens after a CTRL-C inside the REPL buffer
   followed by an EOF (CTRL-Z or CTRL-D) in the external REPL window.
-- REPL buffer refresh on Vim focus gain works only in gvim, not in console vim.
 - Interruption (Ctrl-C) does not work with all Lisp implementations.
   For example SBCL exits on Windows when receiving Ctrl-C.
   It does not work in Clojure.
-  In this case use the Interrupt-Lisp-Process menu command.
+  In these cases use the Interrupt-Lisp-Process menu command.
 - There are some functions that are not compatible or simply not working for
   Clojure.
 - It is not possible to run separate Lisp and Clojure REPL in the same
