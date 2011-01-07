@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Jan 2011
+*slimv.txt*                    Slimv                 Last Change: 07 Jan 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.7.5
+                               Version 0.7.6
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1328,6 +1328,10 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.7.6  - Cursor posision is kept during evaluation.
+       - Bugfix: find defun start when cursor is on a comment.
+       - Bugfix: keep newlines in Compile-Region.
 
 0.7.5  - Added Cygwin compatibility using the Windows Python
          (thanks to Jerome Baum).
