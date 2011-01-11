@@ -484,8 +484,8 @@ function! SlimvTimer()
     call SlimvRefreshReplBuffer()
     if g:slimv_repl_open
         if mode() == 'i' || mode() == 'I'
-            " Put an incomplete '<C-O>' command and an Esc into the typeahead buffer
-            call feedkeys("\x0F\e")
+            " Put an empty '<C-O>:<CR>' command into the typeahead buffer
+            call feedkeys("\<c-o>:\<cr>")
         else
             " Put an incomplete 'f' command and an Esc into the typeahead buffer
             call feedkeys("f\e")

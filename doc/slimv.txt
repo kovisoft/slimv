@@ -1338,6 +1338,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: keep newlines in Compile-Region.
        - Bugfix: infinite loop when selecting form in empty buffer.
        - Bugfix: error when opening REPL buffer with g:slimv_repl_split=0.
+       - Bugfix: REPL blinking in insert mode when visualbell is on.
 
 0.7.5  - Added Cygwin compatibility using the Windows Python
          (thanks to Jerome Baum).
