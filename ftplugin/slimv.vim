@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.6
-" Last Change:  06 Jan 2011
+" Last Change:  11 Jan 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -645,7 +645,7 @@ function! SlimvSelectForm()
     " Search the opening '(' if we are standing on a special form prefix character
     let save_cpo = &cpoptions
     let c = col( '.' ) - 1
-    while match( "'`#", getline( '.' )[c] ) >= 0
+    while c < len( getline( '.' ) ) && match( "'`#", getline( '.' )[c] ) >= 0
         normal! l
         let c = c + 1
     endwhile
