@@ -740,8 +740,6 @@ function! SlimvSend( args, open_buffer )
         call SlimvRefreshReplBuffer()
         if g:slimv_repl_split && repl_win == -1
             execute "normal! \<C-w>p"
-        elseif repl_buf == -1
-            execute "buf " . s:repl_name
         endif
     endif
 endfunction

@@ -405,6 +405,10 @@ buffer, so that only the separate REPL window is opened.
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
 Used only when |g:slimv_repl_open| is nonzero.
+The default is to use split window. If you prefer having REPL being in a hidden
+buffer then set this option to zero. This way the REPL buffer will be opened
+at the first evaluation, but any subsequent evaluation will be performed
+silently, with the REPL buffer kept hidden.
 
                                                            *g:slimv_updatetime*
 The REPL buffer is refreshed at every keystroke or when the user doesn't press
@@ -1333,6 +1337,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: find defun start when cursor is on a comment.
        - Bugfix: keep newlines in Compile-Region.
        - Bugfix: infinite loop when selecting form in empty buffer.
+       - Bugfix: error when opening REPL buffer with g:slimv_repl_split=0.
 
 0.7.5  - Added Cygwin compatibility using the Windows Python
          (thanks to Jerome Baum).
