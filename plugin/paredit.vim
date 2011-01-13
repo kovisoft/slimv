@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.7.5
-" Last Change:  28 Dec 2010
+" Version:      0.7.6
+" Last Change:  13 Jan 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -58,7 +58,7 @@ let s:any_closing_char   = ')\|\]'
 let s:any_openclose_char = '(\|\[\|)\|\]'
 let s:any_wsopen_char    = '\s\|(\|\['
 let s:any_wsclose_char   = '\s\|)\|\]'
-let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~'
+let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,'
 
 " Repeat count for some remapped edit functions (like 'd')
 let s:repeat             = 0
