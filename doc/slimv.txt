@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Jan 2011
+*slimv.txt*                    Slimv                 Last Change: 14 Jan 2011
 
 Slimv                                                                  *slimv*
                                Version 0.7.6
@@ -1341,6 +1341,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: REPL blinking in insert mode when visualbell is on.
        - Bugfix: added the comma to the list of macro prefix characters
          (thanks to John Obbele).
+       - Bugfix: long/short Windows filename problem for REPL buffer.
 
 0.7.5  - Added Cygwin compatibility using the Windows Python
          (thanks to Jerome Baum).
