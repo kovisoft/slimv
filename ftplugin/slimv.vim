@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.6
-" Last Change:  11 Jan 2011
+" Last Change:  14 Jan 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -424,7 +424,7 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
-    let repl_buf = bufnr( s:repl_name )
+    let repl_buf = bufnr( g:slimv_repl_file )
     if repl_buf == -1
         " REPL buffer not loaded
         return
@@ -539,7 +539,7 @@ endfunction
 
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
-    let repl_buf = bufnr( s:repl_name )
+    let repl_buf = bufnr( g:slimv_repl_file )
     if repl_buf == -1
         " Create a new REPL buffer
         if g:slimv_repl_split
@@ -720,7 +720,7 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
-    let repl_buf = bufnr( s:repl_name )
+    let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
 
     if a:open_buffer && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
@@ -1015,11 +1015,11 @@ endfunction
 
 " Refresh REPL buffer continuously
 function! SlimvRefresh()
-    if bufnr( s:repl_name ) == -1
+    if bufnr( g:slimv_repl_file ) == -1
         " REPL not opened, no need to refresh
         return
     endif
-    if bufnr( s:repl_name ) != bufnr( "%" )
+    if bufnr( g:slimv_repl_file ) != bufnr( "%" )
         " REPL is not the current window, activate it
         call SlimvOpenReplBuffer()
     else
