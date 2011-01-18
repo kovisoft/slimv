@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.6
-" Last Change:  14 Jan 2011
+" Last Change:  18 Jan 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -625,7 +625,7 @@ endfunction
 " Select symbol under cursor and copy it to register 's'
 function! SlimvSelectSymbol()
     "TODO: can we use expand('<cWORD>') here?
-    normal! viw"sy
+    silent normal! viw"sy
 endfunction
 
 " Select extended symbol under cursor and copy it to register 's'
@@ -637,7 +637,7 @@ function! SlimvSelectSymbolExt()
     else
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
     endif
-    normal! viw"sy
+    silent normal! viw"sy
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
@@ -657,7 +657,7 @@ function! SlimvSelectForm()
         normal! h
         let c = c - 1
     endwhile
-    normal! "sy
+    silent normal! "sy
     let &cpoptions = save_cpo
 endfunction
 
@@ -695,7 +695,7 @@ function! SlimvFindAddSel( string )
     if found
         " Put the form just found at the beginning of the selection
         let sel = SlimvGetSelection()
-        normal! v%"sy
+        silent normal! v%"sy
         call setreg( '"s', SlimvGetSelection() . "\n" . sel )
     endif
 endfunction
@@ -1173,9 +1173,9 @@ function! SlimvMacroexpandGeneral( command )
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
         if SlimvGetFiletype() == 'clojure'
             " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
-            normal! vt[%ht]"sy
+            silent normal! vt[%ht]"sy
         else
-            normal! vt(])"sy
+            silent normal! vt(])"sy
         endif
         let m = SlimvGetSelection() . '))'
         let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
@@ -1548,93 +1548,93 @@ endif
 if g:slimv_keybindings == 1
     " Short (one-key) keybinding set
 
-    noremap <Leader>)  :<C-U>call SlimvCloseForm()<CR>
-    inoremap <C-X>0    <C-O>:call SlimvCloseForm()<CR>
-    noremap <Leader>(  :<C-U>call PareditToggle()<CR>
+    noremap  <silent> <Leader>)  :<C-U>call SlimvCloseForm()<CR>
+    inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
+    noremap  <silent> <Leader>(  :<C-U>call PareditToggle()<CR>
 
-    noremap <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
-    noremap <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
-    noremap <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
-    noremap <Leader>r  :call SlimvEvalRegion()<CR>
-    noremap <Leader>b  :<C-U>call SlimvEvalBuffer()<CR>
-    noremap <Leader>v  :call SlimvInteractiveEval()<CR>
-    noremap <Leader>u  :call SlimvUndefineFunction()<CR>
+    noremap  <silent> <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
+    noremap  <silent> <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
+    noremap  <silent> <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
+    noremap  <silent> <Leader>r  :call SlimvEvalRegion()<CR>
+    noremap  <silent> <Leader>b  :<C-U>call SlimvEvalBuffer()<CR>
+    noremap  <silent> <Leader>v  :call SlimvInteractiveEval()<CR>
+    noremap  <silent> <Leader>u  :call SlimvUndefineFunction()<CR>
 
-    noremap <Leader>1  :<C-U>call SlimvMacroexpand()<CR>
-    noremap <Leader>m  :<C-U>call SlimvMacroexpandAll()<CR>
-    noremap <Leader>t  :call SlimvTrace()<CR>
-    noremap <Leader>T  :call SlimvUntrace()<CR>
-    noremap <Leader>l  :call SlimvDisassemble()<CR>
-    noremap <Leader>i  :call SlimvInspect()<CR>
+    noremap  <silent> <Leader>1  :<C-U>call SlimvMacroexpand()<CR>
+    noremap  <silent> <Leader>m  :<C-U>call SlimvMacroexpandAll()<CR>
+    noremap  <silent> <Leader>t  :call SlimvTrace()<CR>
+    noremap  <silent> <Leader>T  :call SlimvUntrace()<CR>
+    noremap  <silent> <Leader>l  :call SlimvDisassemble()<CR>
+    noremap  <silent> <Leader>i  :call SlimvInspect()<CR>
 
-    noremap <Leader>D  :<C-U>call SlimvCompileDefun()<CR>
-    noremap <Leader>L  :<C-U>call SlimvCompileLoadFile()<CR>
-    noremap <Leader>F  :<C-U>call SlimvCompileFile()<CR>
-    noremap <Leader>R  :call SlimvCompileRegion()<CR>
+    noremap  <silent> <Leader>D  :<C-U>call SlimvCompileDefun()<CR>
+    noremap  <silent> <Leader>L  :<C-U>call SlimvCompileLoadFile()<CR>
+    noremap  <silent> <Leader>F  :<C-U>call SlimvCompileFile()<CR>
+    noremap  <silent> <Leader>R  :call SlimvCompileRegion()<CR>
 
-    noremap <Leader>O  :call SlimvLoadProfiler()<CR>
-    noremap <Leader>p  :call SlimvProfile()<CR>
-    noremap <Leader>P  :call SlimvUnprofile()<CR>
-    noremap <Leader>U  :call SlimvUnprofileAll()<CR>
-    noremap <Leader>?  :call SlimvShowProfiled()<CR>
-    noremap <Leader>o  :call SlimvProfileReport()<CR>
-    noremap <Leader>x  :call SlimvProfileReset()<CR>
+    noremap  <silent> <Leader>O  :call SlimvLoadProfiler()<CR>
+    noremap  <silent> <Leader>p  :call SlimvProfile()<CR>
+    noremap  <silent> <Leader>P  :call SlimvUnprofile()<CR>
+    noremap  <silent> <Leader>U  :call SlimvUnprofileAll()<CR>
+    noremap  <silent> <Leader>?  :call SlimvShowProfiled()<CR>
+    noremap  <silent> <Leader>o  :call SlimvProfileReport()<CR>
+    noremap  <silent> <Leader>x  :call SlimvProfileReset()<CR>
 
-    noremap <Leader>s  :call SlimvDescribeSymbol()<CR>
-    noremap <Leader>a  :call SlimvApropos()<CR>
-    noremap <Leader>h  :call SlimvHyperspec()<CR>
-    noremap <Leader>]  :call SlimvGenerateTags()<CR>
+    noremap  <silent> <Leader>s  :call SlimvDescribeSymbol()<CR>
+    noremap  <silent> <Leader>a  :call SlimvApropos()<CR>
+    noremap  <silent> <Leader>h  :call SlimvHyperspec()<CR>
+    noremap  <silent> <Leader>]  :call SlimvGenerateTags()<CR>
 
-    noremap <Leader>c  :call SlimvConnectServer()<CR>
+    noremap  <silent> <Leader>c  :call SlimvConnectServer()<CR>
 
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
 
     " Edit commands
-    noremap <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
-    inoremap <C-X>0     <C-O>:call SlimvCloseForm()<CR>
-    noremap <Leader>(t  :<C-U>call PareditToggle()<CR>
+    noremap  <silent> <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
+    inoremap <silent> <C-X>0      <C-O>:call SlimvCloseForm()<CR>
+    noremap  <silent> <Leader>(t  :<C-U>call PareditToggle()<CR>
 
     " Evaluation commands
-    noremap <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
-    noremap <Leader>ee  :<C-U>call SlimvEvalLastExp()<CR>
-    noremap <Leader>ep  :<C-U>call SlimvPprintEvalLastExp()<CR>
-    noremap <Leader>er  :call SlimvEvalRegion()<CR>
-    noremap <Leader>eb  :<C-U>call SlimvEvalBuffer()<CR>
-    noremap <Leader>ei  :call SlimvInteractiveEval()<CR>
-    noremap <Leader>eu  :call SlimvUndefineFunction()<CR>
+    noremap  <silent> <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
+    noremap  <silent> <Leader>ee  :<C-U>call SlimvEvalLastExp()<CR>
+    noremap  <silent> <Leader>ep  :<C-U>call SlimvPprintEvalLastExp()<CR>
+    noremap  <silent> <Leader>er  :call SlimvEvalRegion()<CR>
+    noremap  <silent> <Leader>eb  :<C-U>call SlimvEvalBuffer()<CR>
+    noremap  <silent> <Leader>ei  :call SlimvInteractiveEval()<CR>
+    noremap  <silent> <Leader>eu  :call SlimvUndefineFunction()<CR>
 
     " Debug commands
-    noremap <Leader>m1  :<C-U>call SlimvMacroexpand()<CR>
-    noremap <Leader>ma  :<C-U>call SlimvMacroexpandAll()<CR>
-    noremap <Leader>dt  :call SlimvTrace()<CR>
-    noremap <Leader>du  :call SlimvUntrace()<CR>
-    noremap <Leader>dd  :call SlimvDisassemble()<CR>
-    noremap <Leader>di  :call SlimvInspect()<CR>
+    noremap  <silent> <Leader>m1  :<C-U>call SlimvMacroexpand()<CR>
+    noremap  <silent> <Leader>ma  :<C-U>call SlimvMacroexpandAll()<CR>
+    noremap  <silent> <Leader>dt  :call SlimvTrace()<CR>
+    noremap  <silent> <Leader>du  :call SlimvUntrace()<CR>
+    noremap  <silent> <Leader>dd  :call SlimvDisassemble()<CR>
+    noremap  <silent> <Leader>di  :call SlimvInspect()<CR>
 
     " Compile commands
-    noremap <Leader>cd  :<C-U>call SlimvCompileDefun()<CR>
-    noremap <Leader>cl  :<C-U>call SlimvCompileLoadFile()<CR>
-    noremap <Leader>cf  :<C-U>call SlimvCompileFile()<CR>
-    noremap <Leader>cr  :call SlimvCompileRegion()<CR>
+    noremap  <silent> <Leader>cd  :<C-U>call SlimvCompileDefun()<CR>
+    noremap  <silent> <Leader>cl  :<C-U>call SlimvCompileLoadFile()<CR>
+    noremap  <silent> <Leader>cf  :<C-U>call SlimvCompileFile()<CR>
+    noremap  <silent> <Leader>cr  :call SlimvCompileRegion()<CR>
 
     " Profile commands
-    noremap <Leader>pl  :call SlimvLoadProfiler()<CR>
-    noremap <Leader>pp  :call SlimvProfile()<CR>
-    noremap <Leader>pu  :call SlimvUnprofile()<CR>
-    noremap <Leader>pa  :call SlimvUnprofileAll()<CR>
-    noremap <Leader>ps  :call SlimvShowProfiled()<CR>
-    noremap <Leader>pr  :call SlimvProfileReport()<CR>
-    noremap <Leader>px  :call SlimvProfileReset()<CR>
+    noremap  <silent> <Leader>pl  :call SlimvLoadProfiler()<CR>
+    noremap  <silent> <Leader>pp  :call SlimvProfile()<CR>
+    noremap  <silent> <Leader>pu  :call SlimvUnprofile()<CR>
+    noremap  <silent> <Leader>pa  :call SlimvUnprofileAll()<CR>
+    noremap  <silent> <Leader>ps  :call SlimvShowProfiled()<CR>
+    noremap  <silent> <Leader>pr  :call SlimvProfileReport()<CR>
+    noremap  <silent> <Leader>px  :call SlimvProfileReset()<CR>
 
     " Documentation commands
-    noremap <Leader>ds  :call SlimvDescribeSymbol()<CR>
-    noremap <Leader>da  :call SlimvApropos()<CR>
-    noremap <Leader>dh  :call SlimvHyperspec()<CR>
-    noremap <Leader>dg  :call SlimvGenerateTags()<CR>
+    noremap  <silent> <Leader>ds  :call SlimvDescribeSymbol()<CR>
+    noremap  <silent> <Leader>da  :call SlimvApropos()<CR>
+    noremap  <silent> <Leader>dh  :call SlimvHyperspec()<CR>
+    noremap  <silent> <Leader>dg  :call SlimvGenerateTags()<CR>
 
     " REPL commands
-    noremap <Leader>rc  :call SlimvConnectServer()<CR>
+    noremap  <silent> <Leader>rc  :call SlimvConnectServer()<CR>
 
 endif
 

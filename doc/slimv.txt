@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Jan 2011
+*slimv.txt*                    Slimv                 Last Change: 18 Jan 2011
 
 Slimv                                                                  *slimv*
                                Version 0.7.6
@@ -1334,6 +1334,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.7.6  - Cursor posision is kept during evaluation.
+       - Made Slimv commands silent.
        - Bugfix: find defun start when cursor is on a comment.
        - Bugfix: keep newlines in Compile-Region.
        - Bugfix: infinite loop when selecting form in empty buffer.
