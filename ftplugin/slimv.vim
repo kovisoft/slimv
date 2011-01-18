@@ -1035,7 +1035,7 @@ endfunction
 
 " Get the last region (visual block)
 function! SlimvGetRegion() range
-    normal! ms
+    let oldpos = getpos( '.' ) 
     if mode() == 'v' || mode() == 'V'
         let lines = getline( a:firstline, a:lastline )
         let firstcol = col( a:firstline ) - 1
@@ -1061,7 +1061,7 @@ function! SlimvGetRegion() range
             let lines = [sel] + lines
         endif
     endif
-    normal! `s
+    call setpos( '.', oldpos ) 
     return lines
 endfunction
 
@@ -1112,11 +1112,11 @@ endfunction
 
 " Evaluate top level form at the cursor pos
 function! SlimvEvalDefun()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectDefun()
     call SlimvFindPackage()
     call SlimvEvalSelection()
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Evaluate the whole buffer
@@ -1127,20 +1127,20 @@ endfunction
 
 " Evaluate last expression
 function! SlimvEvalLastExp()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectForm()
     call SlimvFindPackage()
     call SlimvEvalSelection()
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Evaluate and pretty print last expression
 function! SlimvPprintEvalLastExp()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectForm()
     call SlimvFindPackage()
     call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Evaluate expression entered interactively
@@ -1153,10 +1153,10 @@ endfunction
 
 " Undefine function
 function! SlimvUndefineFunction()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_undefine, SlimvGetSelection() )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1196,63 +1196,63 @@ endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     let m = SlimvMacroexpandGeneral( "macroexpand-1" )
     call SlimvEvalForm1( g:slimv_template_macroexpand, m )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Macroexpand the current top level form
 function! SlimvMacroexpandAll()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     let m = SlimvMacroexpandGeneral( "macroexpand" )
     call SlimvEvalForm1( g:slimv_template_macroexpand_all, m )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Switch trace on for the selected function
 function! SlimvTrace()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     let s = input( 'Trace: ', SlimvGetSelection() )
     echo s
     if s != ''
         call SlimvEvalForm1( g:slimv_template_trace, s )
     endif
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Switch trace off for the selected function
 function! SlimvUntrace()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     let s = input( 'Untrace: ', SlimvGetSelection() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_untrace, s )
     endif
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Disassemble the selected function
 function! SlimvDisassemble()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     let s = input( 'Disassemble: ', SlimvGetSelection() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_disassemble, s )
     endif
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Inspect symbol
 function! SlimvInspect()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     let s = input( 'Inspect: ', SlimvGetSelection() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_inspect, s )
     endif
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1280,13 +1280,13 @@ function! SlimvProfile()
     if SlimvGetFiletype() == 'clojure'
         call SlimvError( "No profiler support for Clojure." )
     else
-        normal! ms
+        let oldpos = getpos( '.' ) 
         call SlimvSelectSymbol()
         let s = input( 'Profile: ', SlimvGetSelection() )
         if s != ''
             call SlimvEvalForm1( g:slimv_template_profile, s )
         endif
-        normal! `s
+        call setpos( '.', oldpos ) 
     endif
 endfunction
 
@@ -1295,13 +1295,13 @@ function! SlimvUnprofile()
     if SlimvGetFiletype() == 'clojure'
         call SlimvError( "No profiler support for Clojure." )
     else
-        normal! ms
+        let oldpos = getpos( '.' ) 
         call SlimvSelectSymbol()
         let s = input( 'Unprofile: ', SlimvGetSelection() )
         if s != ''
             call SlimvEvalForm1( g:slimv_template_unprofile, s )
         endif
-        normal! `s
+        call setpos( '.', oldpos ) 
     endif
 endfunction
 
@@ -1345,13 +1345,13 @@ endfunction
 
 " Compile the current top-level form
 function! SlimvCompileDefun()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectDefun()
     call SlimvFindPackage()
     let form = SlimvGetSelection()
     let form = substitute( form, '"', '\\\\"', 'g' )
     call SlimvEvalForm1( g:slimv_template_compile_string, form )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Compile and load whole file
@@ -1379,18 +1379,18 @@ endfunction
 
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Apropos of the selected symbol
 function! SlimvApropos()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
     call SlimvEvalForm1( g:slimv_template_apropos, SlimvGetSelection() )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Generate tags file using ctags
@@ -1502,10 +1502,10 @@ endfunction
 
 " Lookup current symbol in the Common Lisp Hyperspec
 function! SlimvHyperspec()
-    normal! ms
+    let oldpos = getpos( '.' ) 
     call SlimvSelectSymbolExt()
     call SlimvLookup( SlimvGetSelection() )
-    normal! `s
+    call setpos( '.', oldpos ) 
 endfunction
 
 " Complete function that uses the Hyperspec database
