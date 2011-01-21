@@ -92,7 +92,8 @@ For more information see the documentation coupled with the script, please refer
 ---------------------------------------------------------------------------------------------
 Installation details
 ---------------------------------------------------------------------------------------------
-Note for users of pre-0.5.0 versions: Slimv is now a Lisp+Clojure filetype plugin, which means that it went through a major reorganization. Please delete the old version before installing the new one. See details in the documentation.
+For the latest development version please visit the Slimv repository:
+http://bitbucket.org/kovisoft/slimv/
 
 Extract the zip archive into your vimfiles or runtime directory. The archive contains the following files:
     *  doc/slimv.txt
@@ -128,6 +129,8 @@ See the included documentation for more complete installation and customization 
 ---------------------------------------------------------------------------------------------
 Script versions
 ---------------------------------------------------------------------------------------------
+
+0.7.6: Cursor position is kept during evaluation, most Slimv commands made silent, bugfixes: find defun start when cursor is on a comment, keep newlines in Compile-Region, infinite loop when selecting form in empty buffer, error when opening REPL buffer with g:slimv_repl_split=0, REPL blinking in insert mode when visualbell is on, added the comma to the list of macro prefix characters (thanks to John Obbele), long/short Windows filename problem for REPL buffer. 
 
 0.7.5: Added Cygwin compatibility using the Windows Python (thanks to Jerome Baum), display client error message when eval was not successful, form is passed to client via stdin instead of temp file, bugfixes: automatic reconnection when server closed and reopened, delete and yank also via named registers in paredit.vim, handle double quotes in Compile-Defun and Compile-Region.
 
