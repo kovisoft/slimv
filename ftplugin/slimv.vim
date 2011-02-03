@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.6
-" Last Change:  18 Jan 2011
+" Version:      0.7.7
+" Last Change:  29 Jan 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -663,7 +663,9 @@ endfunction
 
 " Find starting '(' of a top level form
 function SlimvFindDefunStart()
-    while searchpair( '(', '', ')', 'bW', 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"' )
+    let l = line( '.' )
+    let matchb = max( [l-100, 1] )
+    while searchpair( '(', '', ')', 'bW', 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"', matchb )
     endwhile
 endfunction
 
