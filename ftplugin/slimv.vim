@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.7
-" Last Change:  29 Jan 2011
+" Last Change:  03 Feb 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -466,6 +466,7 @@ function! SlimvRefreshReplBuffer()
     syntax on
     setlocal autoread
     call SlimvEndOfReplBuffer()
+    call SlimvMarkBufferEnd()
     set nomodified
 
     if repl_buf != this_buf
@@ -520,7 +521,6 @@ function! SlimvReplEnter()
     execute "au FileChangedRO " . g:slimv_repl_file . " :call SlimvRefreshModeOff()"
     call SlimvRefreshModeOn()
     call SlimvRefreshReplBuffer()
-    call SlimvMarkBufferEnd()
 endfunction
 
 " Called when leaving REPL buffer
@@ -534,7 +534,6 @@ function! SlimvReplLeave()
     endtry
     call SlimvRefreshModeOn()
     call SlimvRefreshReplBuffer()
-    call SlimvMarkBufferEnd()
 endfunction
 
 " Open a new REPL buffer or switch to the existing one
