@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.7.6
-" Last Change:  13 Jan 2010
+" Version:      0.7.7
+" Last Change:  04 Feb 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -943,6 +943,11 @@ function! s:FindParenNearby()
     if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
         normal! l
     endif
+
+    " If still not standing on a paren then find the next closing one
+    if line[c0-1] !~ s:any_openclose_char
+        call search(s:any_closing_char, 'W')
+    endif
 endfunction
 
 " Move delimiter one atom or s-expression to the left
@@ -1195,9 +1200,6 @@ function! PareditWrap( open, close )
         execute "normal! " . "viw\<Esc>"
     endif
     call s:WrapSelection( a:open, a:close )
-    if a:open != '"'
-        normal! %
-    endif
 endfunction
 
 " Splice current list into the containing list
