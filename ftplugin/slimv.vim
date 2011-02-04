@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.7
-" Last Change:  03 Feb 2011
+" Last Change:  04 Feb 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -532,8 +532,12 @@ function! SlimvReplLeave()
     catch /.*/
         " REPL menu not found, we cannot remove it
     endtry
-    call SlimvRefreshModeOn()
-    call SlimvRefreshReplBuffer()
+    if g:slimv_repl_split
+        call SlimvRefreshModeOn()
+        call SlimvRefreshReplBuffer()
+    else
+        call SlimvRefreshModeOff()
+    endif
 endfunction
 
 " Open a new REPL buffer or switch to the existing one
