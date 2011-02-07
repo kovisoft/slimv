@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 21 Jan 2011
+*slimv.txt*                    Slimv                 Last Change: 07 Feb 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.7.6
+                               Version 0.7.7
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -239,6 +239,12 @@ Note: On Windows use the / (slash) character instead of \ (backslash) as the
 
                                                                *g:slimv_python*
 This is the installation path of the Python interpreter.
+Normally the Python path is autodetected, but sometimes autodetection fails
+and you need to set up the path in your .vimrc file explicitly.
+If the Python path contains space characters then either the spaces should be
+escaped (Linux) or the short 8.3 filename format should be used (Windows).
+Enclosing the full Python path in double quotes may also work, but this depends
+on the command string handling of the console command used (xterm/cmd.exe/etc).
 Example:
     let g:slimv_python = 'C:/MyPythonDir/python.exe'
 
@@ -1332,6 +1338,15 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.7.7  - Paredit: find next closing paren when using ,< or ,> and not standing
+         on a paren.
+       - Paredit: put cursor on closing paren after Wrap
+       - Bugfix: REPL buffer prompt identification was sometimes missing.
+       - Bugfix: switch off REPL refresh mode when REPL buffer is not visible
+         (thanks to Philipp Marek).
+       - Bugfix: convert Python path on Windows to short 8.3 filename format
+         if it contains space (thanks to Razvan Rotaru).
 
 0.7.6  - Cursor potision is kept during evaluation.
        - Most Slimv commands made silent.
