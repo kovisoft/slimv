@@ -4,8 +4,8 @@
 #
 # Client/Server code for Slimv
 # slimv.py:     Client/Server code for slimv.vim plugin
-# Version:      0.7.5
-# Last Change:  30 Dec 2010
+# Version:      0.7.7
+# Last Change:  06 Feb 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -527,11 +527,6 @@ if __name__ == '__main__':
     python_path = sys.executable
     input_filename = ''
     output_filename = ''
-
-    # Always this trouble with the path/filenames containing spaces:
-    # enclose them in double quotes
-    if python_path.find( ' ' ) >= 0:
-        python_path = '"' + python_path + '"'
 
     # Get command line options
     try:
