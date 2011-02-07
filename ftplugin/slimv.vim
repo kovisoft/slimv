@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.7
-" Last Change:  04 Feb 2011
+" Last Change:  07 Feb 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -39,15 +39,19 @@ function! SlimvAutodetectPython()
         " Try to find Python on the standard installation places
         " For Cygwin we need to use the Windows Python instead of the Cygwin Python
         let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
-        if len( pythons ) > 0
-            return pythons[0]
+        if len( pythons ) == 0
+            " Go deeper in subdirectories
+            let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
+            if len( pythons ) == 0
+                return ''
+            endif
         endif
-        " Go deeper in subdirectories
-        let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
-        if len( pythons ) > 0
-            return pythons[0]
+        let pycmd = pythons[0]
+        if match( pycmd, ' ' ) >= 0
+            " Convert Python command to short 8.3 format if path contains spaces
+            let pycmd = fnamemodify( pycmd, ':8' )
         endif
-        return ''
+        return pycmd
     else
         return ''
     endif
