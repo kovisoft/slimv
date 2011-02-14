@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.7.7
-" Last Change:  04 Feb 2010
+" Last Change:  14 Feb 2010
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1200,6 +1200,9 @@ function! PareditWrap( open, close )
         execute "normal! " . "viw\<Esc>"
     endif
     call s:WrapSelection( a:open, a:close )
+    if a:open != '"'
+        normal! %
+    endif
 endfunction
 
 " Splice current list into the containing list
