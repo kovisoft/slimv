@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Feb 2011
+*slimv.txt*                    Slimv                 Last Change: 17 Feb 2011
 
 Slimv                                                                  *slimv*
                                Version 0.7.7
@@ -1341,6 +1341,7 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.7.7  - Paredit: find next closing paren when using ,< or ,> and not standing
          on a paren.
+       - Open REPL buffer upon connecting server.
        - Bugfix: REPL buffer prompt identification was sometimes missing.
        - Bugfix: switch off REPL refresh mode when REPL buffer is not visible
          (thanks to Philipp Marek).
