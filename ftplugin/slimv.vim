@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.7.7
-" Last Change:  07 Feb 2011
+" Last Change:  17 Feb 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1019,7 +1019,7 @@ endfunction
 " Start and connect slimv server
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
-    call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], 0 )
+    call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
 endfunction
 
 " Refresh REPL buffer continuously
