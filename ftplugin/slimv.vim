@@ -229,6 +229,11 @@ if !exists( 'g:slimv_package' )
     let g:slimv_package = 1
 endif
 
+" 
+if !exists( 'g:slimv_swank' )
+    let g:slimv_swank = 1
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -382,6 +387,11 @@ let s:last_size = 0
 " The original value for 'updatetime'
 let s:save_updatetime = &updatetime
 
+" Is the embedded Python initialized?
+let s:python_initialized = 0
+
+" Is the SWANK server connected?
+let s:swank_connected = 0
 
 " =====================================================================
 "  General utility functions
@@ -433,6 +443,12 @@ function! SlimvRefreshReplBuffer()
         " REPL buffer not loaded
         return
     endif
+
+    if g:slimv_swank && s:swank_connected
+        execute 'python swank_output(' . repl_buf . ')'
+        return
+    endif
+
     let size = getfsize( s:repl_name )
     if size == s:last_size
         " REPL output file did not change since the last refresh
@@ -729,6 +745,29 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
+    if g:slimv_swank
+        if !s:python_initialized
+            python import vim
+            execute 'pyfile ' . substitute( g:slimv_path, "slimv.py", "swank.py", "g" )
+            let s:python_initialized = 1
+        endif
+        if !s:swank_connected
+            call setreg('"s', '')
+            python swank_connect()
+            let result = getreg('"s')
+            if result == ''
+                sleep 1
+                python swank_output(0)
+                let s:swank_connected = 1
+            else
+                call SlimvErrorWait( result )
+            endif
+        endif
+        if !s:swank_connected
+            return
+        endif
+    endif
+
     let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
 
@@ -738,10 +777,21 @@ function! SlimvSend( args, open_buffer )
 
     " Send the lines to the client for evaluation
     let text = join( a:args, "\n" ) . "\n"
-    let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
-    if result != ''
-        " Treat any output as error message
-        call SlimvErrorWait( result )
+
+    if g:slimv_swank
+        "python swank_input(text)
+        let g:python_input = text
+        execute 'python swank_vim_input(' . repl_buf . ', "g:python_input")'
+        sleep 1
+        execute 'python swank_output(' . repl_buf . ')'
+        "execute 'python swank_input("' . text . '")'
+"        python swank_output(2)
+    else
+        let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
+        if result != ''
+            " Treat any output as error message
+            call SlimvErrorWait( result )
+        endif
     endif
 
     if a:open_buffer
