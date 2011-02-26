@@ -1,24 +1,17 @@
 #!/usr/bin/env python)
 
-# Experimental Swank client for Slimv
+###############################################################################
 #
-#
-# How to use this script from within Vim
-# (embedded Python mode, Vim Python DLL version must match with installed Python):
-#
-# python import vim
-# pyfile c:\Program Files\Vim\vimfiles\ftplugin\swank.py
-# python swank_connect()
-# python swank_input('(+ 2 3)\n')
-# python swank_output(2)     # output buffer is buffer 2
-#
-#
-# How to use this with Vim+Slimv (separate Slimv server mode):
-# - run Vim and load a .lisp or .clj file
-# - run the Swank server that matches with the language type (e.g. taken from Emacs)
-# - run this script
-# - connect server in Slimv (,c command)
-# - eval a form in Slimv (,d or similar command)
+# SWANK client for Slimv
+# swank.py:     SWANK client code for slimv.vim plugin
+# Version:      0.7.8
+# Last Change:  26 Feb 2011
+# Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
+# License:      This file is placed in the public domain.
+#               No warranty, express or implied.
+#               *** ***   Use At-Your-Own-Risk!   *** ***
+# 
+############################################################################### 
 
 
 import sys
@@ -37,7 +30,7 @@ maxmessages     = 50            # Maximum number of messages to receive in one l
 sock            = None          # Swank socket object
 id              = 0             # Message id
 debug           = False
-log             = True
+log             = False
 current_thread  = '0'
 debug_activated = False         # Swank debugger activated
 prompt          = 'SLIMV'       # Command prompt
@@ -265,7 +258,8 @@ def swank_listen():
                                     pkg = make_keys( conn_info[':package'] )
                                     package = pkg[':name']
                                     prompt = pkg[':prompt']
-                                    print 'Implementation:' + imp[':type'] + ' Package:' + package + ' Prompt:' + prompt
+                                    if log:
+                                        print 'Implementation:' + imp[':type'] + ' Package:' + package + ' Prompt:' + prompt
                                 elif action == ':name':
                                     keys = make_keys( a )
                                     retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
@@ -406,126 +400,11 @@ def swank_vim_input(bufno, varname):
     swank_append_buffer(bufno, form)
     return swank_input(form)
 
-def swank_output(bufno):
+def swank_vim_output(bufno):
     result = swank_listen()
     swank_append_buffer(bufno, result)
     return result
     
-class swank_output_listener( Thread ):
-    """Listener thread that polls swank output
-    """
-
-    def __init__ ( self ):
-        Thread.__init__( self )
-        self.setDaemon( True )
-        self.start()
-
-    def run( self ):
-        global output
-        global output_filename
-        
-        while True:
-            result = swank_listen()
-            if result != '':
-                if output_filename != '':
-                    output = open(output_filename, 'at')
-                    output.write(result)
-                    output.close()
-            else:
-                time.sleep(0.5)
-
-class slimv_server( Thread ):
-    """Server thread to receive text from the client via socket and send it to the swank server
-    """
-
-    def __init__ ( self ):
-        Thread.__init__( self )
-        self.setDaemon( True )
-        self.output_filename = ''
-        self.start()
-
-    def run( self ):
-        global output_filename
-
-        terminate = False
-        server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        server.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
-        server.bind( (HOST, PORT) )
-        server.listen( 1 )
-        while not terminate:
-            # Listen server socket
-            client, addr = server.accept()
-            sys.stdout.write( 'Accepting client from ' + str(addr) + '\n' + prompt + '> ' )
-
-            while not terminate:
-                l = 0
-                lstr = ''
-                # Read length first, it comes in 4 bytes
-                try:
-                    lstr = client.recv(4)
-                    if len( lstr ) <= 0:
-                        break
-                except KeyboardInterrupt:
-                    terminate = True
-                    break
-                except:
-                    traceback.print_exc()
-                    break
-                l = ord(lstr[0]) + (ord(lstr[1])<<8) + (ord(lstr[2])<<16) + (ord(lstr[3])<<24)
-                if l > 0:
-                    # Valid length received, now wait for the message
-                    try:
-                        # Read the message itself
-                        form = ''
-                        while len( form ) < l:
-                            r = client.recv(l)
-                            if len( r ) == 0:
-                                break
-                            form = form + r
-                        if len( form ) < l:
-                            break
-                    except KeyboardInterrupt:
-                        terminate = True
-                        break
-                    except:
-                        traceback.print_exc()
-                        break
-
-                    if len(form) >= 7 and form[0:7] == 'SLIMV::':
-                        if debug:
-                            print form
-                        command = form[7:]
-                        if len(command) >= 8 and command[0:8] == 'OUTPUT::':
-                            output_filename = command[8:].rstrip( '\n' )
-                    else:
-#                        if not swank_input( form, False ):
-                        if not swank_input( form ):
-                            terminate = True
-            client.close()
-        server.close()
-
-
-# Run this only if not executed from Vim
-#if __name__ == '__main__' and sys.path[0] == '':
-#
-#    if swank_connect():
-#        try:
-#            server = slimv_server()
-#            sol = swank_output_listener()
-#            terminate = False
-#            while not terminate:
-#                form = raw_input() + '\n'
-##                if not swank_input( form, True ):
-#                if not swank_input( form ):
-#                    terminate = True
-#        except:
-#            # In case of any error we just exit
-#            pass
-#
-#        # now tidy up
-#        swank_disconnect()
-#        time.sleep(0.2)
-
 # Checking what Python DLL is compiled Vim against:
 # (put this in a function and call with silent!)
 #

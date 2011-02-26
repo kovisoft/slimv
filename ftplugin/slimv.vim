@@ -445,7 +445,7 @@ function! SlimvRefreshReplBuffer()
     endif
 
     if g:slimv_swank && s:swank_connected
-        execute 'python swank_output(' . repl_buf . ')'
+        execute 'python swank_vim_output(' . repl_buf . ')'
         return
     endif
 
@@ -747,6 +747,21 @@ function! SlimvSend( args, open_buffer )
 
     if g:slimv_swank
         if !s:python_initialized
+            if ! has('python')
+                call SlimvErrorWait( 'Vim is compiled without the Python feature.' )
+                return
+            endif
+            if g:slimv_windows || g:slimv_cygwin
+                let v = ''
+                redir =>> v
+                silent ver
+                redir END
+                let pydll = matchstr( v, '\cpython..\.dll' )
+                if ! executable( pydll )
+                    call SlimvErrorWait( pydll . ' not found.' )
+                    return
+                endif
+            endif
             python import vim
             execute 'pyfile ' . substitute( g:slimv_path, "slimv.py", "swank.py", "g" )
             let s:python_initialized = 1
@@ -757,7 +772,7 @@ function! SlimvSend( args, open_buffer )
             let result = getreg('"s')
             if result == ''
                 sleep 1
-                python swank_output(0)
+                python swank_vim_output(0)
                 let s:swank_connected = 1
             else
                 call SlimvErrorWait( result )
@@ -779,13 +794,9 @@ function! SlimvSend( args, open_buffer )
     let text = join( a:args, "\n" ) . "\n"
 
     if g:slimv_swank
-        "python swank_input(text)
-        let g:python_input = text
-        execute 'python swank_vim_input(' . repl_buf . ', "g:python_input")'
+        execute 'python swank_vim_input(' . repl_buf . ', "text")'
         sleep 1
-        execute 'python swank_output(' . repl_buf . ')'
-        "execute 'python swank_input("' . text . '")'
-"        python swank_output(2)
+        execute 'python swank_vim_output(' . repl_buf . ')'
     else
         let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
         if result != ''
