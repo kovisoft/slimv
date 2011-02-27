@@ -385,7 +385,7 @@ def swank_send_form(form):
 
 def swank_input(varname):
     form = vim.eval(varname)
-    sys.stdout.write(form)
+    #sys.stdout.write(form)
     #sys.stdout.write(prompt + '> ' + form)
     return swank_send_form(form)
 
