@@ -229,9 +229,9 @@ if !exists( 'g:slimv_package' )
     let g:slimv_package = 1
 endif
 
-" 
+" Use SWANK server
 if !exists( 'g:slimv_swank' )
-    let g:slimv_swank = 1
+    let g:slimv_swank = 0
 endif
 
 
