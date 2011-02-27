@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.7.7
-" Last Change:  17 Feb 2011
+" Version:      0.8.0
+" Last Change:  27 Feb 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -429,6 +429,70 @@ function! SlimvMarkBufferEnd()
     let s:prompt = getline( "'s" )
 endfunction
 
+" Execute the given command and write its output at the end of the REPL buffer
+function! SlimvCommand( cmd, param )
+    " Execute the command with output redirected to variable
+    let msg = ''
+    redir => msg
+    silent execute a:cmd
+    redir END
+
+    let repl_buf = bufnr( g:slimv_repl_file )
+    if repl_buf == -1
+        " REPL buffer not loaded
+        return
+    endif
+
+    if msg == ''
+        " No new REPL output since the last refresh
+        if g:slimv_updatetime > 0 && s:last_update < localtime() - 1
+            let &updatetime = s:save_updatetime
+        endif
+        return
+    endif
+    let this_buf = bufnr( "%" )
+    if repl_buf != this_buf
+        " Switch to the REPL buffer/window
+        try
+            if g:slimv_repl_split
+                wincmd w
+            else
+                buf #
+            endif
+        catch /.*/
+            " Some Vim versions give an E303 error here
+            " but we don't need a swapfile for the REPL buffer anyway
+        endtry
+    endif
+
+    if g:slimv_updatetime > 0
+        let &updatetime = g:slimv_updatetime
+    endif
+
+    let lines = split( msg, '\n' )
+    call append( '$', lines )
+    let s:last_update = localtime()
+
+    syntax on
+    if g:slimv_swank
+        set buftype=nofile
+    else
+        setlocal autoread
+    endif
+    call SlimvEndOfReplBuffer()
+    call SlimvMarkBufferEnd()
+    set nomodified
+
+    if repl_buf != this_buf
+        " Switch back to the caller buffer/window
+        if g:slimv_repl_split
+            wincmd w
+        else
+            buf #
+        endif
+    endif
+endfunction
+
 " Reload the contents of the REPL buffer from the output file if changed
 function! SlimvRefreshReplBuffer()
 "    if !g:slimv_repl_open || !g:slimv_repl_split
@@ -445,7 +509,8 @@ function! SlimvRefreshReplBuffer()
     endif
 
     if g:slimv_swank && s:swank_connected
-        execute 'python swank_vim_output(' . repl_buf . ')'
+        "execute 'python swank_output(' . repl_buf . ')'
+        call SlimvCommand( 'python swank_output()', '' )
         return
     endif
 
@@ -484,7 +549,11 @@ function! SlimvRefreshReplBuffer()
         " Oops, something went wrong, the buffer will not be refreshed this time
     endtry
     syntax on
-    setlocal autoread
+    if g:slimv_swank
+        set buftype=nofile
+    else
+        setlocal autoread
+    endif
     call SlimvEndOfReplBuffer()
     call SlimvMarkBufferEnd()
     set nomodified
@@ -518,7 +587,11 @@ endfunction
 " refresh REPL buffer on frequent Vim events
 function! SlimvRefreshModeOn()
     set readonly
-    setlocal autoread
+    if g:slimv_swank
+        set buftype=nofile
+    else
+        setlocal autoread
+    endif
     execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
     execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
     execute "au CursorHold   * :call SlimvTimer()"
@@ -638,7 +711,11 @@ function! SlimvOpenReplBuffer()
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
     filetype on
-    setlocal autoread
+    if g:slimv_swank
+        set buftype=nofile
+    else
+        setlocal autoread
+    endif
     redraw
     let s:last_size = 0
 
@@ -753,7 +830,7 @@ function! SlimvSend( args, open_buffer )
             endif
             if g:slimv_windows || g:slimv_cygwin
                 let v = ''
-                redir =>> v
+                redir => v
                 silent ver
                 redir END
                 let pydll = matchstr( v, '\cpython..\.dll' )
@@ -767,12 +844,11 @@ function! SlimvSend( args, open_buffer )
             let s:python_initialized = 1
         endif
         if !s:swank_connected
-            call setreg('"s', '')
-            python swank_connect()
-            let result = getreg('"s')
+            python swank_connect( "result" )
             if result == ''
                 sleep 1
-                python swank_vim_output(0)
+                "python swank_output(0)
+                python swank_output()
                 let s:swank_connected = 1
             else
                 call SlimvErrorWait( result )
@@ -794,9 +870,13 @@ function! SlimvSend( args, open_buffer )
     let text = join( a:args, "\n" ) . "\n"
 
     if g:slimv_swank
-        execute 'python swank_vim_input(' . repl_buf . ', "text")'
+        "execute 'python swank_input(' . repl_buf . ', "text")'
+        "python swank_input("text")
+        call SlimvCommand( 'python swank_input("a:param")', text )
         sleep 1
-        execute 'python swank_vim_output(' . repl_buf . ')'
+        "execute 'python swank_output(' . repl_buf . ')'
+        "call SlimvCommand( 'python swank_output()', '' )
+        call SlimvRefreshReplBuffer()
     else
         let result = system( g:slimv_client . ' -o ' . s:repl_name, text )
         if result != ''

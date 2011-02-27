@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.7.8
-# Last Change:  26 Feb 2011
+# Version:      0.8.0
+# Last Change:  27 Feb 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -36,8 +36,6 @@ debug_activated = False         # Swank debugger activated
 prompt          = 'SLIMV'       # Command prompt
 #package         = 'user'        # Current package
 package         = 'COMMON-LISP-USER' # Current package
-output          = sys.stdout    # REPL output goes here
-output_filename = ''
 
 
 ###############################################################################
@@ -325,13 +323,13 @@ def swank_invoke_continue():
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-for-emacs ' + frame + ')'
     swank_rex(cmd, 'nil', current_thread)
-    output.write( 'Locals:\n' )
+    sys.stdout.write( 'Locals:\n' )
 
-def send_to_vim(msg):
-    cmd = ":call setreg('" + '"' + "s', '" + msg + "')"
-    vim.command(cmd)
+#def send_to_vim(msg):
+#    cmd = ":call setreg('" + '"' + "s', '" + msg + "')"
+#    vim.command(cmd)
 
-def swank_connect():
+def swank_connect(varname):
     """Create socket to swank server and request connection info
     """
     global sock
@@ -342,16 +340,14 @@ def swank_connect():
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(swank_server)
             swank_connection_info()
+            vim.command('let ' + varname + '=""')
             return sock
         except socket.error:
 #            sys.stdout.write('SWANK server is not running.')
-#            vim.command('echo "SWWWWWWWWWWWWWWWWWANK server is not running."')
-#            vim.command(':let g:python_result="SWANK server is not running."')
-#            cmd = ":call setreg('" + '"' + "s', 'SWANK server is not running.')"
-#            print cmd
-#            vim.command(cmd)
-            send_to_vim('SWANK server is not running.')
+            vim.command('let ' + varname + '="SWANK server is not running."')
+#            send_to_vim('SWANK server is not running.')
             return None
+    vim.command('let ' + varname + '=""')
     return sock
 
 def swank_disconnect():
@@ -359,15 +355,7 @@ def swank_disconnect():
     sock.close()
     sock = None
 
-#def swank_input( form, console ):
-def swank_input(form):
-    global output
-    global output_filename
-
-    if output_filename != '':
-        output = open( output_filename, 'at' )
-#    if not console or output_filename != '':
-        output.write( form )
+def swank_send_form(form):
     handled = False
     if form != 'exit':
         if debug_activated:
@@ -385,33 +373,21 @@ def swank_input(form):
             swank_eval(form + '\n', package)
         handled = True
         
-    if output_filename != '':
-        output.close()
     return handled
 
-def swank_append_buffer(bufno, text):
-    if bufno and text != '':
-        buf = vim.buffers[bufno-1]
-        lines = text.split('\n')
-        buf.append(lines)
+#def swank_append_buffer(bufno, text):
+#    if bufno and text != '':
+#        buf = vim.buffers[bufno-1]
+#        lines = text.split('\n')
+#        buf.append(lines)
 
-def swank_vim_input(bufno, varname):
+def swank_input(varname):
     form = vim.eval(varname)
-    swank_append_buffer(bufno, form)
-    return swank_input(form)
+    sys.stdout.write(form)
+    return swank_send_form(form)
 
-def swank_vim_output(bufno):
+def swank_output():
     result = swank_listen()
-    swank_append_buffer(bufno, result)
+    sys.stdout.write(result)
     return result
-    
-# Checking what Python DLL is compiled Vim against:
-# (put this in a function and call with silent!)
-#
-# let v = ''
-# redir =>> v
-# ver
-# redir END
-# let pydll = matchstr(v, '\cpython..\.dll')
-# echo executable(pydll)
 
