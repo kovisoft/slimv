@@ -473,7 +473,10 @@ function! SlimvCommand( cmd, param )
     endif
 
     let lines = split( msg, '\n' )
+    set noreadonly
     call append( '$', lines )
+    set readonly
+    set nomodified
     let s:last_update = localtime()
 
     syntax on
@@ -484,7 +487,6 @@ function! SlimvCommand( cmd, param )
     endif
     call SlimvEndOfReplBuffer()
     call SlimvMarkBufferEnd()
-    set nomodified
 
     if repl_buf != this_buf
         " Switch back to the caller buffer/window
@@ -1175,7 +1177,7 @@ endfunction
 
 " Refresh REPL buffer continuously
 function! SlimvRefresh()
-    if bufnr( g:slimv_repl_file ) == -1
+    if bufnr( g:slimv_repl_file ) == -1 || g:slimv_swank
         " REPL not opened, no need to refresh
         return
     endif
