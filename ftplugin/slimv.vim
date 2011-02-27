@@ -481,7 +481,8 @@ function! SlimvCommand( cmd, param )
 
     syntax on
     if g:slimv_swank
-        set buftype=nofile
+        setlocal buftype=nofile
+        setlocal noswapfile
     else
         setlocal autoread
     endif
@@ -560,7 +561,8 @@ function! SlimvRefreshReplBuffer()
     endtry
     syntax on
     if g:slimv_swank
-        set buftype=nofile
+        setlocal buftype=nofile
+        setlocal noswapfile
     else
         setlocal autoread
     endif
@@ -598,12 +600,15 @@ endfunction
 function! SlimvRefreshModeOn()
     set readonly
     if g:slimv_swank
-        set buftype=nofile
+        setlocal buftype=nofile
+        setlocal noswapfile
     else
         setlocal autoread
     endif
-    execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
-    execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
+    if ! g:slimv_swank
+        execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
+        execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
+    endif
     execute "au CursorHold   * :call SlimvTimer()"
     execute "au CursorHoldI  * :call SlimvTimer()"
     call SlimvRefreshReplBuffer()
@@ -611,8 +616,10 @@ endfunction
 
 " Switch refresh mode off
 function! SlimvRefreshModeOff()
-    execute "au! CursorMoved"
-    execute "au! CursorMovedI"
+    if ! g:slimv_swank
+        execute "au! CursorMoved"
+        execute "au! CursorMovedI"
+    endif
     execute "au! CursorHold"
     execute "au! CursorHoldI"
     set noreadonly
@@ -722,7 +729,8 @@ function! SlimvOpenReplBuffer()
 
     filetype on
     if g:slimv_swank
-        set buftype=nofile
+        setlocal buftype=nofile
+        setlocal noswapfile
     else
         setlocal autoread
     endif
@@ -880,13 +888,9 @@ function! SlimvSend( args, open_buffer )
     let text = join( a:args, "\n" ) . "\n"
 
     if g:slimv_swank
-        "execute 'python swank_input(' . repl_buf . ', "text")'
-        "python swank_input("text")
         let s:refresh_disabled = 1
+        call SlimvCommand( 'echo a:param', text )
         call SlimvCommand( 'python swank_input("a:param")', text )
-"        sleep 1
-        "execute 'python swank_output(' . repl_buf . ')'
-        "call SlimvCommand( 'python swank_output()', '' )
         let s:refresh_disabled = 0
         call SlimvRefreshReplBuffer()
     else
@@ -1172,7 +1176,11 @@ endfunction
 " Start and connect slimv server
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
-    call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
+    if g:slimv_swank
+        call SlimvSend( ['; Slimv connected' ], g:slimv_repl_open )
+    else
+        call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
+    endif
 endfunction
 
 " Refresh REPL buffer continuously
