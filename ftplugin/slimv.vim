@@ -393,6 +393,9 @@ let s:python_initialized = 0
 " Is the SWANK server connected?
 let s:swank_connected = 0
 
+" Set this variable temporarily to avoid recursive REPL rehresh calls
+let s:refresh_disabled = 0
+
 " =====================================================================
 "  General utility functions
 " =====================================================================
@@ -495,6 +498,11 @@ endfunction
 
 " Reload the contents of the REPL buffer from the output file if changed
 function! SlimvRefreshReplBuffer()
+    if s:refresh_disabled
+        " Refresh is unwanted at the moment, probably another refresh is going on
+        return
+    endif
+
 "    if !g:slimv_repl_open || !g:slimv_repl_split
     if !g:slimv_repl_open
         " User does not want to display REPL in Vim
@@ -872,10 +880,12 @@ function! SlimvSend( args, open_buffer )
     if g:slimv_swank
         "execute 'python swank_input(' . repl_buf . ', "text")'
         "python swank_input("text")
+        let s:refresh_disabled = 1
         call SlimvCommand( 'python swank_input("a:param")', text )
-        sleep 1
+"        sleep 1
         "execute 'python swank_output(' . repl_buf . ')'
         "call SlimvCommand( 'python swank_output()', '' )
+        let s:refresh_disabled = 0
         call SlimvRefreshReplBuffer()
     else
         let result = system( g:slimv_client . ' -o ' . s:repl_name, text )

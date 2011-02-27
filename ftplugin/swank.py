@@ -267,7 +267,7 @@ def swank_listen():
                         retval = retval + prompt + '> '
                     elif result == ':abort':
                         debug_activated = False
-                        retval = retval + '; Evaluation aborted\n'
+                        retval = retval + '; Evaluation aborted\n' + prompt + '> '
                     #break
 
                 elif message == ':debug':
@@ -279,6 +279,7 @@ def swank_listen():
                     for f in frames:
                         frame = str(f[0])
                         retval = retval + frame.rjust(3) + ': ' + unquote( f[1] ) + '\n'
+                    retval = retval + prompt + '> '
 
                 elif message == ':debug-activate':
                     debug_activated = True
@@ -287,6 +288,7 @@ def swank_listen():
 
                 elif message == ':debug-return':
                     debug_activated = False
+                    retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
                     #break
     return retval
 
@@ -384,6 +386,7 @@ def swank_send_form(form):
 def swank_input(varname):
     form = vim.eval(varname)
     sys.stdout.write(form)
+    #sys.stdout.write(prompt + '> ' + form)
     return swank_send_form(form)
 
 def swank_output():
