@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  27 Feb 2011
+# Last Change:  01 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -377,17 +377,23 @@ def swank_send_form(form):
         
     return handled
 
-#def swank_append_buffer(bufno, text):
-#    if bufno and text != '':
-#        buf = vim.buffers[bufno-1]
-#        lines = text.split('\n')
-#        buf.append(lines)
-
 def swank_input(varname):
     form = vim.eval(varname)
     #sys.stdout.write(form)
     #sys.stdout.write(prompt + '> ' + form)
     return swank_send_form(form)
+
+def swank_describe_symbol(fn):
+    cmd = '(swank:describe-symbol "' + fn + '")'
+    swank_rex(cmd, 'nil', 't')
+
+def swank_describe_function(fn):
+    cmd = '(swank:describe-function "' + fn + '")'
+    swank_rex(cmd, 'nil', 't')
+
+def swank_op_arglist(op):
+    cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
+    swank_rex(cmd, 'nil', 't')
 
 def swank_output():
     result = swank_listen()
