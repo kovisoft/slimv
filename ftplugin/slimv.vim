@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  27 Feb 2011
+" Last Change:  01 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -833,6 +833,42 @@ function! SlimvFindPackage()
     endif
 endfunction
 
+" Initialize embedded Python and connect to SWANK server
+function! SlimvConnectSwank()
+    if !s:python_initialized
+        if ! has('python')
+            call SlimvErrorWait( 'Vim is compiled without the Python feature.' )
+            return 0
+        endif
+        if g:slimv_windows || g:slimv_cygwin
+            let v = ''
+            redir => v
+            silent ver
+            redir END
+            let pydll = matchstr( v, '\cpython..\.dll' )
+            if ! executable( pydll )
+                call SlimvErrorWait( pydll . ' not found.' )
+                return 0
+            endif
+        endif
+        python import vim
+        execute 'pyfile ' . substitute( g:slimv_path, "slimv.py", "swank.py", "g" )
+        let s:python_initialized = 1
+    endif
+    if !s:swank_connected
+        python swank_connect( "result" )
+        if result == ''
+            sleep 1
+            "python swank_output(0)
+            python swank_output()
+            let s:swank_connected = 1
+        else
+            call SlimvErrorWait( result )
+        endif
+    endif
+    return s:swank_connected
+endfunction
+
 " Send argument to Lisp server for evaluation
 function! SlimvSend( args, open_buffer )
     call SlimvClientCommand()
@@ -840,41 +876,8 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
-    if g:slimv_swank
-        if !s:python_initialized
-            if ! has('python')
-                call SlimvErrorWait( 'Vim is compiled without the Python feature.' )
-                return
-            endif
-            if g:slimv_windows || g:slimv_cygwin
-                let v = ''
-                redir => v
-                silent ver
-                redir END
-                let pydll = matchstr( v, '\cpython..\.dll' )
-                if ! executable( pydll )
-                    call SlimvErrorWait( pydll . ' not found.' )
-                    return
-                endif
-            endif
-            python import vim
-            execute 'pyfile ' . substitute( g:slimv_path, "slimv.py", "swank.py", "g" )
-            let s:python_initialized = 1
-        endif
-        if !s:swank_connected
-            python swank_connect( "result" )
-            if result == ''
-                sleep 1
-                "python swank_output(0)
-                python swank_output()
-                let s:swank_connected = 1
-            else
-                call SlimvErrorWait( result )
-            endif
-        endif
-        if !s:swank_connected
-            return
-        endif
+    if g:slimv_swank && ! SlimvConnectSwank()
+        return
     endif
 
     let repl_buf = bufnr( g:slimv_repl_file )
@@ -1551,7 +1554,16 @@ endfunction
 function! SlimvDescribeSymbol()
     let oldpos = getpos( '.' ) 
     call SlimvSelectSymbol()
-    call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
+    if g:slimv_swank
+        if SlimvConnectSwank()
+            let s:refresh_disabled = 1
+            call SlimvCommand( 'python swank_describe_symbol("' . SlimvGetSelection() . '")', '' )
+            let s:refresh_disabled = 0
+            call SlimvRefreshReplBuffer()
+        endif
+    else
+        call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
+    endif
     call setpos( '.', oldpos ) 
 endfunction
 
