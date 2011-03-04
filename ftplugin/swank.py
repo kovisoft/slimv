@@ -251,7 +251,11 @@ def swank_listen():
                         action = None
                     if log:
                         for k,a in sorted(actions.items()):
-                            print k, 'pending ' if a.pending else 'finished', a.name, a.result
+                            if a.pending:
+                                pending = 'pending '
+                            else:
+                                pending = 'finished'
+                            print k, pending, a.name, a.result
 
                     if result == ':ok':
                         params = r[1][1]
@@ -317,7 +321,8 @@ def swank_listen():
 def swank_rex(action, cmd, package, thread):
     global id
     id = id + 1
-    actions[str(id)] = swank_action(id, action)
+    key = str(id)
+    actions[key] = swank_action(key, action)
     form = '(:emacs-rex ' + cmd + ' ' + package + ' ' + thread + ' ' + str(id) + ')\n'
     swank_send(form)
 
@@ -422,6 +427,17 @@ def swank_output():
     result = swank_listen()
     sys.stdout.write(result)
     return result
+
+def swank_response():
+    for k,a in sorted(actions.items()):
+        if not a.pending:
+            vc = ":let s:swank_action='" + a.name + "'"
+            vim.command(vc)
+            sys.stdout.write(a.result)
+            actions.pop(a.id)
+            return
+    vc = ":let s:swank_action=''"
+    vim.command(vc)
 
 def swank_get_result(req_id):
     if req_id in actions:

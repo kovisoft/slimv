@@ -432,6 +432,28 @@ function! SlimvMarkBufferEnd()
     let s:prompt = getline( "'s" )
 endfunction
 
+" Handle response coming from the SWANK listener
+function! SlimvSwankResponse()
+    let msg = ''
+    redir => msg
+    silent execute 'python swank_response()'
+    redir END
+
+    if s:swank_action == ''
+        " All SWANK output handled
+        let &updatetime = s:save_updatetime
+    else
+        if msg != ''
+            "echo s:swank_action
+            if s:swank_action == ':describe-symbol'
+                copen
+                echo msg
+                echo input('Press ENTER to continue.')
+            endif
+        endif
+    endif
+endfunction
+
 " Execute the given command and write its output at the end of the REPL buffer
 function! SlimvCommand( cmd, param )
     " Execute the command with output redirected to variable
@@ -522,6 +544,7 @@ function! SlimvRefreshReplBuffer()
     if g:slimv_swank && s:swank_connected
         "execute 'python swank_output(' . repl_buf . ')'
         call SlimvCommand( 'python swank_output()', '' )
+        call SlimvSwankResponse()
         return
     endif
 
