@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  01 Mar 2011
+# Last Change:  04 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -19,7 +19,6 @@ import socket
 import time
 import select
 import string
-from threading import Thread
 
 HOST            = ''            # Symbolic name meaning the local host
 PORT            = 5151          # Slimv port
@@ -36,6 +35,7 @@ debug_activated = False         # Swank debugger activated
 prompt          = 'SLIMV'       # Command prompt
 #package         = 'user'        # Current package
 package         = 'COMMON-LISP-USER' # Current package
+actions         = dict()         # swank actions (like ':write-string'), by message id
 
 
 ###############################################################################
@@ -151,6 +151,13 @@ def parse_sexpr( sexpr ):
 # Swank server interface
 ###############################################################################
 
+class swank_action:
+    def __init__ (self, id, name):
+        self.id = id
+        self.name = name
+        self.result = ''
+        self.pending = True
+
 def unquote(s):
     if s[0] == '"' and s[-1] == '"':
         return s[1:-1]
@@ -220,6 +227,7 @@ def swank_listen():
             if debug:
                 print 'Parsed:', r
             if len(r) > 0:
+                r_id = r[-1]
                 message = r[0].lower()
                 if debug:
                     print 'Message:', message
@@ -236,39 +244,55 @@ def swank_listen():
 
                 elif message == ':return':
                     result = r[1][0].lower()
+                    if type(r_id) == str and r_id in actions:
+                        action = actions[r_id]
+                        action.pending = False
+                    else:
+                        action = None
+                    if log:
+                        for k,a in sorted(actions.items()):
+                            print k, 'pending ' if a.pending else 'finished', a.name, a.result
+
                     if result == ':ok':
-                        #debug_activated = False
-                        actions = r[1][1]
-                        if actions != 'nil':
-                            if type( actions[0] ) == type( '' ):
-                                actions = [actions]
-                            for a in actions:
-                                action = a[0].lower()
-                                if action == ':present':
-                                    retval = retval + unquote( a[1][0][0] ) + '\n'
-                                elif action == ':values':
-                                    retval = retval + a[1][0] + '\n'
-                                elif action == ':suppress-output':
-                                    pass
-                                elif action == ':pid':
-                                    conn_info = make_keys( a )
-                                    imp = make_keys( conn_info[':lisp-implementation'] )
-                                    pkg = make_keys( conn_info[':package'] )
-                                    package = pkg[':name']
-                                    prompt = pkg[':prompt']
-                                    if log:
-                                        print 'Implementation:' + imp[':type'] + ' Package:' + package + ' Prompt:' + prompt
-                                elif action == ':name':
-                                    keys = make_keys( a )
-                                    retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
-                                else:
-                                    retval = retval + a + '\n'
+                        params = r[1][1]
+                        if type(params) == type(''):
+                            element = params.lower()
+                            if element == 'nil':
+                                pass
+                            else:
+                                retval = retval + unquote(params) + '\n'
+                                if action:
+                                    #action = actions.pop(r_id)
+                                    action.result = retval
+                        
+                        elif type(params) == type([]):
+                            element = params[0].lower()
+                            if element == ':present':
+                                retval = retval + unquote(params[1][0][0]) + '\n'
+                            elif element == ':values':
+                                retval = retval + params[1][0] + '\n'
+                            elif element == ':suppress-output':
+                                pass
+                            elif element == ':pid':
+                                conn_info = make_keys(params)
+                                imp = make_keys( conn_info[':lisp-implementation'] )
+                                pkg = make_keys( conn_info[':package'] )
+                                package = pkg[':name']
+                                prompt = pkg[':prompt']
+                                if log:
+                                    print 'Implementation:' + imp[':type'] + ' Package:' + package + ' Prompt:' + prompt
+                            elif element == ':name':
+                                keys = make_keys(params)
+                                retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
+                            else:
+                                if log:
+                                    print element
+                                #retval = retval + str(element) + '\n'
                         # No more output from REPL, write new prompt
                         retval = retval + prompt + '> '
                     elif result == ':abort':
                         debug_activated = False
                         retval = retval + '; Evaluation aborted\n' + prompt + '> '
-                    #break
 
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
@@ -284,47 +308,46 @@ def swank_listen():
                 elif message == ':debug-activate':
                     debug_activated = True
                     current_thread = r[1]
-                    #break
 
                 elif message == ':debug-return':
                     debug_activated = False
                     retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
-                    #break
     return retval
 
-def swank_rex(cmd, package, thread):
+def swank_rex(action, cmd, package, thread):
     global id
     id = id + 1
+    actions[str(id)] = swank_action(id, action)
     form = '(:emacs-rex ' + cmd + ' ' + package + ' ' + thread + ' ' + str(id) + ')\n'
     swank_send(form)
 
 def swank_connection_info():
     cmd = '(swank:connection-info)'
-    swank_rex(cmd, 'nil', 't')
+    swank_rex(':connection-info', cmd, 'nil', 't')
 
 def swank_eval(exp, package):
     cmd = '(swank:listener-eval "' + exp + '")'
-    swank_rex(cmd, '"'+package+'"', ':repl-thread')
+    swank_rex(':listener-eval', cmd, '"'+package+'"', ':repl-thread')
 
 def swank_invoke_restart(level, restart):
     cmd = '(swank:invoke-nth-restart-for-emacs ' + level + ' ' + restart + ')'
-    swank_rex(cmd, 'nil', current_thread)
+    swank_rex(':invoke-nth-restart-for-emacs', cmd, 'nil', current_thread)
 
 def swank_throw_toplevel():
     cmd = '(swank:throw-to-toplevel)'
-    swank_rex(cmd, 'nil', current_thread)
+    swank_rex(':throw-to-toplevel', cmd, 'nil', current_thread)
 
 def swank_invoke_abort():
     cmd = '(swank:sldb-abort)'
-    swank_rex(cmd, 'nil', current_thread)
+    swank_rex(':sldb-abort', cmd, 'nil', current_thread)
 
 def swank_invoke_continue():
     cmd = '(swank:sldb-continue)'
-    swank_rex(cmd, 'nil', current_thread)
+    swank_rex(':sldb-continue', cmd, 'nil', current_thread)
 
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-for-emacs ' + frame + ')'
-    swank_rex(cmd, 'nil', current_thread)
+    swank_rex(':frame-locals-for-emacs', cmd, 'nil', current_thread)
     sys.stdout.write( 'Locals:\n' )
 
 #def send_to_vim(msg):
@@ -385,18 +408,23 @@ def swank_input(varname):
 
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
-    swank_rex(cmd, 'nil', 't')
+    swank_rex(':describe-symbol', cmd, 'nil', 't')
 
 def swank_describe_function(fn):
     cmd = '(swank:describe-function "' + fn + '")'
-    swank_rex(cmd, 'nil', 't')
+    swank_rex(':describe-function', cmd, 'nil', 't')
 
 def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
-    swank_rex(cmd, 'nil', 't')
+    swank_rex(':operator-arglist', cmd, 'nil', 't')
 
 def swank_output():
     result = swank_listen()
     sys.stdout.write(result)
     return result
+
+def swank_get_result(req_id):
+    if req_id in actions:
+        action = actions[req_id]
+        sys.stdout.write(action.result)
 
