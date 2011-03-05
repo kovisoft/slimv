@@ -436,7 +436,7 @@ endfunction
 function! SlimvSwankResponse()
     let msg = ''
     redir => msg
-    silent execute 'python swank_response()'
+    silent execute 'python swank_response("")'
     redir END
 
     if s:swank_action == ''
@@ -446,7 +446,6 @@ function! SlimvSwankResponse()
         if msg != ''
             "echo s:swank_action
             if s:swank_action == ':describe-symbol'
-                copen
                 echo msg
                 echo input('Press ENTER to continue.')
             endif
@@ -1589,6 +1588,41 @@ function! SlimvDescribeSymbol()
     endif
     call setpos( '.', oldpos ) 
 endfunction
+
+" Display symbol description in balloonexpr
+function! SlimvDescribe(arg)
+    let arg=a:arg
+    if a:arg == ''
+        let arg = expand('<cword>')
+    endif
+    if !s:swank_connected
+        return 'none'
+    endif
+    let s:refresh_disabled = 1
+    call SlimvCommand( 'python swank_describe_symbol("' . arg . '")', '' )
+    let msg = ''
+    let s:swank_action = ''
+    while s:swank_action == ''
+        "call SlimvCommand( 'python swank_output()', '' )
+        python swank_output()
+        redir => msg
+        silent execute 'python swank_response(":describe-symbol")'
+        redir END
+    endwhile
+    let s:refresh_disabled = 0
+
+    if msg == ''
+        return 'none'
+    else
+        return msg
+    endif
+endfunction
+
+if g:slimv_swank
+    "setlocal balloondelay=100
+    setlocal ballooneval
+    setlocal balloonexpr=SlimvDescribe(v:beval_text)
+endif
 
 " Apropos of the selected symbol
 function! SlimvApropos()

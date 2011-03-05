@@ -428,9 +428,9 @@ def swank_output():
     sys.stdout.write(result)
     return result
 
-def swank_response():
+def swank_response(name):
     for k,a in sorted(actions.items()):
-        if not a.pending:
+        if not a.pending and (name == '' or name == a.name):
             vc = ":let s:swank_action='" + a.name + "'"
             vim.command(vc)
             sys.stdout.write(a.result)
