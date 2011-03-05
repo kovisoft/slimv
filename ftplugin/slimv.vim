@@ -396,6 +396,8 @@ let s:swank_connected = 0
 " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:refresh_disabled = 0
 
+let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
+
 " =====================================================================
 "  General utility functions
 " =====================================================================
@@ -805,7 +807,7 @@ endfunction
 function SlimvFindDefunStart()
     let l = line( '.' )
     let matchb = max( [l-100, 1] )
-    while searchpair( '(', '', ')', 'bW', 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"', matchb )
+    while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb )
     endwhile
 endfunction
 
@@ -1196,6 +1198,40 @@ endfunction
 function! SlimvHandleInterrupt()
     call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
     call SlimvRefreshReplBuffer()
+endfunction
+
+" Display function argument list
+function! SlimvArglist()
+    let l = line('.')
+    let c = col('.') - 1
+    let line = getline('.')
+    if s:swank_connected
+        let matchb = max( [l-100, 1] )
+        let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
+        if l0 > 0
+            " Found opening paren, let's find out the function name
+            let arg = matchstr( line, '\<\w*\>', c0 )
+            if arg != ''
+                " Ask function argument list from SWANK
+                let s:refresh_disabled = 1
+                call SlimvCommand( 'python swank_op_arglist("' . arg . '")', '' )
+                let msg = ''
+                let s:swank_action = ''
+                while s:swank_action == ''
+                    python swank_listen()
+                    redir => msg
+                    silent execute 'python swank_response(":operator-arglist")'
+                    redir END
+                endwhile
+                let s:refresh_disabled = 0
+                if msg != ''
+                    " Print argument list in status line with newlines removed
+                    let msg = substitute( msg, "\n", "", "g" )
+                    echo "\r(" . arg . ' ' . msg[1:]
+                endif
+            endif
+        endif
+    endif
 endfunction
 
 " Start and connect slimv server
@@ -1596,15 +1632,14 @@ function! SlimvDescribe(arg)
         let arg = expand('<cword>')
     endif
     if !s:swank_connected
-        return 'none'
+        return ''
     endif
     let s:refresh_disabled = 1
     call SlimvCommand( 'python swank_describe_symbol("' . arg . '")', '' )
     let msg = ''
     let s:swank_action = ''
     while s:swank_action == ''
-        "call SlimvCommand( 'python swank_output()', '' )
-        python swank_output()
+        python swank_listen()
         redir => msg
         silent execute 'python swank_response(":describe-symbol")'
         redir END
@@ -1783,6 +1818,10 @@ endif
 " <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
+
+if g:slimv_swank
+    noremap  <silent> <Space>    :call SlimvArglist()<CR>
+endif
 
 if g:slimv_keybindings == 1
     " Short (one-key) keybinding set

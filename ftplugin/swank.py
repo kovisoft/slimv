@@ -262,11 +262,11 @@ def swank_listen():
                         if type(params) == type(''):
                             element = params.lower()
                             if element == 'nil':
-                                pass
+                                # No more output from REPL, write new prompt
+                                retval = retval + prompt + '> '
                             else:
-                                retval = retval + unquote(params) + '\n'
+                                retval = retval + unquote(params)
                                 if action:
-                                    #action = actions.pop(r_id)
                                     action.result = retval
                         
                         elif type(params) == type([]):
@@ -292,8 +292,8 @@ def swank_listen():
                                 if log:
                                     print element
                                 #retval = retval + str(element) + '\n'
-                        # No more output from REPL, write new prompt
-                        retval = retval + prompt + '> '
+                            # No more output from REPL, write new prompt
+                            #retval = retval + prompt + '> '
                     elif result == ':abort':
                         debug_activated = False
                         retval = retval + '; Evaluation aborted\n' + prompt + '> '
