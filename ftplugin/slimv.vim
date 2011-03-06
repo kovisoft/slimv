@@ -720,6 +720,7 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent>        <C-CR> <End><CR><C-O>:call SlimvSendCommand(1)<CR>
     inoremap <buffer> <silent>        <Up>   <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent>        <Down> <C-O>:call SlimvHandleDown()<CR>
+    noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnter()<CR>
 
     if exists( 'g:paredit_loaded' )
         inoremap <buffer> <silent> <expr> <BS>   PareditBackspace(1)
@@ -1196,6 +1197,31 @@ function! SlimvHandleDown()
     else
         normal! gj
     endif
+endfunction
+
+" Handle normal mode 'Enter' keypress in the REPL buffer
+function! SlimvHandleEnter()
+    if s:debug_activated
+        " Check if Enter was pressed in a section printed by the SWANK debugger
+        let line = getline('.')
+        let item = matchstr( line, '\d\+' )
+        if item != ''
+            let section = getline( line('.') - item - 1 )
+            if section[0:8] == 'Restarts:'
+                " Apply item-th restart
+                call SlimvEval( [item] )
+                return
+            endif
+            if section[0:9] == 'Backtrace:'
+                " Display item-th frame, we signal frames by prefixing with '#'
+                call SlimvEval( ['#' . item] )
+                return
+            endif
+        endif
+    endif
+
+    " No special treatment, perform the original function
+    execute "normal \<CR>"
 endfunction
 
 " Go to command line and recall previous command from command history
