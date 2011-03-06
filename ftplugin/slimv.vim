@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  01 Mar 2011
+" Last Change:  06 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -396,9 +396,19 @@ let s:python_initialized = 0
 " Is the SWANK server connected?
 let s:swank_connected = 0
 
+" Package to use at the next SWANK eval
+let s:swank_package = ''
+
+" Form to send to SWANK
+let s:swank_form = ''
+
 " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:refresh_disabled = 0
 
+" Are we in the SWANK debugger?
+let s:debug_activated = 0
+
+" Skip matches inside string or comment 
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
 
 " =====================================================================
@@ -459,7 +469,7 @@ function! SlimvSwankResponse()
 endfunction
 
 " Execute the given command and write its output at the end of the REPL buffer
-function! SlimvCommand( cmd, param )
+function! SlimvCommand( cmd )
     " Execute the command with output redirected to variable
     let msg = ''
     redir => msg
@@ -547,7 +557,7 @@ function! SlimvRefreshReplBuffer()
 
     if g:slimv_swank && s:swank_connected
         "execute 'python swank_output(' . repl_buf . ')'
-        call SlimvCommand( 'python swank_output()', '' )
+        call SlimvCommand( 'python swank_output()' )
         call SlimvSwankResponse()
         return
     endif
@@ -840,17 +850,22 @@ function! SlimvFindAddSel( string )
         let searching = search( '(\s*' . a:string . '\s', 'bW' )
     endwhile
     if found
-        " Put the form just found at the beginning of the selection
-        let sel = SlimvGetSelection()
-        silent normal! v%"sy
-        call setreg( '"s', SlimvGetSelection() . "\n" . sel )
+        if g:slimv_swank
+            silent normal! ww
+            let s:swank_package = expand('<cword>')
+        else
+            " Put the form just found at the beginning of the selection
+            let sel = SlimvGetSelection()
+            silent normal! v%"sy
+            call setreg( '"s', SlimvGetSelection() . "\n" . sel )
+        endif
     endif
 endfunction
 
 " Find and add language specific package/namespace definition before the
 " cursor position and if exists then add it in front of the current selection
 function! SlimvFindPackage()
-    if !g:slimv_package
+    if !g:slimv_package || s:debug_activated
         return
     endif
     if SlimvGetFiletype() == 'clojure'
@@ -919,8 +934,10 @@ function! SlimvSend( args, open_buffer )
 
     if g:slimv_swank
         let s:refresh_disabled = 1
-        call SlimvCommand( 'echo a:param', text )
-        call SlimvCommand( 'python swank_input("a:param")', text )
+        let s:swank_form = text
+        call SlimvCommand( 'echo s:swank_form' )
+        call SlimvCommand( 'python swank_input("s:swank_form", "s:swank_package")' )
+        let s:swank_package = ''
         let s:refresh_disabled = 0
         call SlimvRefreshReplBuffer()
     else
@@ -1223,7 +1240,7 @@ function! SlimvArglist()
             if arg != ''
                 " Ask function argument list from SWANK
                 let s:refresh_disabled = 1
-                call SlimvCommand( 'python swank_op_arglist("' . arg . '")', '' )
+                call SlimvCommand( 'python swank_op_arglist("' . arg . '")' )
                 let msg = ''
                 let s:swank_action = ''
                 while s:swank_action == ''
@@ -1628,7 +1645,7 @@ function! SlimvDescribeSymbol()
     if g:slimv_swank
         if SlimvConnectSwank()
             let s:refresh_disabled = 1
-            call SlimvCommand( 'python swank_describe_symbol("' . SlimvGetSelection() . '")', '' )
+            call SlimvCommand( 'python swank_describe_symbol("' . SlimvGetSelection() . '")' )
             let s:refresh_disabled = 0
             call SlimvRefreshReplBuffer()
         endif
@@ -1648,7 +1665,7 @@ function! SlimvDescribe(arg)
         return ''
     endif
     let s:refresh_disabled = 1
-    call SlimvCommand( 'python swank_describe_symbol("' . arg . '")', '' )
+    call SlimvCommand( 'python swank_describe_symbol("' . arg . '")' )
     let msg = ''
     let s:swank_action = ''
     while s:swank_action == ''
