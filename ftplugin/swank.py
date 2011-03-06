@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  04 Mar 2011
+# Last Change:  06 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -242,6 +242,10 @@ def swank_listen():
                     # REPL has new output to display
                     retval = retval + unquote( r[1] )
 
+                elif message == ':new-package':
+                    package = unquote( r[1] )
+                    prompt  = unquote( r[2] )
+
                 elif message == ':return':
                     result = r[1][0].lower()
                     if type(r_id) == str and r_id in actions:
@@ -296,6 +300,7 @@ def swank_listen():
                             #retval = retval + prompt + '> '
                     elif result == ':abort':
                         debug_activated = False
+                        vim.command('let s:debug_activated=0')
                         retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
                 elif message == ':debug':
@@ -311,10 +316,12 @@ def swank_listen():
 
                 elif message == ':debug-activate':
                     debug_activated = True
+                    vim.command('let s:debug_activated=1')
                     current_thread = r[1]
 
                 elif message == ':debug-return':
                     debug_activated = False
+                    vim.command('let s:debug_activated=0')
                     retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
     return retval
 
@@ -385,32 +392,6 @@ def swank_disconnect():
     sock.close()
     sock = None
 
-def swank_send_form(form):
-    handled = False
-    if form != 'exit':
-        if debug_activated:
-            if form[0] == '#':
-                swank_frame_locals(form[1:])
-            elif form[0].lower() == 'q':
-                swank_throw_toplevel()
-            elif form[0].lower() == 'a':
-                swank_invoke_abort()
-            elif form[0].lower() == 'c':
-                swank_invoke_continue()
-            else:
-                swank_invoke_restart("1", form)
-        else:
-            swank_eval(form + '\n', package)
-        handled = True
-        
-    return handled
-
-def swank_input(varname):
-    form = vim.eval(varname)
-    #sys.stdout.write(form)
-    #sys.stdout.write(prompt + '> ' + form)
-    return swank_send_form(form)
-
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
     swank_rex(':describe-symbol', cmd, 'nil', 't')
@@ -422,6 +403,25 @@ def swank_describe_function(fn):
 def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
     swank_rex(':operator-arglist', cmd, 'nil', 't')
+
+def swank_input(formvar, packagevar):
+    form = vim.eval(formvar)
+    if debug_activated:
+        if form[0] == '#':
+            swank_frame_locals(form[1:])
+        elif form[0].lower() == 'q':
+            swank_throw_toplevel()
+        elif form[0].lower() == 'a':
+            swank_invoke_abort()
+        elif form[0].lower() == 'c':
+            swank_invoke_continue()
+        else:
+            swank_invoke_restart("1", form)
+    else:
+        pkg = vim.eval(packagevar)
+        if pkg == '':
+            pkg = package
+        swank_eval(form + '\n', pkg)
 
 def swank_output():
     result = swank_listen()
@@ -438,9 +438,4 @@ def swank_response(name):
             return
     vc = ":let s:swank_action=''"
     vim.command(vc)
-
-def swank_get_result(req_id):
-    if req_id in actions:
-        action = actions[req_id]
-        sys.stdout.write(action.result)
 
