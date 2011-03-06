@@ -387,6 +387,9 @@ let s:last_size = 0
 " The original value for 'updatetime'
 let s:save_updatetime = &updatetime
 
+" The original value for 'showmode'
+let s:save_showmode = &showmode
+
 " Is the embedded Python initialized?
 let s:python_initialized = 0
 
@@ -1205,12 +1208,18 @@ function! SlimvArglist()
     let l = line('.')
     let c = col('.') - 1
     let line = getline('.')
-    if s:swank_connected
+    if SlimvGetFiletype() == 'clojure'
+        setlocal iskeyword+=~,#,&,\|,{,},!,?
+    else
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+    endif
+    if s:swank_connected && c > 1 && line[c-2] =~ '\k'
+        " Display only if entering the first space after a keyword
         let matchb = max( [l-100, 1] )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
         if l0 > 0
             " Found opening paren, let's find out the function name
-            let arg = matchstr( line, '\<\w*\>', c0 )
+            let arg = matchstr( line, '\<\k*\>', c0 )
             if arg != ''
                 " Ask function argument list from SWANK
                 let s:refresh_disabled = 1
@@ -1225,7 +1234,11 @@ function! SlimvArglist()
                 endwhile
                 let s:refresh_disabled = 0
                 if msg != ''
-                    " Print argument list in status line with newlines removed
+                    " Print argument list in status line with newlines removed.
+                    " Disable showmode until the next ESC to prevent
+                    " immeditate overwriting by the "-- INSERT --" text.
+                    let s:save_showmode = &showmode
+                    set noshowmode
                     let msg = substitute( msg, "\n", "", "g" )
                     echo "\r(" . arg . ' ' . msg[1:]
                 endif
@@ -1820,7 +1833,9 @@ endif
 " then increase 'timeoutlen'
 
 if g:slimv_swank
-    noremap  <silent> <Space>    :call SlimvArglist()<CR>
+    " Map space to display function argument list in status line
+    inoremap <silent> <Space>    <Space><C-O>:call SlimvArglist()<CR>
+    au InsertLeave * :let &showmode=s:save_showmode
 endif
 
 if g:slimv_keybindings == 1
