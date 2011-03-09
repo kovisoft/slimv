@@ -301,8 +301,10 @@ def swank_listen():
                     elif result == ':abort':
                         debug_activated = False
                         vim.command('let s:debug_activated=0')
-                        #retval = retval + '; Evaluation aborted\n' + prompt + '> '
-                        retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + prompt + '> '
+                        if len(r[1]) > 1:
+                            retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + prompt + '> '
+                        else:
+                            retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
@@ -451,7 +453,11 @@ def swank_response(name):
             vim.command(vc)
             sys.stdout.write(a.result)
             actions.pop(a.id)
+            vc = ":let s:swank_actions_pending=" + str(len(actions))
+            vim.command(vc)
             return
     vc = ":let s:swank_action=''"
+    vim.command(vc)
+    vc = ":let s:swank_actions_pending=" + str(len(actions))
     vim.command(vc)
 
