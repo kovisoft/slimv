@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  06 Mar 2011
+# Last Change:  09 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -20,9 +20,6 @@ import time
 import select
 import string
 
-HOST            = ''            # Symbolic name meaning the local host
-PORT            = 5151          # Slimv port
-input_port      = 4005
 output_port     = 4006
 lenbytes        = 6             # Message length is encoded in this number of bytes
 maxmessages     = 50            # Maximum number of messages to receive in one listening session
@@ -267,6 +264,8 @@ def swank_listen():
                             element = params.lower()
                             if element == 'nil':
                                 # No more output from REPL, write new prompt
+                                if retval[-1] != '\n':
+                                    retval = retval + '\n'
                                 retval = retval + prompt + '> '
                             else:
                                 retval = retval + unquote(params)
@@ -276,7 +275,8 @@ def swank_listen():
                         elif type(params) == type([]):
                             element = params[0].lower()
                             if element == ':present':
-                                retval = retval + unquote(params[1][0][0]) + '\n'
+                                # No more output from REPL, write new prompt
+                                retval = retval + unquote(params[1][0][0]) + '\n' + prompt + '> '
                             elif element == ':values':
                                 retval = retval + params[1][0] + '\n'
                             elif element == ':suppress-output':
@@ -301,17 +301,21 @@ def swank_listen():
                     elif result == ':abort':
                         debug_activated = False
                         vim.command('let s:debug_activated=0')
-                        retval = retval + '; Evaluation aborted\n' + prompt + '> '
+                        #retval = retval + '; Evaluation aborted\n' + prompt + '> '
+                        retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + prompt + '> '
 
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
-                    retval = retval + condition[0] + '\n' + condition[1] + '\n\nRestarts:\n'
+                    retval = retval + '\n' + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
                     for i in range( len(restarts) ):
                         retval = retval + str(i).rjust(3) + ': [' + unquote( restarts[i][0] ) + '] ' + unquote( restarts[i][1] ) + '\n'
                     retval = retval + '\nBacktrace:\n'
                     for f in frames:
                         frame = str(f[0])
-                        retval = retval + frame.rjust(3) + ': ' + unquote( f[1] ) + '\n'
+                        ftext = unquote( f[1] )
+                        ftext = ftext.replace('\\"', '"')
+                        ftext = ftext.replace('\\\\n', '')
+                        retval = retval + frame.rjust(3) + ': ' + ftext + '\n'
                     retval = retval + prompt + '> '
 
                 elif message == ':debug-activate':
@@ -323,6 +327,10 @@ def swank_listen():
                     debug_activated = False
                     vim.command('let s:debug_activated=0')
                     retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
+
+                elif message == ':ping':
+                    [thread, tag] = r[1:3]
+                    swank_send('(:emacs-pong ' + thread + ' ' + tag + ')')
     return retval
 
 def swank_rex(action, cmd, package, thread):
@@ -337,9 +345,16 @@ def swank_connection_info():
     cmd = '(swank:connection-info)'
     swank_rex(':connection-info', cmd, 'nil', 't')
 
+def swank_create_repl():
+    cmd = '(swank:create-repl nil)'
+    swank_rex(':create-repl', cmd, 'nil', 't')
+
 def swank_eval(exp, package):
     cmd = '(swank:listener-eval "' + exp + '")'
     swank_rex(':listener-eval', cmd, '"'+package+'"', ':repl-thread')
+
+def swank_interrupt():
+    swank_send('(:emacs-interrupt :repl-thread)')
 
 def swank_invoke_restart(level, restart):
     cmd = '(swank:invoke-nth-restart-for-emacs ' + level + ' ' + restart + ')'
@@ -362,36 +377,6 @@ def swank_frame_locals(frame):
     swank_rex(':frame-locals-for-emacs', cmd, 'nil', current_thread)
     sys.stdout.write( 'Locals:\n' )
 
-#def send_to_vim(msg):
-#    cmd = ":call setreg('" + '"' + "s', '" + msg + "')"
-#    vim.command(cmd)
-
-def swank_connect(varname):
-    """Create socket to swank server and request connection info
-    """
-    global sock
-
-    if not sock:
-        try:
-            swank_server = ('localhost', input_port)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect(swank_server)
-            swank_connection_info()
-            vim.command('let ' + varname + '=""')
-            return sock
-        except socket.error:
-#            sys.stdout.write('SWANK server is not running.')
-            vim.command('let ' + varname + '="SWANK server is not running."')
-#            send_to_vim('SWANK server is not running.')
-            return None
-    vim.command('let ' + varname + '=""')
-    return sock
-
-def swank_disconnect():
-    global sock
-    sock.close()
-    sock = None
-
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
     swank_rex(':describe-symbol', cmd, 'nil', 't')
@@ -403,6 +388,37 @@ def swank_describe_function(fn):
 def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
     swank_rex(':operator-arglist', cmd, 'nil', 't')
+
+#def send_to_vim(msg):
+#    cmd = ":call setreg('" + '"' + "s', '" + msg + "')"
+#    vim.command(cmd)
+
+def swank_connect(portvar, resultvar):
+    """Create socket to swank server and request connection info
+    """
+    global sock
+
+    if not sock:
+        try:
+            port = int(vim.eval(portvar))
+            swank_server = ('localhost', port)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(swank_server)
+            swank_connection_info()
+            vim.command('let ' + resultvar + '=""')
+            return sock
+        except socket.error:
+#            sys.stdout.write('SWANK server is not running.')
+            vim.command('let ' + resultvar + '="SWANK server is not running."')
+#            send_to_vim('SWANK server is not running.')
+            return None
+    vim.command('let ' + resultvar + '=""')
+    return sock
+
+def swank_disconnect():
+    global sock
+    sock.close()
+    sock = None
 
 def swank_input(formvar, packagevar):
     form = vim.eval(formvar)
