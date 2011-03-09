@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  06 Mar 2011
+" Last Change:  09 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -140,9 +140,18 @@ endfunction
 "  Global variable definitions
 " =====================================================================
 
+" Use SWANK server
+if !exists( 'g:slimv_swank' )
+    let g:slimv_swank = 0
+endif
+
 " TCP port number to use
 if !exists( 'g:slimv_port' )
-    let g:slimv_port = 5151
+    if g:slimv_swank
+        let g:slimv_port = 4005
+    else
+        let g:slimv_port = 5151
+    endif
 endif
 
 " Find Python (if not given in vimrc)
@@ -227,11 +236,6 @@ endif
 " Package/namespace handling
 if !exists( 'g:slimv_package' )
     let g:slimv_package = 1
-endif
-
-" Use SWANK server
-if !exists( 'g:slimv_swank' )
-    let g:slimv_swank = 0
 endif
 
 
@@ -899,11 +903,13 @@ function! SlimvConnectSwank()
         let s:python_initialized = 1
     endif
     if !s:swank_connected
-        python swank_connect( "result" )
+        python swank_connect( "g:slimv_port", "result" )
         if result == ''
             sleep 1
-            "python swank_output(0)
-            python swank_output()
+            python swank_create_repl()
+            sleep 1
+            "python swank_output()
+            call SlimvRefreshReplBuffer()
             let s:swank_connected = 1
         else
             call SlimvErrorWait( result )
@@ -1242,7 +1248,11 @@ endfunction
 
 " Handle interrupt (Ctrl-C) keypress in the REPL buffer
 function! SlimvHandleInterrupt()
-    call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+    if g:slimv_swank
+        call SlimvCommand( 'python swank_interrupt()' )
+    else
+        call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+    endif
     call SlimvRefreshReplBuffer()
 endfunction
 
@@ -1283,7 +1293,12 @@ function! SlimvArglist()
                     let s:save_showmode = &showmode
                     set noshowmode
                     let msg = substitute( msg, "\n", "", "g" )
-                    echo "\r(" . arg . ' ' . msg[1:]
+                    if match( msg, arg ) != 1
+                        " Function name is not received from REPL
+                        echo "\r(" . arg . ' ' . msg[1:]
+                    else
+                        echo "\r" . msg
+                    endif
                 endif
             endif
         endif
