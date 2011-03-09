@@ -458,17 +458,16 @@ function! SlimvSwankResponse()
     silent execute 'python swank_response("")'
     redir END
 
-    if s:swank_action == ''
+    if s:swank_action != '' && msg != ''
+        "echo s:swank_action
+        if s:swank_action == ':describe-symbol'
+            echo msg
+            echo input('Press ENTER to continue.')
+        endif
+    endif
+    if s:swank_actions_pending == ''
         " All SWANK output handled
         let &updatetime = s:save_updatetime
-    else
-        if msg != ''
-            "echo s:swank_action
-            if s:swank_action == ':describe-symbol'
-                echo msg
-                echo input('Press ENTER to continue.')
-            endif
-        endif
     endif
 endfunction
 
@@ -971,8 +970,7 @@ endfunction
 
 " Send interrupt command to REPL
 function! SlimvInterrupt()
-    call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
-    call SlimvRefreshReplBuffer()
+    call SlimvHandleInterrupt()
     startinsert!
 endfunction
 
