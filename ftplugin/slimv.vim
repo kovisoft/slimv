@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  09 Mar 2011
+" Last Change:  10 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -205,7 +205,7 @@ endif
 
 " Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
 if !exists( 'g:slimv_updatetime' )
-    let g:slimv_updatetime = 200
+    let g:slimv_updatetime = 500
 endif
 
 " Build client command (if not given in vimrc)
@@ -528,7 +528,7 @@ function! SlimvCommand( cmd )
     call SlimvEndOfReplBuffer()
     call SlimvMarkBufferEnd()
 
-    if repl_buf != this_buf
+    if repl_buf != this_buf && !s:debug_activated
         " Switch back to the caller buffer/window
         if g:slimv_repl_split
             wincmd w
@@ -724,6 +724,7 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent>        <Up>   <C-O>:call SlimvHandleUp()<CR>
     inoremap <buffer> <silent>        <Down> <C-O>:call SlimvHandleDown()<CR>
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnter()<CR>
+    inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
 
     if exists( 'g:paredit_loaded' )
         inoremap <buffer> <silent> <expr> <BS>   PareditBackspace(1)
@@ -966,12 +967,6 @@ endfunction
 " Eval arguments in Lisp REPL
 function! SlimvEval( args )
     call SlimvSend( a:args, g:slimv_repl_open )
-endfunction
-
-" Send interrupt command to REPL
-function! SlimvInterrupt()
-    call SlimvHandleInterrupt()
-    startinsert!
 endfunction
 
 " Set command line after the prompt
@@ -1245,7 +1240,7 @@ function! SlimvNextCommand()
 endfunction
 
 " Handle interrupt (Ctrl-C) keypress in the REPL buffer
-function! SlimvHandleInterrupt()
+function! SlimvInterrupt()
     if g:slimv_swank
         call SlimvCommand( 'python swank_interrupt()' )
     else
@@ -1935,6 +1930,7 @@ if g:slimv_keybindings == 1
     noremap  <silent> <Leader>]  :call SlimvGenerateTags()<CR>
 
     noremap  <silent> <Leader>c  :call SlimvConnectServer()<CR>
+    noremap  <silent> <Leader>y  :call SlimvInterrupt()<CR>
 
 elseif g:slimv_keybindings == 2
     " Easy to remember (two-key) keybinding set
@@ -1984,6 +1980,7 @@ elseif g:slimv_keybindings == 2
 
     " REPL commands
     noremap  <silent> <Leader>rc  :call SlimvConnectServer()<CR>
+    noremap  <silent> <Leader>ri  :call SlimvInterrupt()<CR>
 
 endif
 
@@ -2041,6 +2038,7 @@ if g:slimv_menu == 1
     amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
 
     amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
+    amenu &Slimv.&Repl.Interrup&t-Lisp-Process         :call SlimvInterrupt()<CR>
 endif
 
 " Add REPL menu. This menu exist only for the REPL buffer.
