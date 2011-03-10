@@ -29,6 +29,7 @@ debug           = False
 log             = False
 current_thread  = '0'
 debug_activated = False         # Swank debugger activated
+read_string     = None          # Thread and tag in Swank read string mode
 prompt          = 'SLIMV'       # Command prompt
 #package         = 'user'        # Current package
 package         = 'COMMON-LISP-USER' # Current package
@@ -200,6 +201,7 @@ def swank_recv(msglen):
 def swank_listen():
     global output_port
     global debug_activated
+    global read_string
     global current_thread
     global prompt
     global package
@@ -239,11 +241,15 @@ def swank_listen():
                     # REPL has new output to display
                     retval = retval + unquote( r[1] )
 
+                elif message == ':read-string':
+                    read_string = r[1:3]
+
                 elif message == ':new-package':
                     package = unquote( r[1] )
                     prompt  = unquote( r[2] )
 
                 elif message == ':return':
+                    read_string = None
                     result = r[1][0].lower()
                     if type(r_id) == str and r_id in actions:
                         action = actions[r_id]
@@ -391,6 +397,9 @@ def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
     swank_rex(':operator-arglist', cmd, 'nil', 't')
 
+def swank_return_string(s):
+    swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')
+
 #def send_to_vim(msg):
 #    cmd = ":call setreg('" + '"' + "s', '" + msg + "')"
 #    vim.command(cmd)
@@ -424,7 +433,9 @@ def swank_disconnect():
 
 def swank_input(formvar, packagevar):
     form = vim.eval(formvar)
-    if debug_activated:
+    if read_string:
+        swank_return_string('"' + form + '\n"')
+    elif debug_activated:
         if form[0] == '#':
             swank_frame_locals(form[1:])
         elif form[0].lower() == 'q':

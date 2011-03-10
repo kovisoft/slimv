@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.6.0
-" Last Change:  12 Apr 2010
+" Version:      0.8.0
+" Last Change:  07 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -59,15 +59,7 @@ function! b:SlimvAutodetect()
 
     if g:slimv_windows
         " Try to find Lisp on the standard installation places
-        let lisps = split( globpath( 'c:/*lisp*,c:/Program Files/*lisp*', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/*lisp*/*,c:/Program Files/*lisp*/*', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/*lisp*/**,c:/Program Files/*lisp*/**', '*lisp.exe' ), '\n' )
+        let lisps = split( globpath( 'c:/*lisp*,c:/*lisp*/*,c:/*lisp*/bin/*,c:/Program Files/*lisp*,c:/Program Files/*lisp*/*,c:/Program Files/*lisp*/bin/*', '*lisp.exe' ), '\n' )
         if len( lisps ) > 0
             return [lisps[0], 'clisp']
         endif
@@ -79,7 +71,7 @@ function! b:SlimvAutodetect()
         if len( lisps ) > 0
             return [lisps[0], 'cmu']
         endif
-        let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*', 'sbcl.exe' ), '\n' )
+        let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*', 'sbcl.exe' ), '\n' )
         if len( lisps ) > 0
             return [lisps[0], 'sbcl']
         endif
@@ -87,7 +79,7 @@ function! b:SlimvAutodetect()
         if len( lisps ) > 0
             return [lisps[0], 'ecl']
         endif
-        let lisps = split( globpath( 'c:/ccl*,c:/Program Files/ccl*', 'wx86cl.exe' ), '\n' )
+        let lisps = split( globpath( 'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*', 'wx86cl.exe' ), '\n' )
         if len( lisps ) > 0
             return [lisps[0], 'clozure']
         endif
