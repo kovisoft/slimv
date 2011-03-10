@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  09 Mar 2011
+# Last Change:  10 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -264,7 +264,7 @@ def swank_listen():
                             element = params.lower()
                             if element == 'nil':
                                 # No more output from REPL, write new prompt
-                                if retval[-1] != '\n':
+                                if len(retval) > 0 and retval[-1] != '\n':
                                     retval = retval + '\n'
                                 retval = retval + prompt + '> '
                             else:
