@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  10 Mar 2011
+" Last Change:  11 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -133,6 +133,24 @@ function! SlimvGetFiletype()
 
     " We have no clue, guess its lisp
     return 'lisp'
+endfunction
+
+" Try to autodetect SWANK
+function! SlimvAutodetectSwank()
+    if g:slimv_windows || g:slimv_cygwin
+        " Try to find SWANK as part of a standard Lispbox (Clojurebox) or Lisp Cabinet installation
+        if SlimvGetFiletype() == 'clojure'
+            let swanks = split( globpath( 'c:/*lisp*/slime-clojure/,c:/*clojure*/slime-clojure/,c:/*clojure*/site/lisp/slime-clojure/,c:/Program Files/*lisp*/site/lisp/slime-clojure/', 'start-swank.lisp' ), '\n' )
+        else
+            let swanks = split( globpath( 'c:/*lisp*/slime/,c:/*lisp*/site/lisp/slime/,c:/Program Files/*lisp*/site/lisp/slime/', 'start-swank.lisp' ), '\n' )
+        endif
+        if len( swanks ) == 0
+            return ''
+        endif
+        return swanks[0]
+    else
+        return ''
+    endif
 endfunction
 
 
@@ -904,6 +922,15 @@ function! SlimvConnectSwank()
     endif
     if !s:swank_connected
         python swank_connect( "g:slimv_port", "result" )
+        if result != ''
+            let swank = SlimvAutodetectSwank()
+            if swank != ''
+                let cmd = '!start "' . g:slimv_lisp . '" -l "' . swank . '"'
+                execute cmd
+                sleep 1
+                python swank_connect( "g:slimv_port", "result" )
+            endif
+        endif
         if result == ''
             sleep 1
             python swank_create_repl()

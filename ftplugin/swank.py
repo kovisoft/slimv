@@ -418,7 +418,8 @@ def swank_connect(portvar, resultvar):
             return sock
         except socket.error:
             vim.command('let ' + resultvar + '="SWANK server is not running."')
-            return None
+            sock = None
+            return sock
     vim.command('let ' + resultvar + '=""')
     return sock
 
