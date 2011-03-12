@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  11 Mar 2011
+# Last Change:  12 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -33,7 +33,7 @@ debug_activated = False         # Swank debugger activated
 read_string     = None          # Thread and tag in Swank read string mode
 prompt          = 'SLIMV'       # Command prompt
 package         = 'COMMON-LISP-USER' # Current package
-actions         = dict()         # swank actions (like ':write-string'), by message id
+actions         = dict()        # Swank actions (like ':write-string'), by message id
 
 
 ###############################################################################
@@ -280,6 +280,8 @@ def swank_listen():
                                     action.result = retval
                         
                         elif type(params) == type([]):
+                            if type(params[0]) == type([]): 
+                                params = params[0]
                             element = params[0].lower()
                             if element == ':present':
                                 # No more output from REPL, write new prompt
@@ -296,6 +298,7 @@ def swank_listen():
                                 pkg = make_keys( conn_info[':package'] )
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
+                                vim.command('let s:swank_version="' + ver + '"')
                                 retval = retval + imp[':type'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
                                 if log:
                                     print ' Package:' + package + ' Prompt:' + prompt
@@ -317,12 +320,16 @@ def swank_listen():
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
                     retval = retval + '\n' + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
                     for i in range( len(restarts) ):
-                        retval = retval + str(i).rjust(3) + ': [' + unquote( restarts[i][0] ) + '] ' + unquote( restarts[i][1] ) + '\n'
+                        r0 = unquote( restarts[i][0] )
+                        r1 = unquote( restarts[i][1] )
+                        r1 = r1.replace('\\"', '"')
+                        retval = retval + str(i).rjust(3) + ': [' + r0 + '] ' + r1 + '\n'
                     retval = retval + '\nBacktrace:\n'
                     for f in frames:
                         frame = str(f[0])
                         ftext = unquote( f[1] )
                         ftext = ftext.replace('\\"', '"')
+                        ftext = ftext.replace('\n', '')
                         ftext = ftext.replace('\\\\n', '')
                         retval = retval + frame.rjust(3) + ': ' + ftext + '\n'
                     retval = retval + prompt + '> '
@@ -359,7 +366,8 @@ def swank_create_repl():
     swank_rex(':create-repl', cmd, 'nil', 't')
 
 def swank_eval(exp, package):
-    cmd = '(swank:listener-eval "' + exp + '")'
+    exp2 = exp.replace('"', '\\"')
+    cmd = '(swank:listener-eval "' + exp2 + '")'
     swank_rex(':listener-eval', cmd, '"'+package+'"', ':repl-thread')
 
 def swank_interrupt():
@@ -450,7 +458,7 @@ def swank_input(formvar, packagevar):
         pkg = vim.eval(packagevar)
         if pkg == '':
             pkg = package
-        swank_eval(form + '\n', pkg)
+        swank_eval(form, pkg)
 
 def swank_output():
     result = swank_listen()
