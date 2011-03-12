@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  11 Mar 2011
+" Last Change:  12 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -921,6 +921,7 @@ function! SlimvConnectSwank()
         let s:python_initialized = 1
     endif
     if !s:swank_connected
+        let s:swank_version = ''
         python swank_connect( "g:slimv_port", "result" )
         if result != ''
             let swank = SlimvAutodetectSwank()
@@ -932,11 +933,14 @@ function! SlimvConnectSwank()
             endif
         endif
         if result == ''
-            sleep 1
-            python swank_create_repl()
-            sleep 1
-            "python swank_output()
-            call SlimvRefreshReplBuffer()
+            while s:swank_version == ''
+                "TODO: add timeout here
+                call SlimvCommand( 'python swank_output()' )
+                call SlimvSwankResponse()
+            endwhile
+            if s:swank_version >= '2008-12-23'
+                python swank_create_repl()
+            endif
             let s:swank_connected = 1
         else
             call SlimvErrorWait( result )
@@ -952,15 +956,15 @@ function! SlimvSend( args, open_buffer )
         return
     endif
 
-    if g:slimv_swank && ! SlimvConnectSwank()
-        return
-    endif
-
     let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
 
     if a:open_buffer && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
         call SlimvOpenReplBuffer()
+    endif
+
+    if g:slimv_swank && ! SlimvConnectSwank()
+        return
     endif
 
     " Send the lines to the client for evaluation
