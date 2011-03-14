@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  12 Mar 2011
+" Last Change:  14 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -149,7 +149,11 @@ function! SlimvAutodetectSwank()
         endif
         return swanks[0]
     else
-        return ''
+        let swanks = split( globpath( '/usr/share/common-lisp/source/slime/', 'start-swank.lisp' ), '\n' )
+        if len( swanks ) == 0
+            return ''
+        endif
+        return swanks[0]
     endif
 endfunction
 
@@ -926,10 +930,25 @@ function! SlimvConnectSwank()
         if result != ''
             let swank = SlimvAutodetectSwank()
             if swank != ''
-                let cmd = '!start "' . g:slimv_lisp . '" -l "' . swank . '"'
-                execute cmd
-                sleep 1
+                if g:slimv_windows
+                    if b:SlimvImplementation() == 'clozure'
+                        let cmd = '!start "' . g:slimv_lisp . '" -l "' . swank . '"'
+                    else
+                        let cmd = '!start "' . g:slimv_lisp . '" -i "' . swank . '"'
+                    endif
+                else
+                    if b:SlimvImplementation() == 'sbcl'
+                        let cmd = '! xterm -e "' . g:slimv_lisp . ' --load ' . swank . '" &'
+                    elseif b:SlimvImplementation() == 'clisp'
+                        let cmd = '! xterm -e "' . g:slimv_lisp . ' -i ' . swank . '" &'
+                    else
+                        let cmd = '! xterm -e "' . g:slimv_lisp . ' -l ' . swank . '" &'
+                    endif
+                endif
+                silent execute cmd
+                sleep 2
                 python swank_connect( "g:slimv_port", "result" )
+                redraw!
             endif
         endif
         if result == ''
@@ -1917,6 +1936,7 @@ endif
 if g:slimv_swank
     " Map space to display function argument list in status line
     inoremap <silent> <Space>    <Space><C-O>:call SlimvArglist()<CR>
+    noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
     au InsertLeave * :let &showmode=s:save_showmode
 endif
 
