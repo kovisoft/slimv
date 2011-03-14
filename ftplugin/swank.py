@@ -239,7 +239,9 @@ def swank_listen():
 
                 elif message == ':write-string':
                     # REPL has new output to display
-                    retval = retval + unquote( r[1] )
+                    s = unquote(r[1])
+                    s = s.replace('\\"', '"')
+                    retval = retval + s
 
                 elif message == ':read-string':
                     # RERL requests entering a string
@@ -275,7 +277,9 @@ def swank_listen():
                                     retval = retval + '\n'
                                 retval = retval + prompt + '> '
                             else:
-                                retval = retval + unquote(params)
+                                s = unquote(params)
+                                s = s.replace('\\"', '"')
+                                retval = retval + s
                                 if action:
                                     action.result = retval
                         
