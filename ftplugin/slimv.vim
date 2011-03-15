@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  14 Mar 2011
+" Last Change:  15 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -157,6 +157,33 @@ function! SlimvAutodetectSwank()
     endif
 endfunction
 
+" Build the command to start the SWANK server
+function! SlimvMakeSwankCommand()
+    if !exists( 'g:slimv_swank_cmd' )
+        if SlimvGetFiletype() == 'clojure' && executable( 'lein' )
+            let g:slimv_swank_cmd = 'lein swank'
+        else
+            let swank = SlimvAutodetectSwank()
+            if swank != ''
+                if b:SlimvImplementation() == 'sbcl'
+                    let g:slimv_swank_cmd = g:slimv_lisp . ' --load ' . swank
+                elseif b:SlimvImplementation() == 'clisp'
+                    let g:slimv_swank_cmd = g:slimv_lisp . ' -i ' . swank
+                else
+                    let g:slimv_swank_cmd = g:slimv_lisp . ' -l ' . swank
+                endif
+            endif
+        endif
+    endif
+    if g:slimv_swank_cmd != ''
+        if g:slimv_windows || g:slimv_cygwin
+            return '!start "' . g:slimv_swank_cmd . '"'
+        else
+            return '! xterm -e "' . g:slimv_swank_cmd . '" &'
+        endif
+    endif
+    return ''
+endfunction
 
 " =====================================================================
 "  Global variable definitions
@@ -167,13 +194,14 @@ if !exists( 'g:slimv_swank' )
     let g:slimv_swank = 0
 endif
 
-" TCP port number to use
+" TCP port number to use for the SWANK server
+if !exists( 'g:swank_port' )
+    let g:swank_port = 4005
+endif
+
+" TCP port number to use for the Slimv server
 if !exists( 'g:slimv_port' )
-    if g:slimv_swank
-        let g:slimv_port = 4005
-    else
-        let g:slimv_port = 5151
-    endif
+    let g:slimv_port = 5151
 endif
 
 " Find Python (if not given in vimrc)
@@ -926,28 +954,13 @@ function! SlimvConnectSwank()
     endif
     if !s:swank_connected
         let s:swank_version = ''
-        python swank_connect( "g:slimv_port", "result" )
+        python swank_connect( "g:swank_port", "result" )
         if result != ''
-            let swank = SlimvAutodetectSwank()
+            let swank = SlimvMakeSwankCommand()
             if swank != ''
-                if g:slimv_windows
-                    if b:SlimvImplementation() == 'clozure'
-                        let cmd = '!start "' . g:slimv_lisp . '" -l "' . swank . '"'
-                    else
-                        let cmd = '!start "' . g:slimv_lisp . '" -i "' . swank . '"'
-                    endif
-                else
-                    if b:SlimvImplementation() == 'sbcl'
-                        let cmd = '! xterm -e "' . g:slimv_lisp . ' --load ' . swank . '" &'
-                    elseif b:SlimvImplementation() == 'clisp'
-                        let cmd = '! xterm -e "' . g:slimv_lisp . ' -i ' . swank . '" &'
-                    else
-                        let cmd = '! xterm -e "' . g:slimv_lisp . ' -l ' . swank . '" &'
-                    endif
-                endif
-                silent execute cmd
+                silent execute swank
                 sleep 2
-                python swank_connect( "g:slimv_port", "result" )
+                python swank_connect( "g:swank_port", "result" )
                 redraw!
             endif
         endif
