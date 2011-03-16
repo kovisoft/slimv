@@ -283,6 +283,11 @@ if !exists( 'g:slimv_package' )
     let g:slimv_package = 1
 endif
 
+" General timeout for various startup and connection events (seconds)
+if !exists( 'g:slimv_timeout' )
+    let g:slimv_timeout = 5
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -421,44 +426,20 @@ endif
 "  Other non-global script variables
 " =====================================================================
 
-" Name of the REPL buffer inside Vim
-let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file
-
-" Lisp prompt in the last line
-let s:prompt = ''
-
-" The last update time for the REPL buffer
-let s:last_update = 0
-
-" The last size of the REPL buffer
-let s:last_size = 0
-
-" The original value for 'updatetime'
-let s:save_updatetime = &updatetime
-
-" The original value for 'showmode'
-let s:save_showmode = &showmode
-
-" Is the embedded Python initialized?
-let s:python_initialized = 0
-
-" Is the SWANK server connected?
-let s:swank_connected = 0
-
-" Package to use at the next SWANK eval
-let s:swank_package = ''
-
-" Form to send to SWANK
-let s:swank_form = ''
-
-" Set this variable temporarily to avoid recursive REPL rehresh calls
-let s:refresh_disabled = 0
-
-" Are we in the SWANK debugger?
-let s:debug_activated = 0
-
-" Skip matches inside string or comment 
+let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file    " Name of the REPL buffer inside Vim
+let s:prompt = ''                                         " Lisp prompt in the last line
+let s:last_update = 0                                     " The last update time for the REPL buffer
+let s:last_size = 0                                       " The last size of the REPL buffer
+let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
+let s:save_showmode = &showmode                           " The original value for 'showmode'
+let s:python_initialized = 0                              " Is the embedded Python initialized?
+let s:swank_connected = 0                                 " Is the SWANK server connected?
+let s:swank_package = ''                                  " Package to use at the next SWANK eval
+let s:swank_form = ''                                     " Form to send to SWANK
+let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
+let s:debug_activated = 0                                 " Are we in the SWANK debugger?
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
+                                                          " Skip matches inside string or comment 
 
 " =====================================================================
 "  General utility functions
@@ -933,6 +914,7 @@ function! SlimvConnectSwank()
             return 0
         endif
         if g:slimv_windows || g:slimv_cygwin
+            " Verify that Vim is compiled with Python and Python is properly installed
             let v = ''
             redir => v
             silent ver
@@ -947,21 +929,29 @@ function! SlimvConnectSwank()
         execute 'pyfile ' . substitute( g:slimv_path, "slimv.py", "swank.py", "g" )
         let s:python_initialized = 1
     endif
+
     if !s:swank_connected
         let s:swank_version = ''
         python swank_connect( "g:swank_port", "result" )
         if result != ''
+            " SWANK server is not running, start server if possible
             let swank = SlimvSwankCommand()
             if swank != ''
+                echon "\rStarting SWANK server..."
                 silent execute swank
-                sleep 2
-                python swank_connect( "g:swank_port", "result" )
+                let starttime = localtime()
+                while result != '' && localtime()-starttime < g:slimv_timeout
+                    sleep 500m
+                    python swank_connect( "g:swank_port", "result" )
+                endwhile
                 redraw!
             endif
         endif
         if result == ''
-            while s:swank_version == ''
-                "TODO: add timeout here
+            " Connected to SWANK server
+            echon "\rGetting SWANK connection info..."
+            let starttime = localtime()
+            while s:swank_version == '' && localtime()-starttime < g:slimv_timeout
                 call SlimvCommand( 'python swank_output()' )
                 call SlimvSwankResponse()
             endwhile
@@ -969,7 +959,9 @@ function! SlimvConnectSwank()
                 python swank_create_repl()
             endif
             let s:swank_connected = 1
+            echon "\rConnected to SWANK server on port " . g:swank_port . "."
         else
+            " Display connection error message
             call SlimvErrorWait( result )
         endif
     endif
@@ -1775,7 +1767,8 @@ function! SlimvDescribe(arg)
     endif
 endfunction
 
-if g:slimv_swank
+" Setup balloonexp to display symbol description
+if g:slimv_swank && has( 'balloon_eval' )
     "setlocal balloondelay=100
     setlocal ballooneval
     setlocal balloonexpr=SlimvDescribe(v:beval_text)
