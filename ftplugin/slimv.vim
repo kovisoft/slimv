@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  15 Mar 2011
+" Last Change:  16 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -135,51 +135,46 @@ function! SlimvGetFiletype()
     return 'lisp'
 endfunction
 
-" Try to autodetect SWANK
-function! SlimvAutodetectSwank()
+" Try to autodetect SWANK and build the command to start the SWANK server
+function! SlimvSwankCommand()
+    if exists( 'g:slimv_swank_cmd' )
+        return g:slimv_swank_cmd
+    endif
     if g:slimv_windows || g:slimv_cygwin
-        " Try to find SWANK as part of a standard Lispbox (Clojurebox) or Lisp Cabinet installation
         if SlimvGetFiletype() == 'clojure'
-            let swanks = split( globpath( 'c:/*lisp*/slime-clojure/,c:/*clojure*/slime-clojure/,c:/*clojure*/site/lisp/slime-clojure/,c:/Program Files/*lisp*/site/lisp/slime-clojure/', 'start-swank.lisp' ), '\n' )
+            if executable( 'lein' )
+                return '!start "lein swank"'
+            endif
         else
             let swanks = split( globpath( 'c:/*lisp*/slime/,c:/*lisp*/site/lisp/slime/,c:/Program Files/*lisp*/site/lisp/slime/', 'start-swank.lisp' ), '\n' )
-        endif
-        if len( swanks ) == 0
-            return ''
-        endif
-        return swanks[0]
-    else
-        let swanks = split( globpath( '/usr/share/common-lisp/source/slime/', 'start-swank.lisp' ), '\n' )
-        if len( swanks ) == 0
-            return ''
-        endif
-        return swanks[0]
-    endif
-endfunction
-
-" Build the command to start the SWANK server
-function! SlimvMakeSwankCommand()
-    if !exists( 'g:slimv_swank_cmd' )
-        if SlimvGetFiletype() == 'clojure' && executable( 'lein' )
-            let g:slimv_swank_cmd = 'lein swank'
-        else
-            let swank = SlimvAutodetectSwank()
-            if swank != ''
-                if b:SlimvImplementation() == 'sbcl'
-                    let g:slimv_swank_cmd = g:slimv_lisp . ' --load ' . swank
-                elseif b:SlimvImplementation() == 'clisp'
-                    let g:slimv_swank_cmd = g:slimv_lisp . ' -i ' . swank
-                else
-                    let g:slimv_swank_cmd = g:slimv_lisp . ' -l ' . swank
-                endif
+            if len( swanks ) == 0
+                return ''
+            endif
+            if b:SlimvImplementation() == 'sbcl'
+                return '!start "' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
+            elseif b:SlimvImplementation() == 'clisp'
+                return '!start "' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
+            else
+                return '!start "' . g:slimv_lisp . '" -l "' . swanks[0] . '"'
             endif
         endif
-    endif
-    if g:slimv_swank_cmd != ''
-        if g:slimv_windows || g:slimv_cygwin
-            return '!start "' . g:slimv_swank_cmd . '"'
+    else
+        if SlimvGetFiletype() == 'clojure'
+            if executable( 'lein' )
+                return '! xterm -e "lein swank" &'
+            endif
         else
-            return '! xterm -e "' . g:slimv_swank_cmd . '" &'
+            let swanks = split( globpath( '/usr/share/common-lisp/source/slime/', 'start-swank.lisp' ), '\n' )
+            if len( swanks ) == 0
+                return ''
+            endif
+            if b:SlimvImplementation() == 'sbcl'
+                return '! xterm -e "' . g:slimv_lisp . '" --load "' . swanks[0] . '" &'
+            elseif b:SlimvImplementation() == 'clisp'
+                return '! xterm -e "' . g:slimv_lisp . '" -i "' . swanks[0] . '" &'
+            else
+                return '! xterm -e "' . g:slimv_lisp . '" -l "' . swanks[0] . '" &'
+            endif
         endif
     endif
     return ''
@@ -956,7 +951,7 @@ function! SlimvConnectSwank()
         let s:swank_version = ''
         python swank_connect( "g:swank_port", "result" )
         if result != ''
-            let swank = SlimvMakeSwankCommand()
+            let swank = SlimvSwankCommand()
             if swank != ''
                 silent execute swank
                 sleep 2
