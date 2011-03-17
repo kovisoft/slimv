@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  12 Mar 2011
+# Last Change:  17 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -158,9 +158,12 @@ class swank_action:
 
 def unquote(s):
     if s[0] == '"' and s[-1] == '"':
-        return s[1:-1]
+        return s[1:-1].replace('\\"', '"')
     else:
         return s
+
+def requote(s):
+    return '"' + s.replace('"', '\\"') + '"'
 
 def make_keys(lst):
     keys = {}
@@ -168,6 +171,12 @@ def make_keys(lst):
         if i < len(lst)-1 and lst[i][0] == ':':
             keys[lst[i]] = unquote( lst[i+1] )
     return keys
+
+def parse_plist(lst, keyword):
+    for i in range(0, len(lst), 2):
+        if keyword == lst[i]:
+            return unquote(lst[i+1])
+    return ''
 
 def swank_send(text):
     global sock
@@ -197,6 +206,32 @@ def swank_recv(msglen):
                 if l > 0:
                     data = sock.recv(l)
     return rec
+
+def swank_parse_inspect(struct):
+    buf = '\n \nInspecting ' + parse_plist(struct, ':title') + '\n--------------------'
+    pcont = parse_plist(struct, ':content')
+    cont = pcont[0]
+    lst = []
+    desc = ''
+    for el in cont:
+        if type(el) == list:
+            lst.append(['[' + str(unquote(el[2])) + ']  ' + desc, unquote(el[1])])
+            desc = ''
+        else:
+            stg = unquote(el)
+            if stg == "\n":
+                if desc:
+                    lst.append([desc, ''])
+                desc = ''
+            elif stg != ': ':
+                desc = unquote(stg)
+    for (desc, data) in lst:
+        sep = ""
+        if data:
+            sep = ': '
+        buf = buf + "\n%s%s%s" % (desc, sep, data)
+    buf = buf + '\n \n[<<]'
+    return buf
 
 def swank_listen():
     global output_port
@@ -240,7 +275,6 @@ def swank_listen():
                 elif message == ':write-string':
                     # REPL has new output to display
                     s = unquote(r[1])
-                    s = s.replace('\\"', '"')
                     retval = retval + s
 
                 elif message == ':read-string':
@@ -269,7 +303,7 @@ def swank_listen():
 
                     if result == ':ok':
                         params = r[1][1]
-                        if type(params) == type(''):
+                        if type(params) == str:
                             element = params.lower()
                             if element == 'nil':
                                 # No more output from REPL, write new prompt
@@ -278,13 +312,12 @@ def swank_listen():
                                 retval = retval + prompt + '> '
                             else:
                                 s = unquote(params)
-                                s = s.replace('\\"', '"')
                                 retval = retval + s
                                 if action:
                                     action.result = retval
                         
-                        elif type(params) == type([]):
-                            if type(params[0]) == type([]): 
+                        elif type(params) == list:
+                            if type(params[0]) == list: 
                                 params = params[0]
                             element = params[0].lower()
                             if element == ':present':
@@ -309,6 +342,8 @@ def swank_listen():
                             elif element == ':name':
                                 keys = make_keys(params)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
+                            elif element == ':title':
+                                retval = swank_parse_inspect(params)
                             else:
                                 if log:
                                     print element
@@ -320,19 +355,20 @@ def swank_listen():
                         else:
                             retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
+                elif message == ':inspect':
+                    retval = swank_parse_inspect(r[1])
+
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
                     retval = retval + '\n' + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
                     for i in range( len(restarts) ):
                         r0 = unquote( restarts[i][0] )
                         r1 = unquote( restarts[i][1] )
-                        r1 = r1.replace('\\"', '"')
                         retval = retval + str(i).rjust(3) + ': [' + r0 + '] ' + r1 + '\n'
                     retval = retval + '\nBacktrace:\n'
                     for f in frames:
                         frame = str(f[0])
                         ftext = unquote( f[1] )
-                        ftext = ftext.replace('\\"', '"')
                         ftext = ftext.replace('\n', '')
                         ftext = ftext.replace('\\\\n', '')
                         retval = retval + frame.rjust(3) + ': ' + ftext + '\n'
@@ -362,17 +398,18 @@ def swank_rex(action, cmd, package, thread):
     swank_send(form)
 
 def swank_connection_info():
-    cmd = '(swank:connection-info)'
-    swank_rex(':connection-info', cmd, 'nil', 't')
+    swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
-    cmd = '(swank:create-repl nil)'
-    swank_rex(':create-repl', cmd, 'nil', 't')
+    swank_rex(':create-repl', '(swank:create-repl nil)', 'nil', 't')
 
 def swank_eval(exp, package):
-    exp2 = exp.replace('"', '\\"')
-    cmd = '(swank:listener-eval "' + exp2 + '")'
+    cmd = '(swank:listener-eval ' + requote(exp) + ')'
     swank_rex(':listener-eval', cmd, '"'+package+'"', ':repl-thread')
+
+def swank_pprint_eval(exp, package):
+    cmd = '(swank:pprint-eval ' + requote(exp) + ')'
+    swank_rex(':pprint-eval', cmd, '"'+package+'"', ':repl-thread')
 
 def swank_interrupt():
     swank_send('(:emacs-interrupt :repl-thread)')
@@ -382,16 +419,13 @@ def swank_invoke_restart(level, restart):
     swank_rex(':invoke-nth-restart-for-emacs', cmd, 'nil', current_thread)
 
 def swank_throw_toplevel():
-    cmd = '(swank:throw-to-toplevel)'
-    swank_rex(':throw-to-toplevel', cmd, 'nil', current_thread)
+    swank_rex(':throw-to-toplevel', '(swank:throw-to-toplevel)', 'nil', current_thread)
 
 def swank_invoke_abort():
-    cmd = '(swank:sldb-abort)'
-    swank_rex(':sldb-abort', cmd, 'nil', current_thread)
+    swank_rex(':sldb-abort', '(swank:sldb-abort)', 'nil', current_thread)
 
 def swank_invoke_continue():
-    cmd = '(swank:sldb-continue)'
-    swank_rex(':sldb-continue', cmd, 'nil', current_thread)
+    swank_rex(':sldb-continue', '(swank:sldb-continue)', 'nil', current_thread)
 
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-for-emacs ' + frame + ')'
@@ -412,6 +446,22 @@ def swank_op_arglist(op):
 
 def swank_return_string(s):
     swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')
+
+def swank_inspect(symbol):
+    cmd = '(swank:init-inspector "' + symbol + '")'
+    swank_rex(':init-inspector', cmd, 'nil', 't')
+    #if symbol.find('::') < 0:
+    #    symbol = package + '::' + symbol
+    ##symbol = symbol.replace("'", "\\'")
+    #cmd = '(swank:inspect-in-emacs ' + symbol + ')'
+    #swank_rex(':inspect-in-emacs', cmd, 'nil', 't')
+
+def swank_inspect_nth_part(n):
+    cmd = '(swank:inspect-nth-part ' + str(n) + ')'
+    swank_rex(':inspect-nth-part', cmd, 'nil', 't')
+
+def swank_inspector_pop():
+    swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
 def swank_connect(portvar, resultvar):
     """Create socket to swank server and request connection info
@@ -457,6 +507,11 @@ def swank_input(formvar, packagevar):
             swank_invoke_continue()
         else:
             swank_invoke_restart("1", form)
+    elif form[0] == '[':
+        if form[1] == '-':
+            swank_inspector_pop()
+        else:
+            swank_inspect_nth_part(form[1:-2])
     else:
         # Normal s-expression evaluation
         pkg = vim.eval(packagevar)

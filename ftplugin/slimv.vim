@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  16 Mar 2011
+" Last Change:  17 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -808,22 +808,17 @@ function! SlimvOpenReplBuffer()
     call SlimvRefreshReplBuffer()
 endfunction
 
-" Select symbol under cursor and copy it to register 's'
+" Select symbol under cursor and return it
 function! SlimvSelectSymbol()
-    "TODO: can we use expand('<cWORD>') here?
-    silent normal! viw"sy
-endfunction
-
-" Select extended symbol under cursor and copy it to register 's'
-function! SlimvSelectSymbolExt()
-    " Make sure to include special characters in 'iskeyword'
-    " in case they are accidentally removed
+    let save_iskeyword = &iskeyword
     if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?
+        setlocal iskeyword+=~,#,&,\|,{,},!,?,'
     else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?,'
     endif
-    silent normal! viw"sy
+    let symbol = expand('<cword>')
+    let &iskeyword = save_iskeyword
+    return symbol
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
@@ -1250,9 +1245,9 @@ endfunction
 
 " Handle normal mode 'Enter' keypress in the REPL buffer
 function! SlimvHandleEnter()
+    let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
-        let line = getline('.')
         let item = matchstr( line, '\d\+' )
         if item != ''
             let section = getline( line('.') - item - 1 )
@@ -1268,9 +1263,27 @@ function! SlimvHandleEnter()
             endif
         endif
     endif
+    if line[0:9] == 'Inspecting'
+        " Reload inspected item
+        call SlimvEval( ['[0]'] )
+        return
+    endif
+    if line[0] == '['
+        if line[0:3] == '[<<]'
+            " Pop back up in the inspector
+            let item = '-1'
+        else
+            " Inspect n-th part
+            let item = matchstr( line, '\d\+' )
+        endif
+        if item != ''
+            call SlimvEval( ['[' . item . ']'] )
+            return
+        endif
+    endif
 
     " No special treatment, perform the original function
-    execute "normal \<CR>"
+    execute "normal! \<CR>"
 endfunction
 
 " Go to command line and recall previous command from command history
@@ -1352,7 +1365,7 @@ endfunction
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
     if g:slimv_swank
-        call SlimvSend( ['; Slimv connected' ], g:slimv_repl_open )
+        call SlimvConnectSwank()
     else
         call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
     endif
@@ -1498,10 +1511,7 @@ endfunction
 
 " Undefine function
 function! SlimvUndefineFunction()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    call SlimvEvalForm1( g:slimv_template_undefine, SlimvGetSelection() )
-    call setpos( '.', oldpos ) 
+    call SlimvEvalForm1( g:slimv_template_undefine, SlimvSelectSymbol() )
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1557,47 +1567,44 @@ endfunction
 
 " Switch trace on for the selected function
 function! SlimvTrace()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    let s = input( 'Trace: ', SlimvGetSelection() )
+    let s = input( 'Trace: ', SlimvSelectSymbol() )
     echo s
     if s != ''
         call SlimvEvalForm1( g:slimv_template_trace, s )
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " Switch trace off for the selected function
 function! SlimvUntrace()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    let s = input( 'Untrace: ', SlimvGetSelection() )
+    let s = input( 'Untrace: ', SlimvSelectSymbol() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_untrace, s )
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " Disassemble the selected function
 function! SlimvDisassemble()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    let s = input( 'Disassemble: ', SlimvGetSelection() )
+    let s = input( 'Disassemble: ', SlimvSelectSymbol() )
     if s != ''
         call SlimvEvalForm1( g:slimv_template_disassemble, s )
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " Inspect symbol
 function! SlimvInspect()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    let s = input( 'Inspect: ', SlimvGetSelection() )
+    let s = input( 'Inspect: ', SlimvSelectSymbol() )
     if s != ''
-        call SlimvEvalForm1( g:slimv_template_inspect, s )
+        if g:slimv_swank
+            if s:swank_connected
+                let s:refresh_disabled = 1
+                call SlimvCommand( 'python swank_inspect("' . s . '")' )
+                let s:refresh_disabled = 0
+                call SlimvRefreshReplBuffer()
+            endif
+        else
+            call SlimvEvalForm1( g:slimv_template_inspect, s )
+        endif
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " ---------------------------------------------------------------------
@@ -1625,13 +1632,10 @@ function! SlimvProfile()
     if SlimvGetFiletype() == 'clojure'
         call SlimvError( "No profiler support for Clojure." )
     else
-        let oldpos = getpos( '.' ) 
-        call SlimvSelectSymbol()
-        let s = input( 'Profile: ', SlimvGetSelection() )
+        let s = input( 'Profile: ', SlimvSelectSymbol() )
         if s != ''
             call SlimvEvalForm1( g:slimv_template_profile, s )
         endif
-        call setpos( '.', oldpos ) 
     endif
 endfunction
 
@@ -1640,13 +1644,10 @@ function! SlimvUnprofile()
     if SlimvGetFiletype() == 'clojure'
         call SlimvError( "No profiler support for Clojure." )
     else
-        let oldpos = getpos( '.' ) 
-        call SlimvSelectSymbol()
-        let s = input( 'Unprofile: ', SlimvGetSelection() )
+        let s = input( 'Unprofile: ', SlimvSelectSymbol() )
         if s != ''
             call SlimvEvalForm1( g:slimv_template_unprofile, s )
         endif
-        call setpos( '.', oldpos ) 
     endif
 endfunction
 
@@ -1724,19 +1725,16 @@ endfunction
 
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
     if g:slimv_swank
-        if SlimvConnectSwank()
+        if s:swank_connected
             let s:refresh_disabled = 1
-            call SlimvCommand( 'python swank_describe_symbol("' . SlimvGetSelection() . '")' )
+            call SlimvCommand( 'python swank_describe_symbol("' . SlimvSelectSymbol() . '")' )
             let s:refresh_disabled = 0
             call SlimvRefreshReplBuffer()
         endif
     else
-        call SlimvEvalForm1( g:slimv_template_describe, SlimvGetSelection() )
+        call SlimvEvalForm1( g:slimv_template_describe, SlimvSelectSymbol() )
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " Display symbol description in balloonexpr
@@ -1776,10 +1774,7 @@ endif
 
 " Apropos of the selected symbol
 function! SlimvApropos()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbol()
-    call SlimvEvalForm1( g:slimv_template_apropos, SlimvGetSelection() )
-    call setpos( '.', oldpos ) 
+    call SlimvEvalForm1( g:slimv_template_apropos, SlimvSelectSymbol() )
 endfunction
 
 " Generate tags file using ctags
@@ -1891,10 +1886,7 @@ endfunction
 
 " Lookup current symbol in the Common Lisp Hyperspec
 function! SlimvHyperspec()
-    let oldpos = getpos( '.' ) 
-    call SlimvSelectSymbolExt()
-    call SlimvLookup( SlimvGetSelection() )
-    call setpos( '.', oldpos ) 
+    call SlimvLookup( SlimvSelectSymbol() )
 endfunction
 
 " Complete function that uses the Hyperspec database
