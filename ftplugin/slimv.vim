@@ -137,6 +137,9 @@ endfunction
 
 " Try to autodetect SWANK and build the command to start the SWANK server
 function! SlimvSwankCommand()
+    if exists( 'g:slimv_swank_clojure' ) && SlimvGetFiletype() == 'clojure'
+        return g:slimv_swank_clojure
+    endif
     if exists( 'g:slimv_swank_cmd' )
         return g:slimv_swank_cmd
     endif
@@ -186,7 +189,7 @@ endfunction
 
 " Use SWANK server
 if !exists( 'g:slimv_swank' )
-    let g:slimv_swank = 0
+    let g:slimv_swank = 1
 endif
 
 " TCP port number to use for the SWANK server
@@ -452,12 +455,18 @@ function SlimvError( msg )
     echohl None
 endfunction 
 
-" Display an error message and wait for ENTER
-function SlimvErrorWait( msg )
+" Display an error message and a question, return user response
+function SlimvErrorAsk( msg, question )
     echohl ErrorMsg
-    let dummy = input( a:msg . " Press ENTER to continue." )
+    let answer = input( a:msg . a:question )
     echo ""
     echohl None
+    return answer
+endfunction 
+
+" Display an error message and wait for ENTER
+function SlimvErrorWait( msg )
+    call SlimvErrorAsk( a:msg, " Press ENTER to continue." )
 endfunction 
 
 " Position the cursor at the end of the REPL buffer
@@ -905,7 +914,8 @@ endfunction
 function! SlimvConnectSwank()
     if !s:python_initialized
         if ! has('python')
-            call SlimvErrorWait( 'Vim is compiled without the Python feature.' )
+            call SlimvErrorWait( 'Vim is compiled without the Python feature. Switching off SWANK client.' )
+            let g:slimv_swank = 0
             return 0
         endif
         if g:slimv_windows || g:slimv_cygwin
@@ -916,7 +926,8 @@ function! SlimvConnectSwank()
             redir END
             let pydll = matchstr( v, '\cpython..\.dll' )
             if ! executable( pydll )
-                call SlimvErrorWait( pydll . ' not found.' )
+                call SlimvErrorWait( pydll . ' not found. Switching off SWANK client.' )
+                let g:slimv_swank = 0
                 return 0
             endif
         endif
@@ -957,7 +968,10 @@ function! SlimvConnectSwank()
             echon "\rConnected to SWANK server on port " . g:swank_port . "."
         else
             " Display connection error message
-            call SlimvErrorWait( result )
+            let answer = SlimvErrorAsk( result, " Switch off SWANK client [Y/n]?" )
+            if answer[0] != 'n' && answer[0] != 'N'
+                let g:slimv_swank = 0
+            endif
         endif
     endif
     return s:swank_connected
@@ -977,7 +991,10 @@ function! SlimvSend( args, open_buffer )
         call SlimvOpenReplBuffer()
     endif
 
-    if g:slimv_swank && ! SlimvConnectSwank()
+    if g:slimv_swank
+        call SlimvConnectSwank()
+    endif
+    if g:slimv_swank && !s:swank_connected
         return
     endif
 
@@ -1366,7 +1383,8 @@ endfunction
 function! SlimvConnectServer()
     if g:slimv_swank
         call SlimvConnectSwank()
-    else
+    endif
+    if !g:slimv_swank
         call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
     endif
 endfunction
