@@ -1,19 +1,16 @@
----------------------------------------------------------------------------------------------
-Script name
----------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 slimv.vim
-
----------------------------------------------------------------------------------------------
-Summary
----------------------------------------------------------------------------------------------
-          1         2         3         4         5         6         7
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
-
+--------------------------------------------------------------------------------
 SLIME-like Lisp and Clojure REPL inside Vim with Profiling, Hyperspec, Paredit
 
----------------------------------------------------------------------------------------------
+Vim script
+
+created by
+Tamas Kovacs
+ 
+--------------------------------------------------------------------------------
 Description
----------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux, Windows and Mac OS X. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop). Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
@@ -126,9 +123,9 @@ Linux users using terminal emulator other than xterm should define the complete 
 
 See the included documentation for more complete installation and customization instructions.
 
----------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Script versions
----------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 0.7.7: Find next closing paren when using ,< or ,> in Paredit and not standing on a paren, open REPL buffer upon connecting server, bugfixes: REPL buffer prompt identification was sometimes missing, switch off REPL refresh mode when REPL buffer is not visible (thanks to Philipp Marek), convert Python path on Windows to short 8.3 filename format if it contains space (thanks to Razvan Rotaru).
 
@@ -184,42 +181,5 @@ Script versions
        Ctrl+C is propagated to Lisp REPL, so it is possible to interrupt a running program.
 
 0.1.3: Handle DOS and Unix style line endings on Windows, don't write logfile when debug level not set
-
----------------------------------------------------------------------------------------------
-Reddit
----------------------------------------------------------------------------------------------
-
-Hi Reddit! I have just added Paredit Mode to my Slimv (Superior Lisp Interaction Mode for Vim) script. I submitted this to both /r/lisp and /r/Clojure because the script works for these languages. Paredit Mode for Vim is similar to how paredit.el works for Emacs: matched delimiters are added or removed in pairs, so that the balanced state of parens are maintained. It is also possible to use Paredit Mode alone, without the other Slimv functionalities, please find details in the script documentation. I hope you'll find it useful.
-
-Lisp with Vim: a script that tries to mimic a subset of SLIME's functionality.
-
-Lisp and Clojure REPL inside a Vim buffer: Major update to the Slimv script.
-
-Lisp and Clojure REPL inside a Vim buffer: The Slimv script comes now with Profiling and Hyperspec lookup.
-
-Lisp and Clojure REPL inside Vim with profiling and Hyperspec lookup: update to the Slimv script.
-
----------------------------------------------------------------------------------------------
-
-Issues
-
-- Ctrl+C works in server Lisp window (but only in Lisp implementations that support it, so not in SBCL)
-
----------------------------------------------------------------------------------------------
-
-File list
-
-doc/slimv.txt
-ftdetect/clojure.vim
-ftplugin/metering.lisp
-ftplugin/slimv.py
-ftplugin/slimv.vim
-ftplugin/slimv-clhs.vim
-ftplugin/slimv-cljapi.vim
-ftplugin/slimv-javadoc.vim
-ftplugin/clojure/slimv-clojure.vim
-ftplugin/lisp/slimv-lisp.vim
-indent/clojure.vim
-syntax/clojure/slimv-syntax-clojure.vim
 
 vim:wrap:
