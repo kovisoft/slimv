@@ -478,6 +478,13 @@ def swank_inspect_nth_part(n):
 def swank_inspector_pop():
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
+def swank_toggle_trace(symbol):
+    cmd = '(swank:swank-toggle-trace "' + symbol + '")'
+    swank_rex(':swank-toggle-trace', cmd, 'nil', 't')
+
+def swank_untrace_all():
+    swank_rex(':untrace-all', '(swank:untrace-all)', 'nil', 't')
+
 def swank_connect(portvar, resultvar):
     """Create socket to swank server and request connection info
     """

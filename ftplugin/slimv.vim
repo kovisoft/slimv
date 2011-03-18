@@ -1565,20 +1565,46 @@ function! SlimvMacroexpandAll()
     call setpos( '.', oldpos ) 
 endfunction
 
-" Switch trace on for the selected function
+" Switch trace on for the selected function (toggle for swank)
 function! SlimvTrace()
-    let s = input( 'Trace: ', SlimvSelectSymbol() )
-    echo s
-    if s != ''
-        call SlimvEvalForm1( g:slimv_template_trace, s )
+    if g:slimv_swank
+        if s:swank_connected
+            let s = input( '(Un)trace: ', SlimvSelectSymbol() )
+            if s != ''
+                let s:refresh_disabled = 1
+                call SlimvCommand( 'python swank_toggle_trace("' . s . '")' )
+                let s:refresh_disabled = 0
+                call SlimvRefreshReplBuffer()
+                redraw!
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let s = input( 'Trace: ', SlimvSelectSymbol() )
+        echo s
+        if s != ''
+            call SlimvEvalForm1( g:slimv_template_trace, s )
+        endif
     endif
 endfunction
 
-" Switch trace off for the selected function
+" Switch trace off for the selected function (or all functions for swank)
 function! SlimvUntrace()
-    let s = input( 'Untrace: ', SlimvSelectSymbol() )
-    if s != ''
-        call SlimvEvalForm1( g:slimv_template_untrace, s )
+    if g:slimv_swank
+        if g:swank_connected
+            let s:refresh_disabled = 1
+            call SlimvCommand( 'python swank_untrace_all()' )
+            let s:refresh_disabled = 0
+            call SlimvRefreshReplBuffer()
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let s = input( 'Untrace: ', SlimvSelectSymbol() )
+        if s != ''
+            call SlimvEvalForm1( g:slimv_template_untrace, s )
+        endif
     endif
 endfunction
 
@@ -1592,16 +1618,21 @@ endfunction
 
 " Inspect symbol
 function! SlimvInspect()
-    let s = input( 'Inspect: ', SlimvSelectSymbol() )
-    if s != ''
-        if g:slimv_swank
-            if s:swank_connected
+    if g:slimv_swank
+        if s:swank_connected
+            let s = input( 'Inspect: ', SlimvSelectSymbol() )
+            if s != ''
                 let s:refresh_disabled = 1
                 call SlimvCommand( 'python swank_inspect("' . s . '")' )
                 let s:refresh_disabled = 0
                 call SlimvRefreshReplBuffer()
             endif
         else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let s = input( 'Inspect: ', SlimvSelectSymbol() )
+        if s != ''
             call SlimvEvalForm1( g:slimv_template_inspect, s )
         endif
     endif
@@ -1731,6 +1762,8 @@ function! SlimvDescribeSymbol()
             call SlimvCommand( 'python swank_describe_symbol("' . SlimvSelectSymbol() . '")' )
             let s:refresh_disabled = 0
             call SlimvRefreshReplBuffer()
+        else
+            call SlimvError( "Not connected to SWANK server." )
         endif
     else
         call SlimvEvalForm1( g:slimv_template_describe, SlimvSelectSymbol() )
@@ -2056,8 +2089,13 @@ if g:slimv_menu == 1
 
     amenu &Slimv.De&bugging.Macroexpand-&1             :<C-U>call SlimvMacroexpand()<CR>
     amenu &Slimv.De&bugging.&Macroexpand-All           :<C-U>call SlimvMacroexpandAll()<CR>
+    if g:slimv_swank
+    amenu &Slimv.De&bugging.Toggle-&Trace\.\.\.        :call SlimvTrace()<CR>
+    amenu &Slimv.De&bugging.U&ntrace-All               :call SlimvUntrace()<CR>
+    else
     amenu &Slimv.De&bugging.&Trace\.\.\.               :call SlimvTrace()<CR>
     amenu &Slimv.De&bugging.U&ntrace\.\.\.             :call SlimvUntrace()<CR>
+    endif
     amenu &Slimv.De&bugging.Disassemb&le\.\.\.         :call SlimvDisassemble()<CR>
     amenu &Slimv.De&bugging.&Inspect\.\.\.             :call SlimvInspect()<CR>
 
