@@ -1,0 +1,49 @@
+*swank.txt*                    Slimv                 Last Change: 18 Mar 2011
+
+SWANK client for Slimv                                                 *swank*
+                               Version 0.8.0
+
+The Superior Lisp Interaction Mode for Vim.
+Slimv contains a SWANK client that can communicate with a running SWANK server
+the same way as done by Emacs with SLIME.
+
+|swank-installation|         Installation
+|swank-features|             Features
+
+===============================================================================
+INSTALLATION AND CONFIGURATION                             *swank-installation*
+
+Installation:
+
+  - Vim 7.0 or newer installed with Python feature enabled.
+    This can be verified by the :ver command, look for the +python string.
+    It is recommended to have also the +balloon_eval feature for displaying
+    symbol descriptions in tooltip.
+  - Python installed.
+    Must be the same Python version that was Vim compiled against.
+    This can also be verified by the :ver command, look for the
+    -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string, where XX is the required
+    Python version.
+  - Lisp or Clojure installed.
+    Any Lisp implementation is OK that has SLIME support.
+  - SWANK server installed.
+    This can be a standalone SWANK installation (like swank-clojure),
+    or as part of Emacs with SLIME, or Leiningen (lein swank).
+
+Configuration:
+
+
+===============================================================================
+FEATURES                                                       *swank-features*
+
+  - Evaluation
+  - Interrupt Lisp process
+  - SLDB: Invoke restarts
+  - SLDB: Display backtrace with locals
+  - Function argument list in status line
+  - Describe symbol in tooltip
+  - Inspector
+  - Trace function
+
+===============================================================================
+vim:tw=80:noet:wrap:ts=8:ft=help:norl:
