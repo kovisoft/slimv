@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  17 Mar 2011
+# Last Change:  18 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -27,7 +27,8 @@ maxmessages     = 50            # Maximum number of messages to receive in one l
 sock            = None          # Swank socket object
 id              = 0             # Message id
 debug           = False
-log             = False
+log             = False         # Set this to True in order to enable logging
+logfile         = 'swank.log'   # Logfile name in case logging is on
 current_thread  = '0'
 debug_activated = False         # Swank debugger activated
 read_string     = None          # Thread and tag in Swank read string mode
@@ -35,6 +36,16 @@ prompt          = 'SLIMV'       # Command prompt
 package         = 'COMMON-LISP-USER' # Current package
 actions         = dict()        # Swank actions (like ':write-string'), by message id
 
+
+###############################################################################
+# Basic utility functions
+###############################################################################
+
+def logprint(text):
+    if log:
+        f = open(logfile, "a")
+        f.write(text + '\n')
+        f.close()
 
 ###############################################################################
 # Simple Lisp s-expression parser
@@ -157,6 +168,8 @@ class swank_action:
         self.pending = True
 
 def unquote(s):
+    if len(s) < 2:
+        return s
     if s[0] == '"' and s[-1] == '"':
         return s[1:-1].replace('\\"', '"')
     else:
@@ -181,8 +194,7 @@ def parse_plist(lst, keyword):
 def swank_send(text):
     global sock
 
-    if log:
-        print '[---Sent---]', text
+    logprint('[---Sent---]\n' + text)
     l = hex(len(text))[2:]
     t = '0'*(lenbytes-len(l)) + l + text
     if debug:
@@ -213,23 +225,28 @@ def swank_parse_inspect(struct):
     cont = pcont[0]
     lst = []
     desc = ''
+    sep = ''
     for el in cont:
         if type(el) == list:
-            lst.append(['[' + str(unquote(el[2])) + ']  ' + desc, unquote(el[1])])
+            lst.append([desc, sep, unquote(el[1]), unquote(el[2])])
             desc = ''
+            sep = ''
         else:
             stg = unquote(el)
             if stg == "\n":
                 if desc:
-                    lst.append([desc, ''])
+                    lst.append([desc, sep, '', ''])
                 desc = ''
-            elif stg != ': ':
+                sep = ''
+            elif stg == ': ' or stg == ' ':
+                sep = unquote(stg)
+            else:
                 desc = unquote(stg)
-    for (desc, data) in lst:
-        sep = ""
-        if data:
-            sep = ': '
-        buf = buf + "\n%s%s%s" % (desc, sep, data)
+    for (desc, sep, data, item) in lst:
+        buf = buf + "\n"
+        if item:
+            buf = buf + "[" + item + "]  "
+        buf = buf + "%s%s%s" % (desc, sep, data)
     buf = buf + '\n \n[<<]'
     return buf
 
@@ -255,8 +272,7 @@ def swank_listen():
             print 'Received length:', msglen
         if msglen > 0:
             rec = swank_recv(msglen)
-            if log:
-                print '[-Received-]', rec
+            logprint('[-Received-]\n' + rec)
             [s, r] = parse_sexpr( rec )
             if debug:
                 print 'Parsed:', r
@@ -294,12 +310,13 @@ def swank_listen():
                     else:
                         action = None
                     if log:
+                        logprint('[Actionlist]')
                         for k,a in sorted(actions.items()):
                             if a.pending:
                                 pending = 'pending '
                             else:
                                 pending = 'finished'
-                            print k, pending, a.name, a.result
+                            logprint("%s: %s %s %s" % (k, str(pending), a.name, a.result))
 
                     if result == ':ok':
                         params = r[1][1]
@@ -337,16 +354,14 @@ def swank_listen():
                                 prompt = pkg[':prompt']
                                 vim.command('let s:swank_version="' + ver + '"')
                                 retval = retval + imp[':type'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
-                                if log:
-                                    print ' Package:' + package + ' Prompt:' + prompt
+                                logprint(' Package:' + package + ' Prompt:' + prompt)
                             elif element == ':name':
                                 keys = make_keys(params)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
                                 retval = swank_parse_inspect(params)
                             else:
-                                if log:
-                                    print element
+                                logprint(str(element))
                     elif result == ':abort':
                         debug_activated = False
                         vim.command('let s:debug_activated=0')
