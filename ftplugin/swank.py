@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  18 Mar 2011
+# Last Change:  19 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -199,7 +199,11 @@ def swank_send(text):
     t = '0'*(lenbytes-len(l)) + l + text
     if debug:
         print 'Sending:', t
-    sock.send(t)
+    try:
+        sock.send(t)
+    except socket.error:
+        sys.stdout.write( 'Socket error when sending to SWANK server.\n' )
+	swank_disconnect()
 
 def swank_recv(msglen):
     global sock
@@ -509,8 +513,13 @@ def swank_connect(portvar, resultvar):
 
 def swank_disconnect():
     global sock
-    sock.close()
-    sock = None
+    try:
+        # Try to close socket but don't care if doesn't succeed
+        sock.close()
+    finally:
+        sock = None
+        vim.command('let s:swank_connected = 0')
+        sys.stdout.write( 'Connection to SWANK server is closed.\n' )
 
 def swank_input(formvar, packagevar):
     form = vim.eval(formvar)
@@ -542,6 +551,10 @@ def swank_input(formvar, packagevar):
         swank_eval(form, pkg)
 
 def swank_output():
+    global sock
+
+    if not sock:
+        return "SWANK server is not connected."
     result = swank_listen()
     sys.stdout.write(result)
     return result
