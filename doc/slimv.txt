@@ -1,13 +1,15 @@
-*slimv.txt*                    Slimv                 Last Change: 17 Feb 2011
+*slimv.txt*                    Slimv                 Last Change: 19 Mar 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.7.7
+                               Version 0.8.0
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
 the Lisp REPL, similarly to Emacs/SLIME.
 Slimv works on Windows, Linux, and Mac OS X, however the newly introduced
 paredit mode is operating system independent.
+The current version of Slimv contains a SWANK client. Please visit |swank.txt|
+for additional information.
 
 |slimv-installation|         Installation
 |slimv-customization|        Customization
@@ -42,13 +44,18 @@ Prerequisites:
     Cygwin Python implementation Cygwin users should install Windows Python,
     which is autodetected by the script.
 
+  Recommended components:
+  - SWANK server is highly recommended. Please find details in |swank.txt|.
+
   Optional components:
-  - The interrupt functionality needs the pywin32 extension on Windows.
+  - The interrupt functionality needs the pywin32 extension on Windows, but
+    only when not using the SWANK server.
   - "Exuberant ctags" for tags file generation (if not bundled with Vim
     already). See |slimv-ctags|.
 
 To install the script:
 
+  - Install all required components described above.
   - Download the slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
@@ -62,6 +69,7 @@ To install the script:
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
+       ftplugin/swank.py
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -104,19 +112,6 @@ To install the script:
         endif
 
 
-Upgrade from previous script versions:
-
-0.1   - 0.4.x    The project went through a major reorganization, so users
-                 who already installed previous versions of the plugin should
-                 first delete the old files. These are: plugin/slimv.vim,
-                 plugin/slimv.py, plugin/metering.lisp and doc/slimv.txt
-                 in the vimfiles directory.
-0.1   - 0.2.x    Users having a custom |g:slimv_repl_file| setting should
-                 consider attaching the .lisp or .clj extension to the name
-                 of the REPL buffer, in order to have syntax highlighting
-                 and autoindenting in the REPL buffer.
-                 Users who already have done this are smarter than me :)
-
 Uninstallation:
 
   - Exit all Vim instances and exit from the REPL server terminal window.
@@ -131,6 +126,7 @@ Uninstallation:
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
        ftplugin/slimv-javadoc.vim
+       ftplugin/swank.py
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
@@ -217,6 +213,10 @@ Below that list follows the detailed explanation on each option.
 
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
+|g:slimv_swank|              Indicates the usage of the SWANK client.
+                             Please find additional SWANK related options
+                             in |swank.txt|.
+
 |g:slimv_updatetime|         Alternative value for 'updatetime' during REPL
                              refresh.
 
@@ -268,7 +268,12 @@ set a different port number for each Vim instance.
 Example:
     let g:slimv_port = 10101
 
+There is a separate port definition in Slimv which sets the port number to
+use for the SWANK server, see |g:swank_port| for details.
+
                                                                *g:slimv_client*
+Note: Used only when SWANK client is not enabled.
+
 You may want to use a shell frontend other then the default one (cmd.exe
 on Windows, xterm on Linux) or put additional command line parameters
 for starting the server.
@@ -498,16 +503,22 @@ Example:
     let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
 
                                                     *g:slimv_template_describe*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'Describe' command.
 Example:
     let g:slimv_template_describe = '(describe (read-from-string "%1"))'
 
                                                        *g:slimv_template_trace*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'Trace' command.
 Example:
     let g:slimv_template_trace = "(trace %1)"
 
                                                      *g:slimv_template_untrace*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'Untrace' command.
 Example:
     let g:slimv_template_untrace = "(untrace %1)"
@@ -548,6 +559,8 @@ Example:
     let g:slimv_template_disassemble = "(disassemble #'%1)"
 
                                                      *g:slimv_template_inspect*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'inspect' command.
 Example:
     let g:slimv_template_inspect = "(inspect %1)"
@@ -652,6 +665,8 @@ sequence, then you may want to fine tune these Vim options:
 
 
 Also see |slimv-repl| for additional keybindings valid only in the REPL buffer.
+Some menu items or Slimv commands may differ in case Slimv uses the SWANK
+client, please find details in |swank.txt|.
 
 
 ===============================================================================
@@ -1232,6 +1247,8 @@ FAQ                                                                 *slimv-faq*
 - Q: Why is this plugin called 'Slimv'?
 - A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
      In SLIME 'E' stands for 'Emacs', so here it is replaced with 'V' as Vim.
+     The most recent version also contains a SWANK client, so Slimv's
+     functionality is getting closer to SLIME.
      To tell the truth, first I gave the name 'Slimvim' to the plugin but
      then I found an (already abandoned) project called 'Slim-Vim' and I did
      not want to interfere with it.
@@ -1251,8 +1268,9 @@ FAQ                                                                 *slimv-faq*
      in Vim, but this may change in the future.
 
 - Q: How does Slimv work?
-- A: Slimv consists of three parts: Vim plugin, client and server.
-     The Slimv server is a swank server that embeds a console Lisp REPL
+- A: Slimv consists of three parts by the original concept:
+     Vim plugin, client and server.
+     The Slimv server is a swank-like server that embeds a console Lisp REPL
      via pipes, catching all REPL input/output.
      The Slimv client interfaces with the server and is responsible
      for sending Lisp commands to the Lisp REPL.
@@ -1262,6 +1280,10 @@ FAQ                                                                 *slimv-faq*
      Vim -> Vim plugin -> Slimv client -> Slimv server -> Lisp REPL
      The plugin resides in 'slimv.vim', the client and the server both
      located in 'slimv.py'.
+
+     Slimv also contains a SWANK client that is able to communicate a
+     running SWANK server, just as it is done by Emacs with SLIME.
+     The SWANK output is regularly polled via the socket connection.
 
 - Q: There is no Slimv server opened when I evaluate a form in Vim.
 - A: There may be many reasons for that. Try to run the server manually by
@@ -1289,9 +1311,10 @@ FAQ                                                                 *slimv-faq*
         functionality requires that Slimv reads data from REPL, then
         currently it is not possible to implement it.
      2. It is possible to implement it, but I did not (yet) do it.
-        Maybe future releases will contain it.
+        Maybe future releases will contain it. All feature requests are
+        welcome.
 
-- Q: Why is the default port number 5151?
+- Q: Why is the default Slimv port number 5151?
 - A: Hint: what roman numerals are 5,1,5,1? Bingo: VI, doubled.
 
 - Q: What is the version numbering concept?
@@ -1327,17 +1350,14 @@ FAQ                                                                 *slimv-faq*
      it a try.
 
 - Q: Why using Python for the client/server code? Why not Lisp?
-- A: This is for historical reasons and may change in the future.
-     Preliminary versions used Vim's built-in Python support.
-     Later on the client/server code was separated from Vim but still remained
-     written in Python. On Linux this should not be a problem, most Linux
-     distributions contain a Python interpreter with high enough version.
-     On Windows this means, you need to install Python, if you don't have
-     one (at least version 2.4). Anyway, Python is a nice language and
-     also a perfect replacement for calculator.exe :)
+- A: It is needed to use one of Vim's embedded languages for maintaining a
+     permanent socket connection from within Vim. There aren't too many choices,
+     and Lisp is not (yet?) embedded into Vim.
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.0  - Added SWANK client (many thanks to Philipp Marek).
 
 0.7.7  - Paredit: find next closing paren when using ,< or ,> and not standing
          on a paren.
@@ -1555,7 +1575,8 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 ===============================================================================
 TODO                                                               *slimv-todo*
 
-- Add Swank support, i.e. send commands to SLIME's Swank server.
+- Add missing SLIME functions to the SWANK client.
+- Separate SLDB/Inspector/etc buffers from the REPL buffer.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
@@ -1567,16 +1588,22 @@ above.
 
 Credit must go out to Bram Moolenaar and all the Vim developers for making
 the world's (one of the) best editor.
+
 Thanks to Eric Marsden and all the Emacs/SLIME developers for making SLIME.
 Special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
 Rob MacLachlan for creating the Metering System.
 Also special thanks to Erik Naggum, Yuji Minejima and others for making the
 Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
+
 Thanks to the Vim community for testing, commenting and patching the script,
-especially to Philipp Marek, Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
-Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser, Jon Thacker,
-Andrew Hills, Jerome Baum, John Obbele.
+especially to Philipp Marek for his great number of contributions, patches,
+ideas, suggestions on the SWANK integration.
+
+Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
+Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
+Jon Thacker, Andrew Hills, Jerome Baum, John Obbele.
+
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
