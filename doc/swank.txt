@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 18 Mar 2011
+*swank.txt*                    Slimv                 Last Change: 19 Mar 2011
 
 SWANK client for Slimv                                                 *swank*
                                Version 0.8.0
@@ -6,14 +6,17 @@ SWANK client for Slimv                                                 *swank*
 The Superior Lisp Interaction Mode for Vim.
 Slimv contains a SWANK client that can communicate with a running SWANK server
 the same way as done by Emacs with SLIME.
+The SWANK client is part of Slimv, please find additional general purpose
+information about the plugin, like FAQ, changelog, credits, etc in |slimv.txt|.
 
 |swank-installation|         Installation
+|swank-configuration|        Configuration
 |swank-features|             Features
 
 ===============================================================================
-INSTALLATION AND CONFIGURATION                             *swank-installation*
+INSTALLATION                                               *swank-installation*
 
-Installation:
+  Required components:
 
   - Vim 7.0 or newer installed with Python feature enabled.
     This can be verified by the :ver command, look for the +python string.
@@ -30,20 +33,211 @@ Installation:
     This can be a standalone SWANK installation (like swank-clojure),
     or as part of Emacs with SLIME, or Leiningen (lein swank).
 
-Configuration:
+
+===============================================================================
+CONFIGURATION                                             *swank-configuration*
+
+  Vim may not be configured to load the filetype plugins by default.
+  In this case it might be needed to add this line to the .vimrc file:
+    :filetype plugin on
+
+                                                            *g:slimv_swank_cmd*
+                                                        *g:slimv_swank_clojure*
+  Slimv tries to autodetect your Python/Lisp/SWANK installation (please find
+  more details about the Python and Lisp autodetection and configuration in
+  |slimv-options|).
+  If the location for the SWANK server is not identified by the script, or you
+  want to use a different command for starting the SWANK server, then you may
+  want to customize the g:slimv_swank_cmd (general) and g:slimv_swank_clojure
+  (Clojure specific) options in your .vimrc file.
+  Enter a Vim command here that spawns a detached process that runs the SWANK
+  server of your choice. It is important to use a Vim command here that returns
+  immediately and does not wait for the termination of the detached process,
+  so begin the command with !start on Windows...:
+
+    let g:slimv_swank_cmd = '!start "c:\Program Files\Lisp Cabinet\bin\ccl\wx86cl.exe" -l "c:\Program Files\Lisp Cabinet\site\lisp\slime\start-swank.lisp"'
+    let g:slimv_swank_clojure = '!start "c:\clojurebox\swank-clojure\src\start-swank.bat"'
+
+  ...and end the command with an & on Linux:
+
+    let g:slimv_swank_cmd = '! xterm -e sbcl --load /usr/share/common-lisp/source/slime/start-swank.lisp &'
+    let g:slimv_swank_clojure = '! xterm -e lein swank &'
+
+  It is also possible to run the SWANK server manually prior running Vim.
+  Slimv detects if a SWANK server is running and connects to it at the first
+  evaluation request.
+
+  Note: It is recommended to pass
+    :dont-close t
+  for the swank:create-server function call in the SWANK startup procedure.
+  This makes a permanent SWANK server that listens continuously. Otherwise
+  each time the SWANK connection is lost, the SWANK server needs to be
+  restarted again. Example startup script:
+
+(load (merge-pathnames "swank-loader.lisp" *load-truename*))
+
+(swank-loader:init :delete nil
+                   :reload nil
+                   :load-contribs nil)
+
+(swank:create-server :port 4005
+                     :coding-system "iso-latin-1-unix"
+                     :dont-close t)
+ 
+
+                                                                 *g:swank_port*
+  The SWANK server is connected to port 4005 by default. This can be changed
+  using the g:swank_port option.
+
+                                                              *g:slimv_timeout*
+  There is a 5 second timeout defined for starting up or connecting to the
+  SWANK server. This timeout can be changed via the g:slimv_timeout option.
 
 
 ===============================================================================
 FEATURES                                                       *swank-features*
 
-  - Evaluation
-  - Interrupt Lisp process
-  - SLDB: Invoke restarts
-  - SLDB: Display backtrace with locals
-  - Function argument list in status line
-  - Describe symbol in tooltip
-  - Inspector
-  - Trace function
+The following SLIME (SWANK) features are implemented in Slimv:
+
+|swank-eval|                 Evaluation
+|swank-interrupt|            Interrupt Lisp process
+|swank-restarts|             SLDB: Invoke restarts
+|swank-backtrace|            SLDB: Display backtrace with locals
+|swank-arglist|              Function argument list in status line
+|swank-describe|             Describe symbol in tooltip
+|swank-inspect|              Inspector
+|swank-trace|                Trace function
+
+-------------------------------------------------------------------------------
+EVALUATION                                                         *swank-eval*
+
+  There are various methods for evaluating an s-expression in the SWANK server.
+  It is possible to eval the current top level form, the current subform, the
+  visually selected area, or the whole buffer. Consult the "Evaluation commands"
+  section in |slimv_keyboard| for the possible functions with their respective
+  keyboard shortcuts.
+
+
+-------------------------------------------------------------------------------
+INTERRUPT LISP PROCESS                                        *swank-interrupt*
+
+  It is possible to interrupt a running Lisp or Clojure process by selecting
+  the Interrupt-Lisp-Process menu item in the REPL or Slimv/Repl submenu,
+  or by pressing the keyboard shortcut <Leader>i.
+  It is also possible to map the Ctrl-C shortcut in normal mode to perform the
+  interrupt, but this may interfere with the "Copy to clipboard" function
+  especially on Windows. Here is how to do it:
+
+    noremap  <silent> <C-C>      :call SlimvInterrupt()<CR> 
+
+  When a Lisp process is interrupted, we are dropped in SLDB (SLime DeBugger)
+  and the list of restarts (see |swank-restarts|) and calling frame stack
+  (see |swank-backtrace|) is displayed.
+  It is possible to inspect variables (see |swank-inspect|) and continue
+  or break program execution by selecting the appropriate restart.
+  It is also possible to change the value of variables or redefine functions
+  before resuming execution.
+
+
+-------------------------------------------------------------------------------
+INVOKE RESTARTS                                                *swank-restarts*
+
+  In case of an error or when the Lisp process is interrupted SLDB displays
+  the condition and the list of possible restarts, each line startin with the
+  restart identifier, for example:
+
+DIVISION-BY-ZERO detected
+   [Condition of type DIVISION-BY-ZERO]
+
+Restarts:
+  0: [RETRY] Retry SLIME REPL evaluation request.
+  1: [*ABORT] Return to SLIME's top level.
+  2: [ABORT-BREAK] Reset this thread
+  3: [ABORT] Kill this thread
+
+
+  If you press Enter in normal mode on a restart line then the given restart
+  is invoked.
+
+
+-------------------------------------------------------------------------------
+DISPLAY BACKTRACE                                             *swank-backtrace*
+
+  SLDB displays the backtrace for the calling frames, each line starting with
+  the frame identifier, for example:
+
+Backtrace:
+  0: (CCL::%FIXNUM-TRUNCATE #<Unknown Arguments>)
+  1: (/ 1 0)
+  2: (NIL #<Unknown Arguments>)
+  3: (CCL::CALL-CHECK-REGS / 1 0)
+  4: (CCL::CHEAP-EVAL (/ 1 0))
+  5: (SWANK::EVAL-REGION "(/ 1 0)")
+
+
+  If you press Enter in normal mode on a frame line then the local variable
+  bindings for that frame are displayed at the bottom of the SLDB printout.
+
+
+-------------------------------------------------------------------------------
+FUNCTION ARGUMENT LIST                                          *swank-arglist*
+
+  When entering an s-expressin in insert mode, each time a space is pressed
+  after a non-whitespace character, then SWANK is requested for the function
+  argument list for the current function. If the function is known by SWANK
+  then the function prototype is displayed in the status line.
+
+  Note: the function argument list is not displayed when Slimv is not
+  connected to the SWANK server.
+
+
+-------------------------------------------------------------------------------
+DESCRIBE SYMBOL                                                *swank-describe*
+
+  When you hover your mouse over a symbol's name then the symbol description
+  is requested from SWANK and displayed in a tooltip, called balloonexpr in
+  Vim terms. This functionality requires that Vim is compiled with the
+  +balloon_eval feature enabled.
+
+  If you don't have +balloon_eval then it is possible to select the
+  Describe-Symbol menu item from the Slimv/Documentation submenu, or press
+  the <Leader>s keyboard shortcut, which then displays the symbol description
+  in the REPL buffer.
+
+  Note: the symbol description is not displayed when Slimv is not connected
+  to the SWANK server.
+
+
+-------------------------------------------------------------------------------
+INSPECTOR                                                       *swank-inspect*
+
+  The Enter key is remapped in normal mode for traversing the inspector output.
+
+  When pressing Enter on the top line starting with 'Inspecting' then the
+  currently inspected value is reloaded.
+
+  When pressing Enter on a line starting with [nn] (where nn is the part
+  identifier) then nn-th part is inspected.
+
+  When pressing Enter on the last line starting with [<<] then the inspector
+  is popped up one level.
+
+
+-------------------------------------------------------------------------------
+TRACE                                                             *swank-trace*
+
+  It is possible to tell the SWANK server to trace or untrace functions.
+  There are some subtle differences in the trace handling with or
+  without SWANK.
+
+  For the trace handling without SWANK please check options
+  |g:slimv_template_trace| and |g:slimv_template_untrace|.
+
+  When using the SWANK server the Trace command toggles tracing for the
+  selected function. In this case there is no Untrace command, but there is
+  an Untrace-All command, which completely switches off tracing.
+  This complies with the SWANK tracing functionality.
+
 
 ===============================================================================
 vim:tw=80:noet:wrap:ts=8:ft=help:norl:
