@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  17 Mar 2011
+" Last Change:  22 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -433,6 +433,7 @@ let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file    " Name of the REPL buf
 let s:prompt = ''                                         " Lisp prompt in the last line
 let s:last_update = 0                                     " The last update time for the REPL buffer
 let s:last_size = 0                                       " The last size of the REPL buffer
+let s:leader = mapleader                                  " For some reason 'mapleader' is sometimes unreachable
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
 let s:save_showmode = &showmode                           " The original value for 'showmode'
 let s:python_initialized = 0                              " Is the embedded Python initialized?
@@ -1977,107 +1978,90 @@ endif
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
 
+" Map keyboard keyset dependant shortcut to command and also add it to menu
+function! s:MenuMap( name, shortcut1, shortcut2, command )
+    if g:slimv_keybindings == 1
+        " Short (one-key) keybinding set
+        let shortcut = a:shortcut1
+    elseif g:slimv_keybindings == 2
+        " Easy to remember (two-key) keybinding set
+        let shortcut = a:shortcut2
+    endif
+
+    if shortcut != ''
+        execute "noremap <silent> " . shortcut . " " . a:command
+        if g:slimv_menu == 1
+            let hint = substitute( shortcut, '\c<Leader>', s:leader, "g" )
+            silent execute "amenu " . a:name . "<Tab>" . hint . " " . a:command
+        endif
+    elseif g:slimv_menu == 1
+        silent execute "amenu " . a:name . " " . a:command
+    endif
+endfunction
+
 if g:slimv_swank
     " Map space to display function argument list in status line
     inoremap <silent> <Space>    <Space><C-O>:call SlimvArglist()<CR>
-    noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
+    "noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
     au InsertLeave * :let &showmode=s:save_showmode
 endif
 
-if g:slimv_keybindings == 1
-    " Short (one-key) keybinding set
+" Edit commands
+inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
+call s:MenuMap( '&Slimv.Edi&t.Close-&Form',                     '<Leader>)',  '<Leader>tc',  ':<C-U>call SlimvCloseForm()<CR>' )
+call s:MenuMap( '&Slimv.Edi&t.&Complete-Symbol',                '',           '',            '<C-X><C-O>' )
+call s:MenuMap( '&Slimv.Edi&t.&Paredit-Toggle',                 '<Leader>(',  '<Leader>(t',  ':<C-U>call PareditToggle()<CR>' )
 
-    noremap  <silent> <Leader>)  :<C-U>call SlimvCloseForm()<CR>
-    inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
-    noremap  <silent> <Leader>(  :<C-U>call PareditToggle()<CR>
+" Evaluation commands
+call s:MenuMap( '&Slimv.&Evaluation.Eval-&Defun',               '<Leader>d',  '<Leader>ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.Eval-Last-&Exp',            '<Leader>e',  '<Leader>ee',  ':<C-U>call SlimvEvalLastExp()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.&Pprint-Eval-Last',         '<Leader>E',  '<Leader>ep',  ':<C-U>call SlimvPprintEvalLastExp()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.Eval-&Region',              '<Leader>r',  '<Leader>er',  ':call SlimvEvalRegion()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.Eval-&Buffer',              '<Leader>b',  '<Leader>eb',  ':<C-U>call SlimvEvalBuffer()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.Interacti&ve-Eval\.\.\.',   '<Leader>v',  '<Leader>ei',  ':call SlimvInteractiveEval()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.&Undefine-Function',        '<Leader>u',  '<Leader>eu',  ':call SlimvUndefineFunction()<CR>' )
 
-    noremap  <silent> <Leader>d  :<C-U>call SlimvEvalDefun()<CR>
-    noremap  <silent> <Leader>e  :<C-U>call SlimvEvalLastExp()<CR>
-    noremap  <silent> <Leader>E  :<C-U>call SlimvPprintEvalLastExp()<CR>
-    noremap  <silent> <Leader>r  :call SlimvEvalRegion()<CR>
-    noremap  <silent> <Leader>b  :<C-U>call SlimvEvalBuffer()<CR>
-    noremap  <silent> <Leader>v  :call SlimvInteractiveEval()<CR>
-    noremap  <silent> <Leader>u  :call SlimvUndefineFunction()<CR>
+" Debug commands
+call s:MenuMap( '&Slimv.De&bugging.Macroexpand-&1',             '<Leader>1',  '<Leader>m1',  ':<C-U>call SlimvMacroexpand()<CR>' )
+call s:MenuMap( '&Slimv.De&bugging.&Macroexpand-All',           '<Leader>m',  '<Leader>ma',  ':<C-U>call SlimvMacroexpandAll()<CR>' )
 
-    noremap  <silent> <Leader>1  :<C-U>call SlimvMacroexpand()<CR>
-    noremap  <silent> <Leader>m  :<C-U>call SlimvMacroexpandAll()<CR>
-    noremap  <silent> <Leader>t  :call SlimvTrace()<CR>
-    noremap  <silent> <Leader>T  :call SlimvUntrace()<CR>
-    noremap  <silent> <Leader>l  :call SlimvDisassemble()<CR>
-    noremap  <silent> <Leader>i  :call SlimvInspect()<CR>
-
-    noremap  <silent> <Leader>D  :<C-U>call SlimvCompileDefun()<CR>
-    noremap  <silent> <Leader>L  :<C-U>call SlimvCompileLoadFile()<CR>
-    noremap  <silent> <Leader>F  :<C-U>call SlimvCompileFile()<CR>
-    noremap  <silent> <Leader>R  :call SlimvCompileRegion()<CR>
-
-    noremap  <silent> <Leader>O  :call SlimvLoadProfiler()<CR>
-    noremap  <silent> <Leader>p  :call SlimvProfile()<CR>
-    noremap  <silent> <Leader>P  :call SlimvUnprofile()<CR>
-    noremap  <silent> <Leader>U  :call SlimvUnprofileAll()<CR>
-    noremap  <silent> <Leader>?  :call SlimvShowProfiled()<CR>
-    noremap  <silent> <Leader>o  :call SlimvProfileReport()<CR>
-    noremap  <silent> <Leader>x  :call SlimvProfileReset()<CR>
-
-    noremap  <silent> <Leader>s  :call SlimvDescribeSymbol()<CR>
-    noremap  <silent> <Leader>a  :call SlimvApropos()<CR>
-    noremap  <silent> <Leader>h  :call SlimvHyperspec()<CR>
-    noremap  <silent> <Leader>]  :call SlimvGenerateTags()<CR>
-
-    noremap  <silent> <Leader>c  :call SlimvConnectServer()<CR>
-    noremap  <silent> <Leader>y  :call SlimvInterrupt()<CR>
-
-elseif g:slimv_keybindings == 2
-    " Easy to remember (two-key) keybinding set
-
-    " Edit commands
-    noremap  <silent> <Leader>tc  :<C-U>call SlimvCloseForm()<CR>
-    inoremap <silent> <C-X>0      <C-O>:call SlimvCloseForm()<CR>
-    noremap  <silent> <Leader>(t  :<C-U>call PareditToggle()<CR>
-
-    " Evaluation commands
-    noremap  <silent> <Leader>ed  :<C-U>call SlimvEvalDefun()<CR>
-    noremap  <silent> <Leader>ee  :<C-U>call SlimvEvalLastExp()<CR>
-    noremap  <silent> <Leader>ep  :<C-U>call SlimvPprintEvalLastExp()<CR>
-    noremap  <silent> <Leader>er  :call SlimvEvalRegion()<CR>
-    noremap  <silent> <Leader>eb  :<C-U>call SlimvEvalBuffer()<CR>
-    noremap  <silent> <Leader>ei  :call SlimvInteractiveEval()<CR>
-    noremap  <silent> <Leader>eu  :call SlimvUndefineFunction()<CR>
-
-    " Debug commands
-    noremap  <silent> <Leader>m1  :<C-U>call SlimvMacroexpand()<CR>
-    noremap  <silent> <Leader>ma  :<C-U>call SlimvMacroexpandAll()<CR>
-    noremap  <silent> <Leader>dt  :call SlimvTrace()<CR>
-    noremap  <silent> <Leader>du  :call SlimvUntrace()<CR>
-    noremap  <silent> <Leader>dd  :call SlimvDisassemble()<CR>
-    noremap  <silent> <Leader>di  :call SlimvInspect()<CR>
-
-    " Compile commands
-    noremap  <silent> <Leader>cd  :<C-U>call SlimvCompileDefun()<CR>
-    noremap  <silent> <Leader>cl  :<C-U>call SlimvCompileLoadFile()<CR>
-    noremap  <silent> <Leader>cf  :<C-U>call SlimvCompileFile()<CR>
-    noremap  <silent> <Leader>cr  :call SlimvCompileRegion()<CR>
-
-    " Profile commands
-    noremap  <silent> <Leader>pl  :call SlimvLoadProfiler()<CR>
-    noremap  <silent> <Leader>pp  :call SlimvProfile()<CR>
-    noremap  <silent> <Leader>pu  :call SlimvUnprofile()<CR>
-    noremap  <silent> <Leader>pa  :call SlimvUnprofileAll()<CR>
-    noremap  <silent> <Leader>ps  :call SlimvShowProfiled()<CR>
-    noremap  <silent> <Leader>pr  :call SlimvProfileReport()<CR>
-    noremap  <silent> <Leader>px  :call SlimvProfileReset()<CR>
-
-    " Documentation commands
-    noremap  <silent> <Leader>ds  :call SlimvDescribeSymbol()<CR>
-    noremap  <silent> <Leader>da  :call SlimvApropos()<CR>
-    noremap  <silent> <Leader>dh  :call SlimvHyperspec()<CR>
-    noremap  <silent> <Leader>dg  :call SlimvGenerateTags()<CR>
-
-    " REPL commands
-    noremap  <silent> <Leader>rc  :call SlimvConnectServer()<CR>
-    noremap  <silent> <Leader>ri  :call SlimvInterrupt()<CR>
-
+if g:slimv_swank
+call s:MenuMap( '&Slimv.De&bugging.Toggle-&Trace\.\.\.',        '<Leader>t',  '<Leader>dt',  ':call SlimvTrace()<CR>' )
+call s:MenuMap( '&Slimv.De&bugging.U&ntrace-All',               '<Leader>T',  '<Leader>du',  ':call SlimvUntrace()<CR>' )
+else
+call s:MenuMap( '&Slimv.De&bugging.&Trace\.\.\.',               '<Leader>t',  '<Leader>dt',  ':call SlimvTrace()<CR>' )
+call s:MenuMap( '&Slimv.De&bugging.U&ntrace\.\.\.',             '<Leader>T',  '<Leader>du',  ':call SlimvUntrace()<CR>' )
 endif
+
+call s:MenuMap( '&Slimv.De&bugging.Disassemb&le\.\.\.',         '<Leader>l',  '<Leader>dd',  ':call SlimvDisassemble()<CR>' )
+call s:MenuMap( '&Slimv.De&bugging.&Inspect\.\.\.',             '<Leader>i',  '<Leader>di',  ':call SlimvInspect()<CR>' )
+
+" Compile commands
+call s:MenuMap( '&Slimv.&Compilation.Compile-&Defun',           '<Leader>D',  '<Leader>cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
+call s:MenuMap( '&Slimv.&Compilation.Compile-&Load-File',       '<Leader>L',  '<Leader>cl',  ':<C-U>call SlimvCompileLoadFile()<CR>' )
+call s:MenuMap( '&Slimv.&Compilation.Compile-&File',            '<Leader>F',  '<Leader>cf',  ':<C-U>call SlimvCompileFile()<CR>' )
+call s:MenuMap( '&Slimv.&Compilation.Compile-&Region',          '<Leader>R',  '<Leader>cr',  ':call SlimvCompileRegion()<CR>' )
+
+" Profile commands
+call s:MenuMap( '&Slimv.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':call SlimvLoadProfiler()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':call SlimvProfile()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Unprofile\.\.\.',           '<Leader>P',  '<Leader>pu',  ':call SlimvUnprofile()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Unprofile-&All',             '<Leader>U',  '<Leader>pa',  ':call SlimvUnprofileAll()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Show-Profiled',             '<Leader>?',  '<Leader>ps',  ':call SlimvShowProfiled()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.-ProfilingSep-',             '',           '',            ':' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-Rep&ort',            '<Leader>o',  '<Leader>pr',  ':call SlimvProfileReport()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-&Reset',             '<Leader>x',  '<Leader>px',  ':call SlimvProfileReset()<CR>' )
+
+" Documentation commands
+call s:MenuMap( '&Slimv.&Documentation.Describe-&Symbol',       '<Leader>s',  '<Leader>ds',  ':call SlimvDescribeSymbol()<CR>' )
+call s:MenuMap( '&Slimv.&Documentation.&Apropos',               '<Leader>a',  '<Leader>da',  ':call SlimvApropos()<CR>' )
+call s:MenuMap( '&Slimv.&Documentation.&Hyperspec',             '<Leader>h',  '<Leader>dh',  ':call SlimvHyperspec()<CR>' )
+call s:MenuMap( '&Slimv.&Documentation.Generate-&Tags',         '<Leader>]',  '<Leader>dg',  ':call SlimvGenerateTags()<CR>' )
+
+" REPL commands
+call s:MenuMap( '&Slimv.&Repl.&Connect-Server',                 '<Leader>c',  '<Leader>rc',  ':call SlimvConnectServer()<CR>' )
+call s:MenuMap( '&Slimv.&Repl.Interrup&t-Lisp-Process',         '<Leader>y',  '<Leader>ri',  ':call SlimvInterrupt()<CR>' )
+
 
 " =====================================================================
 "  Slimv menu
@@ -2092,53 +2076,6 @@ if g:slimv_menu == 1
     if &wildcharm != 0
         execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
     endif
-
-    amenu &Slimv.Edi&t.Close-&Form                     :<C-U>call SlimvCloseForm()<CR>
-    imenu &Slimv.Edi&t.&Complete-Symbol                <C-X><C-O>
-    amenu &Slimv.Edi&t.&Paredit-Toggle                 :<C-U>call PareditToggle()<CR>
-
-    amenu &Slimv.&Evaluation.Eval-&Defun               :<C-U>call SlimvEvalDefun()<CR>
-    amenu &Slimv.&Evaluation.Eval-Last-&Exp            :<C-U>call SlimvEvalLastExp()<CR>
-    amenu &Slimv.&Evaluation.&Pprint-Eval-Last         :<C-U>call SlimvPprintEvalLastExp()<CR>
-    amenu &Slimv.&Evaluation.Eval-&Region              :call SlimvEvalRegion()<CR>
-    amenu &Slimv.&Evaluation.Eval-&Buffer              :<C-U>call SlimvEvalBuffer()<CR>
-    amenu &Slimv.&Evaluation.Interacti&ve-Eval\.\.\.   :call SlimvInteractiveEval()<CR>
-    amenu &Slimv.&Evaluation.&Undefine-Function        :call SlimvUndefineFunction()<CR>
-
-    amenu &Slimv.De&bugging.Macroexpand-&1             :<C-U>call SlimvMacroexpand()<CR>
-    amenu &Slimv.De&bugging.&Macroexpand-All           :<C-U>call SlimvMacroexpandAll()<CR>
-    if g:slimv_swank
-    amenu &Slimv.De&bugging.Toggle-&Trace\.\.\.        :call SlimvTrace()<CR>
-    amenu &Slimv.De&bugging.U&ntrace-All               :call SlimvUntrace()<CR>
-    else
-    amenu &Slimv.De&bugging.&Trace\.\.\.               :call SlimvTrace()<CR>
-    amenu &Slimv.De&bugging.U&ntrace\.\.\.             :call SlimvUntrace()<CR>
-    endif
-    amenu &Slimv.De&bugging.Disassemb&le\.\.\.         :call SlimvDisassemble()<CR>
-    amenu &Slimv.De&bugging.&Inspect\.\.\.             :call SlimvInspect()<CR>
-
-    amenu &Slimv.&Compilation.Compile-&Defun           :<C-U>call SlimvCompileDefun()<CR>
-    amenu &Slimv.&Compilation.Compile-&Load-File       :<C-U>call SlimvCompileLoadFile()<CR>
-    amenu &Slimv.&Compilation.Compile-&File            :<C-U>call SlimvCompileFile()<CR>
-    amenu &Slimv.&Compilation.Compile-&Region          :call SlimvCompileRegion()<CR>
-
-    amenu &Slimv.&Profiling.&Load-Profiler             :call SlimvLoadProfiler()<CR>
-    amenu &Slimv.&Profiling.&Profile\.\.\.             :call SlimvProfile()<CR>
-    amenu &Slimv.&Profiling.&Unprofile\.\.\.           :call SlimvUnprofile()<CR>
-    amenu &Slimv.&Profiling.Unprofile-&All             :call SlimvUnprofileAll()<CR>
-    amenu &Slimv.&Profiling.&Show-Profiled             :call SlimvShowProfiled()<CR>
-    amenu &Slimv.&Profiling.-ProfilingSep-             :
-    amenu &Slimv.&Profiling.Profile-Rep&ort            :call SlimvProfileReport()<CR>
-    amenu &Slimv.&Profiling.Profile-&Reset             :call SlimvProfileReset()<CR>
-
-    amenu &Slimv.&Documentation.Describe-&Symbol       :call SlimvDescribeSymbol()<CR>
-    amenu &Slimv.&Documentation.&Apropos               :call SlimvApropos()<CR>
-    amenu &Slimv.&Documentation.&Hyperspec             :call SlimvHyperspec()<CR>
-    imenu &Slimv.&Documentation.&Complete-Symbol       <C-X><C-O>
-    amenu &Slimv.&Documentation.Generate-&Tags         :call SlimvGenerateTags()<CR>
-
-    amenu &Slimv.&Repl.&Connect-Server                 :call SlimvConnectServer()<CR>
-    amenu &Slimv.&Repl.Interrup&t-Lisp-Process         :call SlimvInterrupt()<CR>
 endif
 
 " Add REPL menu. This menu exist only for the REPL buffer.
