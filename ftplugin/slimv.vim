@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  22 Mar 2011
+" Last Change:  23 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -291,6 +291,11 @@ if !exists( 'g:slimv_timeout' )
     let g:slimv_timeout = 5
 endif
 
+" Use balloonexpr to display symbol description
+if !exists( 'g:slimv_balloon' )
+    let g:slimv_balloon = 1
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -572,6 +577,23 @@ function! SlimvCommand( cmd )
             buf #
         endif
     endif
+endfunction
+
+" Execute the given SWANK command, wait for and return the response
+function! SlimvCommandGetResponse( name, cmd )
+    let s:refresh_disabled = 1
+    call SlimvCommand( a:cmd )
+    let msg = ''
+    let s:swank_action = ''
+    let starttime = localtime()
+    while s:swank_action == '' && localtime()-starttime < g:slimv_timeout
+        python swank_listen()
+        redir => msg
+        silent execute 'python swank_response("' . a:name . '")'
+        redir END
+    endwhile
+    let s:refresh_disabled = 0
+    return msg
 endfunction
 
 " Reload the contents of the REPL buffer from the output file if changed
@@ -1349,17 +1371,7 @@ function! SlimvArglist()
             let arg = matchstr( line, '\<\k*\>', c0 )
             if arg != ''
                 " Ask function argument list from SWANK
-                let s:refresh_disabled = 1
-                call SlimvCommand( 'python swank_op_arglist("' . arg . '")' )
-                let msg = ''
-                let s:swank_action = ''
-                while s:swank_action == ''
-                    python swank_listen()
-                    redir => msg
-                    silent execute 'python swank_response(":operator-arglist")'
-                    redir END
-                endwhile
-                let s:refresh_disabled = 0
+                let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")' )
                 if msg != ''
                     " Print argument list in status line with newlines removed.
                     " Disable showmode until the next ESC to prevent
@@ -1798,18 +1810,8 @@ function! SlimvDescribe(arg)
     if !s:swank_connected
         return ''
     endif
-    let s:refresh_disabled = 1
-    call SlimvCommand( 'python swank_describe_symbol("' . arg . '")' )
-    let msg = ''
-    let s:swank_action = ''
-    while s:swank_action == ''
-        python swank_listen()
-        redir => msg
-        silent execute 'python swank_response(":describe-symbol")'
-        redir END
-    endwhile
-    let s:refresh_disabled = 0
-
+    "TODO: when symbol is not defined, swank goes into the debugger
+    let msg = SlimvCommandGetResponse( ':describe-symbol', 'python swank_describe_symbol("' . arg . '")' )
     if msg == ''
         return 'none'
     else
@@ -1818,7 +1820,7 @@ function! SlimvDescribe(arg)
 endfunction
 
 " Setup balloonexp to display symbol description
-if g:slimv_swank && has( 'balloon_eval' )
+if g:slimv_swank && g:slimv_balloon && has( 'balloon_eval' )
     "setlocal balloondelay=100
     setlocal ballooneval
     setlocal balloonexpr=SlimvDescribe(v:beval_text)
