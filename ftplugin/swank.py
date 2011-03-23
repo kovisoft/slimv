@@ -215,12 +215,22 @@ def swank_recv(msglen):
         if ready[0]:
             l = msglen
             sock.setblocking(1)
-            data = sock.recv(l)
+            try:
+                data = sock.recv(l)
+            except socket.error:
+                sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                swank_disconnect()
+                return rec
             while data and len(rec) < msglen:
                 rec = rec + data
                 l = l - len(data)
                 if l > 0:
-                    data = sock.recv(l)
+                    try:
+                        data = sock.recv(l)
+                    except socket.error:
+                        sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                        swank_disconnect()
+                        return rec
     return rec
 
 def swank_parse_inspect(struct):
@@ -365,7 +375,13 @@ def swank_listen():
                             elif element == ':title':
                                 retval = swank_parse_inspect(params)
                             else:
-                                logprint(str(element))
+                                logprint(str(params))
+                                if action.name == ':simple-completions':
+                                    if type(params) == list and type(params[0]) == str and params[0] != 'nil':
+                                        compl = "\n".join(params)
+                                        retval = retval + compl.replace('"', '')
+                                        if action:
+                                            action.result = retval
                     elif result == ':abort':
                         debug_activated = False
                         vim.command('let s:debug_activated=0')
@@ -462,6 +478,10 @@ def swank_describe_function(fn):
 def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
     swank_rex(':operator-arglist', cmd, 'nil', 't')
+
+def swank_completions(symbol):
+    cmd = '(swank:simple-completions "' + symbol + '" "' + package + '")'
+    swank_rex(':simple-completions', cmd, 'nil', 't')
 
 def swank_return_string(s):
     swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')

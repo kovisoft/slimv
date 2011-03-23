@@ -1955,6 +1955,16 @@ function! SlimvComplete( findstart, base )
         return start
     else
         " Find all symbols starting with "a:base"
+        if g:slimv_swank && s:swank_connected
+            let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
+            if msg != ''
+                " We have a completion list from SWANK
+                let res = split( msg, '\n' )
+                return res
+            endif
+        endif
+
+        " No completion yet, try to fetch it from the Hyperspec database
         let res = []
         let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
         call sort( symbol )
