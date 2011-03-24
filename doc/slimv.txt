@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Mar 2011
+*slimv.txt*                    Slimv                 Last Change: 24 Mar 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -498,6 +498,8 @@ Example:
     let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
 
                                                     *g:slimv_template_undefine*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'Undefine' command.
 Example:
     let g:slimv_template_undefine = '(fmakunbound (read-from-string "%1"))'
@@ -571,12 +573,16 @@ Example:
     let g:slimv_template_apropos = '(apropos "%1")'
 
                                                  *g:slimv_template_macroexpand*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'macroexpand-1' command, after "defmacro"
 string is replaced with "macroexpand-1".
 Example:
     let g:slimv_template_macroexpand = '(pprint %1)'
 
                                              *g:slimv_template_macroexpand_all*
+Note: Used only when SWANK client is not enabled.
+
 Lisp form built when issuing the 'macroexpand-all' command, after "defmacro"
 string is replaced with "macroexpand".
 Example:
@@ -592,9 +598,12 @@ Example:
                                                                *slimv_keyboard*
 
 The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
-built in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
+built-in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
 Please note that the leading ',' key below refers to <Leader>, which is set
 by Slimv to ',' by default.
+In the graphical menu the currently active keyboard shortcuts are displayed
+beside the menu item names, so one can refer to the GUI menu as a quick
+reference for the keymappings.
 Vim defines timeout values for mapped key sequences. If you find that Vim does
 not allow you enough time between pressing ',' and the last key(s) of the
 sequence, then you may want to fine tune these Vim options:
@@ -649,6 +658,7 @@ sequence, then you may want to fine tune these Vim options:
 
     Repl commands:
     ,c      ,rc      Connect to Server
+    ,y      ,ri      Interrupt Lisp Process
 
 
     Set#1   Set#2    Command
@@ -845,7 +855,7 @@ Slimv uses the Hyperspec symbol database for symbol name completion, via
 Vim's omni-completion feature (if it is enabled and 'omnifunc' is not
 defined already to something else).
 Start to enter the symbol in Insert mode, then at some point press the
-<C-X> <C-O> (omni-complete) key combination or select the 'Complete Symbol'
+<C-X><C-O> (omni-complete) key combination or select the 'Complete Symbol'
 function. The first match in the symbol database is inserted at the cursor
 position and a list of matching symbols is displayed in a submenu.
 Use <C-N> to select the next match, <C-P> to select the previous match.
@@ -1247,7 +1257,7 @@ FAQ                                                                 *slimv-faq*
 - Q: Why is this plugin called 'Slimv'?
 - A: Because it is trying to mimic the popular Emacs extension 'SLIME'.
      In SLIME 'E' stands for 'Emacs', so here it is replaced with 'V' as Vim.
-     The most recent version also contains a SWANK client, so Slimv's
+     The most recent plugin version also contains a SWANK client, so Slimv's
      functionality is getting closer to SLIME.
      To tell the truth, first I gave the name 'Slimvim' to the plugin but
      then I found an (already abandoned) project called 'Slim-Vim' and I did
@@ -1284,6 +1294,7 @@ FAQ                                                                 *slimv-faq*
      Slimv also contains a SWANK client that is able to communicate a
      running SWANK server, just as it is done by Emacs with SLIME.
      The SWANK output is regularly polled via the socket connection.
+     The SWANK client is located in 'swank.py'.
 
 - Q: There is no Slimv server opened when I evaluate a form in Vim.
 - A: There may be many reasons for that. Try to run the server manually by
