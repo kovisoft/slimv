@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  23 Mar 2011
+" Last Change:  24 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1810,10 +1810,21 @@ function! SlimvDescribe(arg)
     if !s:swank_connected
         return ''
     endif
-    "TODO: when symbol is not defined, swank goes into the debugger
-    let msg = SlimvCommandGetResponse( ':describe-symbol', 'python swank_describe_symbol("' . arg . '")' )
+    let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")' )
+    if arglist == ''
+        " Not able to fetch arglist, assuming function is not defined
+        " Skip calling describe, otherwise SWANK goes into the debugger
+        return ''
+    endif
+    let msg = SlimvCommandGetResponse( ':describe-function', 'python swank_describe_function("' . arg . '")' )
     if msg == ''
-        return 'none'
+        " No describe info, display arglist
+        if match( arglist, arg ) != 1
+            " Function name is not received from REPL
+            return "(" . arg . ' ' . arglist[1:]
+        else
+            return arglist
+        endif
     else
         return msg
     endif
