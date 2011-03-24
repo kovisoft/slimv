@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  19 Mar 2011
+# Last Change:  24 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -483,17 +483,16 @@ def swank_completions(symbol):
     cmd = '(swank:simple-completions "' + symbol + '" "' + package + '")'
     swank_rex(':simple-completions', cmd, 'nil', 't')
 
+def swank_undefine_function(fn):
+    cmd = '(swank:undefine-function "' + fn + '")'
+    swank_rex(':undefine-function', cmd, 'nil', 't')
+
 def swank_return_string(s):
     swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')
 
 def swank_inspect(symbol):
     cmd = '(swank:init-inspector "' + symbol + '")'
     swank_rex(':init-inspector', cmd, 'nil', 't')
-    #if symbol.find('::') < 0:
-    #    symbol = package + '::' + symbol
-    ##symbol = symbol.replace("'", "\\'")
-    #cmd = '(swank:inspect-in-emacs ' + symbol + ')'
-    #swank_rex(':inspect-in-emacs', cmd, 'nil', 't')
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'

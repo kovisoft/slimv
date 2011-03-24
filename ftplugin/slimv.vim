@@ -1542,7 +1542,15 @@ endfunction
 
 " Undefine function
 function! SlimvUndefineFunction()
-    call SlimvEvalForm1( g:slimv_template_undefine, SlimvSelectSymbol() )
+    if g:slimv_swank
+        if s:swank_connected
+            "TODO: write new prompt after output
+            call SlimvCommand( 'python swank_undefine_function("' . SlimvSelectSymbol() . '")' )
+            call SlimvRefreshReplBuffer()
+        endif
+    else
+        call SlimvEvalForm1( g:slimv_template_undefine, SlimvSelectSymbol() )
+    endif
 endfunction
 
 " ---------------------------------------------------------------------
