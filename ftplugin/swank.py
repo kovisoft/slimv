@@ -234,6 +234,9 @@ def swank_recv(msglen):
     return rec
 
 def swank_parse_inspect(struct):
+    """
+    Parse the swank inspector output
+    """
     buf = '\n \nInspecting ' + parse_plist(struct, ':title') + '\n--------------------'
     pcont = parse_plist(struct, ':content')
     cont = pcont[0]
@@ -336,16 +339,18 @@ def swank_listen():
                         params = r[1][1]
                         if type(params) == str:
                             element = params.lower()
-                            if element == 'nil':
-                                # No more output from REPL, write new prompt
-                                if len(retval) > 0 and retval[-1] != '\n':
-                                    retval = retval + '\n'
-                                retval = retval + prompt + '> '
-                            else:
+                            if element != 'nil':
                                 s = unquote(params)
                                 retval = retval + s
                                 if action:
                                     action.result = retval
+                            # List of actions needing a prompt
+                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all']
+                            if element == 'nil' or (action and action.name in to_prompt):
+                                # No more output from REPL, write new prompt
+                                if len(retval) > 0 and retval[-1] != '\n':
+                                    retval = retval + '\n'
+                                retval = retval + prompt + '> '
                         
                         elif type(params) == list:
                             if type(params[0]) == list: 
@@ -425,12 +430,19 @@ def swank_listen():
     return retval
 
 def swank_rex(action, cmd, package, thread):
+    """
+    Send an :emacs-rex command to SWANK
+    """
     global id
     id = id + 1
     key = str(id)
     actions[key] = swank_action(key, action)
     form = '(:emacs-rex ' + cmd + ' ' + package + ' ' + thread + ' ' + str(id) + ')\n'
     swank_send(form)
+
+###############################################################################
+# Various SWANK messages
+###############################################################################
 
 def swank_connection_info():
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
@@ -508,8 +520,23 @@ def swank_toggle_trace(symbol):
 def swank_untrace_all():
     swank_rex(':untrace-all', '(swank:untrace-all)', 'nil', 't')
 
+def swank_macroexpand(formvar):
+    form = vim.eval(formvar)
+    cmd = '(swank:swank-macroexpand-1 ' + requote(form) + ')'
+    swank_rex(':swank-macroexpand-1', cmd, 'nil', 't')
+
+def swank_macroexpand_all(formvar):
+    form = vim.eval(formvar)
+    cmd = '(swank:swank-macroexpand-all ' + requote(form) + ')'
+    swank_rex(':swank-macroexpand-all', cmd, 'nil', 't')
+
+###############################################################################
+# Generic SWANK connection handling
+###############################################################################
+
 def swank_connect(portvar, resultvar):
-    """Create socket to swank server and request connection info
+    """
+    Create socket to swank server and request connection info
     """
     global sock
     global input_port
@@ -531,6 +558,9 @@ def swank_connect(portvar, resultvar):
     return sock
 
 def swank_disconnect():
+    """
+    Disconnect from swank server
+    """
     global sock
     try:
         # Try to close socket but don't care if doesn't succeed

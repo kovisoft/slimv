@@ -1590,18 +1590,42 @@ endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
-    let oldpos = getpos( '.' ) 
-    let m = SlimvMacroexpandGeneral( "macroexpand-1" )
-    call SlimvEvalForm1( g:slimv_template_macroexpand, m )
-    call setpos( '.', oldpos ) 
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvSelectDefun()
+            let s:refresh_disabled = 1
+            let s:swank_form = SlimvGetSelection()
+            call SlimvCommand( 'python swank_macroexpand("s:swank_form")' )
+            let s:refresh_disabled = 0
+            call SlimvRefreshReplBuffer()
+        endif
+    else
+        let oldpos = getpos( '.' ) 
+        let m = SlimvMacroexpandGeneral( "macroexpand-1" )
+        call SlimvEvalForm1( g:slimv_template_macroexpand, m )
+        call setpos( '.', oldpos ) 
+    endif
 endfunction
 
 " Macroexpand the current top level form
 function! SlimvMacroexpandAll()
-    let oldpos = getpos( '.' ) 
-    let m = SlimvMacroexpandGeneral( "macroexpand" )
-    call SlimvEvalForm1( g:slimv_template_macroexpand_all, m )
-    call setpos( '.', oldpos ) 
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvSelectDefun()
+            let s:refresh_disabled = 1
+            let s:swank_form = SlimvGetSelection()
+            call SlimvCommand( 'python swank_macroexpand_all("s:swank_form")' )
+            let s:refresh_disabled = 0
+            call SlimvRefreshReplBuffer()
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let oldpos = getpos( '.' ) 
+        let m = SlimvMacroexpandGeneral( "macroexpand" )
+        call SlimvEvalForm1( g:slimv_template_macroexpand_all, m )
+        call setpos( '.', oldpos ) 
+    endif
 endfunction
 
 " Switch trace on for the selected function (toggle for swank)
@@ -2040,7 +2064,7 @@ endif
 " Edit commands
 inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
 call s:MenuMap( '&Slimv.Edi&t.Close-&Form',                     '<Leader>)',  '<Leader>tc',  ':<C-U>call SlimvCloseForm()<CR>' )
-call s:MenuMap( '&Slimv.Edi&t.&Complete-Symbol',                '',           '',            '<C-X><C-O>' )
+call s:MenuMap( '&Slimv.Edi&t.&Complete-Symbol<Tab>^X^O',       '',           '',            '<Ins><C-X><C-O>' )
 call s:MenuMap( '&Slimv.Edi&t.&Paredit-Toggle',                 '<Leader>(',  '<Leader>(t',  ':<C-U>call PareditToggle()<CR>' )
 
 " Evaluation commands
