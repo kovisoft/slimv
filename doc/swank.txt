@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 19 Mar 2011
+*swank.txt*                    Slimv                 Last Change: 24 Mar 2011
 
 SWANK client for Slimv                                                 *swank*
                                Version 0.8.0
@@ -12,6 +12,7 @@ information about the plugin, like FAQ, changelog, credits, etc in |slimv.txt|.
 |swank-installation|         Installation
 |swank-configuration|        Configuration
 |swank-features|             Features
+|swank-functions|            SWANK functions implemented
 
 ===============================================================================
 INSTALLATION                                               *swank-installation*
@@ -94,10 +95,15 @@ CONFIGURATION                                             *swank-configuration*
   SWANK server. This timeout can be changed via the g:slimv_timeout option.
 
 
+                                                              *g:slimv_balloon*
+  Specifies if tooltips are on (see |swank-describe|).
+
+
 ===============================================================================
 FEATURES                                                       *swank-features*
 
-The following SLIME (SWANK) features are implemented in Slimv:
+The following major SLIME (SWANK) features are implemented in Slimv.
+For a complete reference of SWANK functions implemented see |swank-functions|.
 
 |swank-eval|                 Evaluation
 |swank-interrupt|            Interrupt Lisp process
@@ -105,6 +111,7 @@ The following SLIME (SWANK) features are implemented in Slimv:
 |swank-backtrace|            SLDB: Display backtrace with locals
 |swank-arglist|              Function argument list in status line
 |swank-describe|             Describe symbol in tooltip
+|swank-completions|          List of possible symbol completions
 |swank-inspect|              Inspector
 |swank-trace|                Trace function
 
@@ -209,6 +216,17 @@ DESCRIBE SYMBOL                                                *swank-describe*
 
 
 -------------------------------------------------------------------------------
+COMPLETIONS                                                 *swank-completions*
+
+  The Vim omni-completion function requests the possible completions for the
+  symbol currently being entered from the SWANK server. The completion list
+  is displayed in a popup menu.
+
+  Note: completions are not displayed when Slimv is not connected to the
+  SWANK server.
+
+
+-------------------------------------------------------------------------------
 INSPECTOR                                                       *swank-inspect*
 
   The Enter key is remapped in normal mode for traversing the inspector output.
@@ -238,6 +256,35 @@ TRACE                                                             *swank-trace*
   an Untrace-All command, which completely switches off tracing.
   This complies with the SWANK tracing functionality.
 
+
+===============================================================================
+FUNCTIONS                                                     *swank-functions*
+
+This section contains a reference for the Emacs/SLIME/SWANK functions
+currently implemented in the Slimv SWANK client.
+
+  :emacs-interrupt
+  :emacs-pong
+  :emacs-return-string
+  swank:connection-info
+  swank:create-repl
+  swank:describe-function
+  swank:frame-locals-for-emacs
+  swank:init-inspector
+  swank:inspect-nth-part
+  swank:inspector-pop
+  swank:invoke-nth-restart-for-emacs
+  swank:listener-eval
+  swank:operator-arglist
+  swank:simple-completions
+  swank:sldb-abort
+  swank:sldb-continue
+  swank:swank-macroexpand-1
+  swank:swank-macroexpand-all
+  swank:swank-toggle-trace
+  swank:throw-to-toplevel
+  swank:undefine-function
+  swank:untrace-all
 
 ===============================================================================
 vim:tw=80:noet:wrap:ts=8:ft=help:norl:
