@@ -1,6 +1,6 @@
-*swank.txt*                    Slimv                 Last Change: 24 Mar 2011
+*swank.txt*                    Slimv                 Last Change: 25 Mar 2011
 
-SWANK client for Slimv                                                 *swank*
+SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
 
 The Superior Lisp Interaction Mode for Vim.
