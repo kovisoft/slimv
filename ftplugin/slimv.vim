@@ -856,13 +856,11 @@ endfunction
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm()
     " Search the opening '(' if we are standing on a special form prefix character
-    let save_cpo = &cpoptions
     let c = col( '.' ) - 1
     while c < len( getline( '.' ) ) && match( "'`#", getline( '.' )[c] ) >= 0
         normal! l
         let c = c + 1
     endwhile
-    set cpoptions+=%    " Needed for correct () handling
     normal! va(o
     " Handle '() or #'() etc. type special syntax forms
     let c = col( '.' ) - 2
@@ -871,7 +869,6 @@ function! SlimvSelectForm()
         let c = c - 1
     endwhile
     silent normal! "sy
-    let &cpoptions = save_cpo
 endfunction
 
 " Find starting '(' of a top level form
