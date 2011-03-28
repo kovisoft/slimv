@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 25 Mar 2011
+*slimv.txt*                    Slimv                 Last Change: 28 Mar 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -604,8 +604,8 @@ sequence, then you may want to fine tune these Vim options:
 
     Evaluation commands:
     ,d      ,ed      Eval Defun (current top level form)
-    ,e      ,ee      Eval Last Expression (current subform)
-    ,E      ,ep      Pprint Eval Last Expression
+    ,e      ,ee      Eval Current Expression (current subform)
+    ,E      ,ep      Pprint Eval Current Expression
     ,r      ,er      Eval Region (visual selection)
     ,b      ,eb      Eval Buffer
     ,v      ,ei      Interactive Eval
@@ -613,7 +613,7 @@ sequence, then you may want to fine tune these Vim options:
 
     Debug commands:
     ,1      ,m1      Macroexpand-1
-    ,m      ,ma      Macroexpand
+    ,m      ,ma      Macroexpand All
     ,t      ,dt      Trace
     ,T      ,du      Untrace
     ,l      ,dd      Disassemble

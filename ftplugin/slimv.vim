@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  27 Mar 2011
+" Last Change:  28 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1511,8 +1511,8 @@ function! SlimvEvalBuffer()
     call SlimvEval( lines )
 endfunction
 
-" Evaluate last expression
-function! SlimvEvalLastExp()
+" Evaluate current s-expression at the cursor pos
+function! SlimvEvalExp()
     let oldpos = getpos( '.' ) 
     call SlimvSelectForm()
     call SlimvFindPackage()
@@ -1520,8 +1520,8 @@ function! SlimvEvalLastExp()
     call setpos( '.', oldpos ) 
 endfunction
 
-" Evaluate and pretty print last expression
-function! SlimvPprintEvalLastExp()
+" Evaluate and pretty print current s-expression
+function! SlimvPprintEvalExp()
     let oldpos = getpos( '.' ) 
     call SlimvSelectForm()
     call SlimvFindPackage()
@@ -1541,7 +1541,6 @@ endfunction
 function! SlimvUndefineFunction()
     if g:slimv_swank
         if s:swank_connected
-            "TODO: write new prompt after output
             call SlimvCommand( 'python swank_undefine_function("' . SlimvSelectSymbol() . '")' )
             call SlimvRefreshReplBuffer()
         endif
@@ -2066,8 +2065,8 @@ call s:MenuMap( '&Slimv.Edi&t.&Paredit-Toggle',                 '<Leader>(',  '<
 
 " Evaluation commands
 call s:MenuMap( '&Slimv.&Evaluation.Eval-&Defun',               '<Leader>d',  '<Leader>ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
-call s:MenuMap( '&Slimv.&Evaluation.Eval-Last-&Exp',            '<Leader>e',  '<Leader>ee',  ':<C-U>call SlimvEvalLastExp()<CR>' )
-call s:MenuMap( '&Slimv.&Evaluation.&Pprint-Eval-Last',         '<Leader>E',  '<Leader>ep',  ':<C-U>call SlimvPprintEvalLastExp()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.Eval-Current-&Exp',         '<Leader>e',  '<Leader>ee',  ':<C-U>call SlimvEvalExp()<CR>' )
+call s:MenuMap( '&Slimv.&Evaluation.&Pprint-Eval-Exp',          '<Leader>E',  '<Leader>ep',  ':<C-U>call SlimvPprintEvalExp()<CR>' )
 call s:MenuMap( '&Slimv.&Evaluation.Eval-&Region',              '<Leader>r',  '<Leader>er',  ':call SlimvEvalRegion()<CR>' )
 call s:MenuMap( '&Slimv.&Evaluation.Eval-&Buffer',              '<Leader>b',  '<Leader>eb',  ':<C-U>call SlimvEvalBuffer()<CR>' )
 call s:MenuMap( '&Slimv.&Evaluation.Interacti&ve-Eval\.\.\.',   '<Leader>v',  '<Leader>ei',  ':call SlimvInteractiveEval()<CR>' )

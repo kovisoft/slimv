@@ -42,8 +42,8 @@ Edit commands:
 
 Evaluation commands:
     *  Eval Defun
-    *  Eval Last Expression
-    *  Pprint Eval Last Expression
+    *  Eval Current Expression
+    *  Pprint Eval Expression
     *  Eval Region
     *  Eval Buffer
     *  Interactive Eval
