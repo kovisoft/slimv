@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  28 Mar 2011
+" Last Change:  29 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1697,6 +1697,65 @@ function! SlimvInspect()
     endif
 endfunction
 
+" Cross reference: who calls
+function! SlimvXrefBase( text, cmd )
+    if g:slimv_swank
+        if s:swank_connected
+            let s = input( a:text, SlimvSelectSymbol() )
+            if s != ''
+                let s:refresh_disabled = 1
+                call SlimvCommand( 'python swank_xref("' . s . '", "' . a:cmd . '")' )
+                let s:refresh_disabled = 0
+                call SlimvRefreshReplBuffer()
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        call SlimvError( "SWANK is switched off." )
+    endif
+endfunction
+
+" Cross reference: who calls
+function! SlimvXrefCalls()
+    call SlimvXrefBase( 'Who calls: ', ':calls' )
+endfunction
+
+" Cross reference: who references
+function! SlimvXrefReferences()
+    call SlimvXrefBase( 'Who references: ', ':references' )
+endfunction
+
+" Cross reference: who sets
+function! SlimvXrefSets()
+    call SlimvXrefBase( 'Who sets: ', ':sets' )
+endfunction
+
+" Cross reference: who binds
+function! SlimvXrefBinds()
+    call SlimvXrefBase( 'Who binds: ', ':binds' )
+endfunction
+
+" Cross reference: who macroexpands
+function! SlimvXrefMacroexpands()
+    call SlimvXrefBase( 'Who macroexpands: ', ':macroexpands' )
+endfunction
+
+" Cross reference: who specializes
+function! SlimvXrefSpecializes()
+    call SlimvXrefBase( 'Who specializes: ', ':specializes' )
+endfunction
+
+" Cross reference: list callers
+function! SlimvXrefCallers()
+    call SlimvXrefBase( 'List callers: ', ':callers' )
+endfunction
+
+" Cross reference: list callees
+function! SlimvXrefCallees()
+    call SlimvXrefBase( 'List callees: ', ':callees' )
+endfunction
+
 " ---------------------------------------------------------------------
 
 " Compile and load profiler
@@ -2093,6 +2152,16 @@ call s:MenuMap( '&Slimv.&Compilation.Compile-&Load-File',       '<Leader>L',  '<
 call s:MenuMap( '&Slimv.&Compilation.Compile-&File',            '<Leader>F',  '<Leader>cf',  ':<C-U>call SlimvCompileFile()<CR>' )
 call s:MenuMap( '&Slimv.&Compilation.Compile-&Region',          '<Leader>R',  '<Leader>cr',  ':call SlimvCompileRegion()<CR>' )
 
+" Xref commands
+call s:MenuMap( '&Slimv.&Xref.Who-&Calls',                      '<Leader>xc', '<Leader>xc',  ':call SlimvXrefCalls()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-&References',                 '<Leader>xr', '<Leader>xr',  ':call SlimvXrefReferences()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-&Sets',                       '<Leader>xs', '<Leader>xs',  ':call SlimvXrefSets()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-&Binds',                      '<Leader>xb', '<Leader>xb',  ':call SlimvXrefBinds()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-&Macroexpands',               '<Leader>xm', '<Leader>xm',  ':call SlimvXrefMacroexpands()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-&Specializes',                '<Leader>xp', '<Leader>xp',  ':call SlimvXrefSpecializes()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.&List-Callers',                   '<Leader>xl', '<Leader>xl',  ':call SlimvXrefCallers()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.List-Call&ees',                   '<Leader>xe', '<Leader>xe',  ':call SlimvXrefCallees()<CR>' )
+
 " Profile commands
 call s:MenuMap( '&Slimv.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':call SlimvLoadProfiler()<CR>' )
 call s:MenuMap( '&Slimv.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':call SlimvProfile()<CR>' )
@@ -2101,7 +2170,7 @@ call s:MenuMap( '&Slimv.&Profiling.Unprofile-&All',             '<Leader>U',  '<
 call s:MenuMap( '&Slimv.&Profiling.&Show-Profiled',             '<Leader>?',  '<Leader>ps',  ':call SlimvShowProfiled()<CR>' )
 call s:MenuMap( '&Slimv.&Profiling.-ProfilingSep-',             '',           '',            ':' )
 call s:MenuMap( '&Slimv.&Profiling.Profile-Rep&ort',            '<Leader>o',  '<Leader>pr',  ':call SlimvProfileReport()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.Profile-&Reset',             '<Leader>x',  '<Leader>px',  ':call SlimvProfileReset()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-&Reset',             '<Leader>X',  '<Leader>px',  ':call SlimvProfileReset()<CR>' )
 
 " Documentation commands
 call s:MenuMap( '&Slimv.&Documentation.Describe-&Symbol',       '<Leader>s',  '<Leader>ds',  ':call SlimvDescribeSymbol()<CR>' )
