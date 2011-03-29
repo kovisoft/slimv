@@ -267,6 +267,23 @@ def swank_parse_inspect(struct):
     buf = buf + '\n \n[<<]'
     return buf
 
+def swank_parse_xref(struct):
+    """
+    Parse the swank xref output
+    """
+    buf = ''
+    for e in struct:
+        buf = buf + unquote(e[0]) + ' - '
+        if len(e) > 1:
+            key = e[1][0]
+            if key == ':error':
+                buf = buf + 'no source information\n'
+            elif type(unquote(e[1][1])) == str:
+                buf = unquote(e[1][1]) + '\n'
+            else:
+                buf = unquote(e[1][1][1]) + '\n'
+    return buf
+
 def swank_listen():
     global output_port
     global debug_activated
@@ -386,11 +403,10 @@ def swank_listen():
                                         compl = "\n".join(params)
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':xref':
-                                    if len(params) > 1:
-                                        retval = retval + unquote(params[0]) + '\n' + unquote(params[1][1][1]) + '\n'
-                                        if len(retval) > 0 and retval[-1] != '\n':
-                                            retval = retval + '\n'
-                                        retval = retval + prompt + '> '
+                                    retval = swank_parse_xref(r[1][1])
+                                    if len(retval) > 0 and retval[-1] != '\n':
+                                        retval = retval + '\n'
+                                    retval = retval + prompt + '> '
                                 if action:
                                     action.result = retval
 
