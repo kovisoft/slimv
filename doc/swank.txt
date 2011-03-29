@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 25 Mar 2011
+*swank.txt*                    Slimv                 Last Change: 29 Mar 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -73,13 +73,18 @@ CONFIGURATION                                             *swank-configuration*
   for the swank:create-server function call in the SWANK startup procedure.
   This makes a permanent SWANK server that listens continuously. Otherwise
   each time the SWANK connection is lost, the SWANK server needs to be
-  restarted again. Example startup script:
+  restarted again.
+  Some SWANK features (like Xref) require the load of the contributed modules,
+  so it is recommended to pass
+    :load-contribs t
+  for the swank-loader:init function call in the SWANK strartup procedure.
+  Example startup script:
 
 (load (merge-pathnames "swank-loader.lisp" *load-truename*))
 
 (swank-loader:init :delete nil
                    :reload nil
-                   :load-contribs nil)
+                   :load-contribs t)
 
 (swank:create-server :port 4005
                      :coding-system "iso-latin-1-unix"

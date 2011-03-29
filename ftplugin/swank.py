@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  24 Mar 2011
+# Last Change:  29 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -385,8 +385,15 @@ def swank_listen():
                                     if type(params) == list and type(params[0]) == str and params[0] != 'nil':
                                         compl = "\n".join(params)
                                         retval = retval + compl.replace('"', '')
-                                        if action:
-                                            action.result = retval
+                                elif action.name == ':xref':
+                                    if len(params) > 1:
+                                        retval = retval + unquote(params[0]) + '\n' + unquote(params[1][1][1]) + '\n'
+                                        if len(retval) > 0 and retval[-1] != '\n':
+                                            retval = retval + '\n'
+                                        retval = retval + prompt + '> '
+                                if action:
+                                    action.result = retval
+
                     elif result == ':abort':
                         debug_activated = False
                         vim.command('let s:debug_activated=0')
@@ -529,6 +536,10 @@ def swank_macroexpand_all(formvar):
     form = vim.eval(formvar)
     cmd = '(swank:swank-macroexpand-all ' + requote(form) + ')'
     swank_rex(':swank-macroexpand-all', cmd, 'nil', 't')
+
+def swank_xref(fn, type):
+    cmd = "(swank:xref '" + type + " '" + '"' + fn + '")'
+    swank_rex(':xref', cmd, 'nil', 't')
 
 ###############################################################################
 # Generic SWANK connection handling
