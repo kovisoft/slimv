@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  29 Mar 2011
+# Last Change:  30 Mar 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -463,6 +463,13 @@ def swank_rex(action, cmd, package, thread):
     form = '(:emacs-rex ' + cmd + ' ' + package + ' ' + thread + ' ' + str(id) + ')\n'
     swank_send(form)
 
+def get_package():
+    pkg = vim.eval("s:swank_package")
+    if pkg == '':
+        return 'nil'
+    else:
+        return requote(pkg)
+
 ###############################################################################
 # Various SWANK messages
 ###############################################################################
@@ -504,15 +511,15 @@ def swank_frame_locals(frame):
 
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
-    swank_rex(':describe-symbol', cmd, 'nil', 't')
+    swank_rex(':describe-symbol', cmd, get_package(), 't')
 
 def swank_describe_function(fn):
     cmd = '(swank:describe-function "' + fn + '")'
-    swank_rex(':describe-function', cmd, 'nil', 't')
+    swank_rex(':describe-function', cmd, get_package(), 't')
 
 def swank_op_arglist(op):
     cmd = '(swank:operator-arglist "' + op + '" "' + package + '")'
-    swank_rex(':operator-arglist', cmd, 'nil', 't')
+    swank_rex(':operator-arglist', cmd, get_package(), 't')
 
 def swank_completions(symbol):
     cmd = '(swank:simple-completions "' + symbol + '" "' + package + '")'
@@ -520,14 +527,14 @@ def swank_completions(symbol):
 
 def swank_undefine_function(fn):
     cmd = '(swank:undefine-function "' + fn + '")'
-    swank_rex(':undefine-function', cmd, 'nil', 't')
+    swank_rex(':undefine-function', cmd, get_package(), 't')
 
 def swank_return_string(s):
     swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')
 
 def swank_inspect(symbol):
     cmd = '(swank:init-inspector "' + symbol + '")'
-    swank_rex(':init-inspector', cmd, 'nil', 't')
+    swank_rex(':init-inspector', cmd, get_package(), 't')
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
@@ -538,7 +545,7 @@ def swank_inspector_pop():
 
 def swank_toggle_trace(symbol):
     cmd = '(swank:swank-toggle-trace "' + symbol + '")'
-    swank_rex(':swank-toggle-trace', cmd, 'nil', 't')
+    swank_rex(':swank-toggle-trace', cmd, get_package(), 't')
 
 def swank_untrace_all():
     swank_rex(':untrace-all', '(swank:untrace-all)', 'nil', 't')
@@ -546,16 +553,16 @@ def swank_untrace_all():
 def swank_macroexpand(formvar):
     form = vim.eval(formvar)
     cmd = '(swank:swank-macroexpand-1 ' + requote(form) + ')'
-    swank_rex(':swank-macroexpand-1', cmd, 'nil', 't')
+    swank_rex(':swank-macroexpand-1', cmd, get_package(), 't')
 
 def swank_macroexpand_all(formvar):
     form = vim.eval(formvar)
     cmd = '(swank:swank-macroexpand-all ' + requote(form) + ')'
-    swank_rex(':swank-macroexpand-all', cmd, 'nil', 't')
+    swank_rex(':swank-macroexpand-all', cmd, get_package(), 't')
 
 def swank_xref(fn, type):
     cmd = "(swank:xref '" + type + " '" + '"' + fn + '")'
-    swank_rex(':xref', cmd, 'nil', 't')
+    swank_rex(':xref', cmd, get_package(), 't')
 
 ###############################################################################
 # Generic SWANK connection handling
@@ -597,7 +604,7 @@ def swank_disconnect():
         vim.command('let s:swank_connected = 0')
         sys.stdout.write( 'Connection to SWANK server is closed.\n' )
 
-def swank_input(formvar, packagevar):
+def swank_input(formvar):
     form = vim.eval(formvar)
     if read_string:
         # We are in :read-string mode, pass string entered to REPL
@@ -621,7 +628,7 @@ def swank_input(formvar, packagevar):
             swank_inspect_nth_part(form[1:-2])
     else:
         # Normal s-expression evaluation
-        pkg = vim.eval(packagevar)
+        pkg = vim.eval("s:swank_package")
         if pkg == '':
             pkg = package
         swank_eval(form, pkg)
