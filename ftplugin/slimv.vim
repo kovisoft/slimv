@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  29 Mar 2011
+" Last Change:  30 Mar 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -930,6 +930,16 @@ function! SlimvFindPackage()
     endif
 endfunction
 
+" Execute the given SWANK command with current package defined
+function! SlimvCommandUsePackage( cmd )
+    call SlimvFindPackage()
+    let s:refresh_disabled = 1
+    call SlimvCommand( a:cmd )
+    let s:swank_package = ''
+    let s:refresh_disabled = 0
+    call SlimvRefreshReplBuffer()
+endfunction
+
 " Initialize embedded Python and connect to SWANK server
 function! SlimvConnectSwank()
     if !s:python_initialized
@@ -1024,8 +1034,9 @@ function! SlimvSend( args, open_buffer )
     if g:slimv_swank
         let s:refresh_disabled = 1
         let s:swank_form = text
-        call SlimvCommand( 'echo s:swank_form' )
-        call SlimvCommand( 'python swank_input("s:swank_form", "s:swank_package")' )
+        "TODO: do we need to echo the evaluated form?
+        "call SlimvCommand( 'echo s:swank_form' )
+        call SlimvCommand( 'python swank_input("s:swank_form")' )
         let s:swank_package = ''
         let s:refresh_disabled = 0
         call SlimvRefreshReplBuffer()
@@ -1589,11 +1600,8 @@ function! SlimvMacroexpand()
     if g:slimv_swank
         if s:swank_connected
             call SlimvSelectDefun()
-            let s:refresh_disabled = 1
             let s:swank_form = SlimvGetSelection()
-            call SlimvCommand( 'python swank_macroexpand("s:swank_form")' )
-            let s:refresh_disabled = 0
-            call SlimvRefreshReplBuffer()
+            call SlimvCommandUsePackage( 'python swank_macroexpand("s:swank_form")' )
         endif
     else
         let oldpos = getpos( '.' ) 
@@ -1608,11 +1616,8 @@ function! SlimvMacroexpandAll()
     if g:slimv_swank
         if s:swank_connected
             call SlimvSelectDefun()
-            let s:refresh_disabled = 1
             let s:swank_form = SlimvGetSelection()
-            call SlimvCommand( 'python swank_macroexpand_all("s:swank_form")' )
-            let s:refresh_disabled = 0
-            call SlimvRefreshReplBuffer()
+            call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
         else
             call SlimvError( "Not connected to SWANK server." )
         endif
@@ -1630,10 +1635,7 @@ function! SlimvTrace()
         if s:swank_connected
             let s = input( '(Un)trace: ', SlimvSelectSymbol() )
             if s != ''
-                let s:refresh_disabled = 1
-                call SlimvCommand( 'python swank_toggle_trace("' . s . '")' )
-                let s:refresh_disabled = 0
-                call SlimvRefreshReplBuffer()
+                call SlimvCommandUsePackage( 'python swank_toggle_trace("' . s . '")' )
                 redraw!
             endif
         else
@@ -1681,10 +1683,7 @@ function! SlimvInspect()
         if s:swank_connected
             let s = input( 'Inspect: ', SlimvSelectSymbol() )
             if s != ''
-                let s:refresh_disabled = 1
-                call SlimvCommand( 'python swank_inspect("' . s . '")' )
-                let s:refresh_disabled = 0
-                call SlimvRefreshReplBuffer()
+                call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
             endif
         else
             call SlimvError( "Not connected to SWANK server." )
@@ -1703,10 +1702,7 @@ function! SlimvXrefBase( text, cmd )
         if s:swank_connected
             let s = input( a:text, SlimvSelectSymbol() )
             if s != ''
-                let s:refresh_disabled = 1
-                call SlimvCommand( 'python swank_xref("' . s . '", "' . a:cmd . '")' )
-                let s:refresh_disabled = 0
-                call SlimvRefreshReplBuffer()
+                call SlimvCommandUsePackage( 'python swank_xref("' . s . '", "' . a:cmd . '")' )
             endif
         else
             call SlimvError( "Not connected to SWANK server." )
@@ -1876,10 +1872,7 @@ endfunction
 function! SlimvDescribeSymbol()
     if g:slimv_swank
         if s:swank_connected
-            let s:refresh_disabled = 1
-            call SlimvCommand( 'python swank_describe_symbol("' . SlimvSelectSymbol() . '")' )
-            let s:refresh_disabled = 0
-            call SlimvRefreshReplBuffer()
+            call SlimvCommandUsePackage( 'python swank_describe_symbol("' . SlimvSelectSymbol() . '")' )
         else
             call SlimvError( "Not connected to SWANK server." )
         endif
@@ -2158,7 +2151,7 @@ call s:MenuMap( '&Slimv.&Xref.Who-&References',                 '<Leader>xr', '<
 call s:MenuMap( '&Slimv.&Xref.Who-&Sets',                       '<Leader>xs', '<Leader>xs',  ':call SlimvXrefSets()<CR>' )
 call s:MenuMap( '&Slimv.&Xref.Who-&Binds',                      '<Leader>xb', '<Leader>xb',  ':call SlimvXrefBinds()<CR>' )
 call s:MenuMap( '&Slimv.&Xref.Who-&Macroexpands',               '<Leader>xm', '<Leader>xm',  ':call SlimvXrefMacroexpands()<CR>' )
-call s:MenuMap( '&Slimv.&Xref.Who-&Specializes',                '<Leader>xp', '<Leader>xp',  ':call SlimvXrefSpecializes()<CR>' )
+call s:MenuMap( '&Slimv.&Xref.Who-S&pecializes',                '<Leader>xp', '<Leader>xp',  ':call SlimvXrefSpecializes()<CR>' )
 call s:MenuMap( '&Slimv.&Xref.&List-Callers',                   '<Leader>xl', '<Leader>xl',  ':call SlimvXrefCallers()<CR>' )
 call s:MenuMap( '&Slimv.&Xref.List-Call&ees',                   '<Leader>xe', '<Leader>xe',  ':call SlimvXrefCallees()<CR>' )
 
