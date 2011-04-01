@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 29 Mar 2011
+*swank.txt*                    Slimv                 Last Change: 01 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -30,9 +30,12 @@ INSTALLATION                                               *swank-installation*
     Python version.
   - Lisp or Clojure installed.
     Any Lisp implementation is OK that has SLIME support.
-  - SWANK server installed.
-    This can be a standalone SWANK installation (like swank-clojure),
-    or as part of Emacs with SLIME, or Leiningen (lein swank).
+
+  The bundle version of Slimv also contains SLIME (currently only for Lisp,
+  swank-clojure is not yet embedded in Slimv). If you intend to use your
+  own version of SLIME, then you need to have your own SWANK server installed.
+  For example Clojure users might consider installing Leiningen and run the
+  SWANK server via lein swank.
 
 
 ===============================================================================
@@ -96,7 +99,7 @@ CONFIGURATION                                             *swank-configuration*
   using the g:swank_port option.
 
                                                               *g:slimv_timeout*
-  There is a 5 second timeout defined for starting up or connecting to the
+  There is a 8 second timeout defined for starting up or connecting to the
   SWANK server. This timeout can be changed via the g:slimv_timeout option.
 
 
@@ -119,6 +122,7 @@ For a complete reference of SWANK functions implemented see |swank-functions|.
 |swank-completions|          List of possible symbol completions
 |swank-inspect|              Inspector
 |swank-trace|                Trace function
+|swank-xref|                 Cross Reference
 
 -------------------------------------------------------------------------------
 EVALUATION                                                         *swank-eval*
@@ -262,6 +266,15 @@ TRACE                                                             *swank-trace*
   This complies with the SWANK tracing functionality.
 
 
+-------------------------------------------------------------------------------
+CROSS REFERENCE                                                    *swank-xref*
+
+  SLIME's cross reference functionality can be used to list the functions
+  calling a specific function, the list of functions called from a specific
+  function, and other variable, macro, etc. references.
+  Please note that not all Lisp implementations support the xref functionality.
+
+
 ===============================================================================
 FUNCTIONS                                                     *swank-functions*
 
@@ -290,6 +303,7 @@ currently implemented in the Slimv SWANK client.
   swank:throw-to-toplevel
   swank:undefine-function
   swank:untrace-all
+  swank:xref
 
 ===============================================================================
 vim:tw=80:noet:wrap:ts=8:ft=help:norl:

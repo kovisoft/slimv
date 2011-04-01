@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 28 Mar 2011
+*slimv.txt*                    Slimv                 Last Change: 01 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -49,9 +49,6 @@ Prerequisites:
     Cygwin Python implementation Cygwin users should install Windows Python,
     which is autodetected by the script.
 
-  Recommended components:
-  - SWANK server is highly recommended. Please find details in |swank.txt|.
-
   Optional components:
   - The interrupt functionality needs the pywin32 extension on Windows, but
     only when not using the SWANK server.
@@ -61,14 +58,15 @@ Prerequisites:
 To install the script:
 
   - Install all required components described above.
-  - Download the slimv.zip.
+  - Download slimv.zip.
   - Extract the zip archive into your vimfiles or runtime directory.
     See Vim help file |usr_05.txt| for details on adding a plugin.
     The archive contains the following files:
 
+       doc/paredit.txt
        doc/slimv.txt
+       doc/swank.txt
        ftdetect/clojure.vim
-       ftplugin/metering.lisp
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
@@ -79,6 +77,7 @@ To install the script:
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
        plugin/paredit.vim
+       slime/* (only in the bundle version)
        syntax/clojure/slimv-syntax-clojure.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
@@ -88,7 +87,6 @@ To install the script:
     files:
 
        doc/slimv.txt
-       ftplugin/metering.lisp
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
@@ -123,9 +121,10 @@ Uninstallation:
   - Delete the files that were copied to the vimfiles directory during
     installation:
 
+       doc/paredit.txt
        doc/slimv.txt
+       doc/swank.txt
        ftdetect/clojure.vim
-       ftplugin/metering.*
        ftplugin/slimv.py
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
@@ -136,10 +135,8 @@ Uninstallation:
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
        plugin/paredit.vim
+       slime/*
        syntax/clojure/slimv-syntax-clojure.vim
-
-    (Special note on metering.lisp: if the profiler was compiled, then the
-    compiled files should be deleted as well, hence the metering.* above.)
 
 
 ===============================================================================
@@ -783,12 +780,10 @@ option.
 PROFILING                                                     *slimv-profiling*
 
 Slimv is capable of utilizing SBCL's built-in profiler, and also the same
-monitoring/profiling package (metering.lisp) that is used by SLIME, at least
-for CLISP and maybe for some other Common Lisp implementations.
-Fortunately SLIME's metering.lisp is in public domain, so its current version
-(at the time of writing this document) is included in Slimv.
-The most recent version can be extracted from the main directory of SLIME.
-SLIME can be downloaded from http://common-lisp.net/project/slime/
+monitoring/profiling package (metering.lisp) that is used by SLIME.
+metering.lisp is part of SLIME, which is embedded in the Slimv bundle version.
+If you don't want to use the embedded SLIME, but need profiling support,
+then please keep metering.lisp in the slime directory or copy it in ftplugin.
 
 SBCL's profiler is ready to use by just starting the Lisp REPL.
 In order to use SLIME's profiler with CLISP it first must be compiled and
@@ -1290,6 +1285,7 @@ TODO                                                               *slimv-todo*
 
 - Add missing SLIME functions to the SWANK client.
 - Separate SLDB/Inspector/etc buffers from the REPL buffer.
+- Allow connecting remote SWANK server (outside of localhost).
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
