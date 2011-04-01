@@ -51,7 +51,7 @@ Evaluation commands:
 
 Debug commands:
     *  Macroexpand-1
-    *  Macroexpand
+    *  Macroexpand All
     *  Trace
     *  Untrace
     *  Disassemble
