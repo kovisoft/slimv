@@ -68,7 +68,7 @@ function! SlimvMakeClientCommand()
     let cmd = g:slimv_python
 
     " Add path of Slimv script, enclose it in double quotes if path contains spaces
-    if match( g:slimv_path, ' ' ) >= 0
+    if g:slimv_path[0] != '"' && match( g:slimv_path, ' ' ) >= 0
         let cmd = cmd . ' "' . g:slimv_path . '"'
     else
         let cmd = cmd . ' ' . g:slimv_path
@@ -80,7 +80,7 @@ function! SlimvMakeClientCommand()
     endif
 
     " Add Lisp path
-    if match( g:slimv_lisp, ' ' ) >= 0
+    if g:slimv_lisp[0] != '"' && match( g:slimv_lisp, ' ' ) >= 0
         let cmd = cmd . ' -l "' . g:slimv_lisp . '"'
     else
         let cmd = cmd . ' -l ' . g:slimv_lisp
@@ -180,8 +180,9 @@ function! SlimvSwankCommand()
     endif
     if cmd != ''
         if g:slimv_windows || g:slimv_cygwin
-            return '!start ' . cmd
+            return '!start /MIN ' . cmd
         else
+            "TODO: xterm -iconic
             return '! xterm -e ' . cmd . ' &'
         endif
     endif
@@ -1013,7 +1014,7 @@ function! SlimvConnectSwank()
 endfunction
 
 " Send argument to Lisp server for evaluation
-function! SlimvSend( args, open_buffer )
+function! SlimvSend( args, open_buffer, echoing )
     call SlimvClientCommand()
     if g:slimv_client == ''
         return
@@ -1039,8 +1040,9 @@ function! SlimvSend( args, open_buffer )
     if g:slimv_swank
         let s:refresh_disabled = 1
         let s:swank_form = text
-        "TODO: do we need to echo the evaluated form?
-        call SlimvCommand( 'echo s:swank_form' )
+        if a:echoing
+            call SlimvCommand( 'echo s:swank_form' )
+        endif
         call SlimvCommand( 'python swank_input("s:swank_form")' )
         let s:swank_package = ''
         let s:refresh_disabled = 0
@@ -1064,7 +1066,7 @@ endfunction
 
 " Eval arguments in Lisp REPL
 function! SlimvEval( args )
-    call SlimvSend( a:args, g:slimv_repl_open )
+    call SlimvSend( a:args, g:slimv_repl_open, 1 )
 endfunction
 
 " Set command line after the prompt
@@ -1191,7 +1193,8 @@ function! SlimvSendCommand( close )
                 " Expression finished, let's evaluate it
                 " but first add it to the history
                 call SlimvAddHistory( cmd )
-                call SlimvEval( cmd )
+                " Evaluating without echoing
+                call SlimvSend( cmd, g:slimv_repl_open, 0 )
             elseif paren < 0
                 " Too many closing braces
                 call SlimvErrorWait( "Too many closing parens found." )
@@ -1360,7 +1363,7 @@ function! SlimvInterrupt()
     if g:slimv_swank
         call SlimvCommand( 'python swank_interrupt()' )
     else
-        call SlimvSend( ['SLIMV::INTERRUPT'], 0 )
+        call SlimvSend( ['SLIMV::INTERRUPT'], 0, 1 )
     endif
     call SlimvRefreshReplBuffer()
 endfunction
@@ -1411,7 +1414,7 @@ function! SlimvConnectServer()
         call SlimvConnectSwank()
     endif
     if !g:slimv_swank
-        call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open )
+        call SlimvSend( ['SLIMV::OUTPUT::' . s:repl_name ], g:slimv_repl_open, 1 )
     endif
 endfunction
 
