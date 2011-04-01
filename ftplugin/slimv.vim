@@ -174,6 +174,10 @@ function! SlimvSwankCommand()
             let cmd = '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
         elseif b:SlimvImplementation() == 'clisp'
             let cmd = '"' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
+        elseif b:SlimvImplementation() == 'allegro'
+            let cmd = '"' . g:slimv_lisp . '" -L "' . swanks[0] . '"'
+        elseif b:SlimvImplementation() == 'cmu'
+            let cmd = '"' . g:slimv_lisp . '" -load "' . swanks[0] . '"'
         else
             let cmd = '"' . g:slimv_lisp . '" -l "' . swanks[0] . '"'
         endif
@@ -294,7 +298,7 @@ endif
 
 " General timeout for various startup and connection events (seconds)
 if !exists( 'g:slimv_timeout' )
-    let g:slimv_timeout = 5
+    let g:slimv_timeout = 8
 endif
 
 " Use balloonexpr to display symbol description

@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
 " Version:      0.8.0
-" Last Change:  07 Mar 2011
+" Last Change:  01 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -44,6 +44,22 @@ function! b:SlimvAutodetect()
         " Allegro Common Lisp
         return ['acl', 'allegro']
     endif
+    if executable( 'mlisp' )
+        " Allegro Common Lisp
+        return ['mlisp', 'allegro']
+    endif
+    if executable( 'mlisp8' )
+        " Allegro Common Lisp
+        return ['mlisp8', 'allegro']
+    endif
+    if executable( 'alisp' )
+        " Allegro Common Lisp
+        return ['alisp', 'allegro']
+    endif
+    if executable( 'alisp8' )
+        " Allegro Common Lisp
+        return ['alisp8', 'allegro']
+    endif
     if executable( 'lwl' )
         " LispWorks
         return ['lwl', 'lispworks']
@@ -74,6 +90,10 @@ function! b:SlimvAutodetect()
         let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*', 'sbcl.exe' ), '\n' )
         if len( lisps ) > 0
             return [lisps[0], 'sbcl']
+        endif
+        let lisps = split( globpath( 'c:/acl*,c:/Program Files/acl*,c:/Program Files/*lisp*/bin/acl*', '*lisp*.exe' ), '\n' )
+        if len( lisps ) > 0
+            return [lisps[0], 'allegro']
         endif
         let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
         if len( lisps ) > 0
