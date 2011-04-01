@@ -8,17 +8,22 @@
 
 ;;; For additional swank-side configurations see
 ;;; 6.2 section of the Slime user manual.
+;;;
+;;; Modified for Slimv:
+;;; - load contribs
+;;; - don't close connection
 
 (load (merge-pathnames "swank-loader.lisp" *load-truename*))
 
 (swank-loader:init
  :delete nil         ; delete any existing SWANK packages
  :reload nil         ; reload SWANK, even if the SWANK package already exists
- :load-contribs nil) ; load all contribs
+ :load-contribs t)   ; load all contribs
 
 (swank:create-server :port 4005
                      :coding-system "iso-latin-1-unix"
 
                      ;; if non-nil the connection won't be closed
                      ;; after connecting
-                     :dont-close nil)
+                     :dont-close t)
+
