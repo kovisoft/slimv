@@ -261,6 +261,11 @@ if !exists( 'g:slimv_repl_wrap' )
     let g:slimv_repl_wrap = 1
 endif
 
+" Syntax highlighting for the REPL buffer
+if !exists( 'g:slimv_repl_syntax' )
+    let g:slimv_repl_syntax = 0
+endif
+
 " Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
 if !exists( 'g:slimv_updatetime' )
     let g:slimv_updatetime = 500
@@ -570,6 +575,9 @@ function! SlimvCommand( cmd )
     let s:last_update = localtime()
 
     syntax on
+    if !g:slimv_repl_syntax
+        set syntax=
+    endif
     if g:slimv_swank
         setlocal buftype=nofile
         setlocal noswapfile
@@ -668,6 +676,9 @@ function! SlimvRefreshReplBuffer()
         " Oops, something went wrong, the buffer will not be refreshed this time
     endtry
     syntax on
+    if !g:slimv_repl_syntax
+        set syntax=
+    endif
     if g:slimv_swank
         setlocal buftype=nofile
         setlocal noswapfile
