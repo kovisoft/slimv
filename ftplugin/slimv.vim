@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  01 Apr 2011
+" Last Change:  02 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -187,7 +187,7 @@ function! SlimvSwankCommand()
             return '!start /MIN ' . cmd
         else
             "TODO: xterm -iconic
-            return '! xterm -e ' . cmd . ' &'
+            return '! xterm -iconic -e ' . cmd . ' &'
         endif
     endif
     return ''
@@ -298,7 +298,7 @@ endif
 
 " General timeout for various startup and connection events (seconds)
 if !exists( 'g:slimv_timeout' )
-    let g:slimv_timeout = 8
+    let g:slimv_timeout = 20
 endif
 
 " Use balloonexpr to display symbol description
@@ -2220,4 +2220,7 @@ function SlimvAddReplMenu()
     amenu &REPL.&Next-Input                            :call SlimvNextCommand()<CR>
     amenu &REPL.&Refresh                               :call SlimvRefresh()<CR>
 endfunction
+
+" Switch on syntax highlighting
+syntax on
 

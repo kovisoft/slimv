@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 01 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 02 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -40,10 +40,6 @@ INSTALLATION                                               *swank-installation*
 
 ===============================================================================
 CONFIGURATION                                             *swank-configuration*
-
-  Vim may not be configured to load the filetype plugins by default.
-  In this case it might be needed to add this line to the .vimrc file:
-    :filetype plugin on
 
                                                             *g:slimv_swank_cmd*
                                                         *g:slimv_swank_clojure*
@@ -99,8 +95,11 @@ CONFIGURATION                                             *swank-configuration*
   using the g:swank_port option.
 
                                                               *g:slimv_timeout*
-  There is a 8 second timeout defined for starting up or connecting to the
+  There is a 20 second timeout defined for starting up or connecting to the
   SWANK server. This timeout can be changed via the g:slimv_timeout option.
+  Please note that the very first startup of the SWANK server may take more
+  time than the subsequent startups, so it is not recommended to make this
+  timeout too low.
 
 
                                                               *g:slimv_balloon*
