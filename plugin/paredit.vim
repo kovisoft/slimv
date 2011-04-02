@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.8.0
-" Last Change:  27 Mar 2010
+" Last Change:  02 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -15,6 +15,9 @@ if &cp || exists( 'g:paredit_loaded' )
 endif
 
 let g:paredit_loaded = 1
+
+" Needed to load filetype plugins
+filetype plugin on
 
 " =====================================================================
 "  Global variable definitions

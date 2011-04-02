@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
 " Version:      0.8.0
-" Last Change:  01 Apr 2011
+" Last Change:  02 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -20,6 +20,10 @@ let g:slimv_lisp_loaded = 1
 " Returns list [Lisp executable, Lisp implementation]
 function! b:SlimvAutodetect()
     " Check the easy cases
+    if executable( 'sbcl' )
+        " Steel Bank Common Lisp
+        return ['sbcl', 'sbcl']
+    endif
     if executable( 'clisp' )
         " Common Lisp
         return ['clisp', 'clisp']
@@ -31,10 +35,6 @@ function! b:SlimvAutodetect()
     if executable( 'cmucl' )
         " Carnegie Mellon University Common Lisp
         return ['cmucl', 'cmu']
-    endif
-    if executable( 'sbcl' )
-        " Steel Bank Common Lisp
-        return ['sbcl', 'sbcl']
     endif
     if executable( 'ecl' )
         " Embeddable Common Lisp
