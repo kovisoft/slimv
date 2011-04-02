@@ -11,10 +11,11 @@ Tamas Kovacs
 --------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
-Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux, Windows and Mac OS X. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop).
+Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux, Windows, and Mac OS X. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop).
 
-The latest development version (not yet released here) also contains a SWANK (TCP server for Emacs) client, which means it is able to communicate with a running SWANK server, similarly to SLIME. If you are interested please consult doc/swank.txt in the Slimv repository:
-https://bitbucket.org/kovisoft/slimv/
+The latest development version (not yet released here) also contains a SWANK (TCP server for Emacs) client, which means it is able to communicate with a running SWANK server, similarly to SLIME. There is also a bundle version with SLIME embedded. If you are interested please download it from the Slimv repository:
+https://bitbucket.org/kovisoft/slimv/downloads
+Consult doc/swank.txt for details on the SWANK integration.
 
 Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
 The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
