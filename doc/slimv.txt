@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 01 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 02 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -206,6 +206,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
+
+|g:slimv_repl_syntax|        Enable syntax coloring for the REPL buffer.
 
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
@@ -416,6 +418,17 @@ The default value is 200 (=0.2 sec).
                                                               *g:slimv_package*
 If nonzero then Slimv package/namespace handling is switched on. Please find
 details in the |slimv-package| section.
+
+                                                          *g:slimv_repl_syntax*
+Enables syntax highlighting for the REPL buffer. Switched off by default for
+two reasons:
+  1. The REPL buffer also contains the REPL output, which is generally not
+     related to s-expressions, therefore may confuse syntax coloring.
+  2. REPL output may contain very long lines, which significantly slows down
+     syntax coloring in Vim. If you really want to enable syntax highlighting
+     for the REPL buffer, then it is recommended to adjust the |synmaxcol|
+     parameter to a relatively low value in order to increase syntax coloring
+     speed.
 
                                                             *g:slimv_repl_wrap*
 Set wrap mode for the REPL buffer, which means the lines longer than the

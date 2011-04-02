@@ -9,6 +9,18 @@ created by
 Tamas Kovacs
  
 --------------------------------------------------------------------------------
+Downloads
+--------------------------------------------------------------------------------
+slimvXXX.zip :
+    This is the latest released (stable) version - does not contain SWANK client.
+
+slimvXXX-dev-XXXXXXXX.zip :
+    This is the most recent development snapshot without SLIME - containing SWANK client.
+
+slimvXXX-dev-XXXXXXXX-slime-bundle.zip :
+    This is the most recent development snapshot with SLIME embedded - containing SWANK client.
+
+--------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
 Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux, Windows, and Mac OS X. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop).
