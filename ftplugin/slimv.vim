@@ -2107,6 +2107,21 @@ if &omnifunc == ''
     set omnifunc=SlimvComplete
 endif
 
+" Set current package
+function! SlimvSetPackage()
+    if s:swank_connected
+        let pkg = input( 'Package: ' )
+        if pkg != ''
+            let s:refresh_disabled = 1
+            call SlimvCommand( 'python swank_set_package("' . pkg . '")' )
+            let s:refresh_disabled = 0
+            call SlimvRefreshReplBuffer()
+        endif
+    else
+        call SlimvError( "Not connected to SWANK server." )
+    endif
+endfunction
+
 " =====================================================================
 "  Slimv keybindings
 " =====================================================================
@@ -2127,11 +2142,11 @@ function! s:MenuMap( name, shortcut1, shortcut2, command )
 
     if shortcut != ''
         execute "noremap <silent> " . shortcut . " " . a:command
-        if g:slimv_menu == 1
+        if a:name != '' && g:slimv_menu == 1
             let hint = substitute( shortcut, '\c<Leader>', s:leader, "g" )
             silent execute "amenu " . a:name . "<Tab>" . hint . " " . a:command
         endif
-    elseif g:slimv_menu == 1
+    elseif a:name != '' && g:slimv_menu == 1
         silent execute "amenu " . a:name . " " . a:command
     endif
 endfunction
@@ -2207,6 +2222,9 @@ call s:MenuMap( '&Slimv.&Documentation.Generate-&Tags',         '<Leader>]',  '<
 
 " REPL commands
 call s:MenuMap( '&Slimv.&Repl.&Connect-Server',                 '<Leader>c',  '<Leader>rc',  ':call SlimvConnectServer()<CR>' )
+if g:slimv_swank
+call s:MenuMap( '',                                             '<Leader>g',  '<Leader>rp',  ':call SlimvSetPackage()<CR>' )
+endif
 call s:MenuMap( '&Slimv.&Repl.Interrup&t-Lisp-Process',         '<Leader>y',  '<Leader>ri',  ':call SlimvInterrupt()<CR>' )
 
 
@@ -2233,6 +2251,7 @@ function SlimvAddReplMenu()
 
     amenu &REPL.Send-&Input                            :call SlimvSendCommand(0)<CR>
     amenu &REPL.Cl&ose-Send-Input                      :call SlimvSendCommand(1)<CR>
+    amenu &REPL.Set-Packa&ge                           :call SlimvSetPackage()<CR>
     amenu &REPL.Interrup&t-Lisp-Process                <Esc>:<C-U>call SlimvInterrupt()<CR>
     amenu &REPL.-REPLSep-                              :
     amenu &REPL.&Previous-Input                        :call SlimvPreviousCommand()<CR>
