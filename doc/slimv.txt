@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 05 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -662,6 +662,7 @@ sequence, then you may want to fine tune these Vim options:
     REPL menu commands:
     ,.      ,rs      Send Input
     ,/      ,ro      Close and Send Input
+    ,g      ,rp      Set Package (only when using SWANK client)
     <C-C>   <C-C>    Interrupt Lisp Process
     ,<Up>   ,rp      Previous Input
     ,<Down> ,rn      Next Input

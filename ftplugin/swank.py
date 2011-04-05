@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  30 Mar 2011
+# Last Change:  05 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -407,6 +407,10 @@ def swank_listen():
                                     if len(retval) > 0 and retval[-1] != '\n':
                                         retval = retval + '\n'
                                     retval = retval + prompt + '> '
+                                elif action.name == ':set-package':
+                                    package = unquote(params[0])
+                                    prompt = unquote(params[1])
+                                    retval = prompt + '> '
                                 if action:
                                     action.result = retval
 
@@ -508,6 +512,10 @@ def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-for-emacs ' + frame + ')'
     swank_rex(':frame-locals-for-emacs', cmd, 'nil', current_thread)
     sys.stdout.write( 'Locals:\n' )
+
+def swank_set_package(fn):
+    cmd = '(swank:set-package "' + fn + '")'
+    swank_rex(':set-package', cmd, get_package(), ':repl-thread')
 
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
