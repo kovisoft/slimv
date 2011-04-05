@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.8.0
-" Last Change:  15 Mar 2011
+" Last Change:  05 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -16,16 +16,25 @@ endif
 
 let g:slimv_clojure_loaded = 1
 
+" Transform filename so that it will not contain spaces
+function! s:TransformFilename( name )
+    if match( a:name, ' ' ) >= 0
+        return fnamemodify( a:name , ':8' )
+    else
+        return a:name
+    endif
+endfunction
+
 " Build a Clojure startup command by adding
 " all clojure*.jar files found to the classpath
 function! b:SlimvBuildStartCmd( lisps )
-    let cp = a:lisps[0]
+    let cp = s:TransformFilename( a:lisps[0] )
     let i = 1
     while i < len( a:lisps )
-        let cp = cp . ';' . a:lisps[i]
+        let cp = cp . ';' . s:TransformFilename( a:lisps[i] )
         let i = i + 1
     endwhile
-    return ['"java -cp ' . cp . ' clojure.main"', 'clojure']
+    return ['java -cp ' . cp . ' clojure.main', 'clojure']
 endfunction
 
 " Try to autodetect Clojure executable
@@ -49,6 +58,19 @@ function! b:SlimvAutodetect()
         return b:SlimvBuildStartCmd( lisps )
     endif
 
+    if g:slimv_swank
+        " Check if Clojure is bundled with Slimv
+        let lisps = split( globpath( &runtimepath, 'swank-clojure/clojure*.jar'), '\n' )
+        if len( lisps ) > 0
+            " Try to find swank-clojure and add it to classpath
+            let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
+            if len( swanks ) > 0
+                call add( lisps, swanks[0] )
+            endif
+            return b:SlimvBuildStartCmd( lisps )
+        endif
+    endif
+
     " Try to find Clojure in the PATH
     let path = substitute( $PATH, ';', ',', 'g' )
     let lisps = split( globpath( path, 'clojure*.jar' ), '\n' )
@@ -58,7 +80,7 @@ function! b:SlimvAutodetect()
 
     if g:slimv_windows
         " Try to find Clojure on the standard installation places
-        let lisps = split( globpath( 'c:/*clojure*', 'clojure*.jar' ), '\n' )
+        let lisps = split( globpath( 'c:/*clojure*,c:/*clojure*/lib', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
             return b:SlimvBuildStartCmd( lisps )
         endif

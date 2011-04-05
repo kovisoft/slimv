@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  02 Apr 2011
+" Last Change:  05 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -150,9 +150,17 @@ function! SlimvSwankCommand()
 
     let cmd = ''
     if SlimvGetFiletype() == 'clojure'
-        " For Clojure only 'lein swank' is autodetected
+        " First autodetect 'lein swank'
         if executable( 'lein' )
             let cmd = '"lein swank"'
+        else
+            " Check if swank-clojure is bundled with Slimv
+            let swanks = split( globpath( &runtimepath, 'swank-clojure/swank/swank.clj'), '\n' )
+            if len( swanks ) == 0
+                return ''
+            endif
+            let sclj = substitute( swanks[0], '\', '/', "g" )
+            let cmd = g:slimv_lisp . ' -e "(load-file \"' . sclj . '\") (swank.swank/start-repl)" -r'
         endif
     else
         " First check if SWANK is bundled with Slimv
@@ -186,7 +194,6 @@ function! SlimvSwankCommand()
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
         else
-            "TODO: xterm -iconic
             return '! xterm -iconic -e ' . cmd . ' &'
         endif
     endif
@@ -604,7 +611,8 @@ function! SlimvCommandGetResponse( name, cmd )
     let msg = ''
     let s:swank_action = ''
     let starttime = localtime()
-    while s:swank_action == '' && localtime()-starttime < g:slimv_timeout
+    let cmd_timeout = 3
+    while s:swank_action == '' && localtime()-starttime < cmd_timeout
         python swank_listen()
         redir => msg
         silent execute 'python swank_response("' . a:name . '")'
