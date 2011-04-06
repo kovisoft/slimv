@@ -284,6 +284,7 @@ currently implemented in the Slimv SWANK client.
   :emacs-pong
   :emacs-return-string
   swank:compile-file-for-emacs
+  swank:compile-string-for-emacs
   swank:connection-info
   swank:create-repl
   swank:describe-function

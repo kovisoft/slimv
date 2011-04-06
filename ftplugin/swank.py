@@ -176,7 +176,9 @@ def unquote(s):
         return s
 
 def requote(s):
-    return '"' + s.replace('"', '\\"') + '"'
+    t = s.replace('\\', '\\\\')
+    t = t.replace('"', '\\"')
+    return '"' + t + '"'
 
 def make_keys(lst):
     keys = {}
@@ -436,6 +438,8 @@ def swank_listen():
                                 logprint(str(params))
                                 time = params[3]
                                 filename = params[5]
+                                if filename[0] != '"':
+                                    filename = '"' + filename + '"'
                                 vim.command('let s:compiled_file=' + filename + '')
                                 retval = swank_parse_compile(params) + prompt + '> '
                             else:
@@ -613,6 +617,11 @@ def swank_macroexpand_all(formvar):
 def swank_xref(fn, type):
     cmd = "(swank:xref '" + type + " '" + '"' + fn + '")'
     swank_rex(':xref', cmd, get_package(), 't')
+
+def swank_compile_string(formvar):
+    form = vim.eval(formvar)
+    cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position 1) (:line 1 1))" + ' nil nil)'
+    swank_rex(':compile-string-for-emacs', cmd, get_package(), 't')
 
 def swank_compile_file(name):
     cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' t)'
