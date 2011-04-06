@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 05 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 06 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -283,6 +283,7 @@ currently implemented in the Slimv SWANK client.
   :emacs-interrupt
   :emacs-pong
   :emacs-return-string
+  swank:compile-file-for-emacs
   swank:connection-info
   swank:create-repl
   swank:describe-function
@@ -292,6 +293,7 @@ currently implemented in the Slimv SWANK client.
   swank:inspector-pop
   swank:invoke-nth-restart-for-emacs
   swank:listener-eval
+  swank:load-file
   swank:operator-arglist
   swank:set-package
   swank:simple-completions

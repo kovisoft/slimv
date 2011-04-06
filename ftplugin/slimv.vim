@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  05 Apr 2011
+" Last Change:  06 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -469,6 +469,7 @@ let s:swank_package = ''                                  " Package to use at th
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:debug_activated = 0                                 " Are we in the SWANK debugger?
+let s:compiled_file = ''                                  " Name of the compiled file
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 
@@ -1883,14 +1884,40 @@ endfunction
 function! SlimvCompileLoadFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
-    call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
+    if g:slimv_swank
+        if s:swank_connected
+            let s:compiled_file = ''
+            call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
+            let starttime = localtime()
+            while s:compiled_file == '' && localtime()-starttime < g:slimv_timeout
+                call SlimvCommand( 'python swank_output()' )
+                call SlimvSwankResponse()
+            endwhile
+            if s:compiled_file != ''
+                call SlimvCommandUsePackage( 'python swank_load_file("' . s:compiled_file . '")' )
+                let s:compiled_file = ''
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'T' )
+    endif
 endfunction
 
 " Compile whole file
 function! SlimvCompileFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
-    call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'NIL' )
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        call SlimvEvalForm2( g:slimv_template_compile_file, filename, 'NIL' )
+    endif
 endfunction
 
 function! SlimvCompileRegion() range
