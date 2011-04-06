@@ -1874,9 +1874,18 @@ function! SlimvCompileDefun()
     let oldpos = getpos( '.' ) 
     call SlimvSelectDefun()
     call SlimvFindPackage()
-    let form = SlimvGetSelection()
-    let form = substitute( form, '"', '\\\\"', 'g' )
-    call SlimvEvalForm1( g:slimv_template_compile_string, form )
+    if g:slimv_swank
+        if s:swank_connected
+            let s:swank_form = SlimvGetSelection()
+            call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let form = SlimvGetSelection()
+        let form = substitute( form, '"', '\\\\"', 'g' )
+        call SlimvEvalForm1( g:slimv_template_compile_string, form )
+    endif
     call setpos( '.', oldpos ) 
 endfunction
 
