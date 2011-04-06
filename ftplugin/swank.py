@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  05 Apr 2011
+# Last Change:  06 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -284,6 +284,31 @@ def swank_parse_xref(struct):
                 buf = unquote(e[1][1][1]) + '\n'
     return buf
 
+def swank_parse_compile(struct):
+    """
+    Parse compiler output
+    """
+    buf = ''
+    warnings = struct[1]
+    time = struct[3]
+    filename = struct[5]
+    if type(warnings) == list:
+        buf = str(len(warnings)) + ' compiler notes:\n\n'
+        for w in warnings:
+            msg      = parse_plist(w, ':message')
+            severity = parse_plist(w, ':severity')
+            if severity[0] == ':':
+                severity = severity[1:]
+            location = parse_plist(w, ':location')
+            fname   = unquote(location[1][1])
+            pos     = location[2][1]
+            snippet = unquote(location[3][1]).replace('\r', '')
+            buf = buf + snippet + '\n' + fname + ':' + pos + '\n'
+            buf = buf + '  ' + severity + ': ' + msg + '\n\n'
+    else:
+        buf = 'Compilation finished. (No warnings)  [' + time + ' secs]\n\n'
+    return buf
+
 def swank_listen():
     global output_port
     global debug_activated
@@ -325,7 +350,18 @@ def swank_listen():
                 elif message == ':write-string':
                     # REPL has new output to display
                     s = unquote(r[1])
-                    retval = retval + s
+                    add_prompt = True
+                    for k,a in actions.items():
+                        if a.pending and a.name.find('eval'):
+                            add_prompt = False
+                            break
+                    if add_prompt:
+                        retval = retval + '\n' + s
+                        if len(retval) > 0 and retval[-1] != '\n':
+                            retval = retval + '\n'
+                        retval = retval + prompt + '> '
+                    else:
+                        retval = retval + s
 
                 elif message == ':read-string':
                     # RERL requests entering a string
@@ -362,7 +398,7 @@ def swank_listen():
                                 if action:
                                     action.result = retval
                             # List of actions needing a prompt
-                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all']
+                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file']
                             if element == 'nil' or (action and action.name in to_prompt):
                                 # No more output from REPL, write new prompt
                                 if len(retval) > 0 and retval[-1] != '\n':
@@ -396,6 +432,12 @@ def swank_listen():
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
                                 retval = swank_parse_inspect(params)
+                            elif element == ':compilation-result':
+                                logprint(str(params))
+                                time = params[3]
+                                filename = params[5]
+                                vim.command('let s:compiled_file=' + filename + '')
+                                retval = swank_parse_compile(params) + prompt + '> '
                             else:
                                 logprint(str(params))
                                 if action.name == ':simple-completions':
@@ -513,8 +555,8 @@ def swank_frame_locals(frame):
     swank_rex(':frame-locals-for-emacs', cmd, 'nil', current_thread)
     sys.stdout.write( 'Locals:\n' )
 
-def swank_set_package(fn):
-    cmd = '(swank:set-package "' + fn + '")'
+def swank_set_package(pkg):
+    cmd = '(swank:set-package "' + pkg + '")'
     swank_rex(':set-package', cmd, get_package(), ':repl-thread')
 
 def swank_describe_symbol(fn):
@@ -571,6 +613,14 @@ def swank_macroexpand_all(formvar):
 def swank_xref(fn, type):
     cmd = "(swank:xref '" + type + " '" + '"' + fn + '")'
     swank_rex(':xref', cmd, get_package(), 't')
+
+def swank_compile_file(name):
+    cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' t)'
+    swank_rex(':compile-file-for-emacs', cmd, get_package(), 't')
+
+def swank_load_file(name):
+    cmd = '(swank:load-file ' + requote(name) + ')'
+    swank_rex(':load-file', cmd, get_package(), 't')
 
 ###############################################################################
 # Generic SWANK connection handling
