@@ -1440,6 +1440,11 @@ endfunction
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
     if g:slimv_swank
+        let repl_buf = bufnr( g:slimv_repl_file )
+        let repl_win = bufwinnr( repl_buf )
+        if g:slimv_repl_open && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
+            call SlimvOpenReplBuffer()
+        endif 
         call SlimvConnectSwank()
     endif
     if !g:slimv_swank
