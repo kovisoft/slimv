@@ -311,6 +311,21 @@ def swank_parse_compile(struct):
         buf = 'Compilation finished. (No warnings)  [' + time + ' secs]\n\n'
     return buf
 
+def swank_parse_locals(struct):
+    """
+    Parse frame locals output
+    """
+    buf = ''
+    if type(struct) == list:
+        for f in struct:
+            name  = parse_plist(f, ':name')
+            id    = parse_plist(f, ':id')
+            value = parse_plist(f, ':value')
+            buf = buf + name + ' : ' + value + '\n'
+    else:
+        buf = 'No locals\n'
+    return buf
+
 def swank_listen():
     global output_port
     global debug_activated
@@ -410,7 +425,9 @@ def swank_listen():
                         elif type(params) == list:
                             if type(params[0]) == list: 
                                 params = params[0]
-                            element = params[0].lower()
+                            element = ''
+                            if type(params[0]) == str: 
+                                element = params[0].lower()
                             if element == ':present':
                                 # No more output from REPL, write new prompt
                                 retval = retval + unquote(params[1][0][0]) + '\n' + prompt + '> '
@@ -458,6 +475,9 @@ def swank_listen():
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
                                     retval = prompt + '> '
+                                elif action.name == ':frame-locals-and-catch-tags':
+                                    retval = swank_parse_locals(params)
+                                    retval = retval + prompt + '> '
                                 if action:
                                     action.result = retval
 
@@ -556,9 +576,8 @@ def swank_invoke_continue():
     swank_rex(':sldb-continue', '(swank:sldb-continue)', 'nil', current_thread)
 
 def swank_frame_locals(frame):
-    cmd = '(swank:frame-locals-for-emacs ' + frame + ')'
-    swank_rex(':frame-locals-for-emacs', cmd, 'nil', current_thread)
-    sys.stdout.write( 'Locals:\n' )
+    cmd = '(swank:frame-locals-and-catch-tags ' + frame + ')'
+    swank_rex(':frame-locals-and-catch-tags', cmd, 'nil', current_thread)
 
 def swank_set_package(pkg):
     cmd = '(swank:set-package "' + pkg + '")'
