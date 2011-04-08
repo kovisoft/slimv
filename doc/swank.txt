@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 06 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 08 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -288,7 +288,7 @@ currently implemented in the Slimv SWANK client.
   swank:connection-info
   swank:create-repl
   swank:describe-function
-  swank:frame-locals-for-emacs
+  swank:frame-locals-and-catch-tags
   swank:init-inspector
   swank:inspect-nth-part
   swank:inspector-pop
