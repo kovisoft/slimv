@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  07 Apr 2011
+" Last Change:  08 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -814,8 +814,8 @@ function! SlimvOpenReplBuffer()
         inoremap <buffer> <silent>    <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>CR>\<lt>C-O>:call SlimvSendCommand(0)()\<lt>CR>"<CR>
         inoremap <buffer> <silent>    <C-CR> <End><CR><C-O>:call SlimvSendCommand(1)<CR>
     endif
-    inoremap <buffer> <silent>        <Up>   <C-R>=pumvisible() ? "\<lt>C-P>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
-    inoremap <buffer> <silent>        <Down> <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
+    inoremap <buffer> <silent>        <Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
+    inoremap <buffer> <silent>        <Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnter()<CR>
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
 
