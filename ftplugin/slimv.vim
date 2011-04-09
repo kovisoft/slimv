@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  08 Apr 2011
+" Last Change:  09 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -469,6 +469,7 @@ let s:swank_package = ''                                  " Package to use at th
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:debug_activated = 0                                 " Are we in the SWANK debugger?
+let s:debug_move_cursor = 0                               " Move cursor to Restarts when debug activated
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
@@ -594,6 +595,11 @@ function! SlimvCommand( cmd )
     endif
     call SlimvEndOfReplBuffer()
     call SlimvMarkBufferEnd()
+    if s:debug_activated && s:debug_move_cursor
+        call search( '^Restarts:', 'bW' )
+        let s:debug_move_cursor = 0
+        stopinsert
+    endif
 
     if repl_buf != this_buf && !s:debug_activated
         " Switch back to the caller buffer/window
