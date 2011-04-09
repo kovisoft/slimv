@@ -171,7 +171,8 @@ def unquote(s):
     if len(s) < 2:
         return s
     if s[0] == '"' and s[-1] == '"':
-        return s[1:-1].replace('\\"', '"')
+        t = s[1:-1].replace('\\"', '"')
+        return t.replace('\\\\', '\\')
     else:
         return s
 
