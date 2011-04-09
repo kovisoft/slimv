@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  08 Apr 2011
+# Last Change:  09 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -315,13 +315,13 @@ def swank_parse_locals(struct):
     """
     Parse frame locals output
     """
-    buf = ''
     if type(struct) == list:
+        buf = 'Locals:\n'
         for f in struct:
             name  = parse_plist(f, ':name')
             id    = parse_plist(f, ':id')
             value = parse_plist(f, ':value')
-            buf = buf + name + ' : ' + value + '\n'
+            buf = buf + '  ' + name + ' = ' + value + '\n'
     else:
         buf = 'No locals\n'
     return buf
@@ -511,6 +511,7 @@ def swank_listen():
                 elif message == ':debug-activate':
                     debug_activated = True
                     vim.command('let s:debug_activated=1')
+                    vim.command('let s:debug_move_cursor=1')
                     current_thread = r[1]
 
                 elif message == ':debug-return':
