@@ -327,7 +327,7 @@ if !exists( 'g:slimv_template_pprint' )
     if SlimvGetFiletype() == 'clojure'
         let g:slimv_template_pprint = '(doseq [o %1] (println o))'
     else
-        let g:slimv_template_pprint = '(dolist (o %1)(pprint o))'
+        let g:slimv_template_pprint = '(dolist (o %1) (pprint o))'
     endif
 endif
 
@@ -814,10 +814,10 @@ function! SlimvOpenReplBuffer()
 
     " Add keybindings valid only for the REPL buffer
     if g:slimv_swank
-        inoremap <buffer> <silent>    <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>    <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
         inoremap <buffer> <silent>    <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR>
     else
-        inoremap <buffer> <silent>    <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>CR>\<lt>C-O>:call SlimvSendCommand(0)()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>    <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>CR>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
         inoremap <buffer> <silent>    <C-CR> <End><CR><C-O>:call SlimvSendCommand(1)<CR>
     endif
     inoremap <buffer> <silent>        <Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
