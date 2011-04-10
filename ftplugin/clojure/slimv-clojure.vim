@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.8.0
-" Last Change:  05 Apr 2011
+" Last Change:  10 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -34,6 +34,13 @@ function! b:SlimvBuildStartCmd( lisps )
         let cp = cp . ';' . s:TransformFilename( a:lisps[i] )
         let i = i + 1
     endwhile
+    if g:slimv_swank
+        " Try to find swank-clojure and add it to classpath
+        let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
+        if len( swanks ) > 0
+            let cp = cp . ';' . s:TransformFilename( swanks[0] )
+        endif
+    endif
     return ['java -cp ' . cp . ' clojure.main', 'clojure']
 endfunction
 
@@ -62,11 +69,6 @@ function! b:SlimvAutodetect()
         " Check if Clojure is bundled with Slimv
         let lisps = split( globpath( &runtimepath, 'swank-clojure/clojure*.jar'), '\n' )
         if len( lisps ) > 0
-            " Try to find swank-clojure and add it to classpath
-            let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
-            if len( swanks ) > 0
-                call add( lisps, swanks[0] )
-            endif
             return b:SlimvBuildStartCmd( lisps )
         endif
     endif
