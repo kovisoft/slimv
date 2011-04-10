@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  09 Apr 2011
+# Last Change:  10 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -305,8 +305,10 @@ def swank_parse_compile(struct):
             location = parse_plist(w, ':location')
             fname   = unquote(location[1][1])
             pos     = location[2][1]
-            snippet = unquote(location[3][1]).replace('\r', '')
-            buf = buf + snippet + '\n' + fname + ':' + pos + '\n'
+            if location[3] != 'nil':
+                snippet = unquote(location[3][1]).replace('\r', '')
+                buf = buf + snippet + '\n'
+            buf = buf + fname + ':' + pos + '\n'
             buf = buf + '  ' + severity + ': ' + msg + '\n\n'
     else:
         buf = 'Compilation finished. (No warnings)  [' + time + ' secs]\n\n'
@@ -452,15 +454,14 @@ def swank_listen():
                                 keys = make_keys(params)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
-                                retval = swank_parse_inspect(params)
+                                retval = retval + swank_parse_inspect(params)
                             elif element == ':compilation-result':
                                 logprint(str(params))
-                                time = params[3]
                                 filename = params[5]
                                 if filename[0] != '"':
                                     filename = '"' + filename + '"'
                                 vim.command('let s:compiled_file=' + filename + '')
-                                retval = swank_parse_compile(params) + prompt + '> '
+                                retval = retval + swank_parse_compile(params) + prompt + '> '
                             else:
                                 logprint(str(params))
                                 if action.name == ':simple-completions':
@@ -468,16 +469,16 @@ def swank_listen():
                                         compl = "\n".join(params)
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':xref':
-                                    retval = swank_parse_xref(r[1][1])
+                                    retval = retval + swank_parse_xref(r[1][1])
                                     if len(retval) > 0 and retval[-1] != '\n':
                                         retval = retval + '\n'
                                     retval = retval + prompt + '> '
                                 elif action.name == ':set-package':
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
-                                    retval = prompt + '> '
+                                    retval = retval + prompt + '> '
                                 elif action.name == ':frame-locals-and-catch-tags':
-                                    retval = swank_parse_locals(params)
+                                    retval = retval + swank_parse_locals(params)
                                     retval = retval + prompt + '> '
                                 if action:
                                     action.result = retval
@@ -491,7 +492,7 @@ def swank_listen():
                             retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
                 elif message == ':inspect':
-                    retval = swank_parse_inspect(r[1])
+                    retval = retval + swank_parse_inspect(r[1])
 
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]

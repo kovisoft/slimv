@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  09 Apr 2011
+" Last Change:  10 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1909,6 +1909,12 @@ endfunction
 function! SlimvCompileLoadFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
+    if &modified
+        let answer = SlimvErrorAsk( '', "Save file before compiling [Y/n]?" )
+        if answer[0] != 'n' && answer[0] != 'N'
+            write
+        endif
+    endif
     if g:slimv_swank
         if s:swank_connected
             let s:compiled_file = ''
@@ -1934,6 +1940,12 @@ endfunction
 function! SlimvCompileFile()
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
+    if &modified
+        let answer = SlimvErrorAsk( '', "Save file before compiling [Y/n]?" )
+        if answer[0] != 'n' && answer[0] != 'N'
+            write
+        endif
+    endif
     if g:slimv_swank
         if s:swank_connected
             call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
