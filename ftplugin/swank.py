@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  10 Apr 2011
+# Last Change:  11 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -296,7 +296,7 @@ def swank_parse_compile(struct):
     time = struct[3]
     filename = struct[5]
     if type(warnings) == list:
-        buf = str(len(warnings)) + ' compiler notes:\n\n'
+        buf = '\n' + str(len(warnings)) + ' compiler notes:\n\n'
         for w in warnings:
             msg      = parse_plist(w, ':message')
             severity = parse_plist(w, ':severity')
@@ -311,7 +311,7 @@ def swank_parse_compile(struct):
             buf = buf + fname + ':' + pos + '\n'
             buf = buf + '  ' + severity + ': ' + msg + '\n\n'
     else:
-        buf = 'Compilation finished. (No warnings)  [' + time + ' secs]\n\n'
+        buf = '\nCompilation finished. (No warnings)  [' + time + ' secs]\n\n'
     return buf
 
 def swank_parse_locals(struct):
