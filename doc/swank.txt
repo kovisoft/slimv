@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 08 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 11 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -31,11 +31,11 @@ INSTALLATION                                               *swank-installation*
   - Lisp or Clojure installed.
     Any Lisp implementation is OK that has SLIME support.
 
-  The bundle version of Slimv also contains SLIME (currently only for Lisp,
-  swank-clojure is not yet embedded in Slimv). If you intend to use your
-  own version of SLIME, then you need to have your own SWANK server installed.
+  The bundle version of Slimv also contains SLIME (in fact the SWANK server
+  part of SLIME) and Swank Clojure. If you intend to use your own version of
+  SLIME, then you need to have your own SWANK server installed.
   For example Clojure users might consider installing Leiningen and run the
-  SWANK server via lein swank.
+  SWANK server via 'lein swank'.
 
 
 ===============================================================================
