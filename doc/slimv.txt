@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 11 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -78,19 +78,11 @@ To install the script:
        indent/clojure.vim
        plugin/paredit.vim
        slime/* (only in the bundle version)
+       swank-clojure/* (only in the bundle version)
        syntax/clojure/slimv-syntax-clojure.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
     another Clojure filetype plugin. In this case just keep the original file.
-    If you intend to use the script only for Lisp programming, then most of
-    the files may be skipped, in this case it is enough to copy the following
-    files:
-
-       doc/slimv.txt
-       ftplugin/slimv.py
-       ftplugin/slimv.vim
-       ftplugin/slimv-clhs.vim
-       ftplugin/lisp/slimv-lisp.vim
 
   - Start Vim or goto an existing instance of Vim.
   - Execute the following command:
@@ -119,24 +111,7 @@ Uninstallation:
 
   - Exit all Vim instances and exit from the REPL server terminal window.
   - Delete the files that were copied to the vimfiles directory during
-    installation:
-
-       doc/paredit.txt
-       doc/slimv.txt
-       doc/swank.txt
-       ftdetect/clojure.vim
-       ftplugin/slimv.py
-       ftplugin/slimv.vim
-       ftplugin/slimv-clhs.vim
-       ftplugin/slimv-cljapi.vim
-       ftplugin/slimv-javadoc.vim
-       ftplugin/swank.py
-       ftplugin/clojure/slimv-clojure.vim
-       ftplugin/lisp/slimv-lisp.vim
-       indent/clojure.vim
-       plugin/paredit.vim
-       slime/*
-       syntax/clojure/slimv-syntax-clojure.vim
+    installation (see list of files above).
 
 
 ===============================================================================
@@ -1309,15 +1284,27 @@ Author: Tamas Kovacs <kovisoft at gmail dot com>
 Please send comments, bug reports, suggestions, etc. to the e-mail address
 above.
 
+Slimv is free software, you can redistribute it and/or modify it any way you
+like, except the embedded SLIME and Swank Clojure.
+
+SLIME is distributed under the terms of the GNU General Public License as
+published by the Free Software Foundation. See the included slime/README file
+or http://common-lisp.net/project/slime/ for details.
+
+Swank Clojure is licensed under the Eclipse Public License. See the file
+swank-clojure/COPYING or https://github.com/technomancy/swank-clojure for
+details.
+
 Credit must go out to Bram Moolenaar and all the Vim developers for making
 the world's (one of the) best editor.
 
-Thanks to Eric Marsden and all the Emacs/SLIME developers for making SLIME.
-Special thanks to Mark Kantrowitz, Chris McConnell, Skef Wholey and
-Rob MacLachlan for creating the Metering System.
+Thanks to Eric Marsden, Luke Gorrie, Helmut Eller, Luke Gorrie, Helmut Eller,
+Tobias C. Rittweiler and all the Emacs/SLIME developers for making SLIME.
 Also special thanks to Erik Naggum, Yuji Minejima and others for making the
 Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
+
+Thanks to Jeffrey Chu, Phil Hagelberg, Hugo Duncan for making Swank Clojure.
 
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek for his great number of contributions, patches,
@@ -1325,7 +1312,8 @@ ideas, suggestions on the SWANK integration.
 
 Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
-Jon Thacker, Andrew Hills, Jerome Baum, John Obbele.
+Jon Thacker, Andrew Hills, Jerome Baum, John Obbele for additional notes and
+contributions.
 
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.

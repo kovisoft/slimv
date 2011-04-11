@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  10 Apr 2011
+" Last Change:  11 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1960,8 +1960,18 @@ endfunction
 function! SlimvCompileRegion() range
     let lines = SlimvGetRegion()
     let region = join( lines, "\n" )
-    let region = substitute( region, '"', '\\\\"', 'g' )
-    call SlimvEvalForm1( g:slimv_template_compile_string, region )
+    call SlimvFindPackage()
+    if g:slimv_swank
+        if s:swank_connected
+            let s:swank_form = region
+            call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    else
+        let region = substitute( region, '"', '\\\\"', 'g' )
+        call SlimvEvalForm1( g:slimv_template_compile_string, region )
+    endif
 endfunction
 
 " ---------------------------------------------------------------------
