@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.0
-# Last Change:  11 Apr 2011
+# Last Change:  12 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -418,7 +418,7 @@ def swank_listen():
                                 if action:
                                     action.result = retval
                             # List of actions needing a prompt
-                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file']
+                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition']
                             if element == 'nil' or (action and action.name in to_prompt):
                                 # No more output from REPL, write new prompt
                                 if len(retval) > 0 and retval[-1] != '\n':
@@ -479,6 +479,11 @@ def swank_listen():
                                     retval = retval + prompt + '> '
                                 elif action.name == ':frame-locals-and-catch-tags':
                                     retval = retval + swank_parse_locals(params)
+                                    retval = retval + prompt + '> '
+                                elif action.name == ':profiled-functions':
+                                    retval = retval + 'Profiled functions:\n'
+                                    for f in params:
+                                        retval = retval + '  ' + f + '\n'
                                     retval = retval + prompt + '> '
                                 if action:
                                     action.result = retval
@@ -653,6 +658,26 @@ def swank_compile_file(name):
 def swank_load_file(name):
     cmd = '(swank:load-file ' + requote(name) + ')'
     swank_rex(':load-file', cmd, get_package(), 't')
+
+def swank_toggle_profile(symbol):
+    cmd = '(swank:toggle-profile-fdefinition "' + symbol + '")'
+    swank_rex(':toggle-profile-fdefinition', cmd, get_package(), 't')
+
+def swank_profile_substring(s, package):
+    cmd = '(swank:profile-by-substring ' + requote(s) + ' ' + requote(package) + ')'
+    swank_rex(':profile-by-substring', cmd, 'nil', 't')
+
+def swank_unprofile_all():
+    swank_rex(':unprofile-all', '(swank:unprofile-all)', 'nil', 't')
+
+def swank_profiled_functions():
+    swank_rex(':profiled-functions', '(swank:profiled-functions)', 'nil', 't')
+
+def swank_profile_report():
+    swank_rex(':profile-report', '(swank:profile-report)', 'nil', 't')
+
+def swank_profile_reset():
+    swank_rex(':profile-reset', '(swank:profile-reset)', 'nil', 't')
 
 ###############################################################################
 # Generic SWANK connection handling

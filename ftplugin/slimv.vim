@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  11 Apr 2011
+" Last Change:  12 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1825,12 +1825,24 @@ endfunction
 
 " Switch profiling on for the selected function
 function! SlimvProfile()
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvError( "No profiler support for Clojure." )
+    if g:slimv_swank
+        if s:swank_connected
+            let s = input( '(Un)profile: ', SlimvSelectSymbol() )
+            if s != ''
+                call SlimvCommandUsePackage( 'python swank_toggle_profile("' . s . '")' )
+                redraw!
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
     else
-        let s = input( 'Profile: ', SlimvSelectSymbol() )
-        if s != ''
-            call SlimvEvalForm1( g:slimv_template_profile, s )
+        if SlimvGetFiletype() == 'clojure'
+            call SlimvError( "No profiler support for Clojure." )
+        else
+            let s = input( 'Profile: ', SlimvSelectSymbol() )
+            if s != ''
+                call SlimvEvalForm1( g:slimv_template_profile, s )
+            endif
         endif
     endif
 endfunction
@@ -1849,37 +1861,69 @@ endfunction
 
 " Switch profiling completely off
 function! SlimvUnprofileAll()
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvError( "No profiler support for Clojure." )
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommandUsePackage( 'python swank_unprofile_all()' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
     else
-        call SlimvEvalForm( g:slimv_template_unprofile_all )
+        if SlimvGetFiletype() == 'clojure'
+            call SlimvError( "No profiler support for Clojure." )
+        else
+            call SlimvEvalForm( g:slimv_template_unprofile_all )
+        endif
     endif
 endfunction
 
 " Display list of profiled functions
 function! SlimvShowProfiled()
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvError( "No profiler support for Clojure." )
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommandUsePackage( 'python swank_profiled_functions()' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
     else
-        call SlimvEvalForm( g:slimv_template_show_profiled )
+        if SlimvGetFiletype() == 'clojure'
+            call SlimvError( "No profiler support for Clojure." )
+        else
+            call SlimvEvalForm( g:slimv_template_show_profiled )
+        endif
     endif
 endfunction
 
 " Report profiling results
 function! SlimvProfileReport()
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvError( "No profiler support for Clojure." )
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommandUsePackage( 'python swank_profile_report()' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
     else
-        call SlimvEvalForm( g:slimv_template_profile_report )
+        if SlimvGetFiletype() == 'clojure'
+            call SlimvError( "No profiler support for Clojure." )
+        else
+            call SlimvEvalForm( g:slimv_template_profile_report )
+        endif
     endif
 endfunction
 
 " Reset profiling counters
 function! SlimvProfileReset()
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvError( "No profiler support for Clojure." )
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommandUsePackage( 'python swank_profile_reset()' )
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
     else
-        call SlimvEvalForm( g:slimv_template_profile_reset )
+        if SlimvGetFiletype() == 'clojure'
+            call SlimvError( "No profiler support for Clojure." )
+        else
+            call SlimvEvalForm( g:slimv_template_profile_reset )
+        endif
     endif
 endfunction
 
@@ -2279,14 +2323,18 @@ call s:MenuMap( '&Slimv.&Xref.&List-Callers',                   '<Leader>xl', '<
 call s:MenuMap( '&Slimv.&Xref.List-Call&ees',                   '<Leader>xe', '<Leader>xe',  ':call SlimvXrefCallees()<CR>' )
 
 " Profile commands
-call s:MenuMap( '&Slimv.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':call SlimvLoadProfiler()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':call SlimvProfile()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.&Unprofile\.\.\.',           '<Leader>P',  '<Leader>pu',  ':call SlimvUnprofile()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.Unprofile-&All',             '<Leader>U',  '<Leader>pa',  ':call SlimvUnprofileAll()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.&Show-Profiled',             '<Leader>?',  '<Leader>ps',  ':call SlimvShowProfiled()<CR>' )
+if g:slimv_swank
+call s:MenuMap( '&Slimv.&Profiling.Toggle-&Profile\.\.\.',      '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
+else
+call s:MenuMap( '&Slimv.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':<C-U>call SlimvLoadProfiler()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Unprofile\.\.\.',           '<Leader>P',  '<Leader>pu',  ':<C-U>call SlimvUnprofile()<CR>' )
+endif
+call s:MenuMap( '&Slimv.&Profiling.Unprofile-&All',             '<Leader>U',  '<Leader>pa',  ':<C-U>call SlimvUnprofileAll()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.&Show-Profiled',             '<Leader>?',  '<Leader>ps',  ':<C-U>call SlimvShowProfiled()<CR>' )
 call s:MenuMap( '&Slimv.&Profiling.-ProfilingSep-',             '',           '',            ':' )
-call s:MenuMap( '&Slimv.&Profiling.Profile-Rep&ort',            '<Leader>o',  '<Leader>pr',  ':call SlimvProfileReport()<CR>' )
-call s:MenuMap( '&Slimv.&Profiling.Profile-&Reset',             '<Leader>X',  '<Leader>px',  ':call SlimvProfileReset()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-Rep&ort',            '<Leader>o',  '<Leader>pr',  ':<C-U>call SlimvProfileReport()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-&Reset',             '<Leader>X',  '<Leader>px',  ':<C-U>call SlimvProfileReset()<CR>' )
 
 " Documentation commands
 call s:MenuMap( '&Slimv.&Documentation.Describe-&Symbol',       '<Leader>s',  '<Leader>ds',  ':call SlimvDescribeSymbol()<CR>' )
