@@ -418,7 +418,7 @@ def swank_listen():
                                 if action:
                                     action.result = retval
                             # List of actions needing a prompt
-                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition']
+                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring']
                             if element == 'nil' or (action and action.name in to_prompt):
                                 # No more output from REPL, write new prompt
                                 if len(retval) > 0 and retval[-1] != '\n':
@@ -664,8 +664,12 @@ def swank_toggle_profile(symbol):
     swank_rex(':toggle-profile-fdefinition', cmd, get_package(), 't')
 
 def swank_profile_substring(s, package):
-    cmd = '(swank:profile-by-substring ' + requote(s) + ' ' + requote(package) + ')'
-    swank_rex(':profile-by-substring', cmd, 'nil', 't')
+    if package == '':
+        p = 'nil'
+    else:
+        p = requote(package)
+    cmd = '(swank:profile-by-substring ' + requote(s) + ' ' + p + ')'
+    swank_rex(':profile-by-substring', cmd, get_package(), 't')
 
 def swank_unprofile_all():
     swank_rex(':unprofile-all', '(swank:unprofile-all)', 'nil', 't')
