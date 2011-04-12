@@ -269,11 +269,12 @@ TRACE                                                             *swank-trace*
 -------------------------------------------------------------------------------
 PROFILER                                                        *swank-profile*
 
-  Slimv supports SLIME's profiler. It is possible to toggle profiling a
-  function or unprofile all functions. You may query the profiler for the list
-  of profiled functions. After the profiling session it is possible to display
-  the profiler report. Upon selecting Reset all counters are cleared, so that
-  a new profiling session may be started.
+  Slimv supports SLIME's profiler. It is possible to toggle profiling on a
+  function, on a set of functions whose name contains a given substring, or
+  unprofile all functions. You may query the profiler for the list of profiled
+  functions. After the profiling session it is possible to display the profiler
+  report. Upon selecting Reset all counters are cleared, so that a new
+  profiling session may be started.
 
 
 -------------------------------------------------------------------------------
@@ -307,6 +308,7 @@ currently implemented in the Slimv SWANK client.
   swank:listener-eval
   swank:load-file
   swank:operator-arglist
+  swank:profile-by-substring
   swank:profile-report
   swank:profile-reset
   swank:profiled-functions

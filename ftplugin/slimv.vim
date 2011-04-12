@@ -1823,7 +1823,7 @@ function! SlimvLoadProfiler()
     endif
 endfunction
 
-" Switch profiling on for the selected function
+" Switch or toggle profiling on for the selected function
 function! SlimvProfile()
     if g:slimv_swank
         if s:swank_connected
@@ -1844,6 +1844,20 @@ function! SlimvProfile()
                 call SlimvEvalForm1( g:slimv_template_profile, s )
             endif
         endif
+    endif
+endfunction
+
+" Switch profiling on based on substring
+function! SlimvProfileSubstring()
+    if s:swank_connected
+        let s = input( 'Profile by matching substring: ', SlimvSelectSymbol() )
+        if s != ''
+            let p = input( 'Package (RET for all packages): ' )
+            call SlimvCommandUsePackage( 'python swank_profile_substring("' . s . '","' . p . '")' )
+            redraw!
+        endif
+    else
+        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2325,6 +2339,7 @@ call s:MenuMap( '&Slimv.&Xref.List-Call&ees',                   '<Leader>xe', '<
 " Profile commands
 if g:slimv_swank
 call s:MenuMap( '&Slimv.&Profiling.Toggle-&Profile\.\.\.',      '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
+call s:MenuMap( '&Slimv.&Profiling.Profile-&By-Substring\.\.\.','<Leader>B',  '<Leader>pb',  ':<C-U>call SlimvProfileSubstring()<CR>' )
 else
 call s:MenuMap( '&Slimv.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':<C-U>call SlimvLoadProfiler()<CR>' )
 call s:MenuMap( '&Slimv.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
