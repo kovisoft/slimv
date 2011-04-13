@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 12 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 13 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.0
@@ -230,6 +230,9 @@ COMPLETIONS                                                 *swank-completions*
   The Vim omni-completion function requests the possible completions for the
   symbol currently being entered from the SWANK server. The completion list
   is displayed in a popup menu.
+  The keyboard shortcut for completion is <Tab>. This brings up the completions
+  popup menu if there are multiple choices. In the popup menu subsequent <Tab>
+  keypresses select the next possible completion.
 
   Note: completions are not displayed when Slimv is not connected to the
   SWANK server.
