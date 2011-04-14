@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 11 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 14 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -45,8 +45,10 @@ Prerequisites:
   Required components:
   - Lisp (any console Common Lisp implementation should be OK) or
     Clojure installed.
-  - Python 2.4 or later installed. Please note that due to a Popen bug in the
-    Cygwin Python implementation Cygwin users should install Windows Python,
+  - Python 2.4 or later installed. When using the SWANK client the same Python
+    version is needed that Vim is compiled against.
+    When not using the SWANK client then due to a Popen bug in the Cygwin
+    Python implementation Cygwin users should install Windows Python,
     which is autodetected by the script.
 
   Optional components:
@@ -77,8 +79,8 @@ To install the script:
        ftplugin/lisp/slimv-lisp.vim
        indent/clojure.vim
        plugin/paredit.vim
-       slime/* (only in the bundle version)
-       swank-clojure/* (only in the bundle version)
+       slime/*
+       swank-clojure/*
        syntax/clojure/slimv-syntax-clojure.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
@@ -94,7 +96,7 @@ To install the script:
     This will generate all the help tags for any file located in the doc
     directory.
   - Enter path definitions into your vimrc (if the default values are not
-    valid for your Vim/Python/Lisp installation, which is highly probable).
+    valid for your Vim/Python/Lisp installation).
     See |slimv-customization| below on how to do this.
   - On Linux some login shells (like fish) might be incompatible with the Vim
     temporary file generation, which results in getting random E484 errors.
@@ -768,11 +770,11 @@ option.
 ===============================================================================
 PROFILING                                                     *slimv-profiling*
 
-Slimv is capable of utilizing SBCL's built-in profiler, and also the same
-monitoring/profiling package (metering.lisp) that is used by SLIME.
-metering.lisp is part of SLIME, which is embedded in the Slimv bundle version.
-If you don't want to use the embedded SLIME, but need profiling support,
-then please keep metering.lisp in the slime directory or copy it in ftplugin.
+The SWANK client has the same profiler support as SLIME.
+
+If not using the SWANK client, then Slimv is still capable of utilizing SBCL's
+built-in profiler, and also the same monitoring/profiling package
+(metering.lisp) that is used by SLIME.
 
 SBCL's profiler is ready to use by just starting the Lisp REPL.
 In order to use SLIME's profiler with CLISP it first must be compiled and
@@ -1052,9 +1054,18 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.8.0  - Added SWANK client (many thanks to Philipp Marek).
+0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.
        - Added keymapping hints to GUI menu items.
+       - Renamed Eval-Last-Expression to Eval-Current-Expression.
+       - REPL buffer is not syntax highlighted anymore.
+       - Switch on filetype plugins.
+       - Autodetection for Allegro CL, Lisp Cabinet and Leiningen.
+       - Ask for save before compiling file.
+       - Map <Tab> for symbol name completion.
+       - Bugfix: finding start of keyword in completion.
+       - Bugfix: deleting escaped " inside string.
+       - Bugfix: Up/Down/Enter handling in popup menu.
 
 0.7.7  - Paredit: find next closing paren when using ,< or ,> and not standing
          on a paren.
@@ -1247,26 +1258,14 @@ CHANGE LOG                                                    *slimv-changelog*
 ===============================================================================
 ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 
-- Works only with the console Lisp and Python versions, does not work with the
-  GUI Lisp versions or with a Python IDE (like IDLE).
 - Vim register "s is used for all form selections, so its original content is
   destroyed.
 - Vim mark 's is used to mark the end of the REPL buffer, i.e. the beginning
   of the "command line".
-- Limited profiling support: does not work for all Lisp implementations.
 - Needs Vim version 7.0 or above, because of the intensive use of lists.
-- Needs Python 2.4 or higher (uses the subprocess module)
-- Sometimes a Python exception happens after a CTRL-C inside the REPL buffer
-  followed by an EOF (CTRL-Z or CTRL-D) in the external REPL window.
-- Interruption (Ctrl-C) does not work with all Lisp implementations.
-  For example SBCL exits on Windows when receiving Ctrl-C.
-  It does not work in Clojure.
-  In these cases use the Interrupt-Lisp-Process menu command.
-- There are some functions that are not compatible or simply not working for
-  Clojure.
+- Needs the same Python version that Vim is compiled against
 - It is not possible to run separate Lisp and Clojure REPL in the same
-  Slimv session. Also some other features cannot switch language in the same
-  session, e.g. profiling.
+  Slimv session.
 
 
 ===============================================================================
