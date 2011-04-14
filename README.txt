@@ -9,18 +9,6 @@ created by
 Tamas Kovacs
  
 --------------------------------------------------------------------------------
-Downloads
---------------------------------------------------------------------------------
-slimvXXX.zip :
-    This is the latest released (stable) version - does not contain SWANK client.
-
-slimvXXX-dev-XXXXXXXX.zip :
-    This is the most recent development snapshot without SLIME - containing SWANK client.
-
-slimvXXX-dev-XXXXXXXX-slime-bundle.zip :
-    This is the most recent development snapshot with SLIME embedded - containing SWANK client.
-
---------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
 Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP server for Emacs, which runs a Common Lisp or Clojure REPL and provides a socket interface for evaluating, compiling, debugging, profiling lisp code. The SWANK server is embedded in Slimv, but you can also use your own SWANK installation.
@@ -132,7 +120,7 @@ See the included documentation for more complete installation and customization 
 Script versions
 --------------------------------------------------------------------------------
 
-0.8.0: Added SWANK client (many thanks to Philipp Marek), split documentation into three parts, added keymapping hints to GUI menu items, REPL buffer is not syntax highlighted anymore.
+0.8.0: Major update: added SWANK client (many thanks to Philipp Marek), additional changes: split documentation into three parts, added keymapping hints to GUI menu items, renamed Eval-Last-Expression to Eval-Current-Expression, REPL buffer is not syntax highlighted anymore, switch on filetype plugins, autodetection for Allegro CL, Lisp Cabinet and Leiningen, ask for save before compiling file, map <Tab> for completion, bugfixes: finding start of keyword in completion, deleting escaped " inside string, Up/Down/Enter handling in popup menu.
 
 0.7.7: Find next closing paren when using ,< or ,> in Paredit and not standing on a paren, open REPL buffer upon connecting server, bugfixes: REPL buffer prompt identification was sometimes missing, switch off REPL refresh mode when REPL buffer is not visible (thanks to Philipp Marek), convert Python path on Windows to short 8.3 filename format if it contains space (thanks to Razvan Rotaru).
 
