@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 slimv.vim
 --------------------------------------------------------------------------------
-SLIME-like Lisp and Clojure REPL inside Vim with Profiling, Hyperspec, Paredit
+Superior Lisp Interaction Mode for Vim (SLIME for Vim)
 
 Vim script
 
@@ -23,30 +23,18 @@ slimvXXX-dev-XXXXXXXX-slime-bundle.zip :
 --------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
-Slimv tries to mimic a subset of SLIME's (Superior Lisp Interaction Mode for Emacs) functionality inside Vim on Linux, Windows, and Mac OS X. The script defines functions and keybindings to send s-expressions to a console mode Lisp or Clojure REPL (Read-Eval-Print Loop).
+Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP server for Emacs, which runs a Common Lisp or Clojure REPL and provides a socket interface for evaluating, compiling, debugging, profiling lisp code. The SWANK server is embedded in Slimv, but you can also use your own SWANK installation.
 
-The latest development version (not yet released here) also contains a SWANK (TCP server for Emacs) client, which means it is able to communicate with a running SWANK server, similarly to SLIME. There is also a bundle version with SLIME embedded. If you are interested please download it from the Slimv repository:
-https://bitbucket.org/kovisoft/slimv/downloads
-Consult doc/swank.txt for details on the SWANK integration.
+Slimv opens the lisp or clojure REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
 
-Slimv runs its own REPL or connects to a running REPL started by a previous Slimv session, the connection is established when the first Slimv command is executed (e.g. an s-expression is evaluated).
-The Lisp REPL buffer can also be opened inside Vim as a Vim buffer with syntax highlighting and autoindenting, Lisp commands may be entered in the command line, just as in a regular REPL. The script also has a basic support for Clojure REPL.
-
-Slimv supports the same profiling tool that comes with SLIME. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc. Symbol name completion is supported via Vim's omni-completion based on the hyperspec symbol database.
+Slimv supports SLIME's debugger, profiler, cross reference, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
 Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slimv also implements many paredit.el s-expression handling functions, like Split/Join/Wrap/Splice. Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element in or out of the list, rather you move the opening or closing parenthesis over the element or sub-list.
 
-Check out the screenshot of Slimv having a clisp REPL buffer:
-http://img6.imageshack.us/img6/5104/slimvscreenshotx.png
-
-Another screenshot of Slimv running the Clojure Ants demo:
-http://img21.imageshack.us/img21/3949/slimvants.png
-
-And this is the symbol name completion in action (no, the pink background is not done by Slimv, this is Vim's default):
-http://img18.imageshack.us/img18/5859/slimvcompl.png
+Please visit the Slimv Tutorial for a more complete introduction:
+http://kovisoft.bitbucket.org/tutorial.html
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
-For a more complete description with keybindings see the included documentation.
 
 Edit commands:
     *  Close Form
@@ -56,7 +44,6 @@ Edit commands:
 Evaluation commands:
     *  Eval Defun
     *  Eval Current Expression
-    *  Pprint Eval Expression
     *  Eval Region
     *  Eval Buffer
     *  Interactive Eval
@@ -65,8 +52,8 @@ Evaluation commands:
 Debug commands:
     *  Macroexpand-1
     *  Macroexpand All
-    *  Trace
-    *  Untrace
+    *  Toggle Trace
+    *  Untrace All
     *  Disassemble
     *  Inspect
 
@@ -76,10 +63,19 @@ Compile commands:
     *  Compile File
     *  Compile Region
 
+Cross Reference commands
+    *  Who Calls
+    *  Who References
+    *  Who Sets
+    *  Who Binds
+    *  Who Macroexpands
+    *  Who Specializes
+    *  List Callers
+    *  List Callees
+
 Profile commands:
-    *  Load Profiler
-    *  Profile
-    *  Unprofile
+    *  Toggle Profile
+    *  Profile By Substring
     *  Unprofile All
     *  Show Profiled
     *  Profile Report
@@ -93,53 +89,50 @@ Documentation commands:
 
 REPL commands:
     *  Connect to Server
-    *  Send Input
     *  Interrupt Lisp Process
+    *  Send Input
     *  Close and Send Input
+    *  Set Package
     *  Previous Input
     *  Next Input
 
-Many Slimv commands operate on s-expressions or symbols, just like in SLIME. Place the cursor at any location inside the s-expression or on the symbol's name then invoke the command. This builds a command specific form and sends it to the running REPL for evaluation.
-
-For more information see the documentation coupled with the script, please refer to section "External Utilities" for other useful Lisp editing tips not covered by Slimv.
+For more information see the included documentation.
  
 ---------------------------------------------------------------------------------------------
 Installation details
 ---------------------------------------------------------------------------------------------
-Extract the zip archive into your vimfiles or runtime directory. The archive contains the following files:
-    *  doc/slimv.txt
-    *  ftdetect/clojure.vim
-    *  ftplugin/metering.lisp
-    *  ftplugin/slimv.py
-    *  ftplugin/slimv.vim
-    *  ftplugin/slimv-clhs.vim
-    *  ftplugin/slimv-cljapi.vim
-    *  ftplugin/slimv-javadoc.vim
-    *  ftplugin/clojure/slimv-clojure.vim
-    *  ftplugin/lisp/slimv-lisp.vim
-    *  indent/clojure.vim
-    *  plugin/paredit.vim
-    *  syntax/clojure/slimv-syntax-clojure.vim
 
-Slimv works on Windows, Linux and Mac OS X (via Terminal.app), Cygwin is supported (but needs the Windows Python). The script requires the following programs installed on your system:
-    *  Lisp (any console Common Lisp should be OK) or Clojure
-    *  Python 2.4 or later
-    *  Pywin32 is recommended on Windows
-Slimv tries to autodetect your Lisp/Clojure and Python installation directories. If it fails to determine the correct directories, then you need to enter path definitions into your vimrc file:
-    let g:slimv_python = 'C:/MyPythonDir/python.exe'
-    let g:slimv_lisp = 'C:/MyLispDir/mylisp.exe'
+Extract the zip archive into your vimfiles or runtime directory.
 
-Should the autodetection for Clojure fail, set the Lisp path to the complete Clojure REPL startup command, something like:
-    let g:slimv_lisp = '"java -cp /myclojuredir/clojure.jar clojure.main"'
+Slimv works on Windows, Linux and Mac OS X (via Terminal.app), Cygwin is supported. The script requires the following programs installed on your system:
+    *  Vim with Python feature enabled
+    *  Python (must be the same Python version that was Vim compiled against)
+    *  Lisp (any Common Lisp with SLIME support) or Clojure
 
-Linux users using terminal emulator other than xterm should define the complete command to run the Slimv client + server. Here follows an example with konsole and clisp:
-    let g:slimv_client = 'python ~/.vim/plugin/slimv.py -r "konsole -T Slimv -e @p @s -l clisp -s"'
+Vim's Python version can be identified with the :ver command, look for the -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string.
+
+Slimv tries to autodetect your Lisp/Clojure/Python/Slime installation directories. If it fails to determine the correct directories, then you need to enter the command to start the SWANK server into your vimrc file.
+
+Linux example:
+    let g:slimv_swank_cmd = '! xterm -e sbcl --load /usr/share/common-lisp/source/slime/start-swank.lisp &'
+
+Windows example:
+    let g:slimv_swank_cmd = '!start "c:/Program Files/Lisp Cabinet/bin/ccl/wx86cl.exe" -l "c:/Program Files/Lisp Cabinet/site/lisp/slime/start-swank.lisp"'
+
+For Clojure use the g:slimv_swank_clojure option, e.g.:
+    let g:slimv_swank_clojure = '! xterm -e lein swank &' 
+
+
+Important notice to pre-0.8.0 users:
+If you want the old functionality, please set g:slimv_swank to 0 in your vimrc file. Please note however, that the development focuses on the SWANK client.
 
 See the included documentation for more complete installation and customization instructions.
 
 --------------------------------------------------------------------------------
 Script versions
 --------------------------------------------------------------------------------
+
+0.8.0: Added SWANK client (many thanks to Philipp Marek), split documentation into three parts, added keymapping hints to GUI menu items, REPL buffer is not syntax highlighted anymore.
 
 0.7.7: Find next closing paren when using ,< or ,> in Paredit and not standing on a paren, open REPL buffer upon connecting server, bugfixes: REPL buffer prompt identification was sometimes missing, switch off REPL refresh mode when REPL buffer is not visible (thanks to Philipp Marek), convert Python path on Windows to short 8.3 filename format if it contains space (thanks to Razvan Rotaru).
 
