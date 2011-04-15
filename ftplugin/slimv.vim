@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  14 Apr 2011
+" Last Change:  15 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -564,7 +564,7 @@ function! SlimvCommand( cmd )
             if g:slimv_repl_split
                 wincmd w
             else
-                buf #
+                execute "buf " . repl_buf
             endif
         catch /.*/
             " Some Vim versions give an E303 error here
@@ -606,7 +606,7 @@ function! SlimvCommand( cmd )
         if g:slimv_repl_split
             wincmd w
         else
-            buf #
+            execute "buf " . this_buf
         endif
     endif
 endfunction
@@ -671,7 +671,7 @@ function! SlimvRefreshReplBuffer()
             if g:slimv_repl_split
                 wincmd w
             else
-                buf #
+                execute "buf " . repl_buf
             endif
         catch /.*/
             " Some Vim versions give an E303 error here
@@ -709,7 +709,7 @@ function! SlimvRefreshReplBuffer()
         if g:slimv_repl_split
             wincmd w
         else
-            buf #
+            execute "buf " . this_buf
         endif
     endif
 endfunction
