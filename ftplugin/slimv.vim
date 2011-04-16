@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  15 Apr 2011
+" Last Change:  16 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -549,6 +549,8 @@ function! SlimvCommand( cmd )
         " REPL buffer not loaded
         return
     endif
+    let repl_win = bufwinnr( repl_buf )
+    let this_win = winnr()
 
     if msg == ''
         " No new REPL output since the last refresh
@@ -561,8 +563,10 @@ function! SlimvCommand( cmd )
     if repl_buf != this_buf
         " Switch to the REPL buffer/window
         try
-            if g:slimv_repl_split
-                wincmd w
+            if g:slimv_repl_split && repl_win != -1
+                if this_win != repl_win
+                    execute repl_win . "wincmd w"
+                endif
             else
                 execute "buf " . repl_buf
             endif
@@ -601,10 +605,12 @@ function! SlimvCommand( cmd )
         stopinsert
     endif
 
-    if repl_buf != this_buf && !s:debug_activated
+    if repl_buf != this_buf && repl_win != -1 && !s:debug_activated
         " Switch back to the caller buffer/window
         if g:slimv_repl_split
-            wincmd w
+            if this_win != repl_win
+                execute this_win . "wincmd w"
+            endif
         else
             execute "buf " . this_buf
         endif
@@ -648,6 +654,8 @@ function! SlimvRefreshReplBuffer()
         " REPL buffer not loaded
         return
     endif
+    let repl_win = bufwinnr( repl_buf )
+    let this_win = winnr()
 
     if g:slimv_swank && s:swank_connected
         "execute 'python swank_output(' . repl_buf . ')'
@@ -668,8 +676,10 @@ function! SlimvRefreshReplBuffer()
     if repl_buf != this_buf
         " Switch to the REPL buffer/window
         try
-            if g:slimv_repl_split
-                wincmd w
+            if g:slimv_repl_split && repl_win != -1
+                if this_win != repl_win
+                    execute repl_win . "wincmd w"
+                endif
             else
                 execute "buf " . repl_buf
             endif
@@ -704,10 +714,12 @@ function! SlimvRefreshReplBuffer()
     call SlimvMarkBufferEnd()
     set nomodified
 
-    if repl_buf != this_buf
+    if repl_buf != this_buf && repl_win != -1 && !s:debug_activated
         " Switch back to the caller buffer/window
         if g:slimv_repl_split
-            wincmd w
+            if this_win != repl_win
+                execute this_win . "wincmd w"
+            endif
         else
             execute "buf " . this_buf
         endif
