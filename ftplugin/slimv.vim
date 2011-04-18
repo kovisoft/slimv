@@ -2224,12 +2224,14 @@ endfunction
 function! SlimvComplete( findstart, base )
     if a:findstart
         " Locate the start of the symbol name
-        let line = getline( '.' )
-        let start = col( '.' ) - 1
-        while start > 0 && ( line[start - 1] =~ '\k' || match( '\*&', line[start - 1] ) >= 0 )
-            let start -= 1
-        endwhile
-        return start
+        if SlimvGetFiletype() == 'clojure'
+            setlocal iskeyword+=~,#,&,\|,{,},!,?
+        else
+            setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+        endif
+        let upto = strpart( getline( '.' ), 0, col( '.' ) - 1)
+        let p = match(upto, '\k\+$')
+        return p 
     else
         " Find all symbols starting with "a:base"
         if g:slimv_swank && s:swank_connected
