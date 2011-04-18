@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.0
-" Last Change:  16 Apr 2011
+" Last Change:  18 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -471,6 +471,7 @@ let s:refresh_disabled = 0                                " Set this variable te
 let s:debug_activated = 0                                 " Are we in the SWANK debugger?
 let s:debug_move_cursor = 0                               " Move cursor to Restarts when debug activated
 let s:compiled_file = ''                                  " Name of the compiled file
+let s:au_curhold_set = 0                                  " Whether the autocommand has been set
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 
@@ -755,8 +756,11 @@ function! SlimvRefreshModeOn()
         execute "au CursorMoved  * :call SlimvRefreshReplBuffer()"
         execute "au CursorMovedI * :call SlimvRefreshReplBuffer()"
     endif
-    execute "au CursorHold   * :call SlimvTimer()"
-    execute "au CursorHoldI  * :call SlimvTimer()"
+    if ! s:au_curhold_set
+        let s:au_curhold_set = 1
+        execute "au CursorHold   * :call SlimvTimer()"
+        execute "au CursorHoldI  * :call SlimvTimer()"
+    endif
     call SlimvRefreshReplBuffer()
 endfunction
 
@@ -768,6 +772,7 @@ function! SlimvRefreshModeOff()
     endif
     execute "au! CursorHold"
     execute "au! CursorHoldI"
+    let s:au_curhold_set = 0
     set noreadonly
 endfunction
 
@@ -776,7 +781,6 @@ function! SlimvReplEnter()
     call SlimvAddReplMenu()
     execute "au FileChangedRO " . g:slimv_repl_file . " :call SlimvRefreshModeOff()"
     call SlimvRefreshModeOn()
-    call SlimvRefreshReplBuffer()
 endfunction
 
 " Called when leaving REPL buffer
@@ -790,7 +794,6 @@ function! SlimvReplLeave()
     endtry
     if g:slimv_repl_split
         call SlimvRefreshModeOn()
-        call SlimvRefreshReplBuffer()
     else
         call SlimvRefreshModeOff()
     endif
