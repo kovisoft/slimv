@@ -1059,6 +1059,8 @@ CHANGE LOG                                                    *slimv-changelog*
          (thanks to Philipp Marek).
        - Bugfix: eliminate multiple CursorHold autocommands
          (thanks to Philipp Marek).
+       - Bugfix: completion with special characters in symbol name
+         (thanks to Philipp Marek).
 
 0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.
