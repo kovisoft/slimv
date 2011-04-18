@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 18 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.0
@@ -1053,6 +1053,12 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.1  - Bugfix: read-string mode was stuck.
+       - Bugfix: buffer corruption with two source windows
+         (thanks to Philipp Marek).
+       - Bugfix: eliminate multiple CursorHold autocommands
+         (thanks to Philipp Marek).
 
 0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.
