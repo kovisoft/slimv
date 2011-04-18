@@ -1,7 +1,7 @@
-*swank.txt*                    Slimv                 Last Change: 14 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 18 Apr 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
-                               Version 0.8.0
+                               Version 0.8.1
 
 The Superior Lisp Interaction Mode for Vim.
 Slimv contains a SWANK client that can communicate with a running SWANK server
@@ -246,6 +246,9 @@ INSPECTOR                                                       *swank-inspect*
   When pressing Enter on the top line starting with 'Inspecting' then the
   currently inspected value is reloaded.
 
+  When pressing Enter on a line starting with <nn> (where nn is the action
+  identifier) then nn-th action is called.
+
   When pressing Enter on a line starting with [nn] (where nn is the part
   identifier) then nn-th part is inspected.
 
@@ -307,6 +310,7 @@ currently implemented in the Slimv SWANK client.
   swank:frame-locals-and-catch-tags
   swank:init-inspector
   swank:inspect-nth-part
+  swank:inspector-call-nth-action
   swank:inspector-pop
   swank:invoke-nth-restart-for-emacs
   swank:listener-eval

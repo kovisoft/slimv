@@ -1,5 +1,5 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.0
+" Version:      0.8.1
 " Last Change:  18 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
@@ -1374,6 +1374,7 @@ function! SlimvHandleEnter()
         call SlimvEval( ['[0]'] )
         return
     endif
+
     if line[0] == '['
         if line[0:3] == '[<<]'
             " Pop back up in the inspector
@@ -1384,6 +1385,15 @@ function! SlimvHandleEnter()
         endif
         if item != ''
             call SlimvEval( ['[' . item . ']'] )
+            return
+        endif
+    endif
+
+    if line[0] == '<'
+        " Inspector n-th action
+        let item = matchstr( line, '\d\+' )
+        if item != ''
+            call SlimvEval( ['<' . item . '>'] )
             return
         endif
     endif

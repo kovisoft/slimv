@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.0
-# Last Change:  16 Apr 2011
+# Version:      0.8.1
+# Last Change:  18 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -240,33 +240,36 @@ def swank_parse_inspect(struct):
     """
     Parse the swank inspector output
     """
-    buf = '\n \nInspecting ' + parse_plist(struct, ':title') + '\n--------------------'
+    buf = '\n \nInspecting ' + parse_plist(struct, ':title') + '\n--------------------\n'
     pcont = parse_plist(struct, ':content')
     cont = pcont[0]
     lst = []
-    desc = ''
-    sep = ''
+    linestart = 0
     for el in cont:
+        logprint(str(el))
         if type(el) == list:
-            lst.append([desc, sep, unquote(el[1]), unquote(el[2])])
-            desc = ''
-            sep = ''
-        else:
-            stg = unquote(el)
-            if stg == "\n":
-                if desc:
-                    lst.append([desc, sep, '', ''])
-                desc = ''
-                sep = ''
-            elif stg == ': ' or stg == ' ':
-                sep = unquote(stg)
+            if el[0] == ':action':
+                item = '<' + unquote(el[2]) + '> '
             else:
-                desc = unquote(stg)
-    for (desc, sep, data, item) in lst:
-        buf = buf + "\n"
-        if item:
-            buf = buf + "[" + item + "]  "
-        buf = buf + "%s%s%s" % (desc, sep, data)
+                item = '[' + unquote(el[2]) + '] '
+            if linestart < 0:
+                lst.append("\n")
+                linestart = len(lst)
+            lst.insert(linestart, item)
+            linestart = -1
+            text = unquote(el[1])
+            if text[-len(item):] == ' ' * len(item):
+                # If possible, remove spaces from the end in the length of item info
+                lst.append(text[:-len(item)])
+            else:
+                lst.append(text)
+        else:
+            text = unquote(el)
+            lst.append(text)
+            if text == "\n":
+                linestart = len(lst)
+    for s in lst:
+        buf = buf + s
     buf = buf + '\n \n[<<]'
     return buf
 
@@ -454,6 +457,7 @@ def swank_listen():
                                 keys = make_keys(params)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
+                                logprint(str(params))
                                 retval = retval + swank_parse_inspect(params)
                             elif element == ':compilation-result':
                                 logprint(str(params))
@@ -624,6 +628,10 @@ def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
     swank_rex(':inspect-nth-part', cmd, 'nil', 't')
 
+def swank_inspector_nth_action(n):
+    cmd = '(swank:inspector-call-nth-action ' + str(n) + ')'
+    swank_rex(':inspector-call-nth-action', cmd, 'nil', 't')
+
 def swank_inspector_pop():
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
@@ -751,6 +759,8 @@ def swank_input(formvar):
             swank_inspector_pop()
         else:
             swank_inspect_nth_part(form[1:-2])
+    elif form[0] == '<':
+        swank_inspector_nth_action(form[1:-2])
     else:
         # Normal s-expression evaluation
         pkg = vim.eval("s:swank_package")
