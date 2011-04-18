@@ -1,7 +1,7 @@
 *slimv.txt*                    Slimv                 Last Change: 18 Apr 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.8.0
+                               Version 0.8.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1054,7 +1054,8 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.8.1  - Bugfix: read-string mode was stuck.
+0.8.1  - Added action handling to inspector.
+       - Bugfix: read-string mode was stuck.
        - Bugfix: buffer corruption with two source windows
          (thanks to Philipp Marek).
        - Bugfix: eliminate multiple CursorHold autocommands
