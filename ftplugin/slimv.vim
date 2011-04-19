@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.1
-" Last Change:  18 Apr 2011
+" Last Change:  19 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -525,7 +525,6 @@ function! SlimvSwankResponse()
     redir END
 
     if s:swank_action != '' && msg != ''
-        "echo s:swank_action
         if s:swank_action == ':describe-symbol'
             echo msg
             echo input('Press ENTER to continue.')
@@ -733,8 +732,9 @@ function! SlimvTimer()
     call SlimvRefreshReplBuffer()
     if g:slimv_repl_open
         if mode() == 'i' || mode() == 'I'
-            " Put an empty '<C-O>:<CR>' command into the typeahead buffer
-            call feedkeys("\<c-o>:\<cr>")
+            " Put '<Insert>' twice into the typeahead buffer, which should not do anything
+            " just switch to overwrite mode then back to insert mode
+            call feedkeys("\<insert>\<insert>")
         else
             " Put an incomplete 'f' command and an Esc into the typeahead buffer
             call feedkeys("f\e")

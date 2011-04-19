@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 18 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 19 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.1
@@ -1062,6 +1062,7 @@ CHANGE LOG                                                    *slimv-changelog*
          (thanks to Philipp Marek).
        - Bugfix: completion with special characters in symbol name
          (thanks to Philipp Marek).
+       - Bugfix: sometimes cursor went to the start of line in insert mode.
 
 0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.
