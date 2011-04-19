@@ -1726,7 +1726,7 @@ endfunction
 " Switch trace off for the selected function (or all functions for swank)
 function! SlimvUntrace()
     if g:slimv_swank
-        if g:swank_connected
+        if s:swank_connected
             let s:refresh_disabled = 1
             call SlimvCommand( 'python swank_untrace_all()' )
             let s:refresh_disabled = 0

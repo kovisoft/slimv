@@ -1063,6 +1063,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: completion with special characters in symbol name
          (thanks to Philipp Marek).
        - Bugfix: sometimes cursor went to the start of line in insert mode.
+       - Bugfix: syntax error in Untrace All.
 
 0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.
