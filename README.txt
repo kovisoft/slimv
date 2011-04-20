@@ -120,6 +120,8 @@ See the included documentation for more complete installation and customization 
 Script versions
 --------------------------------------------------------------------------------
 
+0.8.1: Added action handling to Inspector, fixed Inspector output, bugfixes: read-string mode was stuck, buffer corruption with two source windows (thanks to Philipp Marek), eliminate multiple CursorHold autocommands (thanks to Philipp Marek), completion with special characters in symbol name (thanks to Philipp Marek), sometimes cursor went to the start of line in insert mode, syntax error in Untrace All (thanks to Philipp Marek), removed ' prefix from symbol selection (except for Inspect), keep cursor position in Describe and Compile-Region.
+
 0.8.0: Major update: added SWANK client (many thanks to Philipp Marek), additional changes: split documentation into three parts, added keymapping hints to GUI menu items, renamed Eval-Last-Expression to Eval-Current-Expression, REPL buffer is not syntax highlighted anymore, switch on filetype plugins, autodetection for Allegro CL, Lisp Cabinet and Leiningen, ask for save before compiling file, map <Tab> for completion, bugfixes: finding start of keyword in completion, deleting escaped " inside string, Up/Down/Enter handling in popup menu.
 
 0.7.7: Find next closing paren when using ,< or ,> in Paredit and not standing on a paren, open REPL buffer upon connecting server, bugfixes: REPL buffer prompt identification was sometimes missing, switch off REPL refresh mode when REPL buffer is not visible (thanks to Philipp Marek), convert Python path on Windows to short 8.3 filename format if it contains space (thanks to Razvan Rotaru).
