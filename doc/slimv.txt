@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 20 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.1
@@ -1054,7 +1054,7 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.8.1  - Added action handling to inspector.
+0.8.1  - Added action handling to Inspector, fixed Inspector output.
        - Bugfix: read-string mode was stuck.
        - Bugfix: buffer corruption with two source windows
          (thanks to Philipp Marek).
@@ -1063,7 +1063,9 @@ CHANGE LOG                                                    *slimv-changelog*
        - Bugfix: completion with special characters in symbol name
          (thanks to Philipp Marek).
        - Bugfix: sometimes cursor went to the start of line in insert mode.
-       - Bugfix: syntax error in Untrace All.
+       - Bugfix: syntax error in Untrace All (thanks to Philipp Marek).
+       - Bugfix: removed ' prefix from symbol selection (except for Inspect).
+       - Bugfix: keep cursor position in Describe and Compile-Region.
 
 0.8.0  - Major update: added SWANK client (many thanks to Philipp Marek).
        - Split documentation into three parts.

@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.1
-" Last Change:  19 Apr 2011
+" Last Change:  20 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -898,6 +898,17 @@ endfunction
 
 " Select symbol under cursor and return it
 function! SlimvSelectSymbol()
+    if SlimvGetFiletype() == 'clojure'
+        setlocal iskeyword+=~,#,&,\|,{,},!,?
+    else
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+    endif
+    let symbol = expand('<cword>')
+    return symbol
+endfunction
+
+" Select symbol with possible prefixes under cursor and return it
+function! SlimvSelectSymbolExt()
     let save_iskeyword = &iskeyword
     if SlimvGetFiletype() == 'clojure'
         setlocal iskeyword+=~,#,&,\|,{,},!,?,'
@@ -988,10 +999,12 @@ endfunction
 
 " Execute the given SWANK command with current package defined
 function! SlimvCommandUsePackage( cmd )
+    let oldpos = getpos( '.' ) 
     call SlimvFindPackage()
     let s:refresh_disabled = 1
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
+    call setpos( '.', oldpos ) 
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
 endfunction
@@ -1758,9 +1771,9 @@ function! SlimvDisassemble()
     endif
 endfunction
 
-" Inspect symbol
+" Inspect symbol under cursor
 function! SlimvInspect()
-    let s = input( 'Inspect: ', SlimvSelectSymbol() )
+    let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
     if s != ''
         if g:slimv_swank
             if s:swank_connected
@@ -2046,6 +2059,7 @@ function! SlimvCompileFile()
 endfunction
 
 function! SlimvCompileRegion() range
+    let oldpos = getpos( '.' ) 
     let lines = SlimvGetRegion()
     let region = join( lines, "\n" )
     call SlimvFindPackage()
@@ -2060,6 +2074,7 @@ function! SlimvCompileRegion() range
         let region = substitute( region, '"', '\\\\"', 'g' )
         call SlimvEvalForm1( g:slimv_template_compile_string, region )
     endif
+    call setpos( '.', oldpos ) 
 endfunction
 
 " ---------------------------------------------------------------------
