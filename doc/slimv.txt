@@ -1,7 +1,7 @@
 *slimv.txt*                    Slimv                 Last Change: 20 Apr 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.8.1
+                               Version 0.8.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1053,6 +1053,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.2  - Bugfix: Paredit inserting and deleting \" outside of string.
 
 0.8.1  - Added action handling to Inspector, fixed Inspector output.
        - Bugfix: read-string mode was stuck.

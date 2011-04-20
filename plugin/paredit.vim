@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.8.0
-" Last Change:  02 Apr 2011
+" Version:      0.8.2
+" Last Change:  20 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -515,14 +515,14 @@ function! PareditInsertQuotes()
     if !g:paredit_mode || s:InsideComment()
         return '"'
     endif
-    if s:InsideString()
-        let line = getline( '.' )
-        let pos = col( '.' ) - 1
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
+        " About to enter a \"
+        return '"'
+    elseif s:InsideString()
         "TODO: skip comments in search(...)
-        if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
-            " About to enter a \" inside a string
-            return '"'
-        elseif line[pos] == '"'
+        if line[pos] == '"'
             " Standing on a ", just move to the right
             return "\<Right>"
         elseif search('[^\\]"\|^"', 'nW') == 0
@@ -559,8 +559,8 @@ function! PareditBackspace( repl_mode )
     elseif s:InsideString() && line[pos-1] =~ s:any_openclose_char
         " Deleting a paren inside a string
         return "\<BS>"
-    elseif s:InsideString() && pos > 1 && line[pos-2:pos-1] == '\"'
-        " Deleting an escaped double quote inside a string
+    elseif pos > 1 && line[pos-2:pos-1] == '\"'
+        " Deleting an escaped double quote
         return "\<BS>\<BS>"
     elseif line[pos-1] !~ s:any_matched_char
         " Deleting a non-special character
