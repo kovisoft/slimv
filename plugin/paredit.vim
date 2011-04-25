@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.8.2
-" Last Change:  20 Apr 2011
+" Last Change:  25 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -28,12 +28,6 @@ if !exists( 'g:paredit_mode' )
     let g:paredit_mode = 1
 endif
 
-"TODO: automatic indentation
-" Automatic indentation after some editing commands
-"if !exists( 'g:paredit_autoindent' )
-"    let g:paredit_autoindent = 1
-"endif
-
 " Match delimiter this number of lines before and after cursor position
 if !exists( 'g:paredit_matchlines' )
     let g:paredit_matchlines = 100
@@ -50,7 +44,7 @@ endif
 
 " Skip matches inside string or comment
 let s:skip_c  = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Cc]omment"'
-let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
+let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial"'
 
 " Regular expressions to identify special characters combinations used by paredit
 "TODO: add curly brace
@@ -313,22 +307,6 @@ function! s:InsideString( ... )
     return s:SynIDMatch( '[Ss]tring', a:0 ? a:1 : '.', 0 )
 endfunction
 
-" Autoindent current top level form
-function! PareditIndentTopLevelForm( level )
-    if a:level < g:paredit_autoindent
-        return
-    endif
-    let l = line( '.' )
-    let c =  col( '.' )
-    normal! ms
-    let matchb = max( [l-g:paredit_matchlines, 1] )
-    let [l0, c0] = searchpairpos( '(', '', ')', 'brmW', s:skip_sc, matchb )
-    "let save_exp = &expandtab
-    "set expandtab
-    normal! v%=`s
-    "let &expandtab = save_exp
-endfunction
-
 " Is this a Slimv REPL buffer?
 function! s:IsReplBuffer()
     if exists( 'g:slimv_repl_dir' ) && exists( 'g:slimv_repl_file' )
@@ -399,6 +377,8 @@ function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
             if a:lines[i] == "\n"
                 let inside_comment = 0
             endif
+        elseif i > 0 && a:lines[i-1] == '\' && (i < 2 || a:lines[i-2] != '\')
+            " This is an escaped character, ignore it
         else
             " We are outside of strings and comments, now we shall count parens
             if a:lines[i] == '"'
@@ -480,7 +460,10 @@ function! PareditInsertOpening( open, close )
     endif
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] !~ s:any_wsclose_char && pos < len( line )
+    if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
+        " About to enter a \( or \[
+        return a:open
+    elseif line[pos] !~ s:any_wsclose_char && pos < len( line )
         " Add a space after if needed
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
@@ -500,7 +483,10 @@ function! PareditInsertClosing( open, close )
     endif
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    if line[pos] == a:close
+    if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
+        " About to enter a \) or \]
+        return a:close
+    elseif line[pos] == a:close
         return "\<Right>"
     else
         let open  = escape( a:open , '[]' )
@@ -559,8 +545,8 @@ function! PareditBackspace( repl_mode )
     elseif s:InsideString() && line[pos-1] =~ s:any_openclose_char
         " Deleting a paren inside a string
         return "\<BS>"
-    elseif pos > 1 && line[pos-2:pos-1] == '\"'
-        " Deleting an escaped double quote
+    elseif pos > 1 && line[pos-1] =~ s:any_matched_char && line[pos-2] == '\' && (pos < 3 || line[pos-3] != '\')
+        " Deleting an escaped matched character
         return "\<BS>\<BS>"
     elseif line[pos-1] !~ s:any_matched_char
         " Deleting a non-special character
@@ -591,6 +577,9 @@ function! PareditDel()
     if pos == len(line)
         " We are at the end of the line
         return "\<Del>"
+    elseif line[pos] == '\' && line[pos+1] =~ s:any_matched_char && (pos < 1 || line[pos-1] != '\')
+        " Deleting an escaped matched character
+        return "\<Del>\<Del>"
     elseif line[pos] !~ s:any_matched_char
         " Erasing a non-special character
         return "\<Del>"
@@ -639,8 +628,8 @@ function! s:EraseFwd( count, startcol )
     let reg = @"
     let c = a:count
     while c > 0
-        if s:InsideString() && line[pos : pos+1] == '\"'
-            " Erasing a \" inside string
+        if line[pos] == '\' && line[pos+1] =~ s:any_matched_char && (pos < 1 || line[pos-1] != '\')
+            " Erasing an escaped matched character
             let reg = reg . line[pos : pos+1]
             let line = strpart( line, 0, pos ) . strpart( line, pos+2 )
         elseif s:InsideComment() && line[pos] == ';' && a:startcol >= 0
@@ -688,7 +677,8 @@ function! s:EraseBck( count )
     let reg = @"
     let c = a:count
     while c > 0 && pos > 0
-        if s:InsideString() && pos > 1 && line[pos-2:pos-1] == '\"'
+        if pos > 1 && line[pos-2] == '\' && line[pos-1] =~ s:any_matched_char && (pos < 3 || line[pos-3] != '\')
+            " Erasing an escaped matched character
             let reg = reg . line[pos-2 : pos-1]
             let line = strpart( line, 0, pos-2 ) . strpart( line, pos )
             normal! h
