@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.1
-# Last Change:  18 Apr 2011
+# Version:      0.8.2
+# Last Change:  26 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -438,13 +438,16 @@ def swank_listen():
                                 # No more output from REPL, write new prompt
                                 retval = retval + unquote(params[1][0][0]) + '\n' + prompt + '> '
                             elif element == ':values':
-                                retval = retval + params[1][0] + '\n'
+                                if type(params[1]) == list: 
+                                    retval = retval + unquote(params[1][0]) + '\n'
+                                else:
+                                    retval = retval + unquote(params[1]) + '\n' + prompt + '> '
                             elif element == ':suppress-output':
                                 pass
                             elif element == ':pid':
                                 conn_info = make_keys(params)
                                 pid = conn_info[':pid']
-                                ver = conn_info[':version']
+                                ver = conn_info.get(':version', 'nil')
                                 imp = make_keys( conn_info[':lisp-implementation'] )
                                 pkg = make_keys( conn_info[':package'] )
                                 package = pkg[':name']
