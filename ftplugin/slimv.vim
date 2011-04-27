@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.1
-" Last Change:  20 Apr 2011
+" Version:      0.8.2
+" Last Change:  26 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -936,6 +936,16 @@ function! SlimvSelectForm()
         let c = c - 1
     endwhile
     silent normal! "sy
+    let sel = SlimvGetSelection()
+    if sel == ''
+        call SlimvError( "Form is empty." )
+        return 0
+    elseif sel == '(' || sel == '['
+        call SlimvError( "Form is unbalanced." )
+        return 0
+    else
+        return 1
+    endif
 endfunction
 
 " Find starting '(' of a top level form
@@ -949,7 +959,7 @@ endfunction
 " Select top level form the cursor is inside and copy it to register 's'
 function! SlimvSelectDefun()
     call SlimvFindDefunStart()
-    call SlimvSelectForm()
+    return SlimvSelectForm()
 endfunction
 
 " Return the contents of register 's'
@@ -1596,7 +1606,9 @@ endfunction
 " Evaluate top level form at the cursor pos
 function! SlimvEvalDefun()
     let oldpos = getpos( '.' ) 
-    call SlimvSelectDefun()
+    if !SlimvSelectDefun()
+        return
+    endif
     call SlimvFindPackage()
     call SlimvEvalSelection()
     call setpos( '.', oldpos ) 
@@ -1611,7 +1623,9 @@ endfunction
 " Evaluate current s-expression at the cursor pos
 function! SlimvEvalExp()
     let oldpos = getpos( '.' ) 
-    call SlimvSelectForm()
+    if !SlimvSelectForm()
+        return
+    endif
     call SlimvFindPackage()
     call SlimvEvalSelection()
     call setpos( '.', oldpos ) 
@@ -1620,7 +1634,9 @@ endfunction
 " Evaluate and pretty print current s-expression
 function! SlimvPprintEvalExp()
     let oldpos = getpos( '.' ) 
-    call SlimvSelectForm()
+    if !SlimvSelectForm()
+        return
+    endif
     call SlimvFindPackage()
     call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
     call setpos( '.', oldpos ) 
@@ -1654,7 +1670,9 @@ function! SlimvMacroexpandGeneral( command )
     let line = getline( "." )
     if match( line, '(\s*defmacro\s' ) < 0
         " The form does not contain 'defmacro', put it in a macroexpand block
-        call SlimvSelectForm()
+        if !SlimvSelectForm()
+            return
+        endif
         let m = "(" . a:command . " '" . SlimvGetSelection() . ")"
     else
         " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
@@ -1685,7 +1703,9 @@ endfunction
 function! SlimvMacroexpand()
     if g:slimv_swank
         if s:swank_connected
-            call SlimvSelectDefun()
+            if !SlimvSelectDefun()
+                return
+            endif
             let s:swank_form = SlimvGetSelection()
             call SlimvCommandUsePackage( 'python swank_macroexpand("s:swank_form")' )
         endif
@@ -1701,7 +1721,9 @@ endfunction
 function! SlimvMacroexpandAll()
     if g:slimv_swank
         if s:swank_connected
-            call SlimvSelectDefun()
+            if !SlimvSelectDefun()
+                return
+            endif
             let s:swank_form = SlimvGetSelection()
             call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
         else
@@ -1989,7 +2011,9 @@ endfunction
 " Compile the current top-level form
 function! SlimvCompileDefun()
     let oldpos = getpos( '.' ) 
-    call SlimvSelectDefun()
+    if !SlimvSelectDefun()
+        return
+    endif
     call SlimvFindPackage()
     if g:slimv_swank
         if s:swank_connected
