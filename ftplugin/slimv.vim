@@ -144,6 +144,9 @@ function! SlimvSwankCommand()
     if exists( 'g:slimv_swank_clojure' ) && SlimvGetFiletype() == 'clojure'
         return g:slimv_swank_clojure
     endif
+    if exists( 'g:slimv_swank_scheme' ) && SlimvGetFiletype() == 'scheme'
+        return g:slimv_swank_scheme
+    endif
     if exists( 'g:slimv_swank_cmd' )
         return g:slimv_swank_cmd
     endif
@@ -1005,7 +1008,7 @@ endfunction
 " Find and add language specific package/namespace definition before the
 " cursor position and if exists then add it in front of the current selection
 function! SlimvFindPackage()
-    if !g:slimv_package || s:debug_activated
+    if !g:slimv_package || s:debug_activated || SlimvGetFiletype() == 'scheme'
         return
     endif
     if SlimvGetFiletype() == 'clojure'
