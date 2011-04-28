@@ -2016,9 +2016,9 @@ endfunction
 function! SlimvCompileDefun()
     let oldpos = getpos( '.' ) 
     if !SlimvSelectDefun()
+        call setpos( '.', oldpos ) 
         return
     endif
-    call SlimvFindPackage()
     if g:slimv_swank
         if s:swank_connected
             let s:swank_form = SlimvGetSelection()
@@ -2027,11 +2027,12 @@ function! SlimvCompileDefun()
             call SlimvError( "Not connected to SWANK server." )
         endif
     else
+        call SlimvFindPackage()
         let form = SlimvGetSelection()
         let form = substitute( form, '"', '\\\\"', 'g' )
         call SlimvEvalForm1( g:slimv_template_compile_string, form )
+        call setpos( '.', oldpos ) 
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " Compile and load whole file
@@ -2090,7 +2091,6 @@ function! SlimvCompileRegion() range
     let oldpos = getpos( '.' ) 
     let lines = SlimvGetRegion()
     let region = join( lines, "\n" )
-    call SlimvFindPackage()
     if g:slimv_swank
         if s:swank_connected
             let s:swank_form = region
@@ -2099,10 +2099,11 @@ function! SlimvCompileRegion() range
             call SlimvError( "Not connected to SWANK server." )
         endif
     else
+        call SlimvFindPackage()
         let region = substitute( region, '"', '\\\\"', 'g' )
         call SlimvEvalForm1( g:slimv_template_compile_string, region )
+        call setpos( '.', oldpos ) 
     endif
-    call setpos( '.', oldpos ) 
 endfunction
 
 " ---------------------------------------------------------------------
