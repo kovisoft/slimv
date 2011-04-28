@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 28 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.2
@@ -18,6 +18,7 @@ Please visit |swank.txt| for additional information on the SWANK client.
 |slimv-usage|                Usage
 |slimv-repl|                 Lisp REPL inside Vim
 |slimv-clojure|              Clojure support
+|slimv-scheme|               Scheme support
 |slimv-package|              Package and Namespace handling
 |slimv-profiling|            Profiling
 |slimv-hyperspec|            Hyperspec Lookup and Completion
@@ -43,8 +44,8 @@ Prerequisites:
   details in |swank-installation|.
 
   Required components:
-  - Lisp (any console Common Lisp implementation should be OK) or
-    Clojure installed.
+  - Lisp (any console Common Lisp implementation should be OK) or Clojure or
+    MIT Scheme (Linux only) installed.
   - Python 2.4 or later installed. When using the SWANK client the same Python
     version is needed that Vim is compiled against.
     When not using the SWANK client then due to a Popen bug in the Cygwin
@@ -77,11 +78,13 @@ To install the script:
        ftplugin/swank.py
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
+       ftplugin/scheme/slimv-scheme.vim
        indent/clojure.vim
        plugin/paredit.vim
        slime/*
        swank-clojure/*
        syntax/clojure/slimv-syntax-clojure.vim
+       syntax/scheme/slimv-syntax-scheme.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
     another Clojure filetype plugin. In this case just keep the original file.
@@ -754,6 +757,18 @@ Remember to escape the backslashes:
 
 
 ===============================================================================
+SCHEME SUPPORT                                                   *slimv-scheme*
+
+Slimv has a limited support for Scheme: currently only MIT Scheme is supported
+via the SWANK client, using a modified version of swank-mit-scheme.scm in the
+slime/contrib directory.
+The Scheme SWANK server also requires the 'netcat' program to create sockets.
+Please read information about the implementation details in the file header of
+swank-mit-scheme.scm.
+There is no Hyperspec information for Scheme at the moment.
+
+
+===============================================================================
 PACKAGE AND NAMESPACE HANDLING                                  *slimv-package*
 
 Slimv has a basic support for handling Lisp packages and Clojure namespaces.
@@ -1054,7 +1069,8 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.8.2  - Bugfix: Paredit inserting and deleting \" outside of string.
+0.8.2  - Added support for MIT Scheme on Linux
+       - Bugfix: Paredit inserting and deleting \" outside of string.
 
 0.8.1  - Added action handling to Inspector, fixed Inspector output.
        - Bugfix: read-string mode was stuck.
