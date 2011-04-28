@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.2
-" Last Change:  26 Apr 2011
+" Last Change:  28 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1498,6 +1498,10 @@ function! SlimvConnectServer()
         let repl_win = bufwinnr( repl_buf )
         if g:slimv_repl_open && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
             call SlimvOpenReplBuffer()
+        endif 
+        if s:swank_connected
+            python swank_disconnect()
+            let s:swank_connected = 0
         endif 
         call SlimvConnectSwank()
     endif
