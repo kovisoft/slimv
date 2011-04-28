@@ -11,9 +11,9 @@ Tamas Kovacs
 --------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
-Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP server for Emacs, which runs a Common Lisp or Clojure REPL and provides a socket interface for evaluating, compiling, debugging, profiling lisp code. The SWANK server is embedded in Slimv, but you can also use your own SWANK installation.
+Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP server for Emacs, which runs a Common Lisp, Clojure or Scheme REPL and provides a socket interface for evaluating, compiling, debugging, profiling lisp code. The SWANK server is embedded in Slimv, but you can also use your own SWANK installation.
 
-Slimv opens the lisp or clojure REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
+Slimv opens the lisp REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
 
 Slimv supports SLIME's debugger, profiler, cross reference, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
@@ -95,7 +95,7 @@ Extract the zip archive into your vimfiles or runtime directory.
 Slimv works on Windows, Linux and Mac OS X (via Terminal.app), Cygwin is supported. The script requires the following programs installed on your system:
     *  Vim with Python feature enabled
     *  Python (must be the same Python version that was Vim compiled against)
-    *  Lisp (any Common Lisp with SLIME support) or Clojure
+    *  Lisp (any Common Lisp with SLIME support) or Clojure or MIT Scheme (Linux only)
 
 Vim's Python version can be identified with the :ver command, look for the -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string.
 

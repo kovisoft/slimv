@@ -162,6 +162,14 @@ function! SlimvSwankCommand()
             let sclj = substitute( swanks[0], '\', '/', "g" )
             let cmd = g:slimv_lisp . ' -e "(load-file \"' . sclj . '\") (swank.swank/start-repl)" -r'
         endif
+    elseif SlimvGetFiletype() == 'scheme'
+        let swanks = split( globpath( &runtimepath, 'slime/contrib/swank-mit-scheme.scm'), '\n' )
+        if len( swanks ) == 0
+            return ''
+        endif
+        if b:SlimvImplementation() == 'mit'
+            let cmd = '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
+        endif
     else
         " First check if SWANK is bundled with Slimv
         let swanks = split( globpath( &runtimepath, 'slime/start-swank.lisp'), '\n' )
