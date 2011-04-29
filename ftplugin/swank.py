@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.2
-# Last Change:  28 Apr 2011
+# Last Change:  29 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -322,6 +322,29 @@ def swank_parse_compile(struct):
         buf = '\nCompilation finished. (No warnings)  [' + time + ' secs]\n\n'
     return buf
 
+def swank_parse_frame_call(struct):
+    """
+    Parse frame call output
+    """
+    if type(struct) == list:
+        buf = struct[1][1] + '\n'
+        #buf = '{{{' + struct[1][1] + '}}}\n'
+    else:
+        buf = 'No frame call information\n'
+    return buf
+
+def swank_parse_frame_source(struct):
+    """
+    Parse frame source output
+    http://comments.gmane.org/gmane.lisp.slime.devel/9961 ;-(
+    'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
+    """
+    if type(struct) == list and len(struct) == 4:
+        buf = ' in ' + struct[1][1] + ' line ' + struct[2][1] + '\n'
+    else:
+        buf = ' No source line information\n'
+    return buf
+
 def swank_parse_locals(struct):
     """
     Parse frame locals output
@@ -432,7 +455,7 @@ def swank_listen():
                                 if len(retval) > 0 and retval[-1] != '\n':
                                     retval = retval + '\n'
                                 retval = retval + prompt + '> '
-                        
+
                         elif type(params) == list:
                             if type(params[0]) == list: 
                                 params = params[0]
@@ -489,6 +512,12 @@ def swank_listen():
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
                                     retval = retval + prompt + '> '
+                                elif action.name == ':frame-call':
+                                    retval = retval + swank_parse_frame_call(params)
+                                    retval = retval + prompt + '> '
+                                elif action.name == ':frame-source-location':
+                                    retval = retval + swank_parse_frame_source(params)
+                                    #retval = retval + prompt + '> '
                                 elif action.name == ':frame-locals-and-catch-tags':
                                     retval = retval + swank_parse_locals(params)
                                     retval = retval + prompt + '> '
@@ -594,6 +623,14 @@ def swank_invoke_abort():
 
 def swank_invoke_continue():
     swank_rex(':sldb-continue', '(swank:sldb-continue)', 'nil', current_thread)
+
+def swank_frame_call(frame):
+    cmd = '(swank-backend:frame-call ' + frame + ')'
+    swank_rex(':frame-call', cmd, 'nil', current_thread)
+
+def swank_frame_source_loc(frame):
+    cmd = '(swank:frame-source-location ' + frame + ')'
+    swank_rex(':frame-source-location', cmd, 'nil', current_thread)
 
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-and-catch-tags ' + frame + ')'
@@ -753,6 +790,8 @@ def swank_input(formvar):
     elif debug_activated and form[0] != '(' and form[0] != ' ':
         # We are in debug mode and an SLDB command follows (that is not an s-expr)
         if form[0] == '#':
+            swank_frame_call(form[1:])
+            swank_frame_source_loc(form[1:])
             swank_frame_locals(form[1:])
         elif form[0].lower() == 'q':
             swank_throw_toplevel()

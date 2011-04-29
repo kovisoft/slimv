@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 28 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 29 Apr 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.2
@@ -1069,8 +1069,14 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
-0.8.2  - Added support for MIT Scheme on Linux
-       - Bugfix: Paredit inserting and deleting \" outside of string.
+0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.
+       - Added SWANK support for MIT Scheme on Linux.
+       - Added frame call information to SLDB (thanks to Philipp Marek).
+       - Check for unbalanced form before evaluation.
+       - Reconnect SWANK server in Connect-Server if already connected
+         (thanks to Philipp Marek).
+       - Bugfix: Paredit handling of escaped matched characters, like \" or \(.
+       - Bugfix: cursor positioning problems when debugger activated.
 
 0.8.1  - Added action handling to Inspector, fixed Inspector output.
        - Bugfix: read-string mode was stuck.
