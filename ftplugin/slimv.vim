@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.2
-" Last Change:  28 Apr 2011
+" Last Change:  29 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1625,8 +1625,8 @@ function! SlimvEvalDefun()
         return
     endif
     call SlimvFindPackage()
-    call SlimvEvalSelection()
     call setpos( '.', oldpos ) 
+    call SlimvEvalSelection()
 endfunction
 
 " Evaluate the whole buffer
@@ -1642,8 +1642,8 @@ function! SlimvEvalExp()
         return
     endif
     call SlimvFindPackage()
-    call SlimvEvalSelection()
     call setpos( '.', oldpos ) 
+    call SlimvEvalSelection()
 endfunction
 
 " Evaluate and pretty print current s-expression
@@ -1653,8 +1653,8 @@ function! SlimvPprintEvalExp()
         return
     endif
     call SlimvFindPackage()
-    call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
     call setpos( '.', oldpos ) 
+    call SlimvEvalForm1( g:slimv_template_pprint, SlimvGetSelection() )
 endfunction
 
 " Evaluate expression entered interactively
