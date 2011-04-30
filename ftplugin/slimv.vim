@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.2
-" Last Change:  29 Apr 2011
+" Last Change:  30 Apr 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1718,7 +1718,7 @@ endfunction
 function! SlimvMacroexpand()
     if g:slimv_swank
         if s:swank_connected
-            if !SlimvSelectDefun()
+            if !SlimvSelectForm()
                 return
             endif
             let s:swank_form = SlimvGetSelection()
@@ -1736,7 +1736,7 @@ endfunction
 function! SlimvMacroexpandAll()
     if g:slimv_swank
         if s:swank_connected
-            if !SlimvSelectDefun()
+            if !SlimvSelectForm()
                 return
             endif
             let s:swank_form = SlimvGetSelection()
