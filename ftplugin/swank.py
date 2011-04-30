@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.2
-# Last Change:  29 Apr 2011
+# Last Change:  30 Apr 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -449,7 +449,7 @@ def swank_listen():
                                 if action:
                                     action.result = retval
                             # List of actions needing a prompt
-                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form']
+                            to_prompt = [':describe-symbol', ':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form']
                             if element == 'nil' or (action and action.name in to_prompt):
                                 # No more output from REPL, write new prompt
                                 if len(retval) > 0 and retval[-1] != '\n':
