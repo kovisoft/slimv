@@ -1,7 +1,7 @@
-*paredit.txt*                    Slimv               Last Change: 25 Mar 2011
+*paredit.txt*                    Slimv               Last Change: 01 May 2011
 
 Paredit mode for Slimv                                *paredit* *slimv-paredit*
-                               Version 0.8.0
+                               Version 0.8.2
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp or Clojure programming language.
@@ -321,4 +321,4 @@ Otherwise these paredit functions can be reached via the <Leader> prefix.
 
 
 ===============================================================================
-vim:tw=80:noet:wrap:ts=8:ft=help:norl:
+vim:tw=80:et:wrap:ft=help:norl:

@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 29 Apr 2011
+*swank.txt*                    Slimv                 Last Change: 01 May 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.2
@@ -90,7 +90,7 @@ CONFIGURATION                                             *swank-configuration*
 (swank:create-server :port 4005
                      :coding-system "iso-latin-1-unix"
                      :dont-close t)
- 
+
 
                                                                  *g:swank_port*
   The SWANK server is connected to port 4005 by default. This can be changed
@@ -193,8 +193,9 @@ Backtrace:
   5: (SWANK::EVAL-REGION "(/ 1 0)")
 
 
-  If you press Enter in normal mode on a frame line then the local variable
-  bindings for that frame are displayed at the bottom of the SLDB printout.
+  If you press Enter in normal mode on a frame line then frame information
+  with the local variable bindings for that frame are displayed at the bottom
+  of the SLDB printout.
 
 
 -------------------------------------------------------------------------------
@@ -339,4 +340,4 @@ currently implemented in the Slimv SWANK client.
   swank-backend:frame-call
 
 ===============================================================================
-vim:tw=80:noet:wrap:ts=8:ft=help:norl:
+vim:tw=80:et:wrap:ft=help:norl:

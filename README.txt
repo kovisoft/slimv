@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 slimv.vim
 --------------------------------------------------------------------------------
-Superior Lisp Interaction Mode for Vim (SLIME for Vim)
+Superior Lisp Interaction Mode for Vim ("SLIME for Vim")
 
 Vim script
 
@@ -120,7 +120,7 @@ See the included documentation for more complete installation and customization 
 Script versions
 --------------------------------------------------------------------------------
 
-0.8.2: Added Paredit and g:lisp_rainbow support for Scheme files, added SWANK support for MIT Scheme on Linux, added frame call information to SLDB (thanks to Philipp Marek), check for unbalanced form before evaluation, reconnect SWANK server in Connect-Server if already connected (thanks to Philipp Marek), bugfixes: Paredit handling of escaped matched characters (e.g. \"), cursor positioning problems when debugger activated.
+0.8.2: Added Paredit and g:lisp_rainbow support for Scheme files, added SWANK support for MIT Scheme on Linux, added frame call information to SLDB (thanks to Philipp Marek), check for unbalanced form before evaluation, reconnect SWANK server in Connect-Server if already connected (thanks to Philipp Marek), select current form instead of top level form in Macroexpand, bugfixes: Paredit handling of escaped matched characters (e.g. \"), cursor positioning problems when debugger activated, print prompt after Describe.
 
 0.8.1: Added action handling to Inspector, fixed Inspector output, bugfixes: read-string mode was stuck, buffer corruption with two source windows (thanks to Philipp Marek), eliminate multiple CursorHold autocommands (thanks to Philipp Marek), completion with special characters in symbol name (thanks to Philipp Marek), sometimes cursor went to the start of line in insert mode, syntax error in Untrace All (thanks to Philipp Marek), removed ' prefix from symbol selection (except for Inspect), keep cursor position in Describe and Compile-Region.
 
@@ -181,4 +181,4 @@ Script versions
 
 0.1.3: Handle DOS and Unix style line endings on Windows, don't write logfile when debug level not set
 
-vim:wrap:
+vim:et:wrap:
