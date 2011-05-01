@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 29 Apr 2011
+*slimv.txt*                    Slimv                 Last Change: 01 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.2
@@ -1075,8 +1075,10 @@ CHANGE LOG                                                    *slimv-changelog*
        - Check for unbalanced form before evaluation.
        - Reconnect SWANK server in Connect-Server if already connected
          (thanks to Philipp Marek).
+       - Select current form instead of top level form in Macroexpand.
        - Bugfix: Paredit handling of escaped matched characters, like \" or \(.
        - Bugfix: cursor positioning problems when debugger activated.
+       - Bugfix: print prompt after Describe.
 
 0.8.1  - Added action handling to Inspector, fixed Inspector output.
        - Bugfix: read-string mode was stuck.
@@ -1340,7 +1342,8 @@ Also special thanks to Erik Naggum, Yuji Minejima and others for making the
 Common Lisp Hyperspec lookup packages for SLIME, and thanks to
 Taylor R. Campbell for the Emacs paredit.el script.
 
-Thanks to Jeffrey Chu, Phil Hagelberg, Hugo Duncan for making Swank Clojure.
+Thanks to Jeffrey Chu, Phil Hagelberg, Hugo Duncan for making Swank Clojure,
+and to Helmut Eller for making Scheme Swank server.
 
 Thanks to the Vim community for testing, commenting and patching the script,
 especially to Philipp Marek for his great number of contributions, patches,
@@ -1355,4 +1358,4 @@ Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.
 
 ===============================================================================
-vim:tw=80:noet:wrap:ts=8:ft=help:norl:
+vim:tw=80:et:wrap:ft=help:norl:
