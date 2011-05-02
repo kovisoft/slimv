@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.2
-" Last Change:  30 Apr 2011
+" Version:      0.8.3
+" Last Change:  02 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -530,6 +530,9 @@ endfunction
 
 " Handle response coming from the SWANK listener
 function! SlimvSwankResponse()
+    let s:refresh_disabled = 1
+    call SlimvCommand( 'python swank_output()' )
+    let s:refresh_disabled = 0
     let msg = ''
     redir => msg
     silent execute 'python swank_response("")'
@@ -669,8 +672,6 @@ function! SlimvRefreshReplBuffer()
     let this_win = winnr()
 
     if g:slimv_swank && s:swank_connected
-        "execute 'python swank_output(' . repl_buf . ')'
-        call SlimvCommand( 'python swank_output()' )
         call SlimvSwankResponse()
         return
     endif
@@ -1078,7 +1079,6 @@ function! SlimvConnectSwank()
             echon "\rGetting SWANK connection info..."
             let starttime = localtime()
             while s:swank_version == '' && localtime()-starttime < g:slimv_timeout
-                call SlimvCommand( 'python swank_output()' )
                 call SlimvSwankResponse()
             endwhile
             if s:swank_version >= '2008-12-23'
@@ -2062,7 +2062,6 @@ function! SlimvCompileLoadFile()
             call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
             let starttime = localtime()
             while s:compiled_file == '' && localtime()-starttime < g:slimv_timeout
-                call SlimvCommand( 'python swank_output()' )
                 call SlimvSwankResponse()
             endwhile
             if s:compiled_file != ''
