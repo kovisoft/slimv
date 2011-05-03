@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  02 May 2011
+" Last Change:  03 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -811,23 +811,34 @@ function! SlimvReplLeave()
     endif
 endfunction
 
+" View the given file in a top/bottom/left/right split window
+function! s:SplitView( filename )
+    if g:slimv_repl_split == 1
+        execute "silent topleft sview! " . a:filename
+    elseif g:slimv_repl_split == 2
+        execute "silent botright sview! " . a:filename
+    elseif g:slimv_repl_split == 3
+        execute "silent topleft vertical sview! " . a:filename
+    elseif g:slimv_repl_split == 4
+        execute "silent botright vertical sview! " . a:filename
+    else
+        execute "silent view! " . a:filename
+    endif
+endfunction
+
 " Open a new REPL buffer or switch to the existing one
 function! SlimvOpenReplBuffer()
     let repl_buf = bufnr( g:slimv_repl_file )
     if repl_buf == -1
         " Create a new REPL buffer
-        if g:slimv_repl_split
-            execute "silent sview! " . s:repl_name
-        else
-            execute "silent view! " . s:repl_name
-        endif
+        call s:SplitView( s:repl_name )
     else
         if g:slimv_repl_split
             " REPL buffer is already created. Check if it is open in a window
             let repl_win = bufwinnr( repl_buf )
             if repl_win == -1
                 " Create windows
-                execute "silent sview! " . s:repl_name
+                call s:SplitView( s:repl_name )
             else
                 " Switch to the REPL window
                 if winnr() != repl_win

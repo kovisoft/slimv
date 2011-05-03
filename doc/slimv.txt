@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 01 May 2011
+*slimv.txt*                    Slimv                 Last Change: 03 May 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.8.2
+                               Version 0.8.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -383,6 +383,15 @@ The default is to use split window. If you prefer having REPL being in a hidden
 buffer then set this option to zero. This way the REPL buffer will be opened
 at the first evaluation, but any subsequent evaluation will be performed
 silently, with the REPL buffer kept hidden.
+
+It is also possible to define the desired split direction. The following
+values may be used for |g:slimv_repl_open|:
+
+    0: no split
+    1: horizontal split above (default)
+    2: horizontal split below
+    3: vertical split left
+    4: vertical split right
 
                                                            *g:slimv_updatetime*
 The REPL buffer is refreshed at every keystroke or when the user doesn't press
@@ -1068,6 +1077,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.3  - Added top/bottom/left/right directions to g:slimv_repl_split.
+       - Bugfix: REPL output ordering problems.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.
        - Added SWANK support for MIT Scheme on Linux.
