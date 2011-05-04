@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  03 May 2011
+" Last Change:  04 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2295,8 +2295,32 @@ function! SlimvHyperspec()
     call SlimvLookup( SlimvSelectSymbol() )
 endfunction
 
+" Complete symbol name starting with 'base'
+function! SlimvComplete( base )
+    " Find all symbols starting with "a:base"
+    if g:slimv_swank && s:swank_connected
+        let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
+        if msg != ''
+            " We have a completion list from SWANK
+            let res = split( msg, '\n' )
+            return res
+        endif
+    endif
+
+    " No completion yet, try to fetch it from the Hyperspec database
+    let res = []
+    let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
+    call sort( symbol )
+    for m in symbol
+        if m =~ '^' . a:base
+            call add( res, m )
+        endif
+    endfor
+    return res
+endfunction
+
 " Complete function that uses the Hyperspec database
-function! SlimvComplete( findstart, base )
+function! SlimvOmniComplete( findstart, base )
     if a:findstart
         " Locate the start of the symbol name
         if SlimvGetFiletype() == 'clojure'
@@ -2308,33 +2332,39 @@ function! SlimvComplete( findstart, base )
         let p = match(upto, '\k\+$')
         return p 
     else
-        " Find all symbols starting with "a:base"
-        if g:slimv_swank && s:swank_connected
-            let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
-            if msg != ''
-                " We have a completion list from SWANK
-                let res = split( msg, '\n' )
-                return res
-            endif
-        endif
-
-        " No completion yet, try to fetch it from the Hyperspec database
-        let res = []
-        let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
-        call sort( symbol )
-        for m in symbol
-            if m =~ '^' . a:base
-                call add( res, m )
-            endif
-        endfor
-        return res
+        return SlimvComplete( a:base )
     endif
 endfunction
 
 " Define complete function only if none is defined yet
 if &omnifunc == ''
-    set omnifunc=SlimvComplete
+    set omnifunc=SlimvOmniComplete
 endif
+
+" Complete function for user-defined commands
+function! SlimvCommandComplete( arglead, cmdline, cursorpos )
+    " Locate the start of the symbol name
+    if SlimvGetFiletype() == 'clojure'
+        setlocal iskeyword+=~,#,&,\|,{,},!,?
+    else
+        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+    endif
+    let upto = strpart( a:cmdline, 0, a:cursorpos )
+    let base = matchstr(upto, '\k\+$')
+    let ext  = matchstr(upto, '\S*\k\+$')
+    let compl = SlimvComplete( base )
+    if len(compl) > 0 && base != ext
+        " Command completion replaces whole word between spaces, so we
+        " need to add any prefix present in front of the keyword, like '('
+        let prefix = strpart( ext, 0, len(ext) - len(base) )
+        let i = 0
+        while i < len(compl)
+            let compl[i] = prefix . compl[i]
+            let i = i + 1
+        endwhile
+    endif
+    return compl
+endfunction
 
 " Set current package
 function! SlimvSetPackage()
@@ -2495,6 +2525,13 @@ function SlimvAddReplMenu()
     amenu &REPL.&Next-Input                            :call SlimvNextCommand()<CR>
     amenu &REPL.&Refresh                               :call SlimvRefresh()<CR>
 endfunction
+
+" =====================================================================
+"  Slimv commands
+" =====================================================================
+
+command! -complete=customlist,SlimvCommandComplete -nargs=* Lisp call SlimvEval([<q-args>])
+command! -complete=customlist,SlimvCommandComplete -nargs=* Eval call SlimvEval([<q-args>])
 
 " Switch on syntax highlighting
 syntax on
