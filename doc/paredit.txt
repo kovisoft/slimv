@@ -1,4 +1,4 @@
-*paredit.txt*                    Slimv               Last Change: 03 May 2011
+*paredit.txt*                    Slimv               Last Change: 09 May 2011
 
 Paredit mode for Slimv                                *paredit* *slimv-paredit*
                                Version 0.8.3
@@ -106,7 +106,9 @@ Slimv core will not be loaded but paredit will be loaded and assigned to
 .lisp and .clj files.
 
 
-Here follows a list of paredit keybindings:
+Here follows a list of paredit keybindings. Please note that all mappings
+starting with <Leader> are actually prefixed with the Paredit leader which
+is defined by the |g:paredit_leader| option.
 
 
 Insert Mode:
@@ -295,6 +297,7 @@ functions are mapped with the <Leader> prefix:
 ===============================================================================
 PAREDIT OPTIONS                                               *paredit-options*
 
+|g:paredit_leader|           Custom <Leader> setting for Paredit.
 |g:paredit_matchlines|       Number of lines to look backward and forward
                              when checking if the current form is balanced.
 
@@ -302,6 +305,18 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_shortmaps|        If nonzero, paredit is remapping some one-letter
                              Vim commands that are not frequently used.
+
+
+                                                             *g:paredit_leader*
+Some Paredit keybindings use a specific prefix similarly to <Leader>.
+The default Paredit leader prefix is "," but this prefix can be changed by
+defining g:paredit_leader in your .vimrc file.
+Example:
+    let g:paredit_leader = '\'
+
+Paredit ignores the value of <Leader> (mapleader) but for readability reasons
+the documentation sometimes refers the g:paredit_leader prefix as <Leader>.
+Please keep in mind that in this case it actually means <g:paredit_leader>.
 
 
                                                          *g:paredit_matchlines*
@@ -315,9 +330,10 @@ balanced state of parens.
                                                           *g:paredit_shortmaps*
 If nonzero, paredit is remapping some one-letter normal mode Vim commands that
 are not frequently used. These are <, >, J, O, W, S. The original function of
-these maps then can be reached via the <Leader> prefix (which is the ","
-character by default in Slimv).
-Otherwise these paredit functions can be reached via the <Leader> prefix.
+these maps then can be reached via the |g:paredit_leader| prefix (which is
+the "," character by default in Paredit).
+Otherwise these paredit functions can be reached via the |g:paredit_leader|
+prefix.
 
 
 ===============================================================================

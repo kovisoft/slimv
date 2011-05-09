@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.8.2
-" Last Change:  27 Apr 2011
+" Version:      0.8.3
+" Last Change:  09 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -36,6 +36,11 @@ endif
 " Use short keymaps, i.e. J instead of <Leader>J
 if !exists( 'g:paredit_shortmaps' )
     let g:paredit_shortmaps = 0
+endif
+
+" Custom <Leader> for the Paredit plugin
+if !exists( 'g:paredit_leader' )
+    let g:paredit_leader = ','
 endif
 
 " =====================================================================
@@ -105,12 +110,12 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
         nnoremap <buffer> <silent> p            :<C-U>call PareditPut('p')<CR>
         nnoremap <buffer> <silent> P            :<C-U>call PareditPut('P')<CR>
-        nnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrap('(',')')<CR>
-        vnoremap <buffer> <silent> <Leader>w(   :<C-U>call PareditWrapSelection('(',')')<CR>
-        nnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrap('[',']')<CR>
-        vnoremap <buffer> <silent> <Leader>w[   :<C-U>call PareditWrapSelection('[',']')<CR>
-        nnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrap('"','"')<CR>
-        vnoremap <buffer> <silent> <Leader>w"   :<C-U>call PareditWrapSelection('"','"')<CR>
+        execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrap("(",")")<CR>'
+        execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrapSelection("(",")")<CR>'
+        execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrap("[","]")<CR>'
+        execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
+        execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrap('."'".'"'."','".'"'."')<CR>"
+        execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrapSelection('."'".'"'."','".'"'."')<CR>"
 
         if g:paredit_shortmaps
             " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
@@ -121,23 +126,23 @@ function! PareditInitBuffer()
             nnoremap <buffer> <silent> W            :<C-U>call PareditWrap('(',')')<CR>
             vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection('(',')')<CR>
             nnoremap <buffer> <silent> S            :<C-U>call PareditSplice()<CR>
-            nnoremap <buffer> <silent> <Leader><    :<C-U>normal! <<CR>
-            nnoremap <buffer> <silent> <Leader>>    :<C-U>normal! ><CR>
-            nnoremap <buffer> <silent> <Leader>O    :<C-U>normal! O<CR>
-            nnoremap <buffer> <silent> <Leader>J    :<C-U>normal! J<CR>
-            nnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
-            vnoremap <buffer> <silent> <Leader>W    :<C-U>normal! W<CR>
-            nnoremap <buffer> <silent> <Leader>S    :<C-U>normal! S<CR>
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'<  :<C-U>normal! <<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'>  :<C-U>normal! ><CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'O  :<C-U>normal! O<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'J  :<C-U>normal! J<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>normal! W<CR>'
+            execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>normal! W<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'S  :<C-U>normal! S<CR>'
         else
             " Longer keymaps with <Leader> prefix
             nnoremap <buffer> <silent> S            V:<C-U>call PareditChange(visualmode(),1)<CR>
-            nnoremap <buffer> <silent> <Leader><    :<C-U>call PareditMoveLeft()<CR>
-            nnoremap <buffer> <silent> <Leader>>    :<C-U>call PareditMoveRight()<CR>
-            nnoremap <buffer> <silent> <Leader>O    :<C-U>call PareditSplit()<CR>
-            nnoremap <buffer> <silent> <Leader>J    :<C-U>call PareditJoin()<CR>
-            nnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrap('(',')')<CR>
-            vnoremap <buffer> <silent> <Leader>W    :<C-U>call PareditWrapSelection('(',')')<CR>
-            nnoremap <buffer> <silent> <Leader>S    :<C-U>call PareditSplice()<CR>
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'<  :<C-U>call PareditMoveLeft()<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'>  :<C-U>call PareditMoveRight()<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'O  :<C-U>call PareditSplit()<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'J  :<C-U>call PareditJoin()<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>call PareditWrap("(",")")<CR>'
+            execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>call PareditWrapSelection("(",")")<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'S  :<C-U>call PareditSplice()<CR>'
         endif
     else
         " Paredit mode is off: remove keybindings

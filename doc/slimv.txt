@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 03 May 2011
+*slimv.txt*                    Slimv                 Last Change: 09 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.3
@@ -165,6 +165,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
                              1 = set #1, 2 = set #2, other = no keybindings
 
+|g:slimv_leader|             Custom <Leader> setting for Slimv.
+
 |g:slimv_lisp|               Path for the Lisp interpreter.
 
 |g:slimv_menu|               If nonzero, Slimv menu is added to the Vim menu.
@@ -327,10 +329,23 @@ The default ctags command is:
 
                                                           *g:slimv_keybindings*
 Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
-Value 1 defines the short keybinding with one-key bindings (after <Leader>).
-Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
+Value 1 defines the short keybinding with one-key bindings (after
+|g:slimv_leader|). Example: Eval-Defun is mapped to ,d
+Value 2 defines the easy keybinding with two-key bindings (after
+|g:slimv_leader|). Example: Eval-Defun is mapped to ,ed
 Other values mean no predefined keybinding is wanted.
-The <Leader> is set to ',' by default. 
+|g:slimv_leader| is set to "," by default.
+
+                                                               *g:slimv_leader*
+Most Slimv keybindings use a specific prefix similarly to <Leader>.
+The default Slimv leader prefix is "," but this prefix can be changed by
+defining g:slimv_leader in your .vimrc file.
+Example:
+    let g:slimv_leader = '\'
+
+Slimv ignores the value of <Leader> (mapleader) but for readability reasons
+the documentation sometimes refers the g:slimv_leader prefix as <Leader>.
+Please keep in mind that in this case it actually means <g:slimv_leader>.
 
                                                                  *g:slimv_menu*
 If nonzero then the Slimv menu is added to the end of the global menu.
@@ -583,7 +598,7 @@ Example:
 The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
 built-in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
 Please note that the leading ',' key below refers to <Leader>, which is set
-by Slimv to ',' by default.
+by Slimv to ',' by default (see |g:slimv_leader|).
 In the graphical menu the currently active keyboard shortcuts are displayed
 beside the menu item names, so one can refer to the GUI menu as a quick
 reference for the keymappings.
@@ -1079,6 +1094,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.8.3  - Added top/bottom/left/right directions to g:slimv_repl_split.
+       - Added g:slimv_leader and g:paredit_leader options.
        - Bugfix: REPL output ordering problems.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.

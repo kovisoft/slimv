@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  04 May 2011
+" Last Change:  09 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -329,6 +329,11 @@ if !exists( 'g:slimv_balloon' )
     let g:slimv_balloon = 1
 endif
 
+" Custom <Leader> for the Slimv plugin
+if !exists( 'g:slimv_leader' )
+    let g:slimv_leader = ','
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -458,10 +463,6 @@ if !exists( 'g:slimv_template_compile_string' )
     \ '(funcall (compile nil (read-from-string (format nil "(~S () ~A)" ' . "'" . 'lambda "%1"))))'
 endif
 
-if !exists( 'mapleader' )
-    let mapleader = ','
-endif
-
 
 " =====================================================================
 "  Other non-global script variables
@@ -471,7 +472,6 @@ let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file    " Name of the REPL buf
 let s:prompt = ''                                         " Lisp prompt in the last line
 let s:last_update = 0                                     " The last update time for the REPL buffer
 let s:last_size = 0                                       " The last size of the REPL buffer
-let s:leader = mapleader                                  " For some reason 'mapleader' is sometimes unreachable
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
 let s:save_showmode = &showmode                           " The original value for 'showmode'
 let s:python_initialized = 0                              " Is the embedded Python initialized?
@@ -800,7 +800,7 @@ function! SlimvReplLeave()
     try
         " Check if REPL menu exists, then remove it
         aunmenu REPL
-        unmap <Leader>\
+        execute ':unmap ' . g:slimv_leader . '\'
     catch /.*/
         " REPL menu not found, we cannot remove it
     endtry
@@ -870,17 +870,17 @@ function! SlimvOpenReplBuffer()
     endif
 
     if g:slimv_keybindings == 1
-        noremap <buffer> <silent> <Leader>.      :call SlimvSendCommand(0)<CR>
-        noremap <buffer> <silent> <Leader>/      :call SlimvSendCommand(1)<CR>
-        noremap <buffer> <silent> <Leader><Up>   :call SlimvPreviousCommand()<CR>
-        noremap <buffer> <silent> <Leader><Down> :call SlimvNextCommand()<CR>
-        noremap <buffer> <silent> <Leader>z      :call SlimvRefresh()<CR>
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'.      :call SlimvSendCommand(0)<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'/      :call SlimvSendCommand(1)<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Up>   :call SlimvPreviousCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Down> :call SlimvNextCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'z      :call SlimvRefresh()<CR>'
     elseif g:slimv_keybindings == 2
-        noremap <buffer> <silent> <Leader>rs     :call SlimvSendCommand(0)<CR>
-        noremap <buffer> <silent> <Leader>ro     :call SlimvSendCommand(1)<CR>
-        noremap <buffer> <silent> <Leader>rp     :call SlimvPreviousCommand()<CR>
-        noremap <buffer> <silent> <Leader>rn     :call SlimvNextCommand()<CR>
-        noremap <buffer> <silent> <Leader>rr     :call SlimvRefresh()<CR>
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rs     :call SlimvSendCommand(0)<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'ro     :call SlimvSendCommand(1)<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rp     :call SlimvPreviousCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rn     :call SlimvNextCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rr     :call SlimvRefresh()<CR>'
     endif
 
     if g:slimv_repl_wrap
@@ -2385,7 +2385,6 @@ endfunction
 "  Slimv keybindings
 " =====================================================================
 
-" <Leader> can be set in .vimrc, it defaults here to ','
 " <Leader> timeouts in 1000 msec by default, if this is too short,
 " then increase 'timeoutlen'
 
@@ -2402,8 +2401,7 @@ function! s:MenuMap( name, shortcut1, shortcut2, command )
     if shortcut != ''
         execute "noremap <silent> " . shortcut . " " . a:command
         if a:name != '' && g:slimv_menu == 1
-            let hint = substitute( shortcut, '\c<Leader>', s:leader, "g" )
-            silent execute "amenu " . a:name . "<Tab>" . hint . " " . a:command
+            silent execute "amenu " . a:name . "<Tab>" . shortcut . " " . a:command
         endif
     elseif a:name != '' && g:slimv_menu == 1
         silent execute "amenu " . a:name . " " . a:command
@@ -2420,79 +2418,79 @@ endif
 " Edit commands
 inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
 inoremap <silent> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
-call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     '<Leader>)',  '<Leader>tc',  ':<C-U>call SlimvCloseForm()<CR>' )
-call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',           '',            '<Ins><C-X><C-O>' )
-call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 '<Leader>(',  '<Leader>(t',  ':<C-U>call PareditToggle()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     g:slimv_leader.')',  g:slimv_leader.'tc',  ':<C-U>call SlimvCloseForm()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',                  '',                   '<Ins><C-X><C-O>' )
+call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 g:slimv_leader.'(',  g:slimv_leader.'(t',  ':<C-U>call PareditToggle()<CR>' )
 
 " Evaluation commands
-call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Defun',               '<Leader>d',  '<Leader>ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
-call s:MenuMap( 'Slim&v.&Evaluation.Eval-Current-&Exp',         '<Leader>e',  '<Leader>ee',  ':<C-U>call SlimvEvalExp()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Defun',               g:slimv_leader.'d',  g:slimv_leader.'ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.Eval-Current-&Exp',         g:slimv_leader.'e',  g:slimv_leader.'ee',  ':<C-U>call SlimvEvalExp()<CR>' )
 if !g:slimv_swank
-call s:MenuMap( 'Slim&v.&Evaluation.&Pprint-Eval-Exp',          '<Leader>E',  '<Leader>ep',  ':<C-U>call SlimvPprintEvalExp()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.&Pprint-Eval-Exp',          g:slimv_leader.'E',  g:slimv_leader.'ep',  ':<C-U>call SlimvPprintEvalExp()<CR>' )
 endif
-call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Region',              '<Leader>r',  '<Leader>er',  ':call SlimvEvalRegion()<CR>' )
-call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Buffer',              '<Leader>b',  '<Leader>eb',  ':<C-U>call SlimvEvalBuffer()<CR>' )
-call s:MenuMap( 'Slim&v.&Evaluation.Interacti&ve-Eval\.\.\.',   '<Leader>v',  '<Leader>ei',  ':call SlimvInteractiveEval()<CR>' )
-call s:MenuMap( 'Slim&v.&Evaluation.&Undefine-Function',        '<Leader>u',  '<Leader>eu',  ':call SlimvUndefineFunction()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Region',              g:slimv_leader.'r',  g:slimv_leader.'er',  ':call SlimvEvalRegion()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Buffer',              g:slimv_leader.'b',  g:slimv_leader.'eb',  ':<C-U>call SlimvEvalBuffer()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.Interacti&ve-Eval\.\.\.',   g:slimv_leader.'v',  g:slimv_leader.'ei',  ':call SlimvInteractiveEval()<CR>' )
+call s:MenuMap( 'Slim&v.&Evaluation.&Undefine-Function',        g:slimv_leader.'u',  g:slimv_leader.'eu',  ':call SlimvUndefineFunction()<CR>' )
 
 " Debug commands
-call s:MenuMap( 'Slim&v.De&bugging.Macroexpand-&1',             '<Leader>1',  '<Leader>m1',  ':<C-U>call SlimvMacroexpand()<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.&Macroexpand-All',           '<Leader>m',  '<Leader>ma',  ':<C-U>call SlimvMacroexpandAll()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.Macroexpand-&1',             g:slimv_leader.'1',  g:slimv_leader.'m1',  ':<C-U>call SlimvMacroexpand()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Macroexpand-All',           g:slimv_leader.'m',  g:slimv_leader.'ma',  ':<C-U>call SlimvMacroexpandAll()<CR>' )
 
 if g:slimv_swank
-call s:MenuMap( 'Slim&v.De&bugging.Toggle-&Trace\.\.\.',        '<Leader>t',  '<Leader>dt',  ':call SlimvTrace()<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.U&ntrace-All',               '<Leader>T',  '<Leader>du',  ':call SlimvUntrace()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.Toggle-&Trace\.\.\.',        g:slimv_leader.'t',  g:slimv_leader.'dt',  ':call SlimvTrace()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.U&ntrace-All',               g:slimv_leader.'T',  g:slimv_leader.'du',  ':call SlimvUntrace()<CR>' )
 else
-call s:MenuMap( 'Slim&v.De&bugging.&Trace\.\.\.',               '<Leader>t',  '<Leader>dt',  ':call SlimvTrace()<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.U&ntrace\.\.\.',             '<Leader>T',  '<Leader>du',  ':call SlimvUntrace()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Trace\.\.\.',               g:slimv_leader.'t',  g:slimv_leader.'dt',  ':call SlimvTrace()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.U&ntrace\.\.\.',             g:slimv_leader.'T',  g:slimv_leader.'du',  ':call SlimvUntrace()<CR>' )
 endif
 
-call s:MenuMap( 'Slim&v.De&bugging.Disassemb&le\.\.\.',         '<Leader>l',  '<Leader>dd',  ':call SlimvDisassemble()<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             '<Leader>i',  '<Leader>di',  ':call SlimvInspect()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.Disassemb&le\.\.\.',         g:slimv_leader.'l',  g:slimv_leader.'dd',  ':call SlimvDisassemble()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             g:slimv_leader.'i',  g:slimv_leader.'di',  ':call SlimvInspect()<CR>' )
 
 " Compile commands
-call s:MenuMap( 'Slim&v.&Compilation.Compile-&Defun',           '<Leader>D',  '<Leader>cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
-call s:MenuMap( 'Slim&v.&Compilation.Compile-&Load-File',       '<Leader>L',  '<Leader>cl',  ':<C-U>call SlimvCompileLoadFile()<CR>' )
-call s:MenuMap( 'Slim&v.&Compilation.Compile-&File',            '<Leader>F',  '<Leader>cf',  ':<C-U>call SlimvCompileFile()<CR>' )
-call s:MenuMap( 'Slim&v.&Compilation.Compile-&Region',          '<Leader>R',  '<Leader>cr',  ':call SlimvCompileRegion()<CR>' )
+call s:MenuMap( 'Slim&v.&Compilation.Compile-&Defun',           g:slimv_leader.'D',  g:slimv_leader.'cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
+call s:MenuMap( 'Slim&v.&Compilation.Compile-&Load-File',       g:slimv_leader.'L',  g:slimv_leader.'cl',  ':<C-U>call SlimvCompileLoadFile()<CR>' )
+call s:MenuMap( 'Slim&v.&Compilation.Compile-&File',            g:slimv_leader.'F',  g:slimv_leader.'cf',  ':<C-U>call SlimvCompileFile()<CR>' )
+call s:MenuMap( 'Slim&v.&Compilation.Compile-&Region',          g:slimv_leader.'R',  g:slimv_leader.'cr',  ':call SlimvCompileRegion()<CR>' )
 
 " Xref commands
-call s:MenuMap( 'Slim&v.&Xref.Who-&Calls',                      '<Leader>xc', '<Leader>xc',  ':call SlimvXrefCalls()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.Who-&References',                 '<Leader>xr', '<Leader>xr',  ':call SlimvXrefReferences()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.Who-&Sets',                       '<Leader>xs', '<Leader>xs',  ':call SlimvXrefSets()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.Who-&Binds',                      '<Leader>xb', '<Leader>xb',  ':call SlimvXrefBinds()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.Who-&Macroexpands',               '<Leader>xm', '<Leader>xm',  ':call SlimvXrefMacroexpands()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.Who-S&pecializes',                '<Leader>xp', '<Leader>xp',  ':call SlimvXrefSpecializes()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.&List-Callers',                   '<Leader>xl', '<Leader>xl',  ':call SlimvXrefCallers()<CR>' )
-call s:MenuMap( 'Slim&v.&Xref.List-Call&ees',                   '<Leader>xe', '<Leader>xe',  ':call SlimvXrefCallees()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-&Calls',                      g:slimv_leader.'xc', g:slimv_leader.'xc',  ':call SlimvXrefCalls()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-&References',                 g:slimv_leader.'xr', g:slimv_leader.'xr',  ':call SlimvXrefReferences()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-&Sets',                       g:slimv_leader.'xs', g:slimv_leader.'xs',  ':call SlimvXrefSets()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-&Binds',                      g:slimv_leader.'xb', g:slimv_leader.'xb',  ':call SlimvXrefBinds()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-&Macroexpands',               g:slimv_leader.'xm', g:slimv_leader.'xm',  ':call SlimvXrefMacroexpands()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.Who-S&pecializes',                g:slimv_leader.'xp', g:slimv_leader.'xp',  ':call SlimvXrefSpecializes()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.&List-Callers',                   g:slimv_leader.'xl', g:slimv_leader.'xl',  ':call SlimvXrefCallers()<CR>' )
+call s:MenuMap( 'Slim&v.&Xref.List-Call&ees',                   g:slimv_leader.'xe', g:slimv_leader.'xe',  ':call SlimvXrefCallees()<CR>' )
 
 " Profile commands
 if g:slimv_swank
-call s:MenuMap( 'Slim&v.&Profiling.Toggle-&Profile\.\.\.',      '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.Profile-&By-Substring\.\.\.','<Leader>B',  '<Leader>pb',  ':<C-U>call SlimvProfileSubstring()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.Toggle-&Profile\.\.\.',      g:slimv_leader.'p',  g:slimv_leader.'pp',  ':<C-U>call SlimvProfile()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.Profile-&By-Substring\.\.\.',g:slimv_leader.'B',  g:slimv_leader.'pb',  ':<C-U>call SlimvProfileSubstring()<CR>' )
 else
-call s:MenuMap( 'Slim&v.&Profiling.&Load-Profiler',             '<Leader>O',  '<Leader>pl',  ':<C-U>call SlimvLoadProfiler()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.&Profile\.\.\.',             '<Leader>p',  '<Leader>pp',  ':<C-U>call SlimvProfile()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.&Unprofile\.\.\.',           '<Leader>P',  '<Leader>pu',  ':<C-U>call SlimvUnprofile()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.&Load-Profiler',             g:slimv_leader.'O',  g:slimv_leader.'pl',  ':<C-U>call SlimvLoadProfiler()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.&Profile\.\.\.',             g:slimv_leader.'p',  g:slimv_leader.'pp',  ':<C-U>call SlimvProfile()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.&Unprofile\.\.\.',           g:slimv_leader.'P',  g:slimv_leader.'pu',  ':<C-U>call SlimvUnprofile()<CR>' )
 endif
-call s:MenuMap( 'Slim&v.&Profiling.Unprofile-&All',             '<Leader>U',  '<Leader>pa',  ':<C-U>call SlimvUnprofileAll()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.&Show-Profiled',             '<Leader>?',  '<Leader>ps',  ':<C-U>call SlimvShowProfiled()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.-ProfilingSep-',             '',           '',            ':' )
-call s:MenuMap( 'Slim&v.&Profiling.Profile-Rep&ort',            '<Leader>o',  '<Leader>pr',  ':<C-U>call SlimvProfileReport()<CR>' )
-call s:MenuMap( 'Slim&v.&Profiling.Profile-&Reset',             '<Leader>X',  '<Leader>px',  ':<C-U>call SlimvProfileReset()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.Unprofile-&All',             g:slimv_leader.'U',  g:slimv_leader.'pa',  ':<C-U>call SlimvUnprofileAll()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.&Show-Profiled',             g:slimv_leader.'?',  g:slimv_leader.'ps',  ':<C-U>call SlimvShowProfiled()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.-ProfilingSep-',             '',                  '',                   ':' )
+call s:MenuMap( 'Slim&v.&Profiling.Profile-Rep&ort',            g:slimv_leader.'o',  g:slimv_leader.'pr',  ':<C-U>call SlimvProfileReport()<CR>' )
+call s:MenuMap( 'Slim&v.&Profiling.Profile-&Reset',             g:slimv_leader.'X',  g:slimv_leader.'px',  ':<C-U>call SlimvProfileReset()<CR>' )
 
 " Documentation commands
-call s:MenuMap( 'Slim&v.&Documentation.Describe-&Symbol',       '<Leader>s',  '<Leader>ds',  ':call SlimvDescribeSymbol()<CR>' )
-call s:MenuMap( 'Slim&v.&Documentation.&Apropos',               '<Leader>a',  '<Leader>da',  ':call SlimvApropos()<CR>' )
-call s:MenuMap( 'Slim&v.&Documentation.&Hyperspec',             '<Leader>h',  '<Leader>dh',  ':call SlimvHyperspec()<CR>' )
-call s:MenuMap( 'Slim&v.&Documentation.Generate-&Tags',         '<Leader>]',  '<Leader>dg',  ':call SlimvGenerateTags()<CR>' )
+call s:MenuMap( 'Slim&v.&Documentation.Describe-&Symbol',       g:slimv_leader.'s',  g:slimv_leader.'ds',  ':call SlimvDescribeSymbol()<CR>' )
+call s:MenuMap( 'Slim&v.&Documentation.&Apropos',               g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvApropos()<CR>' )
+call s:MenuMap( 'Slim&v.&Documentation.&Hyperspec',             g:slimv_leader.'h',  g:slimv_leader.'dh',  ':call SlimvHyperspec()<CR>' )
+call s:MenuMap( 'Slim&v.&Documentation.Generate-&Tags',         g:slimv_leader.']',  g:slimv_leader.'dg',  ':call SlimvGenerateTags()<CR>' )
 
 " REPL commands
-call s:MenuMap( 'Slim&v.&Repl.&Connect-Server',                 '<Leader>c',  '<Leader>rc',  ':call SlimvConnectServer()<CR>' )
+call s:MenuMap( 'Slim&v.&Repl.&Connect-Server',                 g:slimv_leader.'c',  g:slimv_leader.'rc',  ':call SlimvConnectServer()<CR>' )
 if g:slimv_swank
-call s:MenuMap( '',                                             '<Leader>g',  '<Leader>rp',  ':call SlimvSetPackage()<CR>' )
+call s:MenuMap( '',                                             g:slimv_leader.'g',  g:slimv_leader.'rp',  ':call SlimvSetPackage()<CR>' )
 endif
-call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         '<Leader>y',  '<Leader>ri',  ':call SlimvInterrupt()<CR>' )
+call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         g:slimv_leader.'y',  g:slimv_leader.'ri',  ':call SlimvInterrupt()<CR>' )
 
 
 " =====================================================================
@@ -2501,19 +2499,18 @@ call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         '<Leader>y',  '<
 
 if g:slimv_menu == 1
     " Works only if 'wildcharm' is <Tab>
-    ":map <Leader>, :emenu Slimv.<Tab>
     if &wildcharm == 0
         set wildcharm=<Tab>
     endif
     if &wildcharm != 0
-        execute ':map <Leader>, :emenu Slimv.' . nr2char( &wildcharm )
+        execute ':map ' . g:slimv_leader.', :emenu Slimv.' . nr2char( &wildcharm )
     endif
 endif
 
 " Add REPL menu. This menu exist only for the REPL buffer.
 function SlimvAddReplMenu()
     if &wildcharm != 0
-        execute ':map <Leader>\ :emenu REPL.' . nr2char( &wildcharm )
+        execute ':map ' . g:slimv_leader.'\ :emenu REPL.' . nr2char( &wildcharm )
     endif
 
     amenu &REPL.Send-&Input                            :call SlimvSendCommand(0)<CR>
