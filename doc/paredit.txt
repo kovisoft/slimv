@@ -106,9 +106,7 @@ Slimv core will not be loaded but paredit will be loaded and assigned to
 .lisp and .clj files.
 
 
-Here follows a list of paredit keybindings. Please note that all mappings
-starting with <Leader> are actually prefixed with the Paredit leader which
-is defined by the |g:paredit_leader| option.
+Here follows a list of paredit keybindings:
 
 
 Insert Mode:
@@ -308,16 +306,14 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 
                                                              *g:paredit_leader*
-Some Paredit keybindings use a specific prefix similarly to <Leader>.
-The default Paredit leader prefix is "," but this prefix can be changed by
-defining g:paredit_leader in your .vimrc file.
+This option allows a custom <Leader> setting for the Paredit keybindings.
+By default it has the same value as |mapleader|. If neither g:paredit_leader
+nor mapleader are defined then the default <Leader> is "," in Paredit.
 Example:
     let g:paredit_leader = '\'
+If this is set in the .vimrc then Wrap will be mapped to \W instead of ,W.
 
-Paredit ignores the value of <Leader> (mapleader) but for readability reasons
-the documentation sometimes refers the g:paredit_leader prefix as <Leader>.
-Please keep in mind that in this case it actually means <g:paredit_leader>.
-
+There is a separate |g:slimv_leader| option for the general Slimv keybindings.
 
                                                          *g:paredit_matchlines*
 Number of lines to look backward and forward when checking if the current
@@ -330,10 +326,10 @@ balanced state of parens.
                                                           *g:paredit_shortmaps*
 If nonzero, paredit is remapping some one-letter normal mode Vim commands that
 are not frequently used. These are <, >, J, O, W, S. The original function of
-these maps then can be reached via the |g:paredit_leader| prefix (which is
-the "," character by default in Paredit).
-Otherwise these paredit functions can be reached via the |g:paredit_leader|
-prefix.
+these maps then can be reached via <Leader> (which is the "," character
+by default in Paredit).
+Otherwise these paredit functions can be reached via <Leader> maintaining the
+original functions of these keys.
 
 
 ===============================================================================
