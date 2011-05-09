@@ -328,24 +328,24 @@ The default ctags command is:
   "ctags.exe -a --language-force=lisp *.lisp *.clj"
 
                                                           *g:slimv_keybindings*
-Defines the keybinding set used by Slimv. Value 0 means no keybinding at all.
-Value 1 defines the short keybinding with one-key bindings (after
-|g:slimv_leader|). Example: Eval-Defun is mapped to ,d
-Value 2 defines the easy keybinding with two-key bindings (after
-|g:slimv_leader|). Example: Eval-Defun is mapped to ,ed
+Defines the keybinding set used by Slimv.
+Value 0 means no keybinding at all.
+Value 1 defines the short keybinding with one-key bindings (after <Leader>).
+        Example: Eval-Defun is mapped to ,d
+Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
+        Example: Eval-Defun is mapped to ,ed
 Other values mean no predefined keybinding is wanted.
-|g:slimv_leader| is set to "," by default.
+<Leader> is set to "," by default in Slimv.
 
                                                                *g:slimv_leader*
-Most Slimv keybindings use a specific prefix similarly to <Leader>.
-The default Slimv leader prefix is "," but this prefix can be changed by
-defining g:slimv_leader in your .vimrc file.
+This option allows a custom <Leader> setting for the Slimv keybindings.
+By default it has the same value as |mapleader|. If neither g:slimv_leader nor
+mapleader are defined then the default <Leader> is "," in Slimv.
 Example:
     let g:slimv_leader = '\'
+If this is set in the .vimrc then Eval-Defun will be mapped to \d instead of ,d.
 
-Slimv ignores the value of <Leader> (mapleader) but for readability reasons
-the documentation sometimes refers the g:slimv_leader prefix as <Leader>.
-Please keep in mind that in this case it actually means <g:slimv_leader>.
+There is a separate |g:paredit_leader| option for the Paredit keybindings.
 
                                                                  *g:slimv_menu*
 If nonzero then the Slimv menu is added to the end of the global menu.

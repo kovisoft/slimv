@@ -40,7 +40,11 @@ endif
 
 " Custom <Leader> for the Paredit plugin
 if !exists( 'g:paredit_leader' )
-    let g:paredit_leader = ','
+    if exists( 'mapleader' )
+        let g:paredit_leader = mapleader
+    else
+        let g:paredit_leader = ','
+    endif
 endif
 
 " =====================================================================

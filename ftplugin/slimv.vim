@@ -331,7 +331,11 @@ endif
 
 " Custom <Leader> for the Slimv plugin
 if !exists( 'g:slimv_leader' )
-    let g:slimv_leader = ','
+    if exists( 'mapleader' )
+        let g:slimv_leader = mapleader
+    else
+        let g:slimv_leader = ','
+    endif
 endif
 
 
