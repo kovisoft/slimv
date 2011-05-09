@@ -1510,6 +1510,9 @@ function! SlimvArglist()
             endif
         endif
     endif
+
+    " Return empty string because this function is called from an insert mode mapping
+    return ''
 endfunction
 
 " Start and connect slimv server
@@ -2410,7 +2413,7 @@ endfunction
 
 if g:slimv_swank
     " Map space to display function argument list in status line
-    inoremap <silent> <Space>    <Space><C-O>:call SlimvArglist()<CR>
+    inoremap <silent> <Space>    <Space><C-R>=SlimvArglist()<CR>
     "noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
     au InsertLeave * :let &showmode=s:save_showmode
 endif
