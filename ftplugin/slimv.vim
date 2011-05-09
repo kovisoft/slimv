@@ -279,6 +279,11 @@ if !exists( 'g:slimv_repl_wrap' )
     let g:slimv_repl_wrap = 1
 endif
 
+" Maximum number of lines echoed from the evaluated form
+if !exists( 'g:slimv_echolines' )
+    let g:slimv_echolines = 4
+endif
+
 " Syntax highlighting for the REPL buffer
 if !exists( 'g:slimv_repl_syntax' )
     let g:slimv_repl_syntax = 0
@@ -1140,7 +1145,21 @@ function! SlimvSend( args, open_buffer, echoing )
         let s:refresh_disabled = 1
         let s:swank_form = text
         if a:echoing
+            if g:slimv_echolines > 0
+                let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
+                if nlpos > 0
+                    " Echo only the first g:slimv_echolines number of lines
+                    let s:swank_form = strpart( s:swank_form, 0, nlpos + 1 ) . "..."
+                    let paren = s:GetParenCount( s:swank_form )
+                    while paren > 0
+                        " Add missing parens
+                        let s:swank_form = s:swank_form . ")"
+                        let paren = paren - 1
+                    endwhile
+                endif
+            endif
             call SlimvCommand( 'echo s:swank_form' )
+            let s:swank_form = text
         endif
         call SlimvCommand( 'python swank_input("s:swank_form")' )
         let s:swank_package = ''
