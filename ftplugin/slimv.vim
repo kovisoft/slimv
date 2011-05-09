@@ -1149,7 +1149,7 @@ function! SlimvSend( args, open_buffer, echoing )
                 let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
                 if nlpos > 0
                     " Echo only the first g:slimv_echolines number of lines
-                    let s:swank_form = strpart( s:swank_form, 0, nlpos + 1 ) . "..."
+                    let s:swank_form = strpart( s:swank_form, 0, nlpos ) . " ..."
                     let paren = s:GetParenCount( s:swank_form )
                     while paren > 0
                         " Add missing parens
