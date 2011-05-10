@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  09 May 2011
+" Last Change:  10 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -332,6 +332,11 @@ endif
 " Use balloonexpr to display symbol description
 if !exists( 'g:slimv_balloon' )
     let g:slimv_balloon = 1
+endif
+
+" Shall we use simple or fuzzy completion?
+if !exists( 'g:slimv_simple_compl' )
+    let g:slimv_simple_compl = 0
 endif
 
 " Custom <Leader> for the Slimv plugin
@@ -1103,9 +1108,15 @@ function! SlimvConnectSwank()
             endwhile
             if s:swank_version >= '2008-12-23'
                 python swank_create_repl()
+                call SlimvSwankResponse()
             endif
             let s:swank_connected = 1
             echon "\rConnected to SWANK server on port " . g:swank_port . "."
+
+            if g:slimv_simple_compl == 0
+                python swank_require('swank-fuzzy')
+                call SlimvSwankResponse()
+            endif
         else
             " Display connection error message
             let answer = SlimvErrorAsk( result, " Switch off SWANK client [Y/n]?" )
@@ -2325,7 +2336,11 @@ endfunction
 function! SlimvComplete( base )
     " Find all symbols starting with "a:base"
     if g:slimv_swank && s:swank_connected
-        let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
+        if g:slimv_simple_compl
+            let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
+        else
+            let msg = SlimvCommandGetResponse( ':fuzzy-completions', 'python swank_fuzzy_completions("' . a:base . '")' )
+        endif
         if msg != ''
             " We have a completion list from SWANK
             let res = split( msg, '\n' )

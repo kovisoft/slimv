@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.2
-# Last Change:  30 Apr 2011
+# Version:      0.8.3
+# Last Change:  10 May 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -503,6 +503,10 @@ def swank_listen():
                                     if type(params) == list and type(params[0]) == str and params[0] != 'nil':
                                         compl = "\n".join(params)
                                         retval = retval + compl.replace('"', '')
+                                elif action.name == ':fuzzy-completions':
+                                    if type(params) == list and type(params[0]) == list:
+                                        compl = "\n".join(map(lambda x: x[0], params))
+                                        retval = retval + compl.replace('"', '')
                                 elif action.name == ':xref':
                                     retval = retval + swank_parse_xref(r[1][1])
                                     if len(retval) > 0 and retval[-1] != '\n':
@@ -624,6 +628,10 @@ def swank_invoke_abort():
 def swank_invoke_continue():
     swank_rex(':sldb-continue', '(swank:sldb-continue)', 'nil', current_thread)
 
+def swank_require(contrib):
+    cmd = "(swank:swank-require '" + contrib + ')'
+    swank_rex(':swank-require', cmd, 'nil', ':repl-thread')
+
 def swank_frame_call(frame):
     cmd = '(swank-backend:frame-call ' + frame + ')'
     swank_rex(':frame-call', cmd, 'nil', current_thread)
@@ -655,6 +663,10 @@ def swank_op_arglist(op):
 def swank_completions(symbol):
     cmd = '(swank:simple-completions "' + symbol + '" "' + package + '")'
     swank_rex(':simple-completions', cmd, 'nil', 't')
+
+def swank_fuzzy_completions(symbol):
+    cmd = '(swank:fuzzy-completions "' + symbol + '" "' + package + '")'
+    swank_rex(':fuzzy-completions', cmd, 'nil', 't')
 
 def swank_undefine_function(fn):
     cmd = '(swank:undefine-function "' + fn + '")'

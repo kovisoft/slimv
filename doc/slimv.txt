@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 09 May 2011
+*slimv.txt*                    Slimv                 Last Change: 10 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.3
@@ -869,9 +869,12 @@ It is also possible to add user defined symbols to the Hyperspec database,
 see |g:slimv_clhs_user_db| and |g:slimv_cljapi_user_db|.
 
 
-Slimv uses the Hyperspec symbol database for symbol name completion, via
-Vim's omni-completion feature (if it is enabled and 'omnifunc' is not
-defined already to something else).
+The SWANK client requests simple or fuzzy completion from the SWANK server,
+see |swank-completions| for details.
+
+Without the SWANK client Slimv uses the Hyperspec symbol database for symbol
+name completion, via Vim's omni-completion feature (if it is enabled and
+'omnifunc' is not defined already to something else).
 Start to enter the symbol in Insert mode, then at some point press the
 <C-X><C-O> (omni-complete) key combination or select the 'Complete Symbol'
 function. The first match in the symbol database is inserted at the cursor
@@ -1106,6 +1109,8 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added g:slimv_leader and g:paredit_leader options.
        - Added g:slimv_echolines to echo only the first few lines of the
          form being evaluated.
+       - Added fuzzy completion and option g:slimv_simple_compl
+         (thanks to Philipp Marek).
        - Bugfix: REPL output ordering problems.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.

@@ -1,7 +1,7 @@
-*swank.txt*                    Slimv                 Last Change: 01 May 2011
+*swank.txt*                    Slimv                 Last Change: 10 May 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
-                               Version 0.8.2
+                               Version 0.8.3
 
 The Superior Lisp Interaction Mode for Vim.
 Slimv contains a SWANK client that can communicate with a running SWANK server
@@ -96,16 +96,20 @@ CONFIGURATION                                             *swank-configuration*
   The SWANK server is connected to port 4005 by default. This can be changed
   using the g:swank_port option.
 
+                                                              *g:slimv_balloon*
+  Specifies if tooltips are on (see |swank-describe|).
+
+                                                         *g:slimv_simple_compl*
+  If set to 1, swank:simple-completion is used. By default the fuzzy completion
+  is active, so that "m-v-b<TAB>" expands to "multiple-value-bind" (see
+  |swank-completions|).
+
                                                               *g:slimv_timeout*
   There is a 20 second timeout defined for starting up or connecting to the
   SWANK server. This timeout can be changed via the g:slimv_timeout option.
   Please note that the very first startup of the SWANK server may take more
   time than the subsequent startups, so it is not recommended to make this
   timeout too low.
-
-
-                                                              *g:slimv_balloon*
-  Specifies if tooltips are on (see |swank-describe|).
 
 
 ===============================================================================
@@ -237,8 +241,11 @@ COMPLETIONS                                                 *swank-completions*
   popup menu if there are multiple choices. In the popup menu subsequent <Tab>
   keypresses select the next possible completion.
 
+  Option |g:slimv_simple_compl| determines whether simple or fuzzy completion
+  is used. Default is fuzzy completion.
+
   Note: completions are not displayed when Slimv is not connected to the
-  SWANK server.
+  SWANK server. In this case the Hyperspec database is used for symbol lookup.
 
 
 -------------------------------------------------------------------------------
@@ -312,6 +319,7 @@ currently implemented in the Slimv SWANK client.
   swank:disassemble-form
   swank:frame-locals-and-catch-tags
   swank:frame-source-location
+  swank:fuzzy-completions
   swank:init-inspector
   swank:inspect-nth-part
   swank:inspector-call-nth-action
@@ -330,6 +338,7 @@ currently implemented in the Slimv SWANK client.
   swank:sldb-continue
   swank:swank-macroexpand-1
   swank:swank-macroexpand-all
+  swank:swank-require
   swank:swank-toggle-trace
   swank:throw-to-toplevel
   swank:toggle-profile-fdefinition
