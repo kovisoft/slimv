@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  10 May 2011
+" Last Change:  11 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -615,7 +615,6 @@ function! SlimvCommand( cmd )
     set nomodified
     let s:last_update = localtime()
 
-    syntax on
     if !g:slimv_repl_syntax
         set syntax=
     endif
