@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  10 May 2011
+" Last Change:  12 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1304,7 +1304,7 @@ function! SlimvSendCommand( close )
 
             " Build a possible multi-line command
             let l = lastline + 1
-            while l <= line("$") - 1
+            while l <= line("$")
                 call add( cmd, strpart( getline( l ), 0) )
                 let l = l + 1
             endwhile
@@ -1330,14 +1330,16 @@ function! SlimvSendCommand( close )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
+                let l = line('.') + 1
+                call append( '.', '' )
                 let indent = ''
-                let i = lispindent( '.' )
+                let i = lispindent( l )
                 while i > 0
                     let indent = indent . ' '
                     let i = i - 1
                 endwhile
-                call setline( ".", indent )
-                call SlimvEndOfReplBuffer()
+                call setline( l, indent )
+                normal! j$
             endif
         endif
     else
