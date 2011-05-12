@@ -615,7 +615,6 @@ function! SlimvCommand( cmd )
     set nomodified
     let s:last_update = localtime()
 
-    syntax on
     if !g:slimv_repl_syntax
         set syntax=
     endif
