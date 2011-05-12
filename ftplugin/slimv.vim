@@ -1289,48 +1289,6 @@ function! s:CloseForm( lines )
     return end
 endfunction
 
-" Count the opening and closing parens or brackets to determine if they match
-function! s:GetParenCount( lines )
-    let paren = 0
-    let inside_string = 0
-    let i = 0
-    while i < len( a:lines )
-        let inside_comment = 0
-        let j = 0
-        while j < len( a:lines[i] )
-            if inside_string
-                " We are inside a string, skip parens, wait for closing '"'
-                if a:lines[i][j] == '"' && ( j < 1 || a:lines[i][j-1] != '\' )
-                    let inside_string = 0
-                endif
-            elseif inside_comment
-                " We are inside a comment, skip parens, wait for end of line
-            else
-                " We are outside of strings and comments, now we shall count parens
-                if a:lines[i][j] == '"'
-                    let inside_string = 1
-                endif
-                if a:lines[i][j] == ';'
-                    let inside_comment = 1
-                endif
-                if a:lines[i][j] == '(' || a:lines[i][j] == '['
-                    let paren = paren + 1
-                endif
-                if a:lines[i][j] == ')' || a:lines[i][j] == ']'
-                    let paren = paren - 1
-                    if paren < 0
-                        " Oops, too many closing parens in the middle
-                        return paren
-                    endif
-                endif
-            endif
-            let j = j + 1
-        endwhile
-        let i = i + 1
-    endwhile
-    return paren
-endfunction
-
 " Send command line to REPL buffer
 " Arguments: close = add missing closing parens
 function! SlimvSendCommand( close )
@@ -1356,23 +1314,25 @@ function! SlimvSendCommand( close )
             endwhile
 
             " Count the number of opening and closing braces
-            let paren = s:GetParenCount( cmd )
-            if paren > 0 && a:close
-                " Expression is not finished yet, add missing parens and evaluate it
-                while paren > 0
-                    let cmd[len(cmd)-1] = cmd[len(cmd)-1] . ')'
-                    let paren = paren - 1
-                endwhile
+            let end = s:CloseForm( cmd )
+            if end == 'ERROR'
+                " Too many closing parens
+                call SlimvErrorWait( "Too many or invalid closing parens found." )
+                return
             endif
-            if paren == 0
+            let echoing = 0
+            if a:close && end != ''
+                " Close form if necessary and evaluate it
+                let cmd[len(cmd)-1] = cmd[len(cmd)-1] . end
+                let end = ''
+                let echoing = 1
+            endif
+            if end == ''
                 " Expression finished, let's evaluate it
                 " but first add it to the history
                 call SlimvAddHistory( cmd )
-                " Evaluating without echoing
-                call SlimvSend( cmd, g:slimv_repl_open, 0 )
-            elseif paren < 0
-                " Too many closing braces
-                call SlimvErrorWait( "Too many closing parens found." )
+                " Evaluate, but echo only when form is actually closed here
+                call SlimvSend( cmd, g:slimv_repl_open, echoing )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
@@ -1408,18 +1368,17 @@ function! SlimvCloseForm()
         call add( form, getline( l ) )
         let l = l + 1
     endwhile
-    let paren = s:GetParenCount( form )
-    if paren < 0
-        " Too many closing braces
-        call SlimvErrorWait( "Too many closing parens found." )
-    elseif paren > 0
+    let end = s:CloseForm( form )
+    if end == 'ERROR'
+        " Too many closing parens
+        call SlimvErrorWait( "Too many or invalid closing parens found." )
+    elseif end != ''
         " Add missing parens
-        let lastline = getline( l2 )
-        while paren > 0
-            let lastline = lastline . ')'
-            let paren = paren - 1
-        endwhile
-        call setline( l2, lastline )
+        if end[0] == "\n"
+            call append( l2, end[1:] )
+        else
+            call setline( l2, getline( l2 ) . end )
+        endif
     endif
     normal! %
 endfunction
