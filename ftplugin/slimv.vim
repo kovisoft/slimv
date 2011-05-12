@@ -1161,12 +1161,10 @@ function! SlimvSend( args, open_buffer, echoing )
                 if nlpos > 0
                     " Echo only the first g:slimv_echolines number of lines
                     let s:swank_form = strpart( s:swank_form, 0, nlpos ) . " ..."
-                    let paren = s:GetParenCount( s:swank_form )
-                    while paren > 0
-                        " Add missing parens
-                        let s:swank_form = s:swank_form . ")"
-                        let paren = paren - 1
-                    endwhile
+                    let end = s:CloseForm( [s:swank_form] )
+                    if end != 'ERROR'
+                        let s:swank_form = s:swank_form . end
+                    endif
                 endif
             endif
             call SlimvCommand( 'echo s:swank_form' )
@@ -1241,6 +1239,55 @@ function! SlimvRecallHistory()
     else
         call SlimvSetCommandLine( "" )
     endif
+endfunction
+
+" Return missing parens, double quotes, etc to properly close form
+function! s:CloseForm( lines )
+    let form = join( a:lines, "\n" )
+    let end = ''
+    let i = 0
+    while i < len( form )
+        if form[i] == '"'
+            " Inside a string
+            let end = '"' . end
+            let i += 1
+            while i < len( form )
+                if form[i] == '\'
+                    " Ignore next character
+                    let i += 2
+                elseif form[i] == '"'
+                    let end = end[1:]
+                    break
+                else
+                    let i += 1
+                endif
+            endwhile
+        elseif form[i] == ';'
+            " Inside a comment
+            let end = "\n" . end
+            let cend = match(form, "\n", i)
+            if cend == -1
+                break
+            endif
+            let i = cend
+            let end = end[1:]
+        else
+            " We are outside of strings and comments, now we shall count parens
+            if form[i] == '('
+                let end = ')' . end
+            elseif form[i] == '['
+                let end = ']' . end
+            elseif form[i] == ')' || form[i] == ']'
+                if len( end ) == 0 || end[0] != form[i]
+                    " Oops, too many closing parens or invalid closing paren
+                    return 'ERROR'
+                endif
+                let end = end[1:]
+            endif
+        endif
+        let i += 1
+    endwhile
+    return end
 endfunction
 
 " Count the opening and closing parens or brackets to determine if they match
