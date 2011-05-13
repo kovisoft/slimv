@@ -1109,9 +1109,9 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added g:slimv_leader and g:paredit_leader options.
        - Added g:slimv_echolines to echo only the first few lines of the
          form being evaluated.
-       - Added fuzzy completion and option g:slimv_simple_compl
-         (thanks to Philipp Marek).
+       - Added fuzzy completion and option g:slimv_simple_compl (by Philipp Marek).
        - Indent macros with &body argument by two spaces when connected to swank.
+       - Default for Set-Package is current package (thanks to Philipp Marek).
        - Bugfix: REPL output ordering problems.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.

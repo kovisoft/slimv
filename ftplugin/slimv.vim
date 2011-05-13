@@ -2440,7 +2440,10 @@ endfunction
 " Set current package
 function! SlimvSetPackage()
     if s:swank_connected
-        let pkg = input( 'Package: ' )
+        let oldpos = getpos( '.' )
+        call SlimvFindPackage()
+        call setpos( '.', oldpos )
+        let pkg = input( 'Package: ', s:swank_package )
         if pkg != ''
             let s:refresh_disabled = 1
             call SlimvCommand( 'python swank_set_package("' . pkg . '")' )
