@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 10 May 2011
+*slimv.txt*                    Slimv                 Last Change: 13 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.3
@@ -1111,6 +1111,7 @@ CHANGE LOG                                                    *slimv-changelog*
          form being evaluated.
        - Added fuzzy completion and option g:slimv_simple_compl
          (thanks to Philipp Marek).
+       - Indent macros with &body argument by two spaces when connected to swank.
        - Bugfix: REPL output ordering problems.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.
