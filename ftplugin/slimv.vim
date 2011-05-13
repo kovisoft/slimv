@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  12 May 2011
+" Last Change:  13 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1289,6 +1289,35 @@ function! s:CloseForm( lines )
     return end
 endfunction
 
+" Return Lisp source code indentation at the given line
+function! SlimvIndent( lnum )
+    if a:lnum > 1 && g:slimv_swank && s:swank_connected
+        " Find start of current form
+        let pnum = prevnonblank(v:lnum - 1)
+        if pnum == 0
+            " Hit the start of the file, use zero indent.
+            return 0
+        endif
+        let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
+        if l == pnum
+            " Found opening paren in the previous line, let's find out the function name
+            let line = getline( l )
+            let func = matchstr( line, '\<\k*\>', c )
+            if func != ''
+                " Ask function argument list from SWANK
+                let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . func . '")' )
+                if arglist != '' && match( arglist, '\c&body' ) >= 0
+                    " Function has &body argument, so indent by 2 spaces
+                    return indent(pnum) + 2
+                endif
+            endif
+        endif
+    endif
+
+    " Use default Lisp indening
+    return lispindent(a:lnum)
+endfunction 
+
 " Send command line to REPL buffer
 " Arguments: close = add missing closing parens
 function! SlimvSendCommand( close )
@@ -1338,13 +1367,7 @@ function! SlimvSendCommand( close )
                 " Indentation works only if lisp indentation is switched on
                 let l = line('.') + 1
                 call append( '.', '' )
-                let indent = ''
-                let i = lispindent( l )
-                while i > 0
-                    let indent = indent . ' '
-                    let i = i - 1
-                endwhile
-                call setline( l, indent )
+                call setline( l, repeat( ' ', SlimvIndent(l) ) )
                 normal! j$
             endif
         endif
