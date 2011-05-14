@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 May 2011
+*slimv.txt*                    Slimv                 Last Change: 14 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.3
@@ -1106,6 +1106,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.8.3  - Added top/bottom/left/right directions to g:slimv_repl_split.
+       - Added :Lisp (and an equivalent :Eval) command with completion.
        - Added g:slimv_leader and g:paredit_leader options.
        - Added g:slimv_echolines to echo only the first few lines of the
          form being evaluated.
@@ -1113,6 +1114,10 @@ CHANGE LOG                                                    *slimv-changelog*
        - Indent macros with &body argument by two spaces when connected to swank.
        - Default for Set-Package is current package (thanks to Philipp Marek).
        - Bugfix: REPL output ordering problems.
+       - Bugfix: problem with inserting Space into visual block.
+       - Bugfix: blinking when g:slimv_repl_syntax is on.
+       - Bugfix: entering incomplete form in REPL command line.
+       - Bugfix: close form when inside comment, string, or with mixed ([.
 
 0.8.2  - Added Paredit and g:lisp_rainbow support for Scheme files.
        - Added SWANK support for MIT Scheme on Linux.
