@@ -1302,13 +1302,13 @@ function! SlimvIndent( lnum )
         " Hit the start of the file, use zero indent.
         return 0
     endif
-    " Use custom indentation only if default indenting is > indent of previous nonblank line
-    let pi = lispindent(pnum)
+    " Use custom indentation only if default indenting is >2
     let li = lispindent(a:lnum)
-    if li > pi + 2 && g:slimv_swank && s:swank_connected
+    if li > 2 && g:slimv_swank && s:swank_connected
         " Find start of current form
         let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
-        if l == pnum
+        " Use custom indentation only if default indenting is >2 from the opening paren in the previous line
+        if l == pnum && li > c + 2
             " Found opening paren in the previous line, let's find out the function name
             let line = getline( l )
             let func = matchstr( line, '\<\k*\>', c )
