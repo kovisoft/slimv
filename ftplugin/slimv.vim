@@ -1291,7 +1291,9 @@ endfunction
 
 " Return Lisp source code indentation at the given line
 function! SlimvIndent( lnum )
-    if a:lnum > 1 && g:slimv_swank && s:swank_connected
+    " Use custom indentation only if default indenting is >2
+    let li = lispindent(a:lnum)
+    if li > 2 && a:lnum > 1 && g:slimv_swank && s:swank_connected
         " Find start of current form
         let pnum = prevnonblank(a:lnum - 1)
         if pnum == 0
@@ -1307,15 +1309,15 @@ function! SlimvIndent( lnum )
                 " Ask function argument list from SWANK
                 let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . func . '")' )
                 if arglist != '' && match( arglist, '\c&body' ) >= 0
-                    " Function has &body argument, so indent by 2 spaces
-                    return indent(pnum) + 2
+                    " Function has &body argument, so indent by 2 spaces from the opening '('
+                    return c + 1
                 endif
             endif
         endif
     endif
 
     " Use default Lisp indening
-    return lispindent(a:lnum)
+    return li
 endfunction 
 
 " Send command line to REPL buffer
