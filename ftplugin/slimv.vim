@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  13 May 2011
+" Last Change:  15 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1293,7 +1293,7 @@ endfunction
 function! SlimvIndent( lnum )
     if a:lnum > 1 && g:slimv_swank && s:swank_connected
         " Find start of current form
-        let pnum = prevnonblank(v:lnum - 1)
+        let pnum = prevnonblank(a:lnum - 1)
         if pnum == 0
             " Hit the start of the file, use zero indent.
             return 0
