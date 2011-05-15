@@ -1304,15 +1304,20 @@ function! SlimvIndent( lnum )
     endif
     " Use custom indentation only if default indenting is >2
     let li = lispindent(a:lnum)
-    if li > 2 && g:slimv_swank && s:swank_connected
+    if li > 2
         " Find start of current form
         let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
         " Use custom indentation only if default indenting is >2 from the opening paren in the previous line
-        if l == pnum && li > c + 2
-            " Found opening paren in the previous line, let's find out the function name
+        if l == pnum && li > c + 1
             let line = getline( l )
+            let parent = strpart( line, 0, c )
+            if match( parent, '\c(\s*\(flet\|labels\|macrolet\)\s*(\s*(\s*$' ) >= 0
+                " Handle special indentation style for flet, labels, etc.
+                return c + 1
+            endif
+            " Found opening paren in the previous line, let's find out the function name
             let func = matchstr( line, '\<\k*\>', c )
-            if func != ''
+            if func != '' && g:slimv_swank && s:swank_connected
                 " Ask function argument list from SWANK
                 let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . func . '")' )
                 if arglist != '' && match( arglist, '\c&body' ) >= 0
