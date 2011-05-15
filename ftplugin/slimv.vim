@@ -1088,6 +1088,7 @@ function! SlimvConnectSwank()
             " SWANK server is not running, start server if possible
             let swank = SlimvSwankCommand()
             if swank != ''
+                redraw
                 echon "\rStarting SWANK server..."
                 silent execute swank
                 let starttime = localtime()
@@ -1100,6 +1101,7 @@ function! SlimvConnectSwank()
         endif
         if result == ''
             " Connected to SWANK server
+            redraw
             echon "\rGetting SWANK connection info..."
             let starttime = localtime()
             while s:swank_version == '' && localtime()-starttime < g:slimv_timeout
@@ -1110,12 +1112,12 @@ function! SlimvConnectSwank()
                 call SlimvSwankResponse()
             endif
             let s:swank_connected = 1
-            echon "\rConnected to SWANK server on port " . g:swank_port . "."
-
             if g:slimv_simple_compl == 0
                 python swank_require('swank-fuzzy')
                 call SlimvSwankResponse()
             endif
+            redraw
+            echon "\rConnected to SWANK server on port " . g:swank_port . "."
         else
             " Display connection error message
             let answer = SlimvErrorAsk( result, " Switch off SWANK client [Y/n]?" )
@@ -1291,15 +1293,20 @@ endfunction
 
 " Return Lisp source code indentation at the given line
 function! SlimvIndent( lnum )
-    " Use custom indentation only if default indenting is >2
+    if a:lnum <= 1
+        " Start of the file
+        return 0
+    endif
+    let pnum = prevnonblank(a:lnum - 1)
+    if pnum == 0
+        " Hit the start of the file, use zero indent.
+        return 0
+    endif
+    " Use custom indentation only if default indenting is > indent of previous nonblank line
+    let pi = lispindent(pnum)
     let li = lispindent(a:lnum)
-    if li > 2 && a:lnum > 1 && g:slimv_swank && s:swank_connected
+    if li > pi + 2 && g:slimv_swank && s:swank_connected
         " Find start of current form
-        let pnum = prevnonblank(a:lnum - 1)
-        if pnum == 0
-            " Hit the start of the file, use zero indent.
-            return 0
-        endif
         let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
         if l == pnum
             " Found opening paren in the previous line, let's find out the function name
