@@ -47,6 +47,9 @@ def logprint(text):
         f.write(text + '\n')
         f.close()
 
+def logtime(text):
+    logprint(text + ' ' + str(time.clock()))
+
 ###############################################################################
 # Simple Lisp s-expression parser
 ###############################################################################
@@ -197,7 +200,8 @@ def parse_plist(lst, keyword):
 def swank_send(text):
     global sock
 
-    logprint('[---Sent---]\n' + text)
+    logtime('[---Sent---]')
+    logprint(text)
     l = hex(len(text))[2:]
     t = '0'*(lenbytes-len(l)) + l + text
     if debug:
@@ -206,7 +210,7 @@ def swank_send(text):
         sock.send(t)
     except socket.error:
         sys.stdout.write( 'Socket error when sending to SWANK server.\n' )
-	swank_disconnect()
+        swank_disconnect()
 
 def swank_recv(msglen):
     global sock
@@ -214,7 +218,7 @@ def swank_recv(msglen):
     rec = ''
     if msglen > 0:
         sock.setblocking(0)
-        ready = select.select([sock], [], [], 0.1) # 0.1: timeout in seconds
+        ready = select.select([sock], [], [], 0.01) # 0.01: timeout in seconds
         if ready[0]:
             l = msglen
             sock.setblocking(1)
@@ -370,6 +374,7 @@ def swank_listen():
 
     retval = ''
     msgcount = 0
+    #logtime('[- Listen--]')
     while msgcount < maxmessages:
         rec = swank_recv(lenbytes)
         if rec == '':
@@ -382,7 +387,8 @@ def swank_listen():
             print 'Received length:', msglen
         if msglen > 0:
             rec = swank_recv(msglen)
-            logprint('[-Received-]\n' + rec)
+            logtime('[-Received-]')
+            logprint(rec)
             [s, r] = parse_sexpr( rec )
             if debug:
                 print 'Parsed:', r
@@ -431,7 +437,7 @@ def swank_listen():
                     else:
                         action = None
                     if log:
-                        logprint('[Actionlist]')
+                        logtime('[Actionlist]')
                         for k,a in sorted(actions.items()):
                             if a.pending:
                                 pending = 'pending '
@@ -837,6 +843,7 @@ def swank_output():
     return result
 
 def swank_response(name):
+    #logtime('[-Response-]')
     for k,a in sorted(actions.items()):
         if not a.pending and (name == '' or name == a.name):
             vc = ":let s:swank_action='" + a.name + "'"
