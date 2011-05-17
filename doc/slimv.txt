@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 May 2011
+*slimv.txt*                    Slimv                 Last Change: 17 May 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.3
@@ -80,6 +80,7 @@ To install the script:
        ftplugin/lisp/slimv-lisp.vim
        ftplugin/scheme/slimv-scheme.vim
        indent/clojure.vim
+       indent/lisp.vim
        plugin/paredit.vim
        slime/*
        swank-clojure/*
@@ -908,12 +909,14 @@ b. install a Clojure Vim syntax plugin, like VimClojure.
 The indentation is also done via the default lisp.vim indent plugin, or an
 optionally installed Clojure indent plugin, just like for the syntax
 highlighting.
+When using the SWANK client and it is connected to the server, then indentation
+information is fetched from the SWANK server. This allows special indentation
+methods, e.g. when the given macro has an &body argument then it is indented
+by 2 spaces (instead of indenting the second argument below the first one).
+
 There are some built-in Vim reindentation commands that may come very handy
 when editing Lisp files. One can define a custom key mapping for any of them,
 such mappings are not defined by Slimv.
-
-    :set autoindent         Copy indent from current line when starting
-                            a new line.
 
     =                       Reindent selection, after a text has been selected.
 
@@ -922,6 +925,8 @@ such mappings are not defined by Slimv.
     vab=   or    [(v%=      Select current list and reindent it.
 
     99[(v%=                 Select top level form and reindent it.
+
+    gg=G                    Reindent whole file.
 
 
 3. Parenthesis handling
@@ -1111,7 +1116,9 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added g:slimv_echolines to echo only the first few lines of the
          form being evaluated.
        - Added fuzzy completion and option g:slimv_simple_compl (by Philipp Marek).
-       - Indent macros with &body argument by two spaces when connected to swank.
+       - Indent macros with &body argument by two spaces when connected to swank
+         (thanks to Philipp Marek and Andreas Fredriksson).
+       - Special indentation for flet, labels, macrolet.
        - Default for Set-Package is current package (thanks to Philipp Marek).
        - Bugfix: REPL output ordering problems.
        - Bugfix: problem with inserting Space into visual block.
@@ -1401,8 +1408,8 @@ ideas, suggestions on the SWANK integration.
 
 Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
-Jon Thacker, Andrew Hills, Jerome Baum, John Obbele for additional notes and
-contributions.
+Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson
+for additional notes and contributions.
 
 Last but not least many thanks to my wife Andrea (for the Italians out there:
 hey, this is a female name in Hungary :) for her support and patience.

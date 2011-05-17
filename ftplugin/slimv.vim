@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.3
-" Last Change:  15 May 2011
+" Last Change:  17 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -484,6 +484,7 @@ endif
 
 let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file    " Name of the REPL buffer inside Vim
 let s:prompt = ''                                         " Lisp prompt in the last line
+let s:indent = ''                                         " Most recent indentation info
 let s:last_update = 0                                     " The last update time for the REPL buffer
 let s:last_size = 0                                       " The last size of the REPL buffer
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
@@ -1318,9 +1319,9 @@ function! SlimvIndent( lnum )
             " Found opening paren in the previous line, let's find out the function name
             let func = matchstr( line, '\<\k*\>', c )
             if func != '' && g:slimv_swank && s:swank_connected
-                " Ask function argument list from SWANK
-                let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . func . '")' )
-                if arglist != '' && match( arglist, '\c&body' ) >= 0
+                let s:indent = ''
+                silent execute 'python get_indent_info("' . func . '")'
+                if s:indent >= '0' && s:indent <= '9'
                     " Function has &body argument, so indent by 2 spaces from the opening '('
                     return c + 1
                 endif
