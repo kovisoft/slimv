@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 10 May 2011
+*swank.txt*                    Slimv                 Last Change: 17 May 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.3
@@ -311,6 +311,7 @@ currently implemented in the Slimv SWANK client.
   :emacs-interrupt
   :emacs-pong
   :emacs-return-string
+  :indentation-update
   swank:compile-file-for-emacs
   swank:compile-string-for-emacs
   swank:connection-info

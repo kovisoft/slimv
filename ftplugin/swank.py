@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.3
-# Last Change:  16 May 2011
+# Last Change:  17 May 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -427,7 +427,7 @@ def swank_listen():
 
                 elif message == ':indentation-update':
                     for el in r[1]:
-                        indent_info[ unquote(el[0]) ] = int( el[2] )
+                        indent_info[ unquote(el[0]) ] = el[2]
 
                 elif message == ':new-package':
                     package = unquote( r[1] )
@@ -606,16 +606,18 @@ def get_package():
         return requote(pkg)
 
 def get_indent_info(name):
+    indent = ''
     if name in indent_info:
-        return indent_info[name]
-    else:
-        return 0
+        indent = indent_info[name]
+    vc = ":let s:indent='" + indent + "'"
+    vim.command(vc)
 
 ###############################################################################
 # Various SWANK messages
 ###############################################################################
 
 def swank_connection_info():
+    indent_info.clear()
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
