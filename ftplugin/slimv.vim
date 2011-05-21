@@ -1042,7 +1042,7 @@ endfunction
 " Find and add language specific package/namespace definition before the
 " cursor position and if exists then add it in front of the current selection
 function! SlimvFindPackage()
-    if !g:slimv_package || s:debug_activated || SlimvGetFiletype() == 'scheme'
+    if !g:slimv_package || SlimvGetFiletype() == 'scheme'
         return
     endif
     if SlimvGetFiletype() == 'clojure'
@@ -1558,6 +1558,22 @@ function! SlimvInterrupt()
         call SlimvSend( ['SLIMV::INTERRUPT'], 0, 1 )
     endif
     call SlimvRefreshReplBuffer()
+endfunction
+
+" Select a specific restart in debugger
+function! SlimvDebugCommand( cmd )
+    if g:slimv_swank
+        if s:swank_connected
+            if s:debug_activated
+                call SlimvCommand( 'python ' . a:cmd . '()' )
+                call SlimvRefreshReplBuffer()
+            else
+                call SlimvError( "Debugger is not activated." )
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    endif
 endfunction
 
 " Display function argument list
@@ -2545,6 +2561,9 @@ endif
 
 call s:MenuMap( 'Slim&v.De&bugging.Disassemb&le\.\.\.',         g:slimv_leader.'l',  g:slimv_leader.'dd',  ':call SlimvDisassemble()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             g:slimv_leader.'i',  g:slimv_leader.'di',  ':call SlimvInspect()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvDebugCommand("swank_invoke_abort")<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugCommand("swank_throw_toplevel")<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugCommand("swank_invoke_continue")<CR>' )
 
 " Compile commands
 call s:MenuMap( 'Slim&v.&Compilation.Compile-&Defun',           g:slimv_leader.'D',  g:slimv_leader.'cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
@@ -2579,7 +2598,7 @@ call s:MenuMap( 'Slim&v.&Profiling.Profile-&Reset',             g:slimv_leader.'
 
 " Documentation commands
 call s:MenuMap( 'Slim&v.&Documentation.Describe-&Symbol',       g:slimv_leader.'s',  g:slimv_leader.'ds',  ':call SlimvDescribeSymbol()<CR>' )
-call s:MenuMap( 'Slim&v.&Documentation.&Apropos',               g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvApropos()<CR>' )
+call s:MenuMap( 'Slim&v.&Documentation.&Apropos',               g:slimv_leader.'A',  g:slimv_leader.'dp',  ':call SlimvApropos()<CR>' )
 call s:MenuMap( 'Slim&v.&Documentation.&Hyperspec',             g:slimv_leader.'h',  g:slimv_leader.'dh',  ':call SlimvHyperspec()<CR>' )
 call s:MenuMap( 'Slim&v.&Documentation.Generate-&Tags',         g:slimv_leader.']',  g:slimv_leader.'dg',  ':call SlimvGenerateTags()<CR>' )
 
