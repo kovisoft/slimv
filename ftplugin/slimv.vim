@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.3
-" Last Change:  17 May 2011
+" Version:      0.8.4
+" Last Change:  21 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -506,14 +506,14 @@ let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\
 " =====================================================================
 
 " Display an error message
-function SlimvError( msg )
+function! SlimvError( msg )
     echohl ErrorMsg
     echo a:msg
     echohl None
 endfunction 
 
 " Display an error message and a question, return user response
-function SlimvErrorAsk( msg, question )
+function! SlimvErrorAsk( msg, question )
     echohl ErrorMsg
     let answer = input( a:msg . a:question )
     echo ""
@@ -522,9 +522,17 @@ function SlimvErrorAsk( msg, question )
 endfunction 
 
 " Display an error message and wait for ENTER
-function SlimvErrorWait( msg )
+function! SlimvErrorWait( msg )
     call SlimvErrorAsk( a:msg, " Press ENTER to continue." )
 endfunction 
+
+" Shorten long messages to fit status line
+function! SlimvShortEcho( msg )
+    let saved=&shortmess
+    set shortmess+=T
+    exe "normal :echomsg a:msg\n"
+    let &shortmess=saved
+endfunction
 
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
@@ -1579,11 +1587,12 @@ function! SlimvArglist()
                     let s:save_showmode = &showmode
                     set noshowmode
                     let msg = substitute( msg, "\n", "", "g" )
+                    redraw
                     if match( msg, arg ) != 1
                         " Function name is not received from REPL
-                        echo "\r(" . arg . ' ' . msg[1:]
+                        call SlimvShortEcho( "(" . arg . ' ' . msg[1:] )
                     else
-                        echo "\r" . msg
+                        call SlimvShortEcho( msg )
                     endif
                 endif
             endif
