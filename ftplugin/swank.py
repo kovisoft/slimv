@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.3
-# Last Change:  17 May 2011
+# Version:      0.8.4
+# Last Change:  22 May 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -198,6 +198,23 @@ def parse_plist(lst, keyword):
             return unquote(lst[i+1])
     return ''
 
+def parse_location(fname, loc):
+    lnum = 1
+    cnum = 1
+    pos = loc
+    try:
+        f = open(fname, "r")
+    except:
+        return [0, 0]
+    for line in f:
+        if pos < len(line):
+            cnum = pos
+            break
+        pos = pos - len(line)
+        lnum = lnum + 1
+    f.close()
+    return [lnum, cnum]
+
 def swank_send(text):
     global sock
 
@@ -303,6 +320,7 @@ def swank_parse_compile(struct):
     warnings = struct[1]
     time = struct[3]
     filename = struct[5]
+    vim.command("let qflist = []")
     if type(warnings) == list:
         buf = '\n' + str(len(warnings)) + ' compiler notes:\n\n'
         for w in warnings:
@@ -323,8 +341,13 @@ def swank_parse_compile(struct):
                     buf = buf + snippet + '\n'
                 buf = buf + fname + ':' + pos + '\n'
                 buf = buf + '  ' + severity + ': ' + msg + '\n\n' 
+                [lnum, cnum] = parse_location(fname, int(pos))
+                qfentry = "{'filename':'"+fname+"','lnum':'"+str(lnum)+"','col':'"+str(cnum)+"','text':'"+msg+"'}"
+                logprint(qfentry)
+                vim.command("call add(qflist, " + qfentry + ")")
     else:
         buf = '\nCompilation finished. (No warnings)  [' + time + ' secs]\n\n'
+    vim.command("call setqflist(qflist)")
     return buf
 
 def swank_parse_frame_call(struct):
