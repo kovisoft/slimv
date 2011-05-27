@@ -21,7 +21,7 @@
  :load-contribs t)   ; load all contribs
 
 (swank:create-server :port 4005
-                     :coding-system "iso-latin-1-unix"
+                     :coding-system "utf-8-unix"
 
                      ;; if non-nil the connection won't be closed
                      ;; after connecting
