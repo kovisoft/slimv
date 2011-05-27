@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.4
-# Last Change:  25 May 2011
+# Last Change:  27 May 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -215,12 +215,15 @@ def parse_location(fname, loc):
     f.close()
     return [lnum, cnum]
 
+def unicode_len(text):
+    return len(unicode(text, "utf-8"))
+
 def swank_send(text):
     global sock
 
     logtime('[---Sent---]')
     logprint(text)
-    l = hex(len(text))[2:]
+    l = hex(unicode_len(text))[2:]
     t = '0'*(lenbytes-len(l)) + l + text
     if debug:
         print 'Sending:', t
@@ -246,9 +249,9 @@ def swank_recv(msglen):
                 sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
                 swank_disconnect()
                 return rec
-            while data and len(rec) < msglen:
+            while data and unicode_len(rec) < msglen:
                 rec = rec + data
-                l = l - len(data)
+                l = l - unicode_len(data)
                 if l > 0:
                     try:
                         data = sock.recv(l)
