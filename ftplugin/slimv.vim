@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.4
-" Last Change:  25 May 2011
+" Last Change:  28 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -994,7 +994,7 @@ function! SlimvSelectForm()
 endfunction
 
 " Find starting '(' of a top level form
-function SlimvFindDefunStart()
+function! SlimvFindDefunStart()
     let l = line( '.' )
     let matchb = max( [l-100, 1] )
     while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb )
@@ -2521,16 +2521,19 @@ function! s:MenuMap( name, shortcut1, shortcut2, command )
     endif
 endfunction
 
-if g:slimv_swank
-    " Map space to display function argument list in status line
-    inoremap <silent> <Space>    <Space><C-R>=SlimvArglist()<CR>
-    "noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
-    au InsertLeave * :let &showmode=s:save_showmode
-endif
+" Initialize buffer by adding buffer specific mappings
+function! SlimvInitBuffer()
+    if g:slimv_swank
+        " Map space to display function argument list in status line
+        inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
+        "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
+        au InsertLeave * :let &showmode=s:save_showmode
+    endif
+    inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
+    inoremap <silent> <buffer> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
+endfunction
 
 " Edit commands
-inoremap <silent> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
-inoremap <silent> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
 call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     g:slimv_leader.')',  g:slimv_leader.'tc',  ':<C-U>call SlimvCloseForm()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',                  '',                   '<Ins><C-X><C-O>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 g:slimv_leader.'(',  g:slimv_leader.'(t',  ':<C-U>call PareditToggle()<CR>' )
@@ -2624,7 +2627,7 @@ if g:slimv_menu == 1
 endif
 
 " Add REPL menu. This menu exist only for the REPL buffer.
-function SlimvAddReplMenu()
+function! SlimvAddReplMenu()
     if &wildcharm != 0
         execute ':map ' . g:slimv_leader.'\ :emenu REPL.' . nr2char( &wildcharm )
     endif

@@ -1,7 +1,7 @@
 " slimv-scheme.vim:
 "               Scheme filetype plugin for Slimv
-" Version:      0.8.2
-" Last Change:  27 Apr 2011
+" Version:      0.8.4
+" Last Change:  28 May 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,9 +10,12 @@
 " =====================================================================
 "
 "  Load Once:
-if &cp || exists( 'g:slimv_scheme_loaded' )
+if exists("b:did_ftplugin")
     finish
 endif
+
+" ---------- Begin part loaded once ----------
+if !exists( 'g:slimv_scheme_loaded' )
 
 let g:slimv_scheme_loaded = 1
 
@@ -52,4 +55,15 @@ endfunction
 
 " Source Slimv general part
 runtime ftplugin/**/slimv.vim
+
+endif "!exists( 'g:slimv_lisp_loaded' )
+" ---------- End of part loaded once ----------
+
+runtime ftplugin/**/lisp.vim
+
+" Must be called for each lisp buffer
+call SlimvInitBuffer()
+
+" Don't load another plugin for this buffer
+let b:did_ftplugin = 1
 
