@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.4
-" Last Change:  28 May 2011
+" Last Change:  06 Jun 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1311,7 +1311,9 @@ function! SlimvIndent( lnum )
         return 0
     endif
     " Use custom indentation only if default indenting is >2
+    set lisp
     let li = lispindent(a:lnum)
+    set nolisp
     if li > 2
         " Find start of current form
         let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
