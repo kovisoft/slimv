@@ -15,7 +15,7 @@ Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP se
 
 Slimv opens the lisp REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
 
-Slimv supports SLIME's debugger, profiler, cross reference, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
+Slimv supports SLIME's debugger, profiler, cross reference, arglist, indentation, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
 Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square brackets, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slimv also implements many paredit.el s-expression handling functions, like Split/Join/Wrap/Splice. Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element in or out of the list, rather you move the opening or closing parenthesis over the element or sub-list.
 
