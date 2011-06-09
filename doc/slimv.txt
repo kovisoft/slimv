@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 17 May 2011
+*slimv.txt*                    Slimv                 Last Change: 09 Jun 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.8.3
+                               Version 0.8.4
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1109,6 +1109,17 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.4  - Added handling for Unicode characters.
+       - Truncate arglist output to fit in the status line.
+       - Added debugger keybindings: ,a for abort ,q for quit ,n for continue.
+       - Changed keybinding for apropos to ,A
+       - Added compiler error messages to quickfix list.
+       - Map insert mode <Space> and <Tab> only for lisp (and dialects) buffers.
+       - Bugfix: wait for the response to :create-repl before calling
+         :swank-require (thanks to Philipp Marek).
+       - Bugfix: indentation problems with unbalanced parens in comment.
+       - Bugfix: arglist ate the <Space> when virtualedit was off.
 
 0.8.3  - Added top/bottom/left/right directions to g:slimv_repl_split.
        - Added :Lisp (and an equivalent :Eval) command with completion.
