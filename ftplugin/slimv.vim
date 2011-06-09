@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.4
-" Last Change:  06 Jun 2011
+" Last Change:  09 Jun 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1588,6 +1588,8 @@ function! SlimvArglist()
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
     endif
     if s:swank_connected && c > 1 && line[c-2] =~ '\k'
+        let save_ve = &virtualedit
+        set virtualedit=onemore
         " Display only if entering the first space after a keyword
         let matchb = max( [l-100, 1] )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
@@ -1614,6 +1616,7 @@ function! SlimvArglist()
                 endif
             endif
         endif
+        let &virtualedit=save_ve
     endif
 
     " Return empty string because this function is called from an insert mode mapping
