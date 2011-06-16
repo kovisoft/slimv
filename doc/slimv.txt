@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 09 Jun 2011
+*slimv.txt*                    Slimv                 Last Change: 16 Jun 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.4
@@ -621,15 +621,18 @@ sequence, then you may want to fine tune these Vim options:
     ---------------------------------------------------
     ,,      ,,       Slimv Menu
 
-    Edit commands:
-    <C-X>0           Close-Form (Insert mode)
-    <C-X><C-O>       Complete-Symbol (Insert mode)
+    Edit commands (Insert mode):
+    <C-X>0           Close Form
+    <Tab>            Complete Symbol
+    <Space>          Function Arglist (only when using SWANK client)
+
+    Edit commands (Normal mode):
+    ,)      ,tc      Close Form
     ,(      ,(t      Paredit Toggle
 
     Evaluation commands:
     ,d      ,ed      Eval Defun (current top level form)
     ,e      ,ee      Eval Current Expression (current subform)
-    ,E      ,ep      Pprint Eval Current Expression
     ,r      ,er      Eval Region (visual selection)
     ,b      ,eb      Eval Buffer
     ,v      ,ei      Interactive Eval
@@ -638,10 +641,13 @@ sequence, then you may want to fine tune these Vim options:
     Debug commands:
     ,1      ,m1      Macroexpand-1
     ,m      ,ma      Macroexpand All
-    ,t      ,dt      Trace
-    ,T      ,du      Untrace
+    ,t      ,dt      Toggle Trace
+    ,T      ,du      Untrace All
     ,l      ,dd      Disassemble
     ,i      ,di      Inspect
+    ,a      ,da      Abort (only when using SWANK client)
+    ,q      ,dq      Quit to Toplevel (only when using SWANK client)
+    ,n      ,dc      Continue (only when using SWANK client)
 
     Compile commands:
     ,D      ,cd      Compile Defun
@@ -649,10 +655,19 @@ sequence, then you may want to fine tune these Vim options:
     ,F      ,cf      Compile File
     ,R      ,cr      Compile Region
 
+    Cross Reference commands (only when using SWANK client):
+    ,xc     ,xc      Who Calls
+    ,xr     ,xr      Who References
+    ,xs     ,xs      Who Sets
+    ,xb     ,xb      Who Binds
+    ,xm     ,xm      Who Macroexpands
+    ,xp     ,xp      Who Specializes
+    ,xl     ,xl      List Callers
+    ,xe     ,xe      List Callees
+
     Profile commands:
-    ,O      ,pl      Load Profiler
-    ,p      ,pp      Profile
-    ,P      ,pu      Unprofile
+    ,p      ,pp      Toggle Profile
+    ,B      ,pb      Profile by Substring
     ,U      ,pa      Unprofile All
     ,?      ,ps      Show Profiled
     ,o      ,pr      Profile Report
@@ -660,7 +675,7 @@ sequence, then you may want to fine tune these Vim options:
 
     Documentation commands:
     ,s      ,ds      Describe Symbol
-    ,a      ,da      Apropos
+    ,A      ,da      Apropos
     ,h      ,dh      Hyperspec
     ,]      ,dt      Generate Tags
 

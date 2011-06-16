@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 17 May 2011
+*swank.txt*                    Slimv                 Last Change: 16 Jun 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.3
@@ -129,6 +129,7 @@ For a complete reference of SWANK functions implemented see |swank-functions|.
 |swank-trace|                Trace function
 |swank-profile|              Profiler
 |swank-xref|                 Cross Reference
+|swank-quickfix|             Compiler errors in quickfix list
 
 -------------------------------------------------------------------------------
 EVALUATION                                                         *swank-eval*
@@ -180,6 +181,11 @@ Restarts:
 
   If you press Enter in normal mode on a restart line then the given restart
   is invoked.
+  The most frequently used restarts have the following shortcuts defined:
+
+    ,a      Abort
+    ,q      Quit To Toplevel
+    ,n      Continue
 
 
 -------------------------------------------------------------------------------
@@ -205,10 +211,13 @@ Backtrace:
 -------------------------------------------------------------------------------
 FUNCTION ARGUMENT LIST                                          *swank-arglist*
 
-  When entering an s-expressin in insert mode, each time a space is pressed
+  When entering an s-expression in insert mode, each time a space is pressed
   after a non-whitespace character, then SWANK is requested for the function
   argument list for the current function. If the function is known by SWANK
-  then the function prototype is displayed in the status line.
+  then the function prototype is displayed in the status line. The arglist is
+  condensed in order to fit the status line, so for functions with many
+  arguments the whole definition may not be visible. In this case use the
+  Describe function for displaying the full function definition.
 
   Note: the function argument list is not displayed when Slimv is not
   connected to the SWANK server.
@@ -300,6 +309,16 @@ CROSS REFERENCE                                                    *swank-xref*
   calling a specific function, the list of functions called from a specific
   function, and other variable, macro, etc. references.
   Please note that not all Lisp implementations support the xref functionality.
+
+
+-------------------------------------------------------------------------------
+QUICKFIX                                                       *swank-quickfix*
+
+  The compiler error messages are fed into Vim's quickfix list, as well as
+  printed in the REPL buffer. Enter the :cw command to open the quickfix window.
+  Use :cn and :cp to jump to the next and previous error location, use :cr to
+  rewind to the first error.
+  Consult |quickfix| for details on using the quickfix functionality.
 
 
 ===============================================================================

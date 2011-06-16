@@ -27,6 +27,7 @@ Here follows a list of Slimv commands, any similarity with SLIME's menu is not c
 Edit commands:
     *  Close Form
     *  Complete Symbol
+    *  Function Arglist
     *  Paredit Toggle
 
 Evaluation commands:
@@ -44,6 +45,9 @@ Debug commands:
     *  Untrace All
     *  Disassemble
     *  Inspect
+    *  Abort
+    *  Quit to Toplevel
+    *  Continue
 
 Compile commands:
     *  Compile Defun
@@ -63,7 +67,7 @@ Cross Reference commands
 
 Profile commands:
     *  Toggle Profile
-    *  Profile By Substring
+    *  Profile by Substring
     *  Unprofile All
     *  Show Profiled
     *  Profile Report
@@ -119,6 +123,8 @@ See the included documentation for more complete installation and customization 
 --------------------------------------------------------------------------------
 Script versions
 --------------------------------------------------------------------------------
+
+0.8.4: Added handling for Unicode characters, truncate arglist output to fit in the status line, added debugger keybindings: ,a for abort ,q for quit ,n for continue, changed keybinding for apropos to ,A, added compiler error messages to quickfix list, map insert mode <Space> and <Tab> only for lisp (and dialects) buffers, bugfixes: wait for the response to :create-repl before calling :swank-require (thanks to Philipp Marek), indentation problems with unbalanced parens in comment, arglist ate the <Space> when virtualedit was off.
 
 0.8.3: Added top/bottom/left/right directions to g:slimv_repl_split, added :Lisp (and an equivalent :Eval) command with completion, added g:slimv_leader and g:paredit_leader options, added g:slimv_echolines to echo only the first few lines of the form being evaluated, added fuzzy completion and option g:slimv_simple_compl (by Philipp Marek), indent macros with &body argument by two spaces when connected to swank (thanks to Philipp Marek and Andreas Fredriksson), special indentation for flet, labels and macrolet, default for Set-Package is current package (thanks to Philipp Marek), bugfixes: REPL output ordering problems, problem with inserting Space into visual block, blinking when g:slimv_repl_syntax is on, entering incomplete form in REPL command line, close form when inside comment, string, or with mixed ([. 
 
