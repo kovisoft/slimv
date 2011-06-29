@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.4
-" Last Change:  09 Jun 2011
+" Version:      0.8.5
+" Last Change:  27 Jun 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -617,9 +617,15 @@ function! SlimvCommand( cmd )
         let &updatetime = g:slimv_updatetime
     endif
 
-    let lines = split( msg, '\n' )
+    let lines = split( msg, '\n', 1 )
+    if lines[0] == ''
+        " For some reason Python output redirection sometimes adds a newline at the beginning
+        let lines = lines[1:]
+    endif
     set noreadonly
-    call append( '$', lines )
+    let lastline = getline( '$' ) . lines[0]
+    call setline( '$', lastline )
+    call append( '$', lines[1:] )
     set readonly
     set nomodified
     let s:last_update = localtime()
@@ -662,7 +668,7 @@ function! SlimvCommandGetResponse( name, cmd )
     let starttime = localtime()
     let cmd_timeout = 3
     while s:swank_action == '' && localtime()-starttime < cmd_timeout
-        python swank_listen()
+        python swank_output()
         redir => msg
         silent execute 'python swank_response("' . a:name . '")'
         redir END
@@ -1169,15 +1175,25 @@ function! SlimvSend( args, open_buffer, echoing )
                 let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
                 if nlpos > 0
                     " Echo only the first g:slimv_echolines number of lines
-                    let s:swank_form = strpart( s:swank_form, 0, nlpos ) . " ..."
-                    let end = s:CloseForm( [s:swank_form] )
-                    if end != 'ERROR'
-                        let s:swank_form = s:swank_form . end
+                    let trimmed = strpart( s:swank_form, nlpos )
+                    let s:swank_form = strpart( s:swank_form, 0, nlpos )
+                    let ending = s:CloseForm( [s:swank_form] )
+                    if ending != 'ERROR'
+                        if substitute( trimmed, '\s\|\n', '', 'g' ) == ''
+                            " Only whitespaces are trimmed
+                            let s:swank_form = s:swank_form . ending . "\n"
+                        else
+                            " Valuable characters trimmed, indicate it by printing "..."
+                            let s:swank_form = s:swank_form . " ..." . ending . "\n"
+                        endif
                     endif
                 endif
             endif
-            call SlimvCommand( 'echo s:swank_form' )
+            call SlimvCommand( 'echo "\n" . s:swank_form' )
             let s:swank_form = text
+        else
+            " Open a new line for the output
+            call SlimvCommand( 'echo "\n"' )
         endif
         call SlimvCommand( 'python swank_input("s:swank_form")' )
         let s:swank_package = ''

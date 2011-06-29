@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.4
-# Last Change:  27 May 2011
+# Version:      0.8.5
+# Last Change:  29 Jun 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -24,6 +24,8 @@ input_port      = 4005
 output_port     = 4006
 lenbytes        = 6             # Message length is encoded in this number of bytes
 maxmessages     = 50            # Maximum number of messages to receive in one listening session
+recv_timeout    = 0.01          # socket recv timeout in seconds
+listen_retries  = 10            # number of retries if no response in swank_listen()
 sock            = None          # Swank socket object
 id              = 0             # Message id
 debug           = False
@@ -32,6 +34,7 @@ logfile         = 'swank.log'   # Logfile name in case logging is on
 current_thread  = '0'
 debug_activated = False         # Swank debugger activated
 read_string     = None          # Thread and tag in Swank read string mode
+empty_last_line = True          # Swank output ended with a new line
 prompt          = 'SLIMV'       # Command prompt
 package         = 'COMMON-LISP-USER' # Current package
 actions         = dict()        # Swank actions (like ':write-string'), by message id
@@ -185,6 +188,16 @@ def requote(s):
     t = t.replace('"', '\\"')
     return '"' + t + '"'
 
+def new_line(new_text):
+    global empty_last_line
+
+    if new_text != '':
+        if new_text[-1] != '\n':
+            return '\n'
+    elif not empty_last_line:
+        return '\n'
+    return ''
+
 def make_keys(lst):
     keys = {}
     for i in range(len(lst)):
@@ -239,7 +252,7 @@ def swank_recv(msglen):
     rec = ''
     if msglen > 0:
         sock.setblocking(0)
-        ready = select.select([sock], [], [], 0.01) # 0.01: timeout in seconds
+        ready = select.select([sock], [], [], recv_timeout)
         if ready[0]:
             l = msglen
             sock.setblocking(1)
@@ -265,7 +278,7 @@ def swank_parse_inspect(struct):
     """
     Parse the swank inspector output
     """
-    buf = '\n \nInspecting ' + parse_plist(struct, ':title') + '\n--------------------\n'
+    buf = 'Inspecting ' + parse_plist(struct, ':title') + '\n--------------------\n'
     pcont = parse_plist(struct, ':content')
     cont = pcont[0]
     lst = []
@@ -295,7 +308,9 @@ def swank_parse_inspect(struct):
                 linestart = len(lst)
     for s in lst:
         buf = buf + s
-    buf = buf + '\n \n[<<]'
+    if buf[-1] != '\n':
+        buf = buf + '\n'
+    buf = buf + '\n[<<]'
     return buf
 
 def swank_parse_xref(struct):
@@ -395,6 +410,7 @@ def swank_listen():
     global output_port
     global debug_activated
     global read_string
+    global empty_last_line
     global current_thread
     global prompt
     global package
@@ -431,21 +447,19 @@ def swank_listen():
                         print ':open-dedicated-output-stream result:', output_port
                     break
 
+                elif message == ':presentation-start':
+                    retval = retval + new_line(retval)
+
                 elif message == ':write-string':
                     # REPL has new output to display
-                    s = unquote(r[1])
+                    retval = retval + unquote(r[1])
                     add_prompt = True
                     for k,a in actions.items():
                         if a.pending and a.name.find('eval'):
                             add_prompt = False
                             break
                     if add_prompt:
-                        retval = retval + '\n' + s
-                        if len(retval) > 0 and retval[-1] != '\n':
-                            retval = retval + '\n'
-                        retval = retval + prompt + '> '
-                    else:
-                        retval = retval + s
+                        retval = retval + new_line(retval) + prompt + '> '
 
                 elif message == ':read-string':
                     # RERL requests entering a string
@@ -478,20 +492,19 @@ def swank_listen():
 
                     if result == ':ok':
                         params = r[1][1]
+                        logprint('params: ' + str(params))
                         if type(params) == str:
                             element = params.lower()
+                            retval = retval + new_line(retval)
                             if element != 'nil':
-                                s = unquote(params)
-                                retval = retval + s
+                                retval = retval + unquote(params)
                                 if action:
                                     action.result = retval
                             # List of actions needing a prompt
                             to_prompt = [':describe-symbol', ':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form']
                             if element == 'nil' or (action and action.name in to_prompt):
                                 # No more output from REPL, write new prompt
-                                if len(retval) > 0 and retval[-1] != '\n':
-                                    retval = retval + '\n'
-                                retval = retval + prompt + '> '
+                                retval = retval + new_line(retval) + prompt + '> '
 
                         elif type(params) == list:
                             if type(params[0]) == list: 
@@ -501,8 +514,9 @@ def swank_listen():
                                 element = params[0].lower()
                             if element == ':present':
                                 # No more output from REPL, write new prompt
-                                retval = retval + unquote(params[1][0][0]) + '\n' + prompt + '> '
+                                retval = retval + new_line(retval) + unquote(params[1][0][0]) + '\n' + prompt + '> '
                             elif element == ':values':
+                                retval = retval + new_line(retval)
                                 if type(params[1]) == list: 
                                     retval = retval + unquote(params[1][0]) + '\n'
                                 else:
@@ -518,24 +532,23 @@ def swank_listen():
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
                                 vim.command('let s:swank_version="' + ver + '"')
+                                retval = retval + new_line(retval)
                                 retval = retval + imp[':type'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
                                 retval = retval + '\n' + prompt + '> '
                                 logprint(' Package:' + package + ' Prompt:' + prompt)
                             elif element == ':name':
                                 keys = make_keys(params)
+                                retval = retval + new_line(retval)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
-                                logprint(str(params))
-                                retval = retval + swank_parse_inspect(params)
+                                retval = retval + new_line(retval) + swank_parse_inspect(params)
                             elif element == ':compilation-result':
-                                logprint(str(params))
                                 filename = params[5]
                                 if filename[0] != '"':
                                     filename = '"' + filename + '"'
                                 vim.command('let s:compiled_file=' + filename + '')
-                                retval = retval + swank_parse_compile(params) + prompt + '> '
+                                retval = retval + new_line(retval) + swank_parse_compile(params) + prompt + '> '
                             else:
-                                logprint(str(params))
                                 if action.name == ':simple-completions':
                                     if type(params) == list and type(params[0]) == str and params[0] != 'nil':
                                         compl = "\n".join(params)
@@ -545,25 +558,20 @@ def swank_listen():
                                         compl = "\n".join(map(lambda x: x[0], params))
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':xref':
-                                    retval = retval + swank_parse_xref(r[1][1])
-                                    if len(retval) > 0 and retval[-1] != '\n':
-                                        retval = retval + '\n'
-                                    retval = retval + prompt + '> '
+                                    retval = retval + '\n' + swank_parse_xref(r[1][1])
+                                    retval = retval + new_line(retval) + prompt + '> '
                                 elif action.name == ':set-package':
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
-                                    retval = retval + prompt + '> '
+                                    retval = retval + '\n' + prompt + '> '
                                 elif action.name == ':frame-call':
                                     retval = retval + swank_parse_frame_call(params)
-                                    retval = retval + prompt + '> '
                                 elif action.name == ':frame-source-location':
                                     retval = retval + swank_parse_frame_source(params)
-                                    #retval = retval + prompt + '> '
                                 elif action.name == ':frame-locals-and-catch-tags':
-                                    retval = retval + swank_parse_locals(params)
-                                    retval = retval + prompt + '> '
+                                    retval = retval + swank_parse_locals(params) + prompt + '> '
                                 elif action.name == ':profiled-functions':
-                                    retval = retval + 'Profiled functions:\n'
+                                    retval = retval + '\n' + 'Profiled functions:\n'
                                     for f in params:
                                         retval = retval + '  ' + f + '\n'
                                     retval = retval + prompt + '> '
@@ -579,11 +587,11 @@ def swank_listen():
                             retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
                 elif message == ':inspect':
-                    retval = retval + swank_parse_inspect(r[1])
+                    retval = retval + new_line(retval) + swank_parse_inspect(r[1])
 
                 elif message == ':debug':
                     [thread, level, condition, restarts, frames, conts] = r[1:7]
-                    retval = retval + '\n' + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
+                    retval = retval + new_line(retval) + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
                     for i in range( len(restarts) ):
                         r0 = unquote( restarts[i][0] )
                         r1 = unquote( restarts[i][1] )
@@ -611,6 +619,8 @@ def swank_listen():
                 elif message == ':ping':
                     [thread, tag] = r[1:3]
                     swank_send('(:emacs-pong ' + thread + ' ' + tag + ')')
+    if retval != '':
+        empty_last_line = (retval[-1] == '\n')
     return retval
 
 def swank_rex(action, cmd, package, thread):
@@ -841,6 +851,9 @@ def swank_disconnect():
         sys.stdout.write( 'Connection to SWANK server is closed.\n' )
 
 def swank_input(formvar):
+    global empty_last_line
+
+    empty_last_line = True
     form = vim.eval(formvar)
     if read_string:
         # We are in :read-string mode, pass string entered to REPL
@@ -878,9 +891,15 @@ def swank_output():
 
     if not sock:
         return "SWANK server is not connected."
+    count = 0
     result = swank_listen()
+    while result == '' and count < listen_retries:
+        result = swank_listen()
+        count = count + 1
+    if result != '' and result[-1] == '\n':
+        # For some reason Python output redirection removes the last newline
+        result = result + '\n'
     sys.stdout.write(result)
-    return result
 
 def swank_response(name):
     #logtime('[-Response-]')
