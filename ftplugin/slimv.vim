@@ -2425,6 +2425,9 @@ endfunction
 " Complete symbol name starting with 'base'
 function! SlimvComplete( base )
     " Find all symbols starting with "a:base"
+    if a:base == ''
+        return []
+    endif
     if g:slimv_swank && s:swank_connected
         if g:slimv_simple_compl
             let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
