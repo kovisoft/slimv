@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  29 Jun 2011
+" Last Change:  01 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1343,10 +1343,14 @@ function! SlimvIndent( lnum )
             endif
             " Found opening paren in the previous line, let's find out the function name
             let func = matchstr( line, '\<\k*\>', c )
+            " Remove package specification
+            let func = substitute(func, '^.*:', '', '')
+            if SlimvGetFiletype() == 'clojure' && match( func, 'defn$' ) >= 0
+                " Fix clojure specific indentation issues not handled by the default lisp.vim
+                return c + 1
+            endif
             if func != '' && g:slimv_swank && s:swank_connected
                 let s:indent = ''
-		" Remove package specification
-		let func = substitute(func, '^.*:', '', '')
                 silent execute 'python get_indent_info("' . func . '")'
                 if s:indent >= '0' && s:indent <= '9'
                     " Function has &body argument, so indent by 2 spaces from the opening '('
