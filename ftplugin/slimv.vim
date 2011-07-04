@@ -163,7 +163,7 @@ function! SlimvSwankCommand()
                 return ''
             endif
             let sclj = substitute( swanks[0], '\', '/', "g" )
-            let cmd = g:slimv_lisp . ' -e "(load-file \"' . sclj . '\") (swank.swank/start-repl)" -r'
+            let cmd = g:slimv_lisp . ' -i "' . sclj . '" -e "(swank.swank/start-repl)" -r'
         endif
     elseif SlimvGetFiletype() == 'scheme'
         let swanks = split( globpath( &runtimepath, 'slime/contrib/swank-mit-scheme.scm'), '\n' )
