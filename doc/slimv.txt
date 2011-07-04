@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 29 Jun 2011
+*slimv.txt*                    Slimv                 Last Change: 04 Jul 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.5
@@ -1127,9 +1127,12 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.8.5  - Switch on indent plugins.
        - Do not complete empty string.
+       - Added Clojure keywords to syntax plugin.
        - Bugfix: removed extra linebreak between chunks of long output.
        - Bugfix: indentation problems for symbols with package specification
          (thanks to Philipp Marek).
+       - Bugfix: indentation of Clojure's defn.
+       - Bugfix: plist indentation (thanks to Philipp Marek).
 
 0.8.4  - Added handling for Unicode characters.
        - Truncate arglist output to fit in the status line.
