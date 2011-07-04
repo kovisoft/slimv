@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  01 Jul 2011
+" Last Change:  04 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1326,41 +1326,41 @@ function! SlimvIndent( lnum )
         " Hit the start of the file, use zero indent.
         return 0
     endif
-    " Use custom indentation only if default indenting is >2
-    set lisp
-    let li = lispindent(a:lnum)
-    set nolisp
-    if li > 2
-        " Find start of current form
-        let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
-        " Use custom indentation only if default indenting is >2 from the opening paren in the previous line
-        if l == pnum && li > c + 1
-            let line = getline( l )
-            let parent = strpart( line, 0, c )
-            if match( parent, '\c(\s*\(flet\|labels\|macrolet\)\s*(\s*(\s*$' ) >= 0
-                " Handle special indentation style for flet, labels, etc.
+    " Find start of current form
+    let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
+    if l == pnum
+        let line = getline( l )
+        let parent = strpart( line, 0, c )
+        if match( parent, '\c(\s*\(flet\|labels\|macrolet\)\s*(\s*(\s*$' ) >= 0
+            " Handle special indentation style for flet, labels, etc.
+            return c + 1
+        endif
+        " Found opening paren in the previous line, let's find out the function name
+        let func = matchstr( line, '\<\k*\>', c )
+        " If it's a keyword, keep the indentation straight
+        if strpart(func, 0, 1) == ':'
+            return c
+        endif
+        if SlimvGetFiletype() == 'clojure' && match( func, 'defn$' ) >= 0
+            " Fix clojure specific indentation issues not handled by the default lisp.vim
+            return c + 1
+        endif
+        " Remove package specification
+        let func = substitute(func, '^.*:', '', '')
+        if func != '' && g:slimv_swank && s:swank_connected
+            let s:indent = ''
+            silent execute 'python get_indent_info("' . func . '")'
+            if s:indent >= '0' && s:indent <= '9'
+                " Function has &body argument, so indent by 2 spaces from the opening '('
                 return c + 1
-            endif
-            " Found opening paren in the previous line, let's find out the function name
-            let func = matchstr( line, '\<\k*\>', c )
-            " Remove package specification
-            let func = substitute(func, '^.*:', '', '')
-            if SlimvGetFiletype() == 'clojure' && match( func, 'defn$' ) >= 0
-                " Fix clojure specific indentation issues not handled by the default lisp.vim
-                return c + 1
-            endif
-            if func != '' && g:slimv_swank && s:swank_connected
-                let s:indent = ''
-                silent execute 'python get_indent_info("' . func . '")'
-                if s:indent >= '0' && s:indent <= '9'
-                    " Function has &body argument, so indent by 2 spaces from the opening '('
-                    return c + 1
-                endif
             endif
         endif
     endif
 
     " Use default Lisp indening
+    set lisp
+    let li = lispindent(a:lnum)
+    set nolisp
     return li
 endfunction 
 
