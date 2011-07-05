@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  04 Jul 2011
+" Last Change:  05 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -567,7 +567,7 @@ function! SlimvSwankResponse()
             echo input('Press ENTER to continue.')
         endif
     endif
-    if s:swank_actions_pending == ''
+    if s:swank_actions_pending == 0
         " All SWANK output handled
         let &updatetime = s:save_updatetime
     endif

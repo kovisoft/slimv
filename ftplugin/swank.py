@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.5
-# Last Change:  29 Jun 2011
+# Last Change:  05 Jul 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -886,15 +886,27 @@ def swank_input(formvar):
             pkg = package
         swank_eval(form, pkg)
 
+def actions_pending():
+    count = 0
+    for k,a in sorted(actions.items()):
+        if a.pending:
+            count = count + 1
+    vc = ":let s:swank_actions_pending=" + str(count)
+    vim.command(vc)
+    return count
+
 def swank_output():
     global sock
 
     if not sock:
         return "SWANK server is not connected."
     count = 0
+    #logtime('[- Output--]')
     result = swank_listen()
-    while result == '' and count < listen_retries:
+    pending = actions_pending()
+    while result == '' and pending > 0 and count < listen_retries:
         result = swank_listen()
+        pending = actions_pending()
         count = count + 1
     if result != '' and result[-1] == '\n':
         # For some reason Python output redirection removes the last newline
@@ -909,11 +921,9 @@ def swank_response(name):
             vim.command(vc)
             sys.stdout.write(a.result)
             actions.pop(a.id)
-            vc = ":let s:swank_actions_pending=" + str(len(actions))
-            vim.command(vc)
+            actions_pending()
             return
     vc = ":let s:swank_action=''"
     vim.command(vc)
-    vc = ":let s:swank_actions_pending=" + str(len(actions))
-    vim.command(vc)
+    actions_pending()
 
