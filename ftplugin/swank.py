@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.5
-# Last Change:  05 Jul 2011
+# Last Change:  09 Jul 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -532,8 +532,9 @@ def swank_listen():
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
                                 vim.command('let s:swank_version="' + ver + '"')
+                                vim.command('let s:lisp_version="' + imp[':version'] + '"')
                                 retval = retval + new_line(retval)
-                                retval = retval + imp[':type'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
+                                retval = retval + imp[':type'] + ' ' + imp[':version'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
                                 retval = retval + '\n' + prompt + '> '
                                 logprint(' Package:' + package + ' Prompt:' + prompt)
                             elif element == ':name':
