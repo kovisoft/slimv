@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  05 Jul 2011
+" Last Change:  09 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1098,6 +1098,7 @@ function! SlimvConnectSwank()
 
     if !s:swank_connected
         let s:swank_version = ''
+        let s:lisp_version = ''
         python swank_connect( "g:swank_port", "result" )
         if result != ''
             " SWANK server is not running, start server if possible
@@ -1132,6 +1133,10 @@ function! SlimvConnectSwank()
             endif
             redraw
             echon "\rConnected to SWANK server on port " . g:swank_port . "."
+	    if exists( "*b:SlimvReplInit" )
+		" Perform implementation specific REPL initialization if supplied
+                call b:SlimvReplInit( s:lisp_version )
+            endif
         else
             " Display connection error message
             let answer = SlimvErrorAsk( result, " Switch off SWANK client [Y/n]?" )
