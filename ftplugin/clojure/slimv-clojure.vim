@@ -150,9 +150,13 @@ endfunction
 
 " Implementation specific REPL initialization
 function! b:SlimvReplInit( lisp_version )
+    " Import functions commonly used in REPL but not present when not running in repl mode
     if a:lisp_version >= '1.3'
-        " Since Clojure 1.3 these are not present when not running in repl mode 
         call SlimvSend( ["(use '[clojure.repl :only (source apropos dir pst doc find-doc)])",
+        \                "(use '[clojure.java.javadoc :only (javadoc)])",
+        \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
+    elseif a:lisp_version >= '1.2'
+        call SlimvSend( ["(use '[clojure.repl :only (source apropos)])",
         \                "(use '[clojure.java.javadoc :only (javadoc)])",
         \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
     endif
