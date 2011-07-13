@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.5
-# Last Change:  09 Jul 2011
+# Last Change:  13 Jul 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -368,6 +368,17 @@ def swank_parse_compile(struct):
     vim.command("call setqflist(qflist)")
     return buf
 
+def swank_parse_list_threads(tl):
+    buf = ''
+    lst = tl[1]
+    headers = lst.pop(0)
+    logprint(str(lst))
+    idx = 0
+    for t in lst:
+        buf = buf + "\n%3d. %3d: %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]))
+        idx = idx + 1
+    return buf
+
 def swank_parse_frame_call(struct):
     """
     Parse frame call output
@@ -558,6 +569,9 @@ def swank_listen():
                                     if type(params) == list and type(params[0]) == list:
                                         compl = "\n".join(map(lambda x: x[0], params))
                                         retval = retval + compl.replace('"', '')
+                                elif action.name == ':list-threads':
+                                    retval = retval + swank_parse_list_threads(r[1])
+                                    retval = retval + new_line(retval) + prompt + '> '
                                 elif action.name == ':xref':
                                     retval = retval + '\n' + swank_parse_xref(r[1][1])
                                     retval = retval + new_line(retval) + prompt + '> '
@@ -810,6 +824,18 @@ def swank_profile_report():
 
 def swank_profile_reset():
     swank_rex(':profile-reset', '(swank:profile-reset)', 'nil', 't')
+
+def swank_list_threads():
+    cmd = '(swank:list-threads)'
+    swank_rex(':list-threads', cmd, get_package(), 't')
+
+def swank_kill_thread(index):
+    cmd = '(swank:kill-nth-thread ' + str(index) + ')'
+    swank_rex(':kill-thread', cmd, get_package(), 't')
+
+def swank_debug_thread(index):
+    cmd = '(swank:debug-nth-thread ' + str(index) + ')'
+    swank_rex(':debug-thread', cmd, get_package(), 't')
 
 ###############################################################################
 # Generic SWANK connection handling
