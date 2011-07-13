@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  09 Jul 2011
+" Last Change:  13 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1604,6 +1604,18 @@ function! SlimvDebugCommand( cmd )
     endif
 endfunction
 
+" List current Lisp threads
+function! SlimvListThreads()
+    if g:slimv_swank
+        if s:swank_connected
+            call SlimvCommand( 'python swank_list_threads()' )
+            call SlimvRefreshReplBuffer()
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    endif
+endfunction
+
 " Display function argument list
 function! SlimvArglist()
     let l = line('.')
@@ -2601,6 +2613,10 @@ call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             g:slimv_leader.'
 call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvDebugCommand("swank_invoke_abort")<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugCommand("swank_throw_toplevel")<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugCommand("swank_invoke_continue")<CR>' )
+if g:slimv_swank
+call s:MenuMap( 'Slim&v.De&bugging.&List-Threads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
+endif
+
 
 " Compile commands
 call s:MenuMap( 'Slim&v.&Compilation.Compile-&Defun',           g:slimv_leader.'D',  g:slimv_leader.'cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
