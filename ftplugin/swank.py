@@ -581,6 +581,11 @@ def swank_listen():
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
                                     retval = retval + '\n' + prompt + '> '
+                                elif action.name == ':untrace-all':
+                                    retval = retval + '\nUntracing:'
+                                    for f in params:
+                                        retval = retval + '\n' + '  ' + f
+                                    retval = retval + '\n' + prompt + '> '
                                 elif action.name == ':frame-call':
                                     retval = retval + swank_parse_frame_call(params)
                                 elif action.name == ':frame-source-location':
