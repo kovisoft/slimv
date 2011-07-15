@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  13 Jul 2011
+" Last Change:  15 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1616,6 +1616,40 @@ function! SlimvListThreads()
     endif
 endfunction
 
+" Kill thread selected from the Thread List
+function! SlimvKillThread()
+    if g:slimv_swank
+        if s:swank_connected
+            let line = getline('.')
+            let item = matchstr( line, '\d\+' )
+            let item = input( 'Thread to kill: ', item )
+            if item != ''
+                call SlimvCommand( 'python swank_debug_thread(' . item . ')' )
+                call SlimvRefreshReplBuffer()
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    endif
+endfunction
+
+" Debug thread selected from the Thread List
+function! SlimvDebugThread()
+    if g:slimv_swank
+        if s:swank_connected
+            let line = getline('.')
+            let item = matchstr( line, '\d\+' )
+            let item = input( 'Thread to debug: ', item )
+            if item != ''
+                call SlimvCommand( 'python swank_debug_thread(' . item . ')' )
+                call SlimvRefreshReplBuffer()
+            endif
+        else
+            call SlimvError( "Not connected to SWANK server." )
+        endif
+    endif
+endfunction
+
 " Display function argument list
 function! SlimvArglist()
     let l = line('.')
@@ -2615,6 +2649,8 @@ call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'
 call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugCommand("swank_invoke_continue")<CR>' )
 if g:slimv_swank
 call s:MenuMap( 'Slim&v.De&bugging.&List-Threads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Kill-Thread\.\.\.',         g:slimv_leader.'K',  g:slimv_leader.'dk',  ':call SlimvKillThread()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Debug-Thread\.\.\.',        g:slimv_leader.'G',  g:slimv_leader.'dg',  ':call SlimvDebugThread()<CR>' )
 endif
 
 
