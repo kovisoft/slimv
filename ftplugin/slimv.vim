@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  15 Jul 2011
+" Last Change:  18 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1830,6 +1830,25 @@ function! SlimvEvalBuffer()
     call SlimvEval( lines )
 endfunction
 
+" Return frame number if we are in the Backtrace section of the debugger
+function! s:DebugFrame()
+    if g:slimv_swank && s:swank_connected && s:debug_activated
+        " Check if we are in SLDB
+        let repl_buf = bufnr( g:slimv_repl_file )
+        if repl_buf != -1 && repl_buf == bufnr( "%" )
+            let line = getline('.')
+            let item = matchstr( line, '\d\+' )
+            if item != ''
+                let section = getline( line('.') - item - 1 )
+                if section[0:9] == 'Backtrace:'
+                    return item
+                endif
+            endif
+        endif
+    endif
+    return ''
+endfunction
+
 " Evaluate current s-expression at the cursor pos
 function! SlimvEvalExp()
     let oldpos = getpos( '.' ) 
@@ -1854,9 +1873,22 @@ endfunction
 
 " Evaluate expression entered interactively
 function! SlimvInteractiveEval()
-    let e = input( 'Eval: ' )
-    if e != ''
-        call SlimvEval([e])
+    let frame = s:DebugFrame()
+    if frame != ''
+        " We are in the debugger, eval expression in the frame the cursor stands on
+        let e = input( 'Eval in frame: ' )
+        if e != ''
+            let result = SlimvCommandGetResponse( ':eval-string-in-frame', 'python swank_eval_in_frame("' . e . '", ' . frame . ')' )
+            if result != ''
+                redraw
+                echo result
+            endif
+        endif
+    else
+        let e = input( 'Eval: ' )
+        if e != ''
+            call SlimvEval([e])
+        endif
     endif
 endfunction
 
@@ -2005,16 +2037,25 @@ endfunction
 
 " Inspect symbol under cursor
 function! SlimvInspect()
-    let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
-    if s != ''
-        if g:slimv_swank
-            if s:swank_connected
-                call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
+    let frame = s:DebugFrame()
+    if frame != ''
+        " Inspect selected for a frame in the debugger's Backtrace section
+        let s = input( 'Inspect in frame ' . frame . ': ' )
+        call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
+        call SlimvRefreshReplBuffer()
+        return
+    else
+        let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
+        if s != ''
+            if g:slimv_swank
+                if s:swank_connected
+                    call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
+                else
+                    call SlimvError( "Not connected to SWANK server." )
+                endif
             else
-                call SlimvError( "Not connected to SWANK server." )
+                call SlimvEvalForm1( g:slimv_template_inspect, s )
             endif
-        else
-            call SlimvEvalForm1( g:slimv_template_inspect, s )
         endif
     endif
 endfunction
