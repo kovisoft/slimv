@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.5
-# Last Change:  15 Jul 2011
+# Last Change:  18 Jul 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -657,9 +657,22 @@ def swank_rex(action, cmd, package, thread):
     swank_send(form)
 
 def get_package():
+    """
+    Package set by slimv.vim or nil
+    """
     pkg = vim.eval("s:swank_package")
     if pkg == '':
         return 'nil'
+    else:
+        return requote(pkg)
+
+def get_swank_package():
+    """
+    Package set by slimv.vim or current swank package
+    """
+    pkg = vim.eval("s:swank_package")
+    if pkg == '':
+        return requote(package)
     else:
         return requote(pkg)
 
@@ -682,13 +695,17 @@ def swank_connection_info():
 def swank_create_repl():
     swank_rex(':create-repl', '(swank:create-repl nil)', 'nil', 't')
 
-def swank_eval(exp, package):
+def swank_eval(exp):
     cmd = '(swank:listener-eval ' + requote(exp) + ')'
-    swank_rex(':listener-eval', cmd, '"'+package+'"', ':repl-thread')
+    swank_rex(':listener-eval', cmd, get_swank_package(), ':repl-thread')
 
-def swank_pprint_eval(exp, package):
+def swank_eval_in_frame(exp, n):
+    cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ')'
+    swank_rex(':eval-string-in-frame', cmd, get_swank_package(), current_thread)
+
+def swank_pprint_eval(exp):
     cmd = '(swank:pprint-eval ' + requote(exp) + ')'
-    swank_rex(':pprint-eval', cmd, '"'+package+'"', ':repl-thread')
+    swank_rex(':pprint-eval', cmd, get_swank_package(), ':repl-thread')
 
 def swank_interrupt():
     swank_send('(:emacs-interrupt :repl-thread)')
@@ -769,6 +786,10 @@ def swank_inspector_nth_action(n):
 
 def swank_inspector_pop():
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
+
+def swank_inspect_in_frame(symbol, n):
+    cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
+    swank_rex(':inspect-in-frame', cmd, get_swank_package(), current_thread)
 
 def swank_toggle_trace(symbol):
     cmd = '(swank:swank-toggle-trace "' + symbol + '")'
@@ -915,10 +936,7 @@ def swank_input(formvar):
         swank_inspector_nth_action(form[1:-2])
     else:
         # Normal s-expression evaluation
-        pkg = vim.eval("s:swank_package")
-        if pkg == '':
-            pkg = package
-        swank_eval(form, pkg)
+        swank_eval(form)
 
 def actions_pending():
     count = 0
