@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  18 Jul 2011
+" Last Change:  22 Jul 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -17,11 +17,14 @@ let g:slimv_loaded = 1
 
 let g:slimv_windows = 0
 let g:slimv_cygwin  = 0
+let g:slimv_osx     = 0
 
 if has( 'win32' ) || has( 'win95' ) || has( 'win64' ) || has( 'win16' )
     let g:slimv_windows = 1
 elseif has( 'win32unix' )
     let g:slimv_cygwin = 1
+elseif has( 'macunix' )
+    let g:slimv_osx = 1
 endif
 
 
@@ -204,6 +207,8 @@ function! SlimvSwankCommand()
     if cmd != ''
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
+        elseif g:slimv_osx
+            return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
         else
             return '! xterm -iconic -e ' . cmd . ' &'
         endif
