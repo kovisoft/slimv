@@ -451,7 +451,8 @@ If a long form is evaluated then echo only this number of lines from the
 beginning of the form. This option prevents filling the REPL buffer with
 mostly unnecessary information. Closing parens are added to the end even if
 the end of the form is not echoed, so paren balance is kept.
-If this option is set to zero then all lines are always echoed.
+If this option is set to zero then no line is echoed at all, if set to -1
+then all lines are always echoed.
 
                                                             *g:slimv_clhs_root*
                                                           *g:slimv_cljapi_root*
@@ -1140,6 +1141,7 @@ CHANGE LOG                                                    *slimv-changelog*
        - Display list of untraced functions for Untrace-All.
        - When in SLDB, Interactive-Eval evaluates expressions in the frame,
          Inspect inspects objects in the frame.
+       - Changed g:slimv_echolines logic: set 0 for no lines, -1 for all lines.
        - Bugfix: removed extra linebreak between chunks of long output.
        - Bugfix: indentation problems for symbols with package specification
          (thanks to Philipp Marek).

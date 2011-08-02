@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.5
-" Last Change:  22 Jul 2011
+" Last Change:  02 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1180,7 +1180,7 @@ function! SlimvSend( args, open_buffer, echoing )
     if g:slimv_swank
         let s:refresh_disabled = 1
         let s:swank_form = text
-        if a:echoing
+        if a:echoing && g:slimv_echolines != 0
             if g:slimv_echolines > 0
                 let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
                 if nlpos > 0
