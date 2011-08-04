@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.5
-" Last Change:  02 Aug 2011
+" Version:      0.8.6
+" Last Change:  04 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1059,7 +1059,7 @@ function! SlimvFindPackage()
     if SlimvGetFiletype() == 'clojure'
         call SlimvFindAddSel( 'in-ns' )
     else
-        call SlimvFindAddSel( 'in-package' )
+        call SlimvFindAddSel( '\(cl:\|common-lisp:\|\)in-package' )
     endif
 endfunction
 

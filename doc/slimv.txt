@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Jul 2011
+*slimv.txt*                    Slimv                 Last Change: 04 Aug 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.8.5
+                               Version 0.8.6
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1128,6 +1128,8 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.8.6  - Handle cl:in-package, common-lisp:in-package (thanks to Philipp Marek).
 
 0.8.5  - Switch on indent plugins.
        - Do not complete empty string on <Tab>.
