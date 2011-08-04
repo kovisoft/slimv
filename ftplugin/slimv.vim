@@ -225,6 +225,11 @@ if !exists( 'g:slimv_swank' )
     let g:slimv_swank = 1
 endif
 
+" Host name or IP address of the SWANK server
+if !exists( 'g:swank_host' )
+    let g:swank_host = 'localhost'
+endif
+
 " TCP port number to use for the SWANK server
 if !exists( 'g:swank_port' )
     let g:swank_port = 4005
@@ -1104,8 +1109,11 @@ function! SlimvConnectSwank()
     if !s:swank_connected
         let s:swank_version = ''
         let s:lisp_version = ''
-        python swank_connect( "g:swank_port", "result" )
-        if result != ''
+        if g:swank_host == ''
+            let g:swank_host = input( 'Swank server host name: ', 'localhost' )
+        endif
+        execute 'python swank_connect("' . g:swank_host . '", ' . g:swank_port . ', "result" )'
+        if result != '' && ( g:swank_host == 'localhost' || g:swank_host == '127.0.0.1' )
             " SWANK server is not running, start server if possible
             let swank = SlimvSwankCommand()
             if swank != ''
@@ -1115,7 +1123,7 @@ function! SlimvConnectSwank()
                 let starttime = localtime()
                 while result != '' && localtime()-starttime < g:slimv_timeout
                     sleep 500m
-                    python swank_connect( "g:swank_port", "result" )
+                    execute 'python swank_connect("' . g:swank_host . '", ' . g:swank_port . ', "result" )'
                 endwhile
                 redraw!
             endif

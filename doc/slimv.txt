@@ -1130,6 +1130,7 @@ FAQ                                                                 *slimv-faq*
 CHANGE LOG                                                    *slimv-changelog*
 
 0.8.6  - Handle cl:in-package, common-lisp:in-package (thanks to Philipp Marek).
+       - Added option g:swank_host to allow connecting to remote Swank server.
 
 0.8.5  - Switch on indent plugins.
        - Do not complete empty string on <Tab>.

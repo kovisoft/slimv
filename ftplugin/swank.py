@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.5
-# Last Change:  02 Aug 2011
+# Version:      0.8.6
+# Last Change:  04 Aug 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -869,7 +869,7 @@ def swank_debug_thread(index):
 # Generic SWANK connection handling
 ###############################################################################
 
-def swank_connect(portvar, resultvar):
+def swank_connect(host, port, resultvar):
     """
     Create socket to swank server and request connection info
     """
@@ -878,8 +878,8 @@ def swank_connect(portvar, resultvar):
 
     if not sock:
         try:
-            input_port = int(vim.eval(portvar))
-            swank_server = ('localhost', input_port)
+            input_port = port
+            swank_server = (host, input_port)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(swank_server)
             swank_connection_info()
@@ -890,7 +890,6 @@ def swank_connect(portvar, resultvar):
             sock = None
             return sock
     vim.command('let ' + resultvar + '=""')
-    return sock
 
 def swank_disconnect():
     """
