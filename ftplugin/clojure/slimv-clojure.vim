@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.8.5
-" Last Change:  13 Jul 2011
+" Version:      0.8.6
+" Last Change:  05 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -53,6 +53,9 @@ function! b:SlimvAutodetect()
     " Firts try the most basic setup: everything in the path
     if executable( 'lein' )
         return ['"lein repl"', 'clojure']
+    endif
+    if executable( 'cake' )
+        return ['"cake repl"', 'clojure']
     endif
     if executable( 'clojure' )
         return ['clojure', 'clojure']

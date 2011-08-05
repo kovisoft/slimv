@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.6
-" Last Change:  04 Aug 2011
+" Last Change:  05 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -156,9 +156,11 @@ function! SlimvSwankCommand()
 
     let cmd = ''
     if SlimvGetFiletype() == 'clojure'
-        " First autodetect 'lein swank'
+        " First autodetect Leiningen and Cake
         if executable( 'lein' )
             let cmd = '"lein swank"'
+        elseif executable( 'cake' )
+            let cmd = '"cake swank"'
         else
             " Check if swank-clojure is bundled with Slimv
             let swanks = split( globpath( &runtimepath, 'swank-clojure/swank/swank.clj'), '\n' )
