@@ -1,7 +1,7 @@
-*paredit.txt*                    Slimv               Last Change: 09 May 2011
+*paredit.txt*                    Slimv               Last Change: 08 Aug 2011
 
 Paredit mode for Slimv                                *paredit* *slimv-paredit*
-                               Version 0.8.3
+                               Version 0.8.6
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp or Clojure programming language.
@@ -84,8 +84,9 @@ over its pair, so for example if you move the opening parenthesis to the right,
 then it will stop at the matched closing parenthesis.
 
 
-Paredit mode is set by default for .lisp and .clj files, but it is possible
-to switch it out by putting the following statement in the .vimrc file:
+Paredit mode is set by default for .lisp, .cl, .clj, .scm and .rkt files, but
+it is possible to switch it out by putting the following statement in the
+.vimrc file:
 
     let g:paredit_mode = 0
 
@@ -103,7 +104,7 @@ Another way to prevent Slimv from loading by adding this to your .vimrc file:
     let g:slimv_loaded = 1
 
 Slimv core will not be loaded but paredit will be loaded and assigned to
-.lisp and .clj files.
+.lisp, .clj, .scm, etc files.
 
 
 Here follows a list of paredit keybindings:

@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Aug 2011
+*slimv.txt*                    Slimv                 Last Change: 08 Aug 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.6
@@ -1132,6 +1132,7 @@ CHANGE LOG                                                    *slimv-changelog*
 0.8.6  - Handle cl:in-package, common-lisp:in-package (thanks to Philipp Marek).
        - Added option g:swank_host to allow connecting to remote Swank server.
        - Autodetection of Cake for Clojure (thanks to Chris Cahoon).
+       - Set Paredit mode also for .cl and .rkt files.
 
 0.8.5  - Switch on indent plugins.
        - Do not complete empty string on <Tab>.
