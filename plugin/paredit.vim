@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.8.5
-" Last Change:  29 Jun 2011
+" Version:      0.8.6
+" Last Change:  08 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1245,6 +1245,8 @@ endfunction
 " =====================================================================
 
 au BufNewFile,BufRead *.lisp call PareditInitBuffer()
+au BufNewFile,BufRead *.cl   call PareditInitBuffer()
 au BufNewFile,BufRead *.clj  call PareditInitBuffer()
 au BufNewFile,BufRead *.scm  call PareditInitBuffer()
+au BufNewFile,BufRead *.rkt  call PareditInitBuffer()
 
