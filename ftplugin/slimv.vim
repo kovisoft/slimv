@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.6
-" Last Change:  05 Aug 2011
+" Last Change:  09 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1047,7 +1047,12 @@ function! SlimvFindAddSel( string )
     if found
         if g:slimv_swank
             silent normal! ww
-            let s:swank_package = expand('<cword>')
+            let l:packagename_tokens = split(expand('<cWORD>'),')\|\s')
+            if l:packagename_tokens != []
+                let s:swank_package = l:packagename_tokens[0]
+            else
+                let s:swank_package = ''
+            endif
         else
             " Put the form just found at the beginning of the selection
             let sel = SlimvGetSelection()
