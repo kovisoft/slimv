@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.6
-" Last Change:  09 Aug 2011
+" Last Change:  10 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -959,13 +959,18 @@ function! SlimvOpenReplBuffer()
     call SlimvRefreshReplBuffer()
 endfunction
 
-" Select symbol under cursor and return it
-function! SlimvSelectSymbol()
+" Set 'iskeyword' option depending on file type
+function! s:SetKeyword()
     if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?
+        setlocal iskeyword+=~,#,&,\|,!,?
     else
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
     endif
+endfunction
+
+" Select symbol under cursor and return it
+function! SlimvSelectSymbol()
+    call s:SetKeyword()
     let symbol = expand('<cword>')
     return symbol
 endfunction
@@ -974,7 +979,7 @@ endfunction
 function! SlimvSelectSymbolExt()
     let save_iskeyword = &iskeyword
     if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?,'
+        setlocal iskeyword+=~,#,&,\|,!,?,'
     else
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?,'
     endif
@@ -1675,11 +1680,7 @@ function! SlimvArglist()
     let l = line('.')
     let c = col('.') - 1
     let line = getline('.')
-    if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?
-    else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
-    endif
+    call s:SetKeyword()
     if s:swank_connected && c > 1 && line[c-2] =~ '\k'
         let save_ve = &virtualedit
         set virtualedit=onemore
@@ -2575,11 +2576,7 @@ endfunction
 function! SlimvOmniComplete( findstart, base )
     if a:findstart
         " Locate the start of the symbol name
-        if SlimvGetFiletype() == 'clojure'
-            setlocal iskeyword+=~,#,&,\|,{,},!,?
-        else
-            setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
-        endif
+        call s:SetKeyword()
         let upto = strpart( getline( '.' ), 0, col( '.' ) - 1)
         let p = match(upto, '\k\+$')
         return p 
@@ -2596,11 +2593,7 @@ endif
 " Complete function for user-defined commands
 function! SlimvCommandComplete( arglead, cmdline, cursorpos )
     " Locate the start of the symbol name
-    if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?
-    else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
-    endif
+    call s:SetKeyword()
     let upto = strpart( a:cmdline, 0, a:cursorpos )
     let base = matchstr(upto, '\k\+$')
     let ext  = matchstr(upto, '\S*\k\+$')
