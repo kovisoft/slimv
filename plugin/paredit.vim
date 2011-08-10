@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.8.6
-" Last Change:  08 Aug 2011
+" Last Change:  10 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -56,15 +56,7 @@ endif
 let s:skip_c  = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Cc]omment"'
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial"'
 
-" Regular expressions to identify special characters combinations used by paredit
-"TODO: add curly brace
-let s:any_matched_char   = '(\|)\|\[\|\]\|\"'
-let s:any_matched_pair   = '()\|\[\]\|\"\"'
-let s:any_opening_char   = '(\|\['
-let s:any_closing_char   = ')\|\]'
-let s:any_openclose_char = '(\|\[\|)\|\]'
-let s:any_wsopen_char    = '\s\|(\|\['
-let s:any_wsclose_char   = '\s\|)\|\]'
+" Valid macro prefix characters
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,'
 
 " Repeat count for some remapped edit functions (like 'd')
@@ -80,18 +72,31 @@ let s:yank_pos           = []
 function! PareditInitBuffer()
     " Make sure to include special characters in 'iskeyword'
     " in case they are accidentally removed
+    " Also define regular expressions to identify special characters used by paredit
     if &ft == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,{,},!,?
+        setlocal iskeyword+=~,#,&,\|,!,?
+        let b:any_matched_char   = '(\|)\|\[\|\]\|{\|}\|\"'
+        let b:any_matched_pair   = '()\|\[\]\|{}\|\"\"'
+        let b:any_opening_char   = '(\|\[\|{'
+        let b:any_closing_char   = ')\|\]\|}'
+        let b:any_openclose_char = '(\|)\|\[\|\]\|{\|}'
+        let b:any_wsopen_char    = '\s\|(\|\[\|{'
+        let b:any_wsclose_char   = '\s\|)\|\]\|}'
     else
         setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+        let b:any_matched_char   = '(\|)\|\"'
+        let b:any_matched_pair   = '()\|\"\"'
+        let b:any_opening_char   = '('
+        let b:any_closing_char   = ')'
+        let b:any_openclose_char = '(\|)'
+        let b:any_wsopen_char    = '\s\|('
+        let b:any_wsclose_char   = '\s\|)'
     endif
 
     if g:paredit_mode
         " Paredit mode is on: add buffer specific keybindings
         inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
         inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
-        inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
-        inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
         inoremap <buffer> <expr>   "            PareditInsertQuotes()
         inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
         inoremap <buffer> <expr>   <Del>        PareditDel()
@@ -117,10 +122,18 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> P            :<C-U>call PareditPut('P')<CR>
         execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrap("(",")")<CR>'
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrapSelection("(",")")<CR>'
-        execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrap("[","]")<CR>'
-        execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
         execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrap('."'".'"'."','".'"'."')<CR>"
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrapSelection('."'".'"'."','".'"'."')<CR>"
+        if &ft == 'clojure'
+            inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
+            inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
+            inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
+            inoremap <buffer> <expr>   }            PareditInsertClosing('{','}')
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrap("[","]")<CR>'
+            execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w{  :<C-U>call PareditWrap("{","}")<CR>'
+            execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w{  :<C-U>call PareditWrapSelection("{","}")<CR>'
+        endif
 
         if g:paredit_shortmaps
             " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
@@ -153,8 +166,6 @@ function! PareditInitBuffer()
         " Paredit mode is off: remove keybindings
         silent! iunmap <buffer> (
         silent! iunmap <buffer> )
-        silent! iunmap <buffer> [
-        silent! iunmap <buffer> ]
         silent! iunmap <buffer> "
         silent! iunmap <buffer> <BS>
         silent! iunmap <buffer> <Del>
@@ -170,6 +181,12 @@ function! PareditInitBuffer()
         silent! unmap  <buffer> c
         silent! unmap  <buffer> dd
         silent! unmap  <buffer> cc
+        if &ft == 'clojure'
+            silent! iunmap <buffer> [
+            silent! iunmap <buffer> ]
+            silent! iunmap <buffer> {
+            silent! iunmap <buffer> }
+        endif
     endif
 endfunction
 
@@ -355,15 +372,20 @@ function! s:IsBalanced()
         " Number of opening and closing parens differ
         return 0
     endif
-    let b1 = searchpair( '\[', '', '\]', 'brnmW', s:skip_sc, matchb )
-    if b1 == 0
-        " Outside of all bracket-pairs
-        return 1
-    endif
-    let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
-    if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '[') && !(b1 == b2 + 1 && line[c-1] == ']')
-        " Number of opening and closing brackets differ
-        return 0
+
+    if &ft == 'clojure'
+        let b1 = searchpair( '\[', '', '\]', 'brnmW', s:skip_sc, matchb )
+        let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
+        if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '[') && !(b1 == b2 + 1 && line[c-1] == ']')
+            " Number of opening and closing brackets differ
+            return 0
+        endif
+        let b1 = searchpair( '{', '', '}', 'brnmW', s:skip_sc, matchb )
+        let b2 = searchpair( '{', '', '}',  'rnmW', s:skip_sc, matchf )
+        if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '{') && !(b1 == b2 + 1 && line[c-1] == '}')
+            " Number of opening and closing curly braces differ
+            return 0
+        endif
     endif
     return 1
 endfunction
@@ -398,7 +420,7 @@ function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
             if a:lines[i] == ';'
                 let inside_comment = 1
             endif
-            if a:lines[i] == '(' || a:lines[i] == '[' || a:lines[i] == ')' || a:lines[i] == ']'
+            if a:lines[i] =~ b:any_openclose_char
                 let matched = strpart( matched, 0, i ) . a:lines[i] . strpart( matched, i+1 )
             endif
         endif
@@ -414,12 +436,18 @@ function! s:Unbalanced( matched )
     while 1
         let matched = tmp
         let tmp = substitute( tmp, '(\(\s*\))',   ' \1 ', 'g')
-        let tmp = substitute( tmp, '\[\(\s*\)\]', ' \1 ', 'g')
+        if &ft == 'clojure'
+            let tmp = substitute( tmp, '\[\(\s*\)\]', ' \1 ', 'g')
+            let tmp = substitute( tmp, '{\(\s*\)}',   ' \1 ', 'g')
+        endif
         let tmp = substitute( tmp, '"\(\s*\)"',   ' \1 ', 'g')
         if tmp == matched
             " All paired chars eliminated
             let tmp = substitute( tmp, ')\(\s*\)(',   ' \1 ', 'g')
-            let tmp = substitute( tmp, '\]\(\s*\)\[', ' \1 ', 'g')
+            if &ft == 'clojure'
+                let tmp = substitute( tmp, '\]\(\s*\)\[', ' \1 ', 'g')
+                let tmp = substitute( tmp, '}\(\s*\){',   ' \1 ', 'g')
+            endif
             if tmp == matched
                 " Also no more inverse pairs can be eliminated
                 break
@@ -473,13 +501,13 @@ function! PareditInsertOpening( open, close )
     if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
         " About to enter a \( or \[
         return a:open
-    elseif line[pos] !~ s:any_wsclose_char && pos < len( line )
+    elseif line[pos] !~ b:any_wsclose_char && pos < len( line )
         " Add a space after if needed
         let retval = a:open . a:close . " \<Left>\<Left>"
     else
         let retval = a:open . a:close . "\<Left>"
     endif
-    if pos > 0 && line[pos-1] !~ s:any_wsopen_char && line[pos-1] !~ s:any_macro_prefix
+    if pos > 0 && line[pos-1] !~ b:any_wsopen_char && line[pos-1] !~ s:any_macro_prefix
         " Add a space before if needed
         let retval = " " . retval
     endif
@@ -552,13 +580,13 @@ function! PareditBackspace( repl_mode )
     if pos == 0
         " We are at the beginning of the line
         return "\<BS>"
-    elseif s:InsideString() && line[pos-1] =~ s:any_openclose_char
+    elseif s:InsideString() && line[pos-1] =~ b:any_openclose_char
         " Deleting a paren inside a string
         return "\<BS>"
-    elseif pos > 1 && line[pos-1] =~ s:any_matched_char && line[pos-2] == '\' && (pos < 3 || line[pos-3] != '\')
+    elseif pos > 1 && line[pos-1] =~ b:any_matched_char && line[pos-2] == '\' && (pos < 3 || line[pos-3] != '\')
         " Deleting an escaped matched character
         return "\<BS>\<BS>"
-    elseif line[pos-1] !~ s:any_matched_char
+    elseif line[pos-1] !~ b:any_matched_char
         " Deleting a non-special character
         return "\<BS>"
     elseif line[pos-1] != '"' && !s:IsBalanced()
@@ -566,7 +594,7 @@ function! PareditBackspace( repl_mode )
         return "\<BS>"
     endif
 
-    if line[pos-1:pos] =~ s:any_matched_pair
+    if line[pos-1:pos] =~ b:any_matched_pair
         " Deleting an empty character-pair
         return "\<Right>\<BS>\<BS>"
     else
@@ -587,10 +615,10 @@ function! PareditDel()
     if pos == len(line)
         " We are at the end of the line
         return "\<Del>"
-    elseif line[pos] == '\' && line[pos+1] =~ s:any_matched_char && (pos < 1 || line[pos-1] != '\')
+    elseif line[pos] == '\' && line[pos+1] =~ b:any_matched_char && (pos < 1 || line[pos-1] != '\')
         " Deleting an escaped matched character
         return "\<Del>\<Del>"
-    elseif line[pos] !~ s:any_matched_char
+    elseif line[pos] !~ b:any_matched_char
         " Erasing a non-special character
         return "\<Del>"
     elseif line[pos] != '"' && !s:IsBalanced()
@@ -600,7 +628,7 @@ function! PareditDel()
         return "\<Right>"
     endif
 
-    if line[pos-1:pos] =~ s:any_matched_pair
+    if line[pos-1:pos] =~ b:any_matched_pair
         " Erasing an empty character-pair
         return "\<Left>\<Del>\<Del>"
     else
@@ -638,7 +666,7 @@ function! s:EraseFwd( count, startcol )
     let reg = @"
     let c = a:count
     while c > 0
-        if line[pos] == '\' && line[pos+1] =~ s:any_matched_char && (pos < 1 || line[pos-1] != '\')
+        if line[pos] == '\' && line[pos+1] =~ b:any_matched_char && (pos < 1 || line[pos-1] != '\')
             " Erasing an escaped matched character
             let reg = reg . line[pos : pos+1]
             let line = strpart( line, 0, pos ) . strpart( line, pos+2 )
@@ -650,7 +678,7 @@ function! s:EraseFwd( count, startcol )
             " Erasing any character inside string or comment
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
-        elseif pos > 0 && line[pos-1:pos] =~ s:any_matched_pair
+        elseif pos > 0 && line[pos-1:pos] =~ b:any_matched_pair
             if pos > a:startcol
                 " Erasing an empty character-pair
                 let p2 = s:RemoveYankPos()
@@ -664,7 +692,7 @@ function! s:EraseFwd( count, startcol )
                 let pos = pos + 1
                 normal! l
             endif
-        elseif line[pos] =~ s:any_matched_char
+        elseif line[pos] =~ b:any_matched_char
             " Character-pair is not empty, don't erase just move inside
             call s:AddYankPos( len(reg) )
             let pos = pos + 1
@@ -687,7 +715,7 @@ function! s:EraseBck( count )
     let reg = @"
     let c = a:count
     while c > 0 && pos > 0
-        if pos > 1 && line[pos-2] == '\' && line[pos-1] =~ s:any_matched_char && (pos < 3 || line[pos-3] != '\')
+        if pos > 1 && line[pos-2] == '\' && line[pos-1] =~ b:any_matched_char && (pos < 3 || line[pos-3] != '\')
             " Erasing an escaped matched character
             let reg = reg . line[pos-2 : pos-1]
             let line = strpart( line, 0, pos-2 ) . strpart( line, pos )
@@ -696,13 +724,13 @@ function! s:EraseBck( count )
         elseif s:InsideComment() || ( s:InsideString() && line[pos-1] != '"' )
             let reg = reg . line[pos-1]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
-        elseif line[pos-1:pos] =~ s:any_matched_pair
+        elseif line[pos-1:pos] =~ b:any_matched_pair
             " Erasing an empty character-pair
             let p2 = s:RemoveYankPos()
             let reg = strpart( reg, 0, p2 ) . line[pos-1] . strpart( reg, p2 )
             let reg = reg . line[pos]
             let line = strpart( line, 0, pos-1 ) . strpart( line, pos+1 )
-        elseif line[pos-1] =~ s:any_matched_char
+        elseif line[pos-1] =~ b:any_matched_char
             " Character-pair is not empty, don't erase
             call s:AddYankPos( len(reg) )
         else
@@ -797,7 +825,7 @@ function! s:PrevElement( skip_whitespc )
             if s:InsideString()
                 let symbol_pos = [l, c]
             elseif symbol_pos == [0, 0]
-                if line[c-1] =~ s:any_closing_char
+                if line[c-1] =~ b:any_closing_char
                     " Skip to the beginning of this sub-expression
                     let symbol_pos = [l, c]
                     normal! %
@@ -806,7 +834,7 @@ function! s:PrevElement( skip_whitespc )
                     if c2 > 0 && line2[c2-1] =~ s:any_macro_prefix
                         normal! h
                     endif
-                elseif line[c-1] =~ s:any_opening_char
+                elseif line[c-1] =~ b:any_opening_char
                     " Opening delimiter found: stop
                     call setpos( '.', [0, l0, c0, 0] )
                     return [0, 0]
@@ -815,7 +843,7 @@ function! s:PrevElement( skip_whitespc )
                     let symbol_pos = [l, c]
                 endif
             else
-                if line[c-1] =~ s:any_opening_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
+                if line[c-1] =~ b:any_opening_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
                     " Previous symbol beginning reached, opening delimiter or second previous symbol starting
                     call setpos( '.', [0, l0, c0, 0] )
                     return [l, c+1]
@@ -868,15 +896,15 @@ function! s:NextElement( skip_whitespc )
         if s:InsideString()
             let symbol_pos = [l, c]
         elseif symbol_pos == [0, 0]
-            if line[c-1] =~ s:any_macro_prefix && line[c] =~ s:any_opening_char
+            if line[c-1] =~ s:any_macro_prefix && line[c] =~ b:any_opening_char
                 " Skip to the end of this prefixed sub-expression
                 let symbol_pos = [l, c]
                 normal! l%
-            elseif line[c-1] =~ s:any_opening_char
+            elseif line[c-1] =~ b:any_opening_char
                 " Skip to the end of this sub-expression
                 let symbol_pos = [l, c]
                 normal! %
-            elseif line[c-1] =~ s:any_closing_char
+            elseif line[c-1] =~ b:any_closing_char
                 " Closing delimiter found: stop
                 call setpos( '.', [0, l0, c0, 0] )
                 return [0, 0]
@@ -885,7 +913,7 @@ function! s:NextElement( skip_whitespc )
                 let symbol_pos = [l, c]
             endif
         else
-            if line[c-1] =~ s:any_closing_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
+            if line[c-1] =~ b:any_closing_char || (a:skip_whitespc && line[c-1] =~ '\S' && symbol_end != [0, 0])
                 " Next symbol ended, closing delimiter or second next symbol starting
                 call setpos( '.', [0, l0, c0, 0] )
                 return [l, c]
@@ -938,24 +966,24 @@ endfunction
 function! s:FindParenNearby()
     let line = getline( '.' )
     let c0 =  col( '.' )
-    if line[c0-1] !~ s:any_openclose_char
+    if line[c0-1] !~ b:any_openclose_char
         " OK, we are not standing on a paren to move, but check if there is one nearby
-        if (c0 < 2 || line[c0-2] !~ s:any_openclose_char) && line[c0] =~ s:any_openclose_char
+        if (c0 < 2 || line[c0-2] !~ b:any_openclose_char) && line[c0] =~ b:any_openclose_char
             normal! l
-        elseif c0 > 1 && line[c0-2] =~ s:any_openclose_char && line[c0] !~ s:any_openclose_char
+        elseif c0 > 1 && line[c0-2] =~ b:any_openclose_char && line[c0] !~ b:any_openclose_char
             normal! h
         endif
     endif
 
     " Skip macro prefix character    
     let c0 =  col( '.' )
-    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ s:any_opening_char
+    if line[c0-1] =~ s:any_macro_prefix && line[c0] =~ b:any_opening_char
         normal! l
     endif
 
     " If still not standing on a paren then find the next closing one
-    if line[c0-1] !~ s:any_openclose_char
-        call search(s:any_closing_char, 'W')
+    if line[c0-1] !~ b:any_openclose_char
+        call search(b:any_closing_char, 'W')
     endif
 endfunction
 
@@ -967,9 +995,9 @@ function! PareditMoveLeft()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_opening_char
+    if line[c0-1] =~ b:any_opening_char
         let closing = 0
-    elseif line[c0-1] =~ s:any_closing_char
+    elseif line[c0-1] =~ b:any_closing_char
         let closing = 1
     else
         " Can move only delimiters
@@ -995,12 +1023,12 @@ function! PareditMoveLeft()
     endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if closing && line[c+1] !~ s:any_wsclose_char
+    if closing && line[c+1] !~ b:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
     endif
-    if !closing && c > 0 && line[c-len] !~ s:any_wsopen_char
+    if !closing && c > 0 && line[c-len] !~ b:any_wsopen_char
         " Insert a space before if needed
         if len > 1
             execute "normal! hi "
@@ -1022,9 +1050,9 @@ function! PareditMoveRight()
     let l0 = line( '.' )
     let c0 =  col( '.' )
 
-    if line[c0-1] =~ s:any_opening_char
+    if line[c0-1] =~ b:any_opening_char
         let opening = 1
-    elseif line[c0-1] =~ s:any_closing_char
+    elseif line[c0-1] =~ b:any_closing_char
         let opening = 0
     else
         " Can move only delimiters
@@ -1050,7 +1078,7 @@ function! PareditMoveRight()
     endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if opening && c > 0 && line[c-len] !~ s:any_wsopen_char
+    if opening && c > 0 && line[c-len] !~ b:any_wsopen_char
         " Insert a space before if needed
         if len > 1
             execute "normal! hi "
@@ -1060,37 +1088,59 @@ function! PareditMoveRight()
             normal! l
         endif
     endif
-    if !opening && line[c+1] !~ s:any_wsclose_char
+    if !opening && line[c+1] !~ b:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
     endif
 endfunction
 
-" Find closing of the innermost structure: (...) or [...]
+" Find closing of the innermost structure: (...) or [...] or {...}
 " Return a list where first element is the closing character,
 " second and third is its position (line, column)
 function! s:FindClosing()
     let l = line( '.' )
     let c = col( '.' )
+    let paren = ''
+    let l2 = 0
+    let c2 = 0
+
     call PareditFindClosing( '(', ')', 0 )
     let lp = line( '.' )
     let cp = col( '.' )
-    call setpos( '.', [0, l, c, 0] )
-    call PareditFindClosing( '[', ']', 0 )
-    let lb = line( '.' )
-    let cb = col( '.' )
-    call setpos( '.', [0, l, c, 0] )
-    if [lp, cp] == [l, c] && [lb, cb] == [l, c]
-        " Not found any kind of paren
-        return ['', 0, 0]
-    elseif [lb, cb] == [l, c] || lp < lb || (lp == lb && cp < cb)
-        " The innermost structure is a (...)
-        return [')', lp, cp]
-    else
-        " The innermost structure is a [...]
-        return [']', lb, cb]
+    if [lp, cp] != [l, c]
+        " Do we have a closing ')'?
+        let paren = ')'
+        let l2 = lp
+        let c2 = cp
     endif
+    call setpos( '.', [0, l, c, 0] )
+
+    if &ft == 'clojure'
+        call PareditFindClosing( '[', ']', 0 )
+        let lp = line( '.' )
+        let cp = col( '.' )
+        if [lp, cp] != [l, c] && (lp < l2 || (lp == l2 && cp < c2))
+            " Do we have a ']' closer?
+            let paren = ']'
+            let l2 = lp
+            let c2 = cp
+        endif
+        call setpos( '.', [0, l, c, 0] )
+
+        call PareditFindClosing( '{', '}', 0 )
+        let lp = line( '.' )
+        let cp = col( '.' )
+        if [lp, cp] != [l, c] && (lp < l2 || (lp == l2 && cp < c2))
+            " Do we have a '}' even closer?
+            let paren = '}'
+            let l2 = lp
+            let c2 = cp
+        endif
+        call setpos( '.', [0, l, c, 0] )
+    endif
+
+    return [paren, l2, c2]
 endfunction
 
 " Split list or string at the cursor position
@@ -1106,7 +1156,7 @@ function! PareditSplit()
         " Go back to the beginning of the current symbol
         let c = col('.') - 1
         if getline('.')[c] =~ '\S'
-            if c == 0 || (c > 0 && getline('.')[c-1] =~ s:any_wsopen_char)
+            if c == 0 || (c > 0 && getline('.')[c-1] =~ b:any_wsopen_char)
                 " OK, we are standing on the first character of the symbol
             else
                 normal! b
@@ -1115,7 +1165,7 @@ function! PareditSplit()
 
         " First find which kind of paren is the innermost
         let [p, l, c] = s:FindClosing()
-        if p !~ s:any_closing_char
+        if p !~ b:any_closing_char
             " Not found any kind of parens
             return
         endif
@@ -1130,6 +1180,8 @@ function! PareditSplit()
 
         if p == ')'
             normal! i) (
+        elseif p == '}'
+            normal! i} {
         else
             normal! i] [
         endif
@@ -1143,14 +1195,16 @@ function! PareditJoin()
     endif
 
     "TODO: skip parens in comments
-    let [l0, c0] = searchpos(s:any_matched_char, 'nbW')
-    let [l1, c1] = searchpos(s:any_matched_char, 'ncW')
+    let [l0, c0] = searchpos(b:any_matched_char, 'nbW')
+    let [l1, c1] = searchpos(b:any_matched_char, 'ncW')
     if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
         return
     endif
     let line0 = getline( l0 )
     let line1 = getline( l1 )
-    if (line0[c0-1] == ')' && line1[c1-1] == '(') || (line0[c0-1] == ']' && line1[c1-1] == '[') || (line0[c0-1] == '"' && line1[c1-1] == '"')
+    let p0 = line0[c0-1]
+    let p1 = line1[c1-1]
+    if (p0 == ')' && p1 == '(') || (p0 == ']' && p1 == '[') || (p0 == '}' && p1 == '{') || (p0 == '"' && p1 == '"')
         if l0 == l1
             " First list ends on the same line where the second list begins
             let line0 = strpart( line0, 0, c0-1 ) . ' ' . strpart( line0, c1 )
@@ -1203,7 +1257,7 @@ endfunction
 " If standing on a paren then wrap the whole s-expression
 " Stand on the opening paren (if not wrapping in "")
 function! PareditWrap( open, close )
-    if a:open != '"' && getline('.')[col('.') - 1] =~ s:any_openclose_char
+    if a:open != '"' && getline('.')[col('.') - 1] =~ b:any_openclose_char
         execute "normal! " . "v%\<Esc>"
     else
         execute "normal! " . "viw\<Esc>"
@@ -1222,7 +1276,7 @@ function! PareditSplice()
 
     " First find which kind of paren is the innermost
     let [p, l, c] = s:FindClosing()
-    if p !~ s:any_closing_char
+    if p !~ b:any_closing_char
         " Not found any kind of parens
         return
     endif
