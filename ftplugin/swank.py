@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.6
-# Last Change:  04 Aug 2011
+# Last Change:  13 Aug 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -911,7 +911,7 @@ def swank_input(formvar):
     form = vim.eval(formvar)
     if read_string:
         # We are in :read-string mode, pass string entered to REPL
-        swank_return_string('"' + form + '\n"')
+        swank_return_string('"' + form + '"')
     elif debug_activated and form[0] != '(' and form[0] != ' ':
         # We are in debug mode and an SLDB command follows (that is not an s-expr)
         if form[0] == '#':

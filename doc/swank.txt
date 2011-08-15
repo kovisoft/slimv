@@ -1,4 +1,4 @@
-*swank.txt*                    Slimv                 Last Change: 04 Aug 2011
+*swank.txt*                    Slimv                 Last Change: 13 Aug 2011
 
 SWANK client for Slimv                                    *swank* *slimv-swank*
                                Version 0.8.6
@@ -35,7 +35,7 @@ INSTALLATION                                               *swank-installation*
   part of SLIME) and Swank Clojure. If you intend to use your own version of
   SLIME, then you need to have your own SWANK server installed.
   For example Clojure users might consider installing Leiningen and run the
-  SWANK server via 'lein swank'.
+  SWANK server via 'lein swank', or use Cake via 'cake swank'.
 
 
 ===============================================================================
@@ -64,6 +64,15 @@ CONFIGURATION                                             *swank-configuration*
 
     let g:slimv_swank_cmd = '! xterm -e sbcl --load /usr/share/common-lisp/source/slime/start-swank.lisp &'
     let g:slimv_swank_clojure = '! xterm -e lein swank &'
+
+  On OS X the following or similar command may be used (but sometimes the above
+  Linux xterm command also works):
+
+    let g:slimv_swank_cmd = '!osascript -e "tell application \"Terminal\" to do script \"sbcl --load ~/.vim/slime/start-swank.lisp\""'
+    let g:slimv_swank_clojure = '!osascript -e "tell application \"Terminal\" to do script \"cake swank\""'
+
+  These are examples only, the Lisp command and the path to the SWANK server
+  may need to be changed in the command depending on the actual configuration.
 
   It is also possible to run the SWANK server manually prior running Vim.
   Slimv detects if a SWANK server is running and connects to it at the first
