@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.6
-# Last Change:  13 Aug 2011
+# Last Change:  20 Aug 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -337,7 +337,12 @@ def swank_parse_compile(struct):
     buf = ''
     warnings = struct[1]
     time = struct[3]
-    filename = struct[5]
+    filename = ''
+    if len(struct) > 5:
+        filename = struct[5]
+    if filename == '' or filename[0] != '"':
+        filename = '"' + filename + '"'
+    vim.command('let s:compiled_file=' + filename + '')
     vim.command("let qflist = []")
     if type(warnings) == list:
         buf = '\n' + str(len(warnings)) + ' compiler notes:\n\n'
@@ -359,7 +364,11 @@ def swank_parse_compile(struct):
                     buf = buf + snippet + '\n'
                 buf = buf + fname + ':' + pos + '\n'
                 buf = buf + '  ' + severity + ': ' + msg + '\n\n' 
-                [lnum, cnum] = parse_location(fname, int(pos))
+                if location[2][0] == ':line':
+                    lnum = pos
+                    cnum = 1
+                else:
+                    [lnum, cnum] = parse_location(fname, int(pos))
                 qfentry = "{'filename':'"+fname+"','lnum':'"+str(lnum)+"','col':'"+str(cnum)+"','text':'"+msg+"'}"
                 logprint(qfentry)
                 vim.command("call add(qflist, " + qfentry + ")")
@@ -557,10 +566,6 @@ def swank_listen():
                             elif element == ':title':
                                 retval = retval + new_line(retval) + swank_parse_inspect(params)
                             elif element == ':compilation-result':
-                                filename = params[5]
-                                if filename[0] != '"':
-                                    filename = '"' + filename + '"'
-                                vim.command('let s:compiled_file=' + filename + '')
                                 retval = retval + new_line(retval) + swank_parse_compile(params) + prompt + '> '
                             else:
                                 if action.name == ':simple-completions':
