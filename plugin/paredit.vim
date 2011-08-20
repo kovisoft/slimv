@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.8.6
-" Last Change:  10 Aug 2011
+" Last Change:  20 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -220,15 +220,22 @@ function! PareditOpfunc( func, type, visualmode )
         let putreg = getreg( '"' )
 
         " Find and keep unbalanced matched characters in the region
+        let endingwhitespace = matchstr(putreg, "\\s*$")
         let matched = s:GetMatchedChars( putreg, s:InsideString( "'<" ), s:InsideComment( "'<" ) )
         let matched = s:Unbalanced( matched )
         let matched = substitute( matched, '\s', '', 'g' )
+        if a:func == 'c'
+            let matched = matched . endingwhitespace
+        endif
 
         if matched == ''
             silent exe "normal! gvx"
         else
             silent exe "normal! gvc" . matched
             silent exe "normal! l"
+            if a:func == 'c'
+                silent exe "normal! " . string(len(endingwhitespace)) . "h"
+            endif
         endif
     endif
 
