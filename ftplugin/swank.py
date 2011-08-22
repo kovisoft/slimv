@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.8.6
-# Last Change:  20 Aug 2011
+# Last Change:  22 Aug 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -144,10 +144,11 @@ def parse_sub_sexpr( sexpr, opening, closing ):
                 # Skip coment
                 pos = pos + parse_comment( sexpr[pos:] ) - 1
             elif not sexpr[pos] in string.whitespace + '\\':
-                # Parse keyword
+                # Parse keyword but ignore dot in dotted notation (a . b)
                 klen = parse_keyword( sexpr[pos:] )
-                result = result + [sexpr[pos:pos+klen]]
-                pos = pos + klen - 1
+                if klen > 1 or sexpr[pos] != '.':
+                    result = result + [sexpr[pos:pos+klen]]
+                    pos = pos + klen - 1
         pos = pos + 1
 
     if quote_cnt != 0:
@@ -487,7 +488,7 @@ def swank_listen():
 
                 elif message == ':indentation-update':
                     for el in r[1]:
-                        indent_info[ unquote(el[0]) ] = el[2]
+                        indent_info[ unquote(el[0]) ] = el[1]
 
                 elif message == ':new-package':
                     package = unquote( r[1] )
