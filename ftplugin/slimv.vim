@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.6
-" Last Change:  10 Aug 2011
+" Last Change:  25 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1008,7 +1008,7 @@ function! SlimvSelectForm()
     if sel == ''
         call SlimvError( "Form is empty." )
         return 0
-    elseif sel == '(' || sel == '['
+    elseif sel == '(' || sel == '[' || sel == '{'
         call SlimvError( "Form is unbalanced." )
         return 0
     else
@@ -1330,9 +1330,11 @@ function! s:CloseForm( lines )
             " We are outside of strings and comments, now we shall count parens
             if form[i] == '('
                 let end = ')' . end
-            elseif form[i] == '['
+            elseif form[i] == '[' && SlimvGetFiletype() == 'clojure'
                 let end = ']' . end
-            elseif form[i] == ')' || form[i] == ']'
+            elseif form[i] == '{' && SlimvGetFiletype() == 'clojure'
+                let end = '}' . end
+            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() == 'clojure')
                 if len( end ) == 0 || end[0] != form[i]
                     " Oops, too many closing parens or invalid closing paren
                     return 'ERROR'
