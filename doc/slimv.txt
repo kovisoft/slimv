@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 08 Aug 2011
+*slimv.txt*                    Slimv                 Last Change: 25 Aug 2011
 
 Slimv                                                                  *slimv*
                                Version 0.8.6
@@ -1076,6 +1076,23 @@ FAQ                                                                 *slimv-faq*
          :echo g:slimv_lisp
          :echo g:slimv_client         
 
+- Q: The Slimv plugin is not loaded for a .lisp (or .clj, etc) file.
+- A: Filetype plugins should be enabled, check it via the :filetype command.
+     If needed, put this in your .vimrc file:
+         filetype plugin on
+         filetype indent on
+     You can check the scripts loaded with the :scriptnames command,
+     filetype.vim and ftplugin.vim should be listed in order to load other
+     filetype plugins.
+     The source buffer filetype should be lisp (or clojure, etc), check it via
+         :set ft?
+     The Slimv files should be in Vim's runtime path, check the path via
+         :set rtp?
+     slimv.vim should be in the ftplugin directory in the runtimepath,
+     there should be an ftplugin/lisp subdirectory containing slimv-lisp.vim.
+     Also make sure that no other ftplugin/lisp.vim is loaded that prevents
+     loading of the Slimv scripts.
+
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: There are two possible reasons:
      1. The dataflow of Slimv is one-directional: from client to server.
@@ -1133,6 +1150,17 @@ CHANGE LOG                                                    *slimv-changelog*
        - Added option g:swank_host to allow connecting to remote Swank server.
        - Autodetection of Cake for Clojure (thanks to Chris Cahoon).
        - Set Paredit mode also for .cl and .rkt files.
+       - Recognise domain reversed package names in form com.gigamonkeys.pathnames
+         (thanks to has2k1).
+       - Added curly braces rainbow parenthesis for Clojure.
+       - Added paredit handling of curly braces for Clojure.
+       - Use SlimvIndent also for Clojure.
+       - Handle line number returned in :compilation-result.
+       - Bugfix: removed double newline in :read-string (text input).
+       - Bugfix: when editing with cw in paredit mode, keep ending whitespaces
+         (thanks to Mats Rauhala).
+       - Bugfix: compilation error when Swank does not return file name.
+       - Bugfix: skip dot character when Swank returns a dotted pair (a . b).
 
 0.8.5  - Switch on indent plugins.
        - Do not complete empty string on <Tab>.
@@ -1465,8 +1493,8 @@ ideas, suggestions on the SWANK integration.
 Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
-Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon for additional notes and
-contributions.
+Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala for additional
+notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)

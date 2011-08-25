@@ -1,4 +1,4 @@
-*paredit.txt*                    Slimv               Last Change: 08 Aug 2011
+*paredit.txt*                    Slimv               Last Change: 25 Aug 2011
 
 Paredit mode for Slimv                                *paredit* *slimv-paredit*
                                Version 0.8.6
@@ -13,12 +13,14 @@ the Lisp or Clojure programming language.
 PAREDIT MODE                                                     *paredit-mode*
 
 Paredit mode is a special editing mode that keeps all matched characters
-(parentheses, square brackets, double quotes) balanced, i.e. all opening
+(parentheses, square and curly braces, double quotes) balanced, i.e. all opening
 characters have a matching closing character. Most text entering and erasing
 commands try to maintain the balanced state, so no single matched character is
 added or deleted, they are entered or removed in pairs.
 The function takes care of strings and comments, so no parenthesis and square
 bracket balancing is performed inside a string or comment.
+Please note that [] and {} pairs are not balanced for Lisp filetypes, only
+for Clojure.
 
 The idea is taken from the paredit mode of Emacs, but not all paredit.el
 editing functions are implemented or behave exactly the same way as they do
@@ -46,8 +48,8 @@ When you are deleting multiple characters at once, e.g. deleting a whole line,
 or deleting till the end of the line, etc, then the deletion logic of a single
 character is iterated. This means that the whole line or the characters till
 the end of the line, etc are not necessarily deleted all. Depending on the
-number of open/close parentheses, square brackets, double quotes some of them
-might be kept in order to maintain the balanced state.
+number of open/close parentheses, square or curly braces, double quotes some
+of them might be kept in order to maintain the balanced state.
 For example if you press D in Normal mode to delete till the end of line
 between the a and b parameters of the following Clojure function definition:
 
@@ -132,6 +134,16 @@ Insert Mode:
                    top level form is reached.
                    Inserts ']' when inside comment or string.
 
+    {              Inserts '{}' and moves the cursor inside. Also adds leading
+                   or trailing spaces when needed.
+                   Inserts '{' when inside comment or string.
+
+    }              Moves the cursor to the next closing curly brace of the
+                   current list. When pressed again then moves to the next
+                   outer closing curly brace, etc, until the closing of the
+                   top level form is reached.
+                   Inserts '}' when inside comment or string.
+
     "              When outside of string, inserts '""' and moves the cursor
                    inside. When inside string then moves to the closing '"'.                   
                    Inserts '"' when inside comment. Also insert '"' when inside
@@ -207,6 +219,11 @@ Normal Mode:
                    For example pressing <Leader>w[ at position marked with |:
                        (aaa b|bb ccc)    --->    (aaa [bbb] ccc)
 
+    <Leader>w{     Wrap the current symbol in a pair of curly braces,
+                   similarly to <Leader>W.
+                   For example pressing <Leader>w{ at position marked with |:
+                       (aaa b|bb ccc)    --->    (aaa {bbb} ccc)
+
     <Leader>w"     Wrap the current symbol in a pair of double quotes,
                    similarly to <Leader>W.
                    For example pressing <Leader>w" at position marked with |:
@@ -280,6 +297,9 @@ Visual Mode:
 
     <Leader>w[     Wrap the current visual selection in a pair of square
                    brackets. The visual selection is kept.
+
+    <Leader>w{     Wrap the current visual selection in a pair of curly braces.
+                   The visual selection is kept.
 
     <Leader>w"     Wrap the current visual selection in a pair of double
                    quotes. The visual selection is kept.
