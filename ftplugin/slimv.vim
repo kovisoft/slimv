@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.6
-" Last Change:  25 Aug 2011
+" Version:      0.8.7
+" Last Change:  31 Aug 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1073,11 +1073,13 @@ function! SlimvFindPackage()
     if !g:slimv_package || SlimvGetFiletype() == 'scheme'
         return
     endif
+    let oldpos = getpos( '.' )
     if SlimvGetFiletype() == 'clojure'
         call SlimvFindAddSel( 'in-ns' )
     else
         call SlimvFindAddSel( '\(cl:\|common-lisp:\|\)in-package' )
     endif
+    call setpos( '.', oldpos )
 endfunction
 
 " Execute the given SWANK command with current package defined
@@ -2616,9 +2618,7 @@ endfunction
 " Set current package
 function! SlimvSetPackage()
     if s:swank_connected
-        let oldpos = getpos( '.' )
         call SlimvFindPackage()
-        call setpos( '.', oldpos )
         let pkg = input( 'Package: ', s:swank_package )
         if pkg != ''
             let s:refresh_disabled = 1
