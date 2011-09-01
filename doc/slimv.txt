@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 31 Aug 2011
+*slimv.txt*                    Slimv                 Last Change: 01 Sep 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.0
@@ -1153,6 +1153,13 @@ FAQ                                                                 *slimv-faq*
      The SWANK output is regularly polled via the socket connection and
      interpreted in the REPL buffer opened in Vim.
      The SWANK client is located in 'swank.py'.
+
+- Q: But there was a non-swank functionality built in Slimv, where is it now
+     and how can I use it?
+- A: It has been removed since version 0.9.0, because the development focuses
+     on providing a fully functional SWANK client, so the non-swank functionality
+     was not maintained. If you want the old behaviour then fetch plugin
+     version 0.8.6 and set g:slimv_swank to 0 in your vimrc file.
 
 - Q: There is no SWANK server opened when I evaluate a form in Vim.
 - A: There may be many reasons for that. Try to run the SWANK server manually,
