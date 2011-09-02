@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.8.7
-" Last Change:  31 Aug 2011
+" Last Change:  02 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1087,9 +1087,9 @@ function! SlimvCommandUsePackage( cmd )
     let oldpos = getpos( '.' ) 
     call SlimvFindPackage()
     let s:refresh_disabled = 1
+    call setpos( '.', oldpos ) 
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
-    call setpos( '.', oldpos ) 
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
 endfunction
