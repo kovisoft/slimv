@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.8.6
-" Last Change:  20 Aug 2011
+" Version:      0.8.7
+" Last Change:  5 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -104,6 +104,8 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
         vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
         vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+        nnoremap <buffer> <silent> [[           :<C-U>call PareditFindDefunBck()<CR>
+        nnoremap <buffer> <silent> ]]           :<C-U>call PareditFindDefunFwd()<CR>
         nnoremap <buffer> <silent> x            :<C-U>call PareditEraseFwd()<CR>
         nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
         nnoremap <buffer> <silent> X            :<C-U>call PareditEraseBck()<CR>
@@ -171,6 +173,8 @@ function! PareditInitBuffer()
         silent! iunmap <buffer> <Del>
         silent! unmap  <buffer> (
         silent! unmap  <buffer> )
+        silent! unmap  <buffer> [[
+        silent! unmap  <buffer> ]]
         silent! unmap  <buffer> x
         silent! unmap  <buffer> <Del>
         silent! unmap  <buffer> X
@@ -495,6 +499,38 @@ function! PareditFindClosing( open, close, select )
         normal! l
     else
         call searchpair( open, '', close, 'W', s:skip_sc )
+    endif
+endfunction
+
+" Find defun start backwards
+function! PareditFindDefunBck()
+    let oldpos = getpos( '.' ) 
+    call searchpair( '(', '', ')', 'brW', s:skip_sc )
+    let newpos = getpos( '.' ) 
+    if oldpos[1] == newpos[1] && oldpos[2] == newpos[2]
+        " Already standing on a defun, find the previous one
+        call search( '(', 'bW' )
+        let searchpos = getpos( '.' ) 
+        call searchpair( '(', '', ')', 'brW', s:skip_sc )
+        let newpos = getpos( '.' ) 
+        if searchpos[1] == newpos[1] && searchpos[2] == newpos[2]
+            " The '(' just found is outside of a defun, don't move cursor
+            call setpos( '.', oldpos )
+        endif
+    endif
+endfunction
+
+" Find defun start forward
+function! PareditFindDefunFwd()
+    let oldpos = getpos( '.' ) 
+    call searchpair( '(', '', ')', 'brW', s:skip_sc )
+    normal! %
+    let searchpos = getpos( '.' ) 
+    call search( '(', 'W' )
+    let newpos = getpos( '.' ) 
+    if searchpos[1] == newpos[1] && searchpos[2] == newpos[2]
+        " No '(' found, don't move cursor
+        call setpos( '.', oldpos )
     endif
 endfunction
 
