@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.8.7
-" Last Change:  5 Sep 2011
+" Last Change:  6 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -504,31 +504,42 @@ endfunction
 
 " Find defun start backwards
 function! PareditFindDefunBck()
+    let l = line( '.' )
+    let matchb = max( [l-g:paredit_matchlines, 1] )
     let oldpos = getpos( '.' ) 
-    call searchpair( '(', '', ')', 'brW', s:skip_sc )
-    let newpos = getpos( '.' ) 
-    if oldpos[1] == newpos[1] && oldpos[2] == newpos[2]
-        " Already standing on a defun, find the previous one
-        call search( '(', 'bW' )
-        let searchpos = getpos( '.' ) 
-        call searchpair( '(', '', ')', 'brW', s:skip_sc )
-        let newpos = getpos( '.' ) 
-        if searchpos[1] == newpos[1] && searchpos[2] == newpos[2]
-            " The '(' just found is outside of a defun, don't move cursor
+    let newpos = searchpairpos( '(', '', ')', 'brW', s:skip_sc, matchb )
+    if newpos[0] == 0
+        " Already standing on a defun, find the end of the previous one
+        let newpos = searchpos( ')', 'bW' )
+        while newpos[0] != 0 && (s:InsideComment() || s:InsideString())
+            let newpos = searchpos( ')', 'W' )
+        endwhile
+        if newpos[0] == 0
+            " No ')' found, don't move cursor
             call setpos( '.', oldpos )
+        else
+            " Find opening paren
+            let pairpos = searchpairpos( '(', '', ')', 'brW', s:skip_sc, matchb )
+            if pairpos[0] == 0
+                " ')' has no matching pair
+                call setpos( '.', oldpos )
+            endif
         endif
     endif
 endfunction
 
 " Find defun start forward
 function! PareditFindDefunFwd()
+    let l = line( '.' )
+    let matchf = min( [l+g:paredit_matchlines, line('$')] )
     let oldpos = getpos( '.' ) 
-    call searchpair( '(', '', ')', 'brW', s:skip_sc )
+    call searchpair( '(', '', ')', 'brW', s:skip_sc, matchf )
     normal! %
-    let searchpos = getpos( '.' ) 
-    call search( '(', 'W' )
-    let newpos = getpos( '.' ) 
-    if searchpos[1] == newpos[1] && searchpos[2] == newpos[2]
+    let newpos = searchpos( '(', 'W' )
+    while newpos[0] != 0 && (s:InsideComment() || s:InsideString())
+        let newpos = searchpos( '(', 'W' )
+    endwhile
+    if newpos[0] == 0
         " No '(' found, don't move cursor
         call setpos( '.', oldpos )
     endif
