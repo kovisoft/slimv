@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.6
-# Last Change:  22 Aug 2011
+# Version:      0.8.7
+# Last Change:  13 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -696,6 +696,7 @@ def get_indent_info(name):
 def swank_connection_info():
     actions.clear()
     indent_info.clear()
+    debug_activated = False
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
