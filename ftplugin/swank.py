@@ -994,7 +994,7 @@ def actions_pending():
     vim.command(vc)
     return count
 
-def swank_output():
+def swank_output(echo):
     global sock
 
     if not sock:
@@ -1007,10 +1007,19 @@ def swank_output():
         result = swank_listen()
         pending = actions_pending()
         count = count + 1
-    if result != '' and result[-1] == '\n':
-        # For some reason Python output redirection removes the last newline
-        result = result + '\n'
-    sys.stdout.write(result)
+    if echo and result != '':
+        vim.command('call SlimvOpenReplBuffer()')
+        vim.command('setlocal noreadonly')
+        buf = vim.current.buffer
+        if len(buf) < 2:
+            # The buffer is still empty
+            buf[:] = result.split("\n")
+        else:
+            buf.append(result.split("\n"))
+        vim.command('setlocal readonly')
+        vim.command('setlocal nomodified')
+        vim.command('normal! G$')
+        vim.command('call SlimvMarkBufferEnd()')
 
 def swank_response(name):
     #logtime('[-Response-]')

@@ -211,11 +211,6 @@ if !exists( 'g:slimv_impl' )
     let g:slimv_impl = b:SlimvImplementation()
 endif
 
-" Open a REPL buffer inside Vim?
-if !exists( 'g:slimv_repl_open' )
-    let g:slimv_repl_open = 1
-endif
-
 " Filename for the REPL buffer file
 if !exists( 'g:slimv_repl_file' )
     let g:slimv_repl_file = b:SlimvREPLFile()
@@ -366,10 +361,6 @@ endfunction
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer()
-    if !g:slimv_repl_open
-        " User does not want to display REPL in Vim
-        return
-    endif
     normal! G$
 endfunction
 
@@ -383,7 +374,7 @@ endfunction
 " Handle response coming from the SWANK listener
 function! SlimvSwankResponse()
     let s:refresh_disabled = 1
-    call SlimvCommand( 'python swank_output()' )
+    call SlimvCommand( 'python swank_output(1)' )
     let s:refresh_disabled = 0
     let msg = ''
     redir => msg
@@ -406,9 +397,9 @@ endfunction
 function! SlimvCommand( cmd )
     " Execute the command with output redirected to variable
     let msg = ''
-    redir => msg
+"    redir => msg
     silent execute a:cmd
-    redir END
+"    redir END
 
     let repl_buf = bufnr( g:slimv_repl_file )
     if repl_buf == -1
@@ -488,7 +479,7 @@ function! SlimvCommandGetResponse( name, cmd )
     let starttime = localtime()
     let cmd_timeout = 3
     while s:swank_action == '' && localtime()-starttime < cmd_timeout
-        python swank_output()
+        python swank_output( 0 )
         redir => msg
         silent execute 'python swank_response("' . a:name . '")'
         redir END
@@ -501,13 +492,6 @@ endfunction
 function! SlimvRefreshReplBuffer()
     if s:refresh_disabled
         " Refresh is unwanted at the moment, probably another refresh is going on
-        return
-    endif
-
-"    if !g:slimv_repl_open || !g:slimv_repl_split
-    if !g:slimv_repl_open
-        " User does not want to display REPL in Vim
-        " or does not display it in a split window
         return
     endif
 
@@ -528,15 +512,13 @@ endfunction
 " after refreshing the REPL buffer
 function! SlimvTimer()
     call SlimvRefreshReplBuffer()
-    if g:slimv_repl_open
-        if mode() == 'i' || mode() == 'I'
-            " Put '<Insert>' twice into the typeahead buffer, which should not do anything
-            " just switch to overwrite mode then back to insert mode
-            call feedkeys("\<insert>\<insert>")
-        else
-            " Put an incomplete 'f' command and an Esc into the typeahead buffer
-            call feedkeys("f\e")
-        endif
+    if mode() == 'i' || mode() == 'I'
+        " Put '<Insert>' twice into the typeahead buffer, which should not do anything
+        " just switch to overwrite mode then back to insert mode
+        call feedkeys("\<insert>\<insert>")
+    else
+        " Put an incomplete 'f' command and an Esc into the typeahead buffer
+        call feedkeys("f\e")
     endif
 endfunction
 
@@ -642,6 +624,9 @@ endfunction
 " Open a new REPL buffer
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_file )
+    if !g:slimv_repl_syntax
+        set syntax=
+    endif
 
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
@@ -951,11 +936,11 @@ function! SlimvConnectSwank()
 endfunction
 
 " Send argument to Lisp server for evaluation
-function! SlimvSend( args, open_buffer, echoing )
+function! SlimvSend( args, echoing )
     let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
 
-    if a:open_buffer && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
+    if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
         call SlimvOpenReplBuffer()
     endif
 
@@ -987,7 +972,15 @@ function! SlimvSend( args, open_buffer, echoing )
                 endif
             endif
         endif
-        call SlimvCommand( 'echo "\n" . s:swank_form' )
+        "call SlimvCommand( 'echo "\n" . s:swank_form' )
+        call SlimvOpenReplBuffer()
+        setlocal noreadonly
+        let lines = split( s:swank_form, '\n', 1 )
+        call append( '$', lines )
+        setlocal readonly
+        setlocal nomodified
+        call SlimvEndOfReplBuffer()
+        call SlimvMarkBufferEnd()
         let s:swank_form = text
     else
         " Open a new line for the output
@@ -998,18 +991,16 @@ function! SlimvSend( args, open_buffer, echoing )
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
 
-    if a:open_buffer
-        " Refresh REPL buffer then return to the caller buffer/window
-        call SlimvRefreshReplBuffer()
-        if g:slimv_repl_split && repl_win == -1
-            execute "normal! \<C-w>p"
-        endif
+    " Refresh REPL buffer then return to the caller buffer/window
+    call SlimvRefreshReplBuffer()
+    if g:slimv_repl_split && repl_win == -1
+        execute "normal! \<C-w>p"
     endif
 endfunction
 
 " Eval arguments in Lisp REPL
 function! SlimvEval( args )
-    call SlimvSend( a:args, g:slimv_repl_open, 1 )
+    call SlimvSend( a:args, 1 )
 endfunction
 
 " Set command line after the prompt
@@ -1200,7 +1191,7 @@ function! SlimvSendCommand( close )
                 " but first add it to the history
                 call SlimvAddHistory( cmd )
                 " Evaluate, but echo only when form is actually closed here
-                call SlimvSend( cmd, g:slimv_repl_open, echoing )
+                call SlimvSend( cmd, echoing )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
@@ -1305,13 +1296,13 @@ function! SlimvHandleEnterSldb()
         if item != ''
             if search( '^Backtrace:', 'bnW' ) > 0
                 " Display item-th frame, we signal frames by prefixing with '#'
-                call SlimvSend( ['#' . item], g:slimv_repl_open, 0 )
+                call SlimvSend( ['#' . item], 0 )
                 return
             endif
             if search( '^Restarts:', 'bnW' ) > 0
                 " Apply item-th restart
                 call SlimvQuitSldb()
-                call SlimvSend( [item], g:slimv_repl_open, 0 )
+                call SlimvSend( [item], 0 )
                 return
             endif
         endif
@@ -1326,7 +1317,7 @@ function! SlimvHandleEnterInspect()
     let line = getline('.')
     if line[0:9] == 'Inspecting'
         " Reload inspected item
-        call SlimvSend( ['[0]'], g:slimv_repl_open, 0 )
+        call SlimvSend( ['[0]'], 0 )
         return
     endif
 
@@ -1339,7 +1330,7 @@ function! SlimvHandleEnterInspect()
             let item = matchstr( line, '\d\+' )
         endif
         if item != ''
-            call SlimvSend( ['[' . item . ']'], g:slimv_repl_open, 0 )
+            call SlimvSend( ['[' . item . ']'], 0 )
             return
         endif
     endif
@@ -1348,7 +1339,7 @@ function! SlimvHandleEnterInspect()
         " Inspector n-th action
         let item = matchstr( line, '\d\+' )
         if item != ''
-            call SlimvSend( ['<' . item . '>'], g:slimv_repl_open, 0 )
+            call SlimvSend( ['<' . item . '>'], 0 )
             return
         endif
     endif
@@ -1484,7 +1475,7 @@ endfunction
 function! SlimvConnectServer()
     let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
-    if g:slimv_repl_open && ( repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 ) )
+    if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
         call SlimvOpenReplBuffer()
     endif 
     if s:swank_connected
