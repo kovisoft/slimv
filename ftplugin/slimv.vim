@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.8.7
-" Last Change:  31 Aug 2011
+" Version:      0.9.0
+" Last Change:  14 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -216,15 +216,6 @@ if !exists( 'g:slimv_repl_open' )
     let g:slimv_repl_open = 1
 endif
 
-" Directory name for the REPL buffer file
-if !exists( 'g:slimv_repl_dir' )
-    if g:slimv_windows
-        let g:slimv_repl_dir = matchstr( tempname(), '.*\\' )
-    else
-        let g:slimv_repl_dir = s:Cygpath( '/tmp/' )
-    endif
-endif
-
 " Filename for the REPL buffer file
 if !exists( 'g:slimv_repl_file' )
     let g:slimv_repl_file = b:SlimvREPLFile()
@@ -322,7 +313,6 @@ endif
 "  Other non-global script variables
 " =====================================================================
 
-let s:repl_name = g:slimv_repl_dir . g:slimv_repl_file    " Name of the REPL buffer inside Vim
 let s:prompt = ''                                         " Lisp prompt in the last line
 let s:indent = ''                                         " Most recent indentation info
 let s:last_update = 0                                     " The last update time for the REPL buffer
@@ -335,7 +325,6 @@ let s:swank_package = ''                                  " Package to use at th
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:debug_activated = 0                                 " Are we in the SWANK debugger?
-let s:debug_move_cursor = 0                               " Move cursor to Restarts when debug activated
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:au_curhold_set = 0                                  " Whether the autocommand has been set
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
@@ -477,11 +466,6 @@ function! SlimvCommand( cmd )
     setlocal noswapfile
     call SlimvEndOfReplBuffer()
     call SlimvMarkBufferEnd()
-    if s:debug_activated && s:debug_move_cursor
-        call search( '^Restarts:', 'bW' )
-        let s:debug_move_cursor = 0
-        stopinsert
-    endif
 
     if repl_buf != this_buf && repl_win != -1 && !s:debug_activated
         " Switch back to the caller buffer/window
@@ -603,49 +587,67 @@ endfunction
 
 " View the given file in a top/bottom/left/right split window
 function! s:SplitView( filename )
-    if g:slimv_repl_split == 1
-        execute "silent topleft sview! " . a:filename
-    elseif g:slimv_repl_split == 2
-        execute "silent botright sview! " . a:filename
-    elseif g:slimv_repl_split == 3
-        execute "silent topleft vertical sview! " . a:filename
-    elseif g:slimv_repl_split == 4
-        execute "silent botright vertical sview! " . a:filename
-    else
+    if winnr('$') == 2
+        " We have exactly two windows
+        if a:filename == g:slimv_repl_file && bufname('%') != g:slimv_repl_file
+            " Switch to the REPL window
+            execute "wincmd w"
+        elseif a:filename != g:slimv_repl_file && bufname('%') == g:slimv_repl_file
+            " Switch to the non-REPL window
+            execute "wincmd w"
+        endif
         execute "silent view! " . a:filename
+    else
+        if g:slimv_repl_split == 1
+            execute "silent topleft sview! " . a:filename
+        elseif g:slimv_repl_split == 2
+            execute "silent botright sview! " . a:filename
+        elseif g:slimv_repl_split == 3
+            execute "silent topleft vertical sview! " . a:filename
+        elseif g:slimv_repl_split == 4
+            execute "silent botright vertical sview! " . a:filename
+        else
+            execute "silent view! " . a:filename
+        endif
     endif
 endfunction
 
-" Open a new REPL buffer or switch to the existing one
-function! SlimvOpenReplBuffer()
-    let repl_buf = bufnr( g:slimv_repl_file )
-    if repl_buf == -1
-        " Create a new REPL buffer
-        call s:SplitView( s:repl_name )
+" Open a buffer with the given name if not yet open, and switch to it
+function! SlimvOpenBuffer( name )
+    let buf = bufnr( a:name )
+    if buf == -1
+        " Create a new buffer
+        call s:SplitView( a:name )
     else
         if g:slimv_repl_split
-            " REPL buffer is already created. Check if it is open in a window
-            let repl_win = bufwinnr( repl_buf )
-            if repl_win == -1
+            " Buffer is already created. Check if it is open in a window
+            let win = bufwinnr( buf )
+            if win == -1
                 " Create windows
-                call s:SplitView( s:repl_name )
+                call s:SplitView( a:name )
             else
-                " Switch to the REPL window
-                if winnr() != repl_win
-                    execute repl_win . "wincmd w"
+                " Switch to the buffer's window
+                if winnr() != win
+                    execute win . "wincmd w"
                 endif
             endif
         else
-            execute "buffer " . repl_buf
+            execute "buffer " . buf
         endif
     endif
+    setlocal buftype=nofile
+    setlocal noswapfile
+endfunction
+
+" Open a new REPL buffer
+function! SlimvOpenReplBuffer()
+    call SlimvOpenBuffer( g:slimv_repl_file )
 
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
     inoremap <buffer> <silent>        <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR>
     inoremap <buffer> <silent>        <Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
     inoremap <buffer> <silent>        <Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
-    noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnter()<CR>
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
 
     if exists( 'g:paredit_loaded' )
@@ -690,12 +692,57 @@ function! SlimvOpenReplBuffer()
     execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
 
     filetype on
-    setlocal buftype=nofile
-    setlocal noswapfile
     redraw
     let s:last_size = 0
 
     call SlimvRefreshReplBuffer()
+endfunction
+
+" Open a new Inspect buffer
+function SlimvOpenInspectBuffer()
+    call SlimvOpenBuffer( 'Slimv.INSPECT' )
+
+    " Add keybindings valid only for the Inspect buffer
+    noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
+endfunction
+
+" Open a new SLDB buffer
+function SlimvOpenSldbBuffer()
+    call SlimvOpenBuffer( 'Slimv.SLDB' )
+
+    " Add keybindings valid only for the SLDB buffer
+    noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterSldb()<CR>
+    if g:slimv_keybindings == 1
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'a      :call SlimvDebugCommand("swank_invoke_abort")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'n      :call SlimvDebugCommand("swank_invoke_continue")<CR>'
+    elseif g:slimv_keybindings == 2
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugCommand("swank_invoke_abort")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugCommand("swank_invoke_continue")<CR>'
+    endif
+endfunction
+
+" Quit Inspector
+function SlimvQuitInspect()
+    " Clear the contents of the Inspect buffer
+    setlocal noreadonly
+    silent! %d
+    setlocal readonly
+    setlocal nomodified
+    call SlimvCommand( 'python swank_quit_inspector()' )
+    bn
+endfunction
+
+" Quit Sldb
+function SlimvQuitSldb()
+    " Clear the contents of the Sldb buffer
+    setlocal noreadonly
+    silent! %d
+    setlocal readonly
+    setlocal nomodified
+    bn
 endfunction
 
 " Set 'iskeyword' option depending on file type
@@ -1249,29 +1296,37 @@ function! SlimvHandleDown()
     endif
 endfunction
 
-" Handle normal mode 'Enter' keypress in the REPL buffer
-function! SlimvHandleEnter()
+" Handle normal mode 'Enter' keypress in the SLDB buffer
+function! SlimvHandleEnterSldb()
     let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
         let item = matchstr( line, '\d\+' )
         if item != ''
-            let section = getline( line('.') - item - 1 )
-            if section[0:8] == 'Restarts:'
-                " Apply item-th restart
-                call SlimvEval( [item] )
+            if search( '^Backtrace:', 'bnW' ) > 0
+                " Display item-th frame, we signal frames by prefixing with '#'
+                call SlimvSend( ['#' . item], g:slimv_repl_open, 0 )
                 return
             endif
-            if section[0:9] == 'Backtrace:'
-                " Display item-th frame, we signal frames by prefixing with '#'
-                call SlimvEval( ['#' . item] )
+            if search( '^Restarts:', 'bnW' ) > 0
+                " Apply item-th restart
+                call SlimvQuitSldb()
+                call SlimvSend( [item], g:slimv_repl_open, 0 )
                 return
             endif
         endif
     endif
+
+    " No special treatment, perform the original function
+    execute "normal! \<CR>"
+endfunction
+
+" Handle normal mode 'Enter' keypress in the Inspector buffer
+function! SlimvHandleEnterInspect()
+    let line = getline('.')
     if line[0:9] == 'Inspecting'
         " Reload inspected item
-        call SlimvEval( ['[0]'] )
+        call SlimvSend( ['[0]'], g:slimv_repl_open, 0 )
         return
     endif
 
@@ -1284,7 +1339,7 @@ function! SlimvHandleEnter()
             let item = matchstr( line, '\d\+' )
         endif
         if item != ''
-            call SlimvEval( ['[' . item . ']'] )
+            call SlimvSend( ['[' . item . ']'], g:slimv_repl_open, 0 )
             return
         endif
     endif
@@ -1293,7 +1348,7 @@ function! SlimvHandleEnter()
         " Inspector n-th action
         let item = matchstr( line, '\d\+' )
         if item != ''
-            call SlimvEval( ['<' . item . '>'] )
+            call SlimvSend( ['<' . item . '>'], g:slimv_repl_open, 0 )
             return
         endif
     endif
@@ -1326,8 +1381,12 @@ endfunction
 
 " Select a specific restart in debugger
 function! SlimvDebugCommand( cmd )
+    if bufname('%') != 'Slimv.SLDB'
+        return
+    endif
     if s:swank_connected
         if s:debug_activated
+            call SlimvQuitSldb()
             call SlimvCommand( 'python ' . a:cmd . '()' )
             call SlimvRefreshReplBuffer()
         else
