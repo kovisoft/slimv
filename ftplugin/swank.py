@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.8.6
-# Last Change:  22 Aug 2011
+# Version:      0.9.0
+# Last Change:  14 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -279,7 +279,10 @@ def swank_parse_inspect(struct):
     """
     Parse the swank inspector output
     """
-    buf = 'Inspecting ' + parse_plist(struct, ':title') + '\n--------------------\n'
+    vim.command('call SlimvOpenInspectBuffer()')
+    vim.command('setlocal noreadonly')
+    buf = vim.current.buffer
+    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
     pcont = parse_plist(struct, ':content')
     cont = pcont[0]
     lst = []
@@ -307,12 +310,35 @@ def swank_parse_inspect(struct):
             lst.append(text)
             if text == "\n":
                 linestart = len(lst)
-    for s in lst:
-        buf = buf + s
-    if buf[-1] != '\n':
-        buf = buf + '\n'
-    buf = buf + '\n[<<]'
-    return buf
+    buf.append("".join(lst).split("\n"))
+    buf.append(['', '[<<]'])
+    vim.command('setlocal readonly')
+    vim.command('setlocal nomodified')
+
+def swank_parse_debug(struct):
+    """
+    Parse the SLDB output
+    """
+    vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('setlocal noreadonly')
+    buf = vim.current.buffer
+    [thread, level, condition, restarts, frames, conts] = struct[1:7]
+    buf[:] = [unquote(condition[0]), unquote(condition[1]), '', 'Restarts:']
+    for i in range( len(restarts) ):
+        r0 = unquote( restarts[i][0] )
+        r1 = unquote( restarts[i][1] )
+        buf.append([str(i).rjust(3) + ': [' + r0 + '] ' + r1])
+    buf.append(['', 'Backtrace:'])
+    for f in frames:
+        frame = str(f[0])
+        ftext = unquote( f[1] )
+        ftext = ftext.replace('\n', '')
+        ftext = ftext.replace('\\\\n', '')
+        buf.append([frame.rjust(3) + ': ' + ftext])
+    vim.command('setlocal readonly')
+    vim.command('setlocal nomodified')
+    vim.command("call search('^Restarts:', 'W')")
+    vim.command('stopinsert')
 
 def swank_parse_xref(struct):
     """
@@ -393,12 +419,18 @@ def swank_parse_frame_call(struct):
     """
     Parse frame call output
     """
+    vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('setlocal noreadonly')
+    buf = vim.current.buffer
+    win = vim.current.window
+    line = win.cursor[0]
     if type(struct) == list:
-        buf = struct[1][1] + '\n'
+        buf[line:line] = [struct[1][1]]
         #buf = '{{{' + struct[1][1] + '}}}\n'
     else:
-        buf = 'No frame call information\n'
-    return buf
+        buf[line:line] = ['No frame call information']
+    vim.command('setlocal readonly')
+    vim.command('setlocal nomodified')
 
 def swank_parse_frame_source(struct):
     """
@@ -406,26 +438,39 @@ def swank_parse_frame_source(struct):
     http://comments.gmane.org/gmane.lisp.slime.devel/9961 ;-(
     'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
     """
+    vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('setlocal noreadonly')
+    buf = vim.current.buffer
+    win = vim.current.window
+    line = win.cursor[0]
     if type(struct) == list and len(struct) == 4:
-        buf = ' in ' + struct[1][1] + ' line ' + struct[2][1] + '\n'
+        buf[line:line] = ['     in ' + struct[1][1] + ' line ' + struct[2][1]]
     else:
-        buf = ' No source line information\n'
-    return buf
+        buf[line:line] = ['     No source line information']
+    vim.command('setlocal readonly')
+    vim.command('setlocal nomodified')
 
 def swank_parse_locals(struct):
     """
     Parse frame locals output
     """
+    vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('setlocal noreadonly')
+    buf = vim.current.buffer
+    win = vim.current.window
+    line = win.cursor[0]
     if type(struct) == list:
-        buf = 'Locals:\n'
+        lines = '    Locals:\n'
         for f in struct:
             name  = parse_plist(f, ':name')
             id    = parse_plist(f, ':id')
             value = parse_plist(f, ':value')
-            buf = buf + '  ' + name + ' = ' + value + '\n'
+            lines = lines + '      ' + name + ' = ' + value + '\n'
     else:
-        buf = 'No locals\n'
-    return buf
+        lines = '    No locals'
+    buf[line:line] = lines.split("\n")
+    vim.command('setlocal readonly')
+    vim.command('setlocal nomodified')
 
 def swank_listen():
     global output_port
@@ -483,7 +528,7 @@ def swank_listen():
                         retval = retval + new_line(retval) + prompt + '> '
 
                 elif message == ':read-string':
-                    # RERL requests entering a string
+                    # REPL requests entering a string
                     read_string = r[1:3]
 
                 elif message == ':indentation-update':
@@ -515,19 +560,27 @@ def swank_listen():
                         params = r[1][1]
                         logprint('params: ' + str(params))
                         if type(params) == str:
-                            element = params.lower()
-                            retval = retval + new_line(retval)
-                            if element != 'nil':
-                                retval = retval + unquote(params)
-                                if action:
-                                    action.result = retval
-                            # List of actions needing a prompt
-                            to_prompt = [':describe-symbol', ':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', \
-                                         ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form', \
-                                         ':swank-toggle-trace']
-                            if element == 'nil' or (action and action.name in to_prompt):
-                                # No more output from REPL, write new prompt
-                                retval = retval + new_line(retval) + prompt + '> '
+                            to_ignore = [':frame-call']
+                            if action and action.name in to_ignore:
+                                # Just ignore the output for this message
+                                pass
+                            else:
+                                element = params.lower()
+                                retval = retval + new_line(retval)
+                                if element != 'nil':
+                                    retval = retval + unquote(params)
+                                    if action:
+                                        action.result = retval
+                                # List of actions needing a prompt
+                                to_prompt = [':describe-symbol', ':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', \
+                                             ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form', \
+                                             ':swank-toggle-trace']
+                                if element == 'nil' and action and action.name == ':inspector-pop':
+                                    # Quit inspector
+                                    vim.command(':bn')
+                                elif element == 'nil' or (action and action.name in to_prompt):
+                                    # No more output from REPL, write new prompt
+                                    retval = retval + new_line(retval) + prompt + '> '
 
                         elif type(params) == list and params:
                             if type(params[0]) == list: 
@@ -565,7 +618,7 @@ def swank_listen():
                                 retval = retval + new_line(retval)
                                 retval = retval + '  ' + keys[':name'] + ' = ' + keys[':value'] + '\n'
                             elif element == ':title':
-                                retval = retval + new_line(retval) + swank_parse_inspect(params)
+                                swank_parse_inspect(params)
                             elif element == ':compilation-result':
                                 retval = retval + new_line(retval) + swank_parse_compile(params) + prompt + '> '
                             else:
@@ -593,11 +646,11 @@ def swank_listen():
                                         retval = retval + '\n' + '  ' + f
                                     retval = retval + '\n' + prompt + '> '
                                 elif action.name == ':frame-call':
-                                    retval = retval + swank_parse_frame_call(params)
+                                    swank_parse_frame_call(params)
                                 elif action.name == ':frame-source-location':
-                                    retval = retval + swank_parse_frame_source(params)
+                                    swank_parse_frame_source(params)
                                 elif action.name == ':frame-locals-and-catch-tags':
-                                    retval = retval + swank_parse_locals(params) + prompt + '> '
+                                    swank_parse_locals(params)
                                 elif action.name == ':profiled-functions':
                                     retval = retval + '\n' + 'Profiled functions:\n'
                                     for f in params:
@@ -615,28 +668,14 @@ def swank_listen():
                             retval = retval + '; Evaluation aborted\n' + prompt + '> '
 
                 elif message == ':inspect':
-                    retval = retval + new_line(retval) + swank_parse_inspect(r[1])
+                    swank_parse_inspect(r[1])
 
                 elif message == ':debug':
-                    [thread, level, condition, restarts, frames, conts] = r[1:7]
-                    retval = retval + new_line(retval) + unquote(condition[0]) + '\n' + unquote(condition[1]) + '\n\nRestarts:\n'
-                    for i in range( len(restarts) ):
-                        r0 = unquote( restarts[i][0] )
-                        r1 = unquote( restarts[i][1] )
-                        retval = retval + str(i).rjust(3) + ': [' + r0 + '] ' + r1 + '\n'
-                    retval = retval + '\nBacktrace:\n'
-                    for f in frames:
-                        frame = str(f[0])
-                        ftext = unquote( f[1] )
-                        ftext = ftext.replace('\n', '')
-                        ftext = ftext.replace('\\\\n', '')
-                        retval = retval + frame.rjust(3) + ': ' + ftext + '\n'
-                    retval = retval + prompt + '> '
+                    swank_parse_debug(r)
 
                 elif message == ':debug-activate':
                     debug_activated = True
                     vim.command('let s:debug_activated=1')
-                    vim.command('let s:debug_move_cursor=1')
                     current_thread = r[1]
 
                 elif message == ':debug-return':
@@ -796,6 +835,9 @@ def swank_inspector_pop():
 def swank_inspect_in_frame(symbol, n):
     cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
     swank_rex(':inspect-in-frame', cmd, get_swank_package(), current_thread)
+
+def swank_quit_inspector():
+    swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
 
 def swank_toggle_trace(symbol):
     cmd = '(swank:swank-toggle-trace "' + symbol + '")'
