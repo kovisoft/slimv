@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 01 Sep 2011
+*slimv.txt*                    Slimv                 Last Change: 14 Sep 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.0
@@ -170,9 +170,6 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_repl_dir|           Directory path for the Lisp REPL buffer file.
 
 |g:slimv_repl_file|          Filename without path for the REPL buffer file.
-
-|g:slimv_repl_open|          If nonzero, Slimv opens the Lisp REPL buffer
-                             inside Vim when the SWANK server is started.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
@@ -370,35 +367,15 @@ The Lisp REPL output is written to a temporary file by the SWANK client.
 the directory path. The complete REPL filename is built from
 |g:slimv_repl_dir| and |g:slimv_repl_file|.
 
-                                                            *g:slimv_repl_open*
-Slimv opens the Lisp REPL buffer inside Vim by default when the SWANK server
-is started, so there exist actually two REPL-s with the same contents:
-one inside a Vim buffer and another one as a separate terminal window.
-The reason behind this is that the simulation is not perfect, which is caused
-by the lack of asynchronous update possibilities in Vim. Sometimes the REPL
-buffer is not perfectly updated, this is the case for example when a Lisp
-program is running too long and it has infrequent outputs only.
-Slimv refreshes the REPL buffer at every keystroke or when the user doesn't
-press a key for the time specified with 'updatetime'. It is also possible
-to manually refresh the REPL buffer. The default value for 'updatetime' is
-4 secs (=4000 ms), in cases when more precise refreshing is needed you can
-lower the 'updatetime' option, e.g. to one second (=1000 ms):
-    set updatetime=1000
-However, it is not recommended to set this to a much lower value.
-Optionally one may check the output of the separate REPL window.
-The |g:slimv_repl_open| = 0 option can be used to disable the built-in REPL
-buffer, so that only the separate REPL window is opened.
-
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
-Used only when |g:slimv_repl_open| is nonzero.
 The default is to use split window. If you prefer having REPL being in a hidden
 buffer then set this option to zero. This way the REPL buffer will be opened
 at the first evaluation, but any subsequent evaluation will be performed
 silently, with the REPL buffer kept hidden.
 
 It is also possible to define the desired split direction. The following
-values may be used for |g:slimv_repl_open|:
+values may be used for |g:slimv_repl_split|:
 
     0: no split
     1: horizontal split above (default)
@@ -864,6 +841,7 @@ currently implemented in the Slimv SWANK client.
   swank:profile-report
   swank:profile-reset
   swank:profiled-functions
+  swank:quit-inspector
   swank:set-package
   swank:simple-completions
   swank:sldb-abort
