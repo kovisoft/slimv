@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  14 Sep 2011
+" Last Change:  15 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -322,6 +322,8 @@ let s:refresh_disabled = 0                                " Set this variable te
 let s:debug_activated = 0                                 " Are we in the SWANK debugger?
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:au_curhold_set = 0                                  " Whether the autocommand has been set
+let s:current_buf = -1                                    " Swank action was requested from this buffer
+let s:current_win = -1                                    " Swank action was requested from this window
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 
@@ -367,8 +369,33 @@ endfunction
 " Remember the end of the REPL buffer: user may enter commands here
 " Also remember the prompt, because the user may overwrite it
 function! SlimvMarkBufferEnd()
+    call SlimvEndOfReplBuffer()
     call setpos( "'s", [0, line('$'), col('$'), 0] )
     let s:prompt = getline( "'s" )
+endfunction
+
+" Save caller buffer identification
+function! SlimvBeginUpdateRepl()
+    let s:current_buf = bufnr( "%" )
+    let s:current_win = winnr()
+endfunction
+
+" Stop updating the REPL buffer and switch back to caller
+function! SlimvEndUpdateRepl()
+    call SlimvEndUpdate()
+    call SlimvMarkBufferEnd()
+    let repl_buf = bufnr( g:slimv_repl_file )
+    let repl_win = bufwinnr( repl_buf )
+    if repl_buf != s:current_buf && repl_win != -1 && !s:debug_activated
+        " Switch back to the caller buffer/window
+        if g:slimv_repl_split
+            if s:current_win != repl_win
+                execute s:current_win . "wincmd w"
+            endif
+        else
+            execute "buf " . s:current_buf
+        endif
+    endif
 endfunction
 
 " Handle response coming from the SWANK listener
@@ -395,78 +422,10 @@ endfunction
 
 " Execute the given command and write its output at the end of the REPL buffer
 function! SlimvCommand( cmd )
-    " Execute the command with output redirected to variable
-    let msg = ''
-"    redir => msg
     silent execute a:cmd
-"    redir END
 
-    let repl_buf = bufnr( g:slimv_repl_file )
-    if repl_buf == -1
-        " REPL buffer not loaded
-        return
-    endif
-    let repl_win = bufwinnr( repl_buf )
-    let this_win = winnr()
-
-    if msg == ''
-        " No new REPL output since the last refresh
-        if g:slimv_updatetime > 0 && s:last_update < localtime() - 1
-            let &updatetime = s:save_updatetime
-        endif
-        return
-    endif
-    let this_buf = bufnr( "%" )
-    if repl_buf != this_buf
-        " Switch to the REPL buffer/window
-        try
-            if g:slimv_repl_split && repl_win != -1
-                if this_win != repl_win
-                    execute repl_win . "wincmd w"
-                endif
-            else
-                execute "buf " . repl_buf
-            endif
-        catch /.*/
-            " Some Vim versions give an E303 error here
-            " but we don't need a swapfile for the REPL buffer anyway
-        endtry
-    endif
-
-    if g:slimv_updatetime > 0
-        let &updatetime = g:slimv_updatetime
-    endif
-
-    let lines = split( msg, '\n', 1 )
-    if lines[0] == ''
-        " For some reason Python output redirection sometimes adds a newline at the beginning
-        let lines = lines[1:]
-    endif
-    set noreadonly
-    let lastline = getline( '$' ) . lines[0]
-    call setline( '$', lastline )
-    call append( '$', lines[1:] )
-    set readonly
-    set nomodified
-    let s:last_update = localtime()
-
-    if !g:slimv_repl_syntax
-        set syntax=
-    endif
-    setlocal buftype=nofile
-    setlocal noswapfile
-    call SlimvEndOfReplBuffer()
-    call SlimvMarkBufferEnd()
-
-    if repl_buf != this_buf && repl_win != -1 && !s:debug_activated
-        " Switch back to the caller buffer/window
-        if g:slimv_repl_split
-            if this_win != repl_win
-                execute this_win . "wincmd w"
-            endif
-        else
-            execute "buf " . this_buf
-        endif
+    if g:slimv_updatetime > 0 && s:last_update < localtime() - 1
+        let &updatetime = s:save_updatetime
     endif
 endfunction
 
@@ -619,6 +578,7 @@ function! SlimvOpenBuffer( name )
     endif
     setlocal buftype=nofile
     setlocal noswapfile
+    setlocal noreadonly
 endfunction
 
 " Open a new REPL buffer
@@ -709,13 +669,18 @@ function SlimvOpenSldbBuffer()
     endif
 endfunction
 
+" End updating an otherwise readonly buffer
+function SlimvEndUpdate()
+    setlocal readonly
+    setlocal nomodified
+endfunction
+
 " Quit Inspector
 function SlimvQuitInspect()
     " Clear the contents of the Inspect buffer
     setlocal noreadonly
     silent! %d
-    setlocal readonly
-    setlocal nomodified
+    call SlimvEndUpdate()
     call SlimvCommand( 'python swank_quit_inspector()' )
     bn
 endfunction
@@ -725,8 +690,7 @@ function SlimvQuitSldb()
     " Clear the contents of the Sldb buffer
     setlocal noreadonly
     silent! %d
-    setlocal readonly
-    setlocal nomodified
+    call SlimvEndUpdate()
     bn
 endfunction
 
@@ -937,12 +901,7 @@ endfunction
 
 " Send argument to Lisp server for evaluation
 function! SlimvSend( args, echoing )
-    let repl_buf = bufnr( g:slimv_repl_file )
-    let repl_win = bufwinnr( repl_buf )
-
-    if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
-        call SlimvOpenReplBuffer()
-    endif
+    call SlimvBeginUpdateRepl()
 
     if ! SlimvConnectSwank()
         return
@@ -972,14 +931,10 @@ function! SlimvSend( args, echoing )
                 endif
             endif
         endif
-        "call SlimvCommand( 'echo "\n" . s:swank_form' )
         call SlimvOpenReplBuffer()
-        setlocal noreadonly
         let lines = split( s:swank_form, '\n', 1 )
         call append( '$', lines )
-        setlocal readonly
-        setlocal nomodified
-        call SlimvEndOfReplBuffer()
+        call SlimvEndUpdate()
         call SlimvMarkBufferEnd()
         let s:swank_form = text
     else
@@ -990,12 +945,6 @@ function! SlimvSend( args, echoing )
     let s:swank_package = ''
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
-
-    " Refresh REPL buffer then return to the caller buffer/window
-    call SlimvRefreshReplBuffer()
-    if g:slimv_repl_split && repl_win == -1
-        execute "normal! \<C-w>p"
-    endif
 endfunction
 
 " Eval arguments in Lisp REPL
@@ -1204,7 +1153,6 @@ function! SlimvSendCommand( close )
     else
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
         call append( '$', "" )
-        call SlimvEndOfReplBuffer()
         call SlimvMarkBufferEnd()
         set nomodified
     endif
@@ -1268,7 +1216,6 @@ endfunction
 function! SlimvHandleUp()
     if line( "." ) >= line( "'s" )
         if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos == len( g:slimv_cmdhistory )
-            call SlimvEndOfReplBuffer()
             call SlimvMarkBufferEnd()
             startinsert!
         endif
