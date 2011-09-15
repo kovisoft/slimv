@@ -1239,9 +1239,27 @@ function! SlimvHandleEnterSldb()
     let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
-        let item = matchstr( line, '\d\+' )
+        let item = matchstr( line, '^\s*\d\+' )
         if item != ''
             if search( '^Backtrace:', 'bnW' ) > 0
+                " We are in the Backtrace section
+                if line('.') < line('$')
+                    let nextline = getline(line('.')+1)
+                    if matchstr( nextline, '^\s*\d\+' ) == ''
+                        " This frame is already open, close it
+                        normal! j
+                        call SlimvOpenSldbBuffer()
+                        while matchstr( nextline, '^\s*\d\+' ) == ''
+                            normal! dd
+                            let nextline = getline('.')
+                        endwhile
+                        if line('.') < line('$')
+                            normal! k
+                        endif
+                        call SlimvEndUpdate()
+                        return
+                    endif
+                endif
                 " Display item-th frame, we signal frames by prefixing with '#'
                 call SlimvSend( ['#' . item], 0 )
                 return
