@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  14 Sep 2011
+# Last Change:  15 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -280,7 +280,6 @@ def swank_parse_inspect(struct):
     Parse the swank inspector output
     """
     vim.command('call SlimvOpenInspectBuffer()')
-    vim.command('setlocal noreadonly')
     buf = vim.current.buffer
     buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
     pcont = parse_plist(struct, ':content')
@@ -312,15 +311,13 @@ def swank_parse_inspect(struct):
                 linestart = len(lst)
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])
-    vim.command('setlocal readonly')
-    vim.command('setlocal nomodified')
+    vim.command('call SlimvEndUpdate()')
 
 def swank_parse_debug(struct):
     """
     Parse the SLDB output
     """
     vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('setlocal noreadonly')
     buf = vim.current.buffer
     [thread, level, condition, restarts, frames, conts] = struct[1:7]
     buf[:] = [unquote(condition[0]), unquote(condition[1]), '', 'Restarts:']
@@ -335,8 +332,7 @@ def swank_parse_debug(struct):
         ftext = ftext.replace('\n', '')
         ftext = ftext.replace('\\\\n', '')
         buf.append([frame.rjust(3) + ': ' + ftext])
-    vim.command('setlocal readonly')
-    vim.command('setlocal nomodified')
+    vim.command('call SlimvEndUpdate()')
     vim.command("call search('^Restarts:', 'W')")
     vim.command('stopinsert')
 
@@ -420,7 +416,6 @@ def swank_parse_frame_call(struct):
     Parse frame call output
     """
     vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('setlocal noreadonly')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -429,8 +424,7 @@ def swank_parse_frame_call(struct):
         #buf = '{{{' + struct[1][1] + '}}}\n'
     else:
         buf[line:line] = ['No frame call information']
-    vim.command('setlocal readonly')
-    vim.command('setlocal nomodified')
+    vim.command('call SlimvEndUpdate()')
 
 def swank_parse_frame_source(struct):
     """
@@ -439,7 +433,6 @@ def swank_parse_frame_source(struct):
     'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
     """
     vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('setlocal noreadonly')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -447,15 +440,13 @@ def swank_parse_frame_source(struct):
         buf[line:line] = ['     in ' + struct[1][1] + ' line ' + struct[2][1]]
     else:
         buf[line:line] = ['     No source line information']
-    vim.command('setlocal readonly')
-    vim.command('setlocal nomodified')
+    vim.command('call SlimvEndUpdate()')
 
 def swank_parse_locals(struct):
     """
     Parse frame locals output
     """
     vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('setlocal noreadonly')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -469,8 +460,7 @@ def swank_parse_locals(struct):
     else:
         lines = '    No locals'
     buf[line:line] = lines.split("\n")
-    vim.command('setlocal readonly')
-    vim.command('setlocal nomodified')
+    vim.command('call SlimvEndUpdate()')
 
 def swank_listen():
     global output_port
@@ -1009,17 +999,13 @@ def swank_output(echo):
         count = count + 1
     if echo and result != '':
         vim.command('call SlimvOpenReplBuffer()')
-        vim.command('setlocal noreadonly')
         buf = vim.current.buffer
         if len(buf) < 2:
             # The buffer is still empty
             buf[:] = result.split("\n")
         else:
             buf.append(result.split("\n"))
-        vim.command('setlocal readonly')
-        vim.command('setlocal nomodified')
-        vim.command('normal! G$')
-        vim.command('call SlimvMarkBufferEnd()')
+        vim.command('call SlimvEndUpdateRepl()')
 
 def swank_response(name):
     #logtime('[-Response-]')
