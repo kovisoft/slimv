@@ -320,7 +320,8 @@ def swank_parse_debug(struct):
     vim.command('call SlimvOpenSldbBuffer()')
     buf = vim.current.buffer
     [thread, level, condition, restarts, frames, conts] = struct[1:7]
-    buf[:] = [unquote(condition[0]), unquote(condition[1]), '', 'Restarts:']
+    buf[:] = [l for l in (unquote(condition[0]) + "\n" + unquote(condition[1])).splitlines()]
+    buf.append(['', 'Restarts:'])
     for i in range( len(restarts) ):
         r0 = unquote( restarts[i][0] )
         r1 = unquote( restarts[i][1] )
@@ -392,6 +393,7 @@ def swank_parse_compile(struct):
                     cnum = 1
                 else:
                     [lnum, cnum] = parse_location(fname, int(pos))
+                msg = msg.replace("'", "' . \"'\" . '")
                 qfentry = "{'filename':'"+fname+"','lnum':'"+str(lnum)+"','col':'"+str(cnum)+"','text':'"+msg+"'}"
                 logprint(qfentry)
                 vim.command("call add(qflist, " + qfentry + ")")
