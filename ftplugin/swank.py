@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  15 Sep 2011
+# Last Change:  16 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -421,7 +421,6 @@ def swank_parse_frame_call(struct):
     line = win.cursor[0]
     if type(struct) == list:
         buf[line:line] = [struct[1][1]]
-        #buf = '{{{' + struct[1][1] + '}}}\n'
     else:
         buf[line:line] = ['No frame call information']
     vim.command('call SlimvEndUpdate()')
@@ -437,7 +436,11 @@ def swank_parse_frame_source(struct):
     win = vim.current.window
     line = win.cursor[0]
     if type(struct) == list and len(struct) == 4:
-        buf[line:line] = ['     in ' + struct[1][1] + ' line ' + struct[2][1]]
+        [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
+        if lnum > 0:
+            buf[line:line] = ['     in ' + struct[1][1] + ' line ' + str(lnum)]
+        else:
+            buf[line:line] = ['     in ' + struct[1][1] + ' byte ' + struct[2][1]]
     else:
         buf[line:line] = ['     No source line information']
     vim.command('call SlimvEndUpdate()')
@@ -567,7 +570,7 @@ def swank_listen():
                                              ':swank-toggle-trace']
                                 if element == 'nil' and action and action.name == ':inspector-pop':
                                     # Quit inspector
-                                    vim.command(':bn')
+                                    vim.command(':e #')
                                 elif element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
                                     retval = retval + new_line(retval) + prompt + '> '
