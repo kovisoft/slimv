@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  15 Sep 2011
+" Last Change:  16 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -530,13 +530,10 @@ endfunction
 function! s:SplitView( filename )
     if winnr('$') == 2
         " We have exactly two windows
-        if a:filename == g:slimv_repl_file && bufname('%') != g:slimv_repl_file
-            " Switch to the REPL window
+         if bufnr("%") == s:current_buf && winnr() == s:current_win
+            " Keep the current window on screen, use the other window for the new buffer
             execute "wincmd w"
-        elseif a:filename != g:slimv_repl_file && bufname('%') == g:slimv_repl_file
-            " Switch to the non-REPL window
-            execute "wincmd w"
-        endif
+         endif
         execute "silent view! " . a:filename
     else
         if g:slimv_repl_split == 1
@@ -649,6 +646,7 @@ function SlimvOpenInspectBuffer()
 
     " Add keybindings valid only for the Inspect buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
+    noremap  <buffer> <silent> <Backspace>   :call SlimvSend(['[-1]'], 0)<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
 endfunction
 
@@ -667,6 +665,14 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugCommand("swank_invoke_continue")<CR>'
     endif
+    
+    " Set folding parameters
+    setlocal foldmethod=marker
+    setlocal foldmarker={{{,}}}
+    setlocal foldtext=substitute(getline(v:foldstart),'{{{','','')
+    setlocal conceallevel=3 concealcursor=nc
+    syn match Comment /{{{/ conceal
+    syn match Comment /}}}/ conceal
 endfunction
 
 " End updating an otherwise readonly buffer
@@ -1234,6 +1240,13 @@ function! SlimvHandleDown()
     endif
 endfunction
 
+" Make a fold at the cursor point in the current buffer
+function SlimvMakeFold()
+    setlocal noreadonly
+    normal! o    }}}kA {{{0
+    setlocal readonly
+endfunction
+
 " Handle normal mode 'Enter' keypress in the SLDB buffer
 function! SlimvHandleEnterSldb()
     let line = getline('.')
@@ -1242,25 +1255,13 @@ function! SlimvHandleEnterSldb()
         let item = matchstr( line, '^\s*\d\+' )
         if item != ''
             if search( '^Backtrace:', 'bnW' ) > 0
-                " We are in the Backtrace section
-                if line('.') < line('$')
-                    let nextline = getline(line('.')+1)
-                    if matchstr( nextline, '^\s*\d\+' ) == ''
-                        " This frame is already open, close it
-                        normal! j
-                        call SlimvOpenSldbBuffer()
-                        while matchstr( nextline, '^\s*\d\+' ) == ''
-                            normal! dd
-                            let nextline = getline('.')
-                        endwhile
-                        if line('.') < line('$')
-                            normal! k
-                        endif
-                        call SlimvEndUpdate()
-                        return
-                    endif
+                if foldlevel('.')
+                    " With a fold just toggle visibility
+                    normal za
+                    return
                 endif
                 " Display item-th frame, we signal frames by prefixing with '#'
+                call SlimvMakeFold()
                 call SlimvSend( ['#' . item], 0 )
                 return
             endif
