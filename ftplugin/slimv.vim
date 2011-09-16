@@ -821,9 +821,9 @@ function! SlimvCommandUsePackage( cmd )
     let oldpos = getpos( '.' ) 
     call SlimvFindPackage()
     let s:refresh_disabled = 1
+    call setpos( '.', oldpos ) 
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
-    call setpos( '.', oldpos ) 
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
 endfunction

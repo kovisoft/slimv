@@ -1,4 +1,4 @@
-*paredit.txt*                    Slimv               Last Change: 25 Aug 2011
+*paredit.txt*                    Slimv               Last Change: 05 Sep 2011
 
 Paredit mode for Slimv                                *paredit* *slimv-paredit*
                                Version 0.8.6
@@ -7,6 +7,7 @@ The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp or Clojure programming language.
 
 |paredit-mode|               Paredit mode
+|paredit-keys|               Paredit keybindings
 |paredit-options|            Paredit options
 
 ===============================================================================
@@ -109,6 +110,9 @@ Slimv core will not be loaded but paredit will be loaded and assigned to
 .lisp, .clj, .scm, etc files.
 
 
+===============================================================================
+PAREDIT KEYBINDINGS                                              *paredit-keys*
+
 Here follows a list of paredit keybindings:
 
 
@@ -167,6 +171,10 @@ Normal Mode:
 
     )              Finds closing ')' of the current list. Can be pressed
                    repeatedly until the closing of the top level form reached.
+
+    [[             Go to the start of current/previous defun.
+
+    ]]             Go to the start of next defun.
 
     <Leader><      If standing on a delimiter (parenthesis or square bracket)
                    then moves it to the left by slurping or barfing the
@@ -311,6 +319,29 @@ to existing (but infrequently used) Vim functions and instead the original Vim
 functions are mapped with the <Leader> prefix:
 
                    <, >, J, O, W, S
+
+
+Vim has many built-in mappings for manipulating s-expressions. Here follows a
+list of useful commands, these are not defined by paredit.vim, they are
+available even when paredit mode is switched off.
+
+    %              Find the matching pair of the parenthesis the cursor is
+                   standing on.
+
+    d%             Delete till the matching parenthesis. Normally it is used
+                   when the cursor is standing on a parenthesis (works with
+                   square or curly braces as well). If not standing on a
+                   parenthesis then deletes left till the first opening paren,
+                   so this command may also be used to delete an s-expression
+                   that is right before the cursor.
+
+    daw            Delete a word. Can be used to delete a list element, the
+                   cursor may be placed anywhere in the element.
+
+    da(            Delete the innermost s-expression. The cursor may be placed
+                   anywhere inside the s-expression.
+
+    di(            Same as da( but does not delete the enclosing parens.
 
 
 ===============================================================================
