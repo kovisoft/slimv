@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  16 Sep 2011
+" Last Change:  19 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -369,6 +369,7 @@ endfunction
 " Remember the end of the REPL buffer: user may enter commands here
 " Also remember the prompt, because the user may overwrite it
 function! SlimvMarkBufferEnd()
+    setlocal nomodified
     call SlimvEndOfReplBuffer()
     call setpos( "'s", [0, line('$'), col('$'), 0] )
     let s:prompt = getline( "'s" )
@@ -382,7 +383,6 @@ endfunction
 
 " Stop updating the REPL buffer and switch back to caller
 function! SlimvEndUpdateRepl()
-    call SlimvEndUpdate()
     call SlimvMarkBufferEnd()
     let repl_buf = bufnr( g:slimv_repl_file )
     let repl_win = bufwinnr( repl_buf )
@@ -423,10 +423,7 @@ endfunction
 " Execute the given command and write its output at the end of the REPL buffer
 function! SlimvCommand( cmd )
     silent execute a:cmd
-
-    if g:slimv_updatetime > 0 && s:last_update < localtime() - 1
-        let &updatetime = s:save_updatetime
-    endif
+    let &updatetime = g:slimv_updatetime
 endfunction
 
 " Execute the given SWANK command, wait for and return the response
@@ -484,9 +481,6 @@ endfunction
 " Switch refresh mode on:
 " refresh REPL buffer on frequent Vim events
 function! SlimvRefreshModeOn()
-    set readonly
-    setlocal buftype=nofile
-    setlocal noswapfile
     if ! s:au_curhold_set
         let s:au_curhold_set = 1
         execute "au CursorHold   * :call SlimvTimer()"
@@ -500,7 +494,6 @@ function! SlimvRefreshModeOff()
     execute "au! CursorHold"
     execute "au! CursorHoldI"
     let s:au_curhold_set = 0
-    set noreadonly
 endfunction
 
 " Called when entering REPL buffer
@@ -688,7 +681,7 @@ function SlimvQuitInspect()
     silent! %d
     call SlimvEndUpdate()
     call SlimvCommand( 'python swank_quit_inspector()' )
-    bn
+    b #
 endfunction
 
 " Quit Sldb
@@ -697,7 +690,7 @@ function SlimvQuitSldb()
     setlocal noreadonly
     silent! %d
     call SlimvEndUpdate()
-    bn
+    b #
 endfunction
 
 " Set 'iskeyword' option depending on file type
@@ -940,7 +933,6 @@ function! SlimvSend( args, echoing )
         call SlimvOpenReplBuffer()
         let lines = split( s:swank_form, '\n', 1 )
         call append( '$', lines )
-        call SlimvEndUpdate()
         call SlimvMarkBufferEnd()
         let s:swank_form = text
     else
@@ -1160,7 +1152,6 @@ function! SlimvSendCommand( close )
         call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
         call append( '$', "" )
         call SlimvMarkBufferEnd()
-        set nomodified
     endif
 endfunction
 

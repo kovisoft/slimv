@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  16 Sep 2011
+# Last Change:  19 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -572,7 +572,7 @@ def swank_listen():
                                              ':swank-toggle-trace']
                                 if element == 'nil' and action and action.name == ':inspector-pop':
                                     # Quit inspector
-                                    vim.command(':e #')
+                                    vim.command('b #')
                                 elif element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
                                     retval = retval + new_line(retval) + prompt + '> '
@@ -1005,11 +1005,14 @@ def swank_output(echo):
     if echo and result != '':
         vim.command('call SlimvOpenReplBuffer()')
         buf = vim.current.buffer
-        if len(buf) < 2:
-            # The buffer is still empty
-            buf[:] = result.split("\n")
-        else:
-            buf.append(result.split("\n"))
+        lines = result.split("\n")
+        if lines[0] != '':
+            # Concatenate first line to the last line of the buffer
+            nlines = len(buf)
+            buf[nlines-1] = buf[nlines-1] + lines[0]
+        if len(lines) > 1:
+            # Append all subsequent lines
+            buf.append(lines[1:])
         vim.command('call SlimvEndUpdateRepl()')
 
 def swank_response(name):
