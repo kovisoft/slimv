@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  19 Sep 2011
+" Last Change:  20 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -378,7 +378,12 @@ endfunction
 " Save caller buffer identification
 function! SlimvBeginUpdateRepl()
     let s:current_buf = bufnr( "%" )
-    let s:current_win = winnr()
+    if winnr('$') < 2
+        " No windows yet
+        let s:current_win = -1
+    else
+        let s:current_win = winnr()
+    endif
 endfunction
 
 " Stop updating the REPL buffer and switch back to caller
@@ -389,7 +394,10 @@ function! SlimvEndUpdateRepl()
     if repl_buf != s:current_buf && repl_win != -1 && !s:debug_activated
         " Switch back to the caller buffer/window
         if g:slimv_repl_split
-            if s:current_win != repl_win
+            if s:current_win == -1
+                let s:current_win = winnr('#')
+            endif
+            if s:current_win > 0 && s:current_win != repl_win
                 execute s:current_win . "wincmd w"
             endif
         else
@@ -401,7 +409,7 @@ endfunction
 " Handle response coming from the SWANK listener
 function! SlimvSwankResponse()
     let s:refresh_disabled = 1
-    call SlimvCommand( 'python swank_output(1)' )
+    silent execute 'python swank_output(1)'
     let s:refresh_disabled = 0
     let msg = ''
     redir => msg
@@ -414,8 +422,14 @@ function! SlimvSwankResponse()
             echo input('Press ENTER to continue.')
         endif
     endif
-    if s:swank_actions_pending == 0
-        " All SWANK output handled
+    if s:swank_actions_pending
+        let s:last_update = -1
+    elseif s:last_update < 0
+        " Remember the time when all actions are processed
+        let s:last_update = localtime()
+    endif
+    if s:swank_actions_pending == 0 && s:last_update >= 0 && s:last_update < localtime() - 2
+        " All SWANK output handled long ago, restore original update frequency
         let &updatetime = s:save_updatetime
     endif
 endfunction
@@ -423,7 +437,11 @@ endfunction
 " Execute the given command and write its output at the end of the REPL buffer
 function! SlimvCommand( cmd )
     silent execute a:cmd
-    let &updatetime = g:slimv_updatetime
+    if g:slimv_updatetime < &updatetime
+        " Update more frequently until all swank responses processed
+        let &updatetime = g:slimv_updatetime
+        let s:last_update = -1
+    endif
 endfunction
 
 " Execute the given SWANK command, wait for and return the response
@@ -942,7 +960,7 @@ function! SlimvSend( args, echoing )
     call SlimvCommand( 'python swank_input("s:swank_form")' )
     let s:swank_package = ''
     let s:refresh_disabled = 0
-    call SlimvRefreshReplBuffer()
+    call SlimvRefreshModeOn()
 endfunction
 
 " Eval arguments in Lisp REPL
