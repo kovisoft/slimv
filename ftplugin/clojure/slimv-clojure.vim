@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
 " Version:      0.9.0
-" Last Change:  27 Aug 2011
+" Last Change:  20 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -154,11 +154,11 @@ function! b:SlimvReplInit( lisp_version )
     if a:lisp_version[0:2] >= '1.3'
         call SlimvSend( ["(use '[clojure.repl :only (source apropos dir pst doc find-doc)])",
         \                "(use '[clojure.java.javadoc :only (javadoc)])",
-        \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
+        \                "(use '[clojure.pprint :only (pp pprint)])"], 0 )
     elseif a:lisp_version[0:2] >= '1.2'
         call SlimvSend( ["(use '[clojure.repl :only (source apropos)])",
         \                "(use '[clojure.java.javadoc :only (javadoc)])",
-        \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
+        \                "(use '[clojure.pprint :only (pp pprint)])"], 0 )
     endif
 endfunction
 
