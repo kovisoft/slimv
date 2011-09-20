@@ -24,7 +24,7 @@ input_port      = 4005
 output_port     = 4006
 lenbytes        = 6             # Message length is encoded in this number of bytes
 maxmessages     = 50            # Maximum number of messages to receive in one listening session
-recv_timeout    = 0.01          # socket recv timeout in seconds
+recv_timeout    = 0.001         # socket recv timeout in seconds
 listen_retries  = 10            # number of retries if no response in swank_listen()
 sock            = None          # Swank socket object
 id              = 0             # Message id
@@ -246,6 +246,33 @@ def swank_send(text):
     except socket.error:
         sys.stdout.write( 'Socket error when sending to SWANK server.\n' )
         swank_disconnect()
+
+def swank_recv_len(timeout):
+    global sock
+
+    rec = ''
+    sock.setblocking(0)
+    ready = select.select([sock], [], [], timeout)
+    if ready[0]:
+        l = lenbytes
+        sock.setblocking(1)
+        try:
+            data = sock.recv(l)
+        except socket.error:
+            sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+            swank_disconnect()
+            return rec
+        while data and len(rec) < lenbytes:
+            rec = rec + data
+            l = l - len(data)
+            if l > 0:
+                try:
+                    data = sock.recv(l)
+                except socket.error:
+                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    swank_disconnect()
+                    return rec
+    return rec
 
 def swank_recv(msglen, timeout):
     global sock
@@ -479,18 +506,22 @@ def swank_listen():
     retval = ''
     msgcount = 0
     #logtime('[- Listen--]')
+    timeout = recv_timeout
     while msgcount < maxmessages:
-        rec = swank_recv(lenbytes, recv_timeout if msgcount == 0 else 0)
+        rec = swank_recv_len(timeout)
         if rec == '':
             break
+        timeout = 0.0
         msgcount = msgcount + 1
         if debug:
-            print 'swank_recv received', rec
+            print 'swank_recv_len received', rec
         msglen = int(rec, 16)
         if debug:
             print 'Received length:', msglen
         if msglen > 0:
-            rec = swank_recv(msglen, 0)
+            # length already received so it must be followed by data
+            # use a higher timeout
+            rec = swank_recv(msglen, 1.0)
             logtime('[-Received-]')
             logprint(rec)
             [s, r] = parse_sexpr( rec )
