@@ -1264,6 +1264,7 @@ function! SlimvHandleEnterSldb()
         " Check if Enter was pressed in a section printed by the SWANK debugger
         let item = matchstr( line, '^\s*\d\+' )
         if item != ''
+            let item = substitute( item, '\s', '', 'g' )
             if search( '^Backtrace:', 'bnW' ) > 0
                 if foldlevel('.')
                     " With a fold just toggle visibility
@@ -1272,13 +1273,15 @@ function! SlimvHandleEnterSldb()
                 endif
                 " Display item-th frame, we signal frames by prefixing with '#'
                 call SlimvMakeFold()
-                call SlimvSend( ['#' . item], 0 )
+                silent execute 'python swank_frame_call("' . item . '")'
+                silent execute 'python swank_frame_source_loc("' . item . '")'
+                silent execute 'python swank_frame_locals("' . item . '")'
                 return
             endif
             if search( '^Restarts:', 'bnW' ) > 0
                 " Apply item-th restart
                 call SlimvQuitSldb()
-                call SlimvSend( [item], 0 )
+                silent execute 'python swank_invoke_restart("1", "' . item . '")'
                 return
             endif
         endif
