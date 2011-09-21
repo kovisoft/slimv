@@ -986,20 +986,6 @@ def swank_input(formvar):
     if read_string:
         # We are in :read-string mode, pass string entered to REPL
         swank_return_string('"' + form + '"')
-    elif debug_activated and form[0] != '(' and form[0] != ' ':
-        # We are in debug mode and an SLDB command follows (that is not an s-expr)
-        if form[0] == '#':
-            swank_frame_call(form[1:])
-            swank_frame_source_loc(form[1:])
-            swank_frame_locals(form[1:])
-        elif form[0].lower() == 'q':
-            swank_throw_toplevel()
-        elif form[0].lower() == 'a':
-            swank_invoke_abort()
-        elif form[0].lower() == 'c':
-            swank_invoke_continue()
-        else:
-            swank_invoke_restart("1", form)
     elif form[0] == '[':
         if form[1] == '-':
             swank_inspector_pop()
