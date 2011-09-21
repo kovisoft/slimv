@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  20 Sep 2011
+" Last Change:  21 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -504,7 +504,6 @@ function! SlimvRefreshModeOn()
         execute "au CursorHold   * :call SlimvTimer()"
         execute "au CursorHoldI  * :call SlimvTimer()"
     endif
-    call SlimvRefreshReplBuffer()
 endfunction
 
 " Switch refresh mode off
@@ -684,6 +683,7 @@ function SlimvOpenSldbBuffer()
     setlocal conceallevel=3 concealcursor=nc
     syn match Comment /{{{/ conceal
     syn match Comment /}}}/ conceal
+    syn match Type /^\s*\d\+:/
 endfunction
 
 " End updating an otherwise readonly buffer
@@ -929,6 +929,7 @@ function! SlimvSend( args, echoing )
 
     let s:refresh_disabled = 1
     let s:swank_form = text
+    call SlimvOpenReplBuffer()
     if a:echoing && g:slimv_echolines != 0
         if g:slimv_echolines > 0
             let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
@@ -948,19 +949,19 @@ function! SlimvSend( args, echoing )
                 endif
             endif
         endif
-        call SlimvOpenReplBuffer()
         let lines = split( s:swank_form, '\n', 1 )
         call append( '$', lines )
-        call SlimvMarkBufferEnd()
         let s:swank_form = text
     else
         " Open a new line for the output
-        call SlimvCommand( 'echo "\n"' )
+        call append( '$', '' )
     endif
+    call SlimvMarkBufferEnd()
     call SlimvCommand( 'python swank_input("s:swank_form")' )
     let s:swank_package = ''
     let s:refresh_disabled = 0
     call SlimvRefreshModeOn()
+    call SlimvRefreshReplBuffer()
 endfunction
 
 " Eval arguments in Lisp REPL
