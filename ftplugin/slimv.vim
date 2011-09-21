@@ -1281,7 +1281,7 @@ function! SlimvHandleEnterSldb()
             if search( '^Restarts:', 'bnW' ) > 0
                 " Apply item-th restart
                 call SlimvQuitSldb()
-                silent execute 'python swank_invoke_restart("1", "' . item . '")'
+                silent execute 'python swank_invoke_restart("' . s:debug_activated . '", "' . item . '")'
                 return
             endif
         endif

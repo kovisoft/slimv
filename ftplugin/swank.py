@@ -701,8 +701,9 @@ def swank_listen():
 
                 elif message == ':debug-activate':
                     debug_activated = True
-                    vim.command('let s:debug_activated=1')
                     current_thread = r[1]
+                    sldb_level = r[2]
+                    vim.command('let s:debug_activated=' + sldb_level)
 
                 elif message == ':debug-return':
                     debug_activated = False
