@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  20 Sep 2011
+# Last Change:  22 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -32,7 +32,8 @@ debug           = False
 log             = False         # Set this to True in order to enable logging
 logfile         = 'swank.log'   # Logfile name in case logging is on
 current_thread  = '0'
-debug_activated = False         # Swank debugger activated
+debug_active    = False         # Swank debugger is active
+debug_activated = False         # Swank debugger was activated
 read_string     = None          # Thread and tag in Swank read string mode
 empty_last_line = True          # Swank output ended with a new line
 prompt          = 'SLIMV'       # Command prompt
@@ -361,7 +362,7 @@ def swank_parse_debug(struct):
         ftext = ftext.replace('\\\\n', '')
         buf.append([frame.rjust(3) + ': ' + ftext])
     vim.command('call SlimvEndUpdate()')
-    vim.command("call search('^Restarts:', 'W')")
+    vim.command("call search('^Restarts:', 'w')")
     vim.command('stopinsert')
 
 def swank_parse_xref(struct):
@@ -496,6 +497,7 @@ def swank_parse_locals(struct):
 
 def swank_listen():
     global output_port
+    global debug_active
     global debug_activated
     global read_string
     global empty_last_line
@@ -686,7 +688,7 @@ def swank_listen():
                                     action.result = retval
 
                     elif result == ':abort':
-                        debug_activated = False
+                        debug_active = False
                         vim.command('let s:debug_activated=0')
                         if len(r[1]) > 1:
                             retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + prompt + '> '
@@ -700,13 +702,14 @@ def swank_listen():
                     swank_parse_debug(r)
 
                 elif message == ':debug-activate':
+                    debug_active = True
                     debug_activated = True
                     current_thread = r[1]
                     sldb_level = r[2]
                     vim.command('let s:debug_activated=' + sldb_level)
 
                 elif message == ':debug-return':
-                    debug_activated = False
+                    debug_active = False
                     vim.command('let s:debug_activated=0')
                     retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
 
@@ -1009,11 +1012,14 @@ def actions_pending():
 
 def swank_output(echo):
     global sock
+    global debug_active
+    global debug_activated
 
     if not sock:
         return "SWANK server is not connected."
     count = 0
     #logtime('[- Output--]')
+    debug_activated = False
     result = swank_listen()
     pending = actions_pending()
     while result == '' and pending > 0 and count < listen_retries:
@@ -1021,6 +1027,7 @@ def swank_output(echo):
         pending = actions_pending()
         count = count + 1
     if echo and result != '':
+        # Append SWANK output to REPL buffer
         vim.command('call SlimvOpenReplBuffer()')
         buf = vim.current.buffer
         lines = result.split("\n")
@@ -1032,6 +1039,11 @@ def swank_output(echo):
             # Append all subsequent lines
             buf.append(lines[1:])
         vim.command('call SlimvEndUpdateRepl()')
+    if debug_activated and debug_active:
+        # Debugger was activated in this run
+        vim.command('call SlimvOpenSldbBuffer()')
+        vim.command('call SlimvEndUpdateRepl()')
+        vim.command("call search('^Restarts:', 'w')")
 
 def swank_response(name):
     #logtime('[-Response-]')
