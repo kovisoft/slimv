@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  22 Sep 2011
+# Last Change:  23 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -238,8 +238,8 @@ def swank_send(text):
 
     logtime('[---Sent---]')
     logprint(text)
-    l = hex(unicode_len(text))[2:]
-    t = '0'*(lenbytes-len(l)) + l + text
+    l = "%06x" % unicode_len(text)
+    t = l + text
     if debug:
         print 'Sending:', t
     try:
@@ -278,30 +278,30 @@ def swank_recv_len(timeout):
 def swank_recv(msglen, timeout):
     global sock
 
-    rec = ''
     if msglen > 0:
         sock.setblocking(0)
         ready = select.select([sock], [], [], timeout)
         if ready[0]:
-            l = msglen
             sock.setblocking(1)
-            try:
-                data = sock.recv(l)
-            except socket.error:
-                sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
-                swank_disconnect()
-                return rec
-            while data and unicode_len(rec) < msglen:
+            rec = ''
+            while True:
+                # Each codepoint has at least 1 byte; so we start with the 
+                # number of bytes, and read more if needed.
+                try:
+                    needed = msglen - unicode_len(rec)
+                except UnicodeDecodeError:
+                    # Add single bytes until we've got valid UTF-8 again
+                    needed = max(msglen - len(rec), 1)
+                if needed == 0:
+                    return rec
+                try:
+                    data = sock.recv(needed)
+                except socket.error:
+                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    swank_disconnect()
+                    return rec
                 rec = rec + data
-                l = l - unicode_len(data)
-                if l > 0:
-                    try:
-                        data = sock.recv(l)
-                    except socket.error:
-                        sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
-                        swank_disconnect()
-                        return rec
-    return rec
+    rec = ''
 
 def swank_parse_inspect(struct):
     """
@@ -468,9 +468,10 @@ def swank_parse_frame_source(struct):
     if type(struct) == list and len(struct) == 4:
         [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
         if lnum > 0:
-            buf[line:line] = ['     in ' + struct[1][1] + ' line ' + str(lnum)]
+            s = '     in ' + struct[1][1] + ' line ' + str(lnum)
         else:
-            buf[line:line] = ['     in ' + struct[1][1] + ' byte ' + struct[2][1]]
+            s = '     in ' + struct[1][1] + ' byte ' + struct[2][1]
+        buf[line:line] = s.splitlines();
     else:
         buf[line:line] = ['     No source line information']
     vim.command('call SlimvEndUpdate()')
