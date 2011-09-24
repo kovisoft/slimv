@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  21 Sep 2011
+" Last Change:  24 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -680,9 +680,15 @@ function SlimvOpenSldbBuffer()
     setlocal foldmethod=marker
     setlocal foldmarker={{{,}}}
     setlocal foldtext=substitute(getline(v:foldstart),'{{{','','')
-    setlocal conceallevel=3 concealcursor=nc
-    syn match Comment /{{{/ conceal
-    syn match Comment /}}}/ conceal
+    if version < 703
+        " conceal mechanism is defined since Vim 7.3
+        syn match Ignore /{{{/
+        syn match Ignore /}}}/
+    else
+        setlocal conceallevel=3 concealcursor=nc
+        syn match Comment /{{{/ conceal
+        syn match Comment /}}}/ conceal
+    endif
     syn match Type /^\s*\d\+:/
 endfunction
 
@@ -1273,8 +1279,11 @@ function! SlimvHandleEnterSldb()
                 endif
                 " Display item-th frame, we signal frames by prefixing with '#'
                 call SlimvMakeFold()
-                silent execute 'python swank_frame_call("' . item . '")'
-                silent execute 'python swank_frame_source_loc("' . item . '")'
+                if b:SlimvImplementation() != 'clisp'
+                    " These are not implemented for CLISP
+                    silent execute 'python swank_frame_call("' . item . '")'
+                    silent execute 'python swank_frame_source_loc("' . item . '")'
+                endif
                 silent execute 'python swank_frame_locals("' . item . '")'
                 return
             endif
@@ -1351,11 +1360,11 @@ endfunction
 
 " Select a specific restart in debugger
 function! SlimvDebugCommand( cmd )
-    if bufname('%') != 'Slimv.SLDB'
-        return
-    endif
     if s:swank_connected
         if s:debug_activated
+            if bufname('%') != 'Slimv.SLDB'
+                call SlimvOpenSldbBuffer()
+            endif
             call SlimvQuitSldb()
             call SlimvCommand( 'python ' . a:cmd . '()' )
             call SlimvRefreshReplBuffer()
