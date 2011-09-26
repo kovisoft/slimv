@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  23 Sep 2011
+# Last Change:  26 Sep 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -897,7 +897,9 @@ def swank_xref(fn, type):
 
 def swank_compile_string(formvar):
     form = vim.eval(formvar)
-    cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position 1) (:line 1 1))" + ' nil nil)'
+    filename = vim.eval("substitute( expand('%:p'), '\\', '/', 'g' )")
+    line = vim.eval("line('.')")
+    cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position 1) (:line " + str(line) + " 1)) " + requote(filename) + ' nil)'
     swank_rex(':compile-string-for-emacs', cmd, get_package(), 't')
 
 def swank_compile_file(name):
