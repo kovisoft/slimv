@@ -899,7 +899,11 @@ def swank_compile_string(formvar):
     form = vim.eval(formvar)
     filename = vim.eval("substitute( expand('%:p'), '\\', '/', 'g' )")
     line = vim.eval("line('.')")
-    cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position 1) (:line " + str(line) + " 1)) " + requote(filename) + ' nil)'
+    pos = vim.eval("line2byte(line('.'))")
+    if vim.eval("&fileformat") == 'dos':
+        # Remove 0x0D, keep 0x0A characters
+        pos = str(int(pos) - int(line) + 1)
+    cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position " + str(pos) + ") (:line " + str(line) + " 1)) " + requote(filename) + ' nil)'
     swank_rex(':compile-string-for-emacs', cmd, get_package(), 't')
 
 def swank_compile_file(name):
