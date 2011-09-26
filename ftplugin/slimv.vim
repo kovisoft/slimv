@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  24 Sep 2011
+" Last Change:  26 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -720,9 +720,9 @@ endfunction
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
     if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,!,?
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,{,},[,]
     endif
 endfunction
 
@@ -736,11 +736,8 @@ endfunction
 " Select symbol with possible prefixes under cursor and return it
 function! SlimvSelectSymbolExt()
     let save_iskeyword = &iskeyword
-    if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,!,?,'
-    else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?,'
-    endif
+    call s:SetKeyword()
+    setlocal iskeyword+='
     let symbol = expand('<cword>')
     let &iskeyword = save_iskeyword
     return symbol

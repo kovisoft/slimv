@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.8.7
-" Last Change:  6 Sep 2011
+" Version:      0.9.0
+" Last Change:  26 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -74,7 +74,7 @@ function! PareditInitBuffer()
     " in case they are accidentally removed
     " Also define regular expressions to identify special characters used by paredit
     if &ft == 'clojure'
-        setlocal iskeyword+=~,#,&,\|,!,?
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
         let b:any_matched_char   = '(\|)\|\[\|\]\|{\|}\|\"'
         let b:any_matched_pair   = '()\|\[\]\|{}\|\"\"'
         let b:any_opening_char   = '(\|\[\|{'
@@ -83,7 +83,7 @@ function! PareditInitBuffer()
         let b:any_wsopen_char    = '\s\|(\|\[\|{'
         let b:any_wsclose_char   = '\s\|)\|\]\|}'
     else
-        setlocal iskeyword+=~,#,&,\|,{,},[,],!,?
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,{,},[,]
         let b:any_matched_char   = '(\|)\|\"'
         let b:any_matched_pair   = '()\|\"\"'
         let b:any_opening_char   = '('
