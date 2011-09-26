@@ -1094,9 +1094,15 @@ function! SlimvIndent( lnum )
         if strpart(func, 0, 1) == ':'
             return c
         endif
-        if SlimvGetFiletype() == 'clojure' && match( func, 'defn$' ) >= 0
+        if SlimvGetFiletype() == 'clojure'
             " Fix clojure specific indentation issues not handled by the default lisp.vim
-            return c + 1
+            if match( func, 'defn$' ) >= 0
+                return c + 1
+            endif
+        else
+            if match( func, 'defgeneric$' ) >= 0
+                return c + 1
+            endif
         endif
         " Remove package specification
         let func = substitute(func, '^.*:', '', '')
