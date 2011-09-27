@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  26 Sep 2011
+" Last Change:  27 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -486,9 +486,9 @@ endfunction
 " after refreshing the REPL buffer
 function! SlimvTimer()
     call SlimvRefreshReplBuffer()
-    if mode() == 'i' || mode() == 'I'
+    if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
         " Put '<Insert>' twice into the typeahead buffer, which should not do anything
-        " just switch to overwrite mode then back to insert mode
+        " just switch to replace/insert mode then back to insert/replace mode
         call feedkeys("\<insert>\<insert>")
     else
         " Put an incomplete 'f' command and an Esc into the typeahead buffer
