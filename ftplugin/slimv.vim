@@ -489,7 +489,10 @@ function! SlimvTimer()
     if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
         " Put '<Insert>' twice into the typeahead buffer, which should not do anything
         " just switch to replace/insert mode then back to insert/replace mode
-        call feedkeys("\<insert>\<insert>")
+        " But don't do this for readonly buffers
+        if bufname('%') != 'Slimv.SLDB' && bufname('%') != 'Slimv.INSPECT'
+            call feedkeys("\<insert>\<insert>")
+        endif
     else
         " Put an incomplete 'f' command and an Esc into the typeahead buffer
         call feedkeys("f\e")
@@ -558,6 +561,7 @@ function! s:SplitView( filename )
             execute "silent view! " . a:filename
         endif
     endif
+    stopinsert
 endfunction
 
 " Open a buffer with the given name if not yet open, and switch to it
@@ -581,6 +585,7 @@ function! SlimvOpenBuffer( name )
             endif
         else
             execute "buffer " . buf
+            stopinsert
         endif
     endif
     setlocal buftype=nofile
