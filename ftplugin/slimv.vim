@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  27 Sep 2011
+" Last Change:  29 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -695,6 +695,7 @@ function SlimvOpenSldbBuffer()
         syn match Comment /}}}/ conceal
     endif
     syn match Type /^\s*\d\+:/
+    syn match Type /^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$/
 endfunction
 
 " End updating an otherwise readonly buffer
@@ -1285,7 +1286,7 @@ function! SlimvHandleEnterSldb()
                     normal za
                     return
                 endif
-                " Display item-th frame, we signal frames by prefixing with '#'
+                " Display item-th frame
                 call SlimvMakeFold()
                 if b:SlimvImplementation() != 'clisp'
                     " These are not implemented for CLISP
@@ -1300,6 +1301,19 @@ function! SlimvHandleEnterSldb()
                 call SlimvQuitSldb()
                 silent execute 'python swank_invoke_restart("' . s:debug_activated . '", "' . item . '")'
                 return
+            endif
+        endif
+        let mlist = matchlist( line, '^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$' )
+        if len(mlist)
+            if g:slimv_repl_split
+                " Switch back to other window
+                execute "wincmd w"
+            endif
+            " Jump to the file at the specified position
+            if mlist[2] == 'line'
+                exec ":edit +" . mlist[3] . " " . mlist[1]
+            else
+                exec ":edit +" . mlist[3] . "go " . mlist[1]
             endif
         endif
     endif
