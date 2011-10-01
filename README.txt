@@ -114,12 +114,15 @@ Linux example:
 Windows example:
     let g:slimv_swank_cmd = '!start "c:/Program Files/Lisp Cabinet/bin/ccl/wx86cl.exe" -l "c:/Program Files/Lisp Cabinet/site/lisp/slime/start-swank.lisp"'
 
+Mac OS X example:
+    let g:slimv_swank_cmd = '!osascript -e "tell application \"Terminal\" to do script \"sbcl --load ~/.vim/slime/start-swank.lisp\""'
+
 For Clojure use the g:slimv_swank_clojure option, e.g.:
     let g:slimv_swank_clojure = '! xterm -e lein swank &' 
 
 
-Important notice to pre-0.8.0 users:
-If you want the old functionality, please set g:slimv_swank to 0 in your vimrc file. Please note however, that the development focuses on the SWANK client.
+Important notice to pre-0.9.0 users:
+If you want the old functionality that did not use the SWANK client, please fetch Slimv version 0.8.6 and set g:slimv_swank to 0 in your vimrc file.
 
 See the included documentation for more complete installation and customization instructions.
 

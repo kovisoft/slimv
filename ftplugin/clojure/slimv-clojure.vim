@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.8.6
-" Last Change:  05 Aug 2011
+" Version:      0.9.0
+" Last Change:  20 Sep 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -37,12 +37,11 @@ function! b:SlimvBuildStartCmd( lisps )
         let cp = cp . ';' . s:TransformFilename( a:lisps[i] )
         let i = i + 1
     endwhile
-    if g:slimv_swank
-        " Try to find swank-clojure and add it to classpath
-        let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
-        if len( swanks ) > 0
-            let cp = cp . ';' . s:TransformFilename( swanks[0] )
-        endif
+
+    " Try to find swank-clojure and add it to classpath
+    let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
+    if len( swanks ) > 0
+        let cp = cp . ';' . s:TransformFilename( swanks[0] )
     endif
     return ['java -cp ' . cp . ' clojure.main', 'clojure']
 endfunction
@@ -71,12 +70,10 @@ function! b:SlimvAutodetect()
         return b:SlimvBuildStartCmd( lisps )
     endif
 
-    if g:slimv_swank
-        " Check if Clojure is bundled with Slimv
-        let lisps = split( globpath( &runtimepath, 'swank-clojure/clojure*.jar'), '\n' )
-        if len( lisps ) > 0
-            return b:SlimvBuildStartCmd( lisps )
-        endif
+    " Check if Clojure is bundled with Slimv
+    let lisps = split( globpath( &runtimepath, 'swank-clojure/clojure*.jar'), '\n' )
+    if len( lisps ) > 0
+        return b:SlimvBuildStartCmd( lisps )
     endif
 
     " Try to find Clojure in the PATH
@@ -157,11 +154,11 @@ function! b:SlimvReplInit( lisp_version )
     if a:lisp_version[0:2] >= '1.3'
         call SlimvSend( ["(use '[clojure.repl :only (source apropos dir pst doc find-doc)])",
         \                "(use '[clojure.java.javadoc :only (javadoc)])",
-        \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
+        \                "(use '[clojure.pprint :only (pp pprint)])"], 0 )
     elseif a:lisp_version[0:2] >= '1.2'
         call SlimvSend( ["(use '[clojure.repl :only (source apropos)])",
         \                "(use '[clojure.java.javadoc :only (javadoc)])",
-        \                "(use '[clojure.pprint :only (pp pprint)])"], 0, 0 )
+        \                "(use '[clojure.pprint :only (pp pprint)])"], 0 )
     endif
 endfunction
 
