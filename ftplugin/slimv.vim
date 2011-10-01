@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  29 Sep 2011
+" Last Change:  01 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -593,6 +593,16 @@ function! SlimvOpenBuffer( name )
     setlocal noreadonly
 endfunction
 
+" Go to the end of the screen line
+function s:EndOfScreenLine()
+    if len(getline('.')) < &columns
+        " g$ moves the cursor to the rightmost column if virtualedit=all
+        normal! $
+    else
+        normal! g$
+    endif
+endfunction
+
 " Open a new REPL buffer
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_file )
@@ -627,15 +637,15 @@ function! SlimvOpenReplBuffer()
 
     if g:slimv_repl_wrap
         inoremap <buffer> <silent>        <Home> <C-O>g<Home>
-        inoremap <buffer> <silent>        <End>  <C-O>g<End>
+        inoremap <buffer> <silent>        <End>  <C-O>:call <SID>EndOfScreenLine()<CR>
         noremap  <buffer> <silent>        <Up>   gk
         noremap  <buffer> <silent>        <Down> gj
         noremap  <buffer> <silent>        <Home> g<Home>
-        noremap  <buffer> <silent>        <End>  g<End>
+        noremap  <buffer> <silent>        <End>  :call <SID>EndOfScreenLine()<CR>
         noremap  <buffer> <silent>        k      gk
         noremap  <buffer> <silent>        j      gj
         noremap  <buffer> <silent>        0      g0
-        noremap  <buffer> <silent>        $      g$
+        noremap  <buffer> <silent>        $      :call <SID>EndOfScreenLine()<CR>
         set wrap
     endif
 
