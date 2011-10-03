@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Sep 2011
+*slimv.txt*                    Slimv                 Last Change: 03 Oct 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.0
@@ -192,6 +192,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_updatetime|         Alternative value for 'updatetime' during REPL
                              refresh.
 
+|g:swank_block_size|         SWANK connection output buffer size.
+
 |g:swank_host|               Host name or IP address of the SWANK server.
 
 |g:swank_port|               Port number of the SWANK server.
@@ -293,6 +295,14 @@ Example startup script:
                      :coding-system "iso-latin-1-unix"
                      :dont-close t)
 
+
+                                                           *g:swank_block_size*
+By default the SWANK server connection output buffer size is 4 or 8 kbytes.
+All the data sent by the SWANK server is divided into this size blocks, so
+if the SWANK server is sending large amount of data then this may result in
+high number of data blocks sent, which may slow down Slimv. For greater
+performance you may want to increase the block size, e.g. to 64 kbytes:
+    let g:swank_block_size = 65536
 
                                                                  *g:swank_host*
 Host name or IP address of the SWANK server. Default value is 'localhost'.
