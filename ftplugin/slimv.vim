@@ -378,7 +378,7 @@ function! SlimvMarkBufferEnd()
 endfunction
 
 " Save caller buffer identification
-function! SlimvBeginUpdateRepl()
+function! SlimvBeginUpdate()
     let s:current_buf = bufnr( "%" )
     if winnr('$') < 2
         " No windows yet
@@ -418,10 +418,9 @@ function! SlimvSwankResponse()
     silent execute 'python swank_response("")'
     redir END
 
-    if s:swank_action != '' && msg != ''
+    if msg != ''
         if s:swank_action == ':describe-symbol'
-            echo msg
-            echo input('Press ENTER to continue.')
+            echo substitute(msg,'^\n*','','')
         endif
     endif
     if s:swank_actions_pending
@@ -673,7 +672,7 @@ function SlimvOpenInspectBuffer()
 
     " Add keybindings valid only for the Inspect buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
-    noremap  <buffer> <silent> <Backspace>   :call SlimvSend(['[-1]'], 0)<CR>
+    noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
 endfunction
 
@@ -933,7 +932,7 @@ function! SlimvConnectSwank()
             " Override SWANK connection output buffer size
             let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank-backend::buffer)"
             let cmd = cmd . " (make-string " . g:swank_block_size . ")) nil)"
-            call SlimvSend( [cmd], 0 )
+            call SlimvSend( [cmd], 0, 1 )
         endif
 	if exists( "*b:SlimvReplInit" )
 	    " Perform implementation specific REPL initialization if supplied
@@ -944,8 +943,8 @@ function! SlimvConnectSwank()
 endfunction
 
 " Send argument to Lisp server for evaluation
-function! SlimvSend( args, echoing )
-    call SlimvBeginUpdateRepl()
+function! SlimvSend( args, echoing, output )
+    call SlimvBeginUpdate()
 
     if ! SlimvConnectSwank()
         return
@@ -956,7 +955,9 @@ function! SlimvSend( args, echoing )
 
     let s:refresh_disabled = 1
     let s:swank_form = text
-    call SlimvOpenReplBuffer()
+    if a:output
+        call SlimvOpenReplBuffer()
+    endif
     if a:echoing && g:slimv_echolines != 0
         if g:slimv_echolines > 0
             let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
@@ -979,7 +980,7 @@ function! SlimvSend( args, echoing )
         let lines = split( s:swank_form, '\n', 1 )
         call append( '$', lines )
         let s:swank_form = text
-    else
+    elseif a:output
         " Open a new line for the output
         call append( '$', '' )
     endif
@@ -993,7 +994,12 @@ endfunction
 
 " Eval arguments in Lisp REPL
 function! SlimvEval( args )
-    call SlimvSend( a:args, 1 )
+    call SlimvSend( a:args, 1, 1 )
+endfunction
+
+" Send argument silently to SWANK
+function! SlimvSendSilent( args )
+    call SlimvSend( a:args, 0, 0 )
 endfunction
 
 " Set command line after the prompt
@@ -1190,7 +1196,7 @@ function! SlimvSendCommand( close )
                 " but first add it to the history
                 call SlimvAddHistory( cmd )
                 " Evaluate, but echo only when form is actually closed here
-                call SlimvSend( cmd, echoing )
+                call SlimvSend( cmd, echoing, 1 )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
@@ -1346,7 +1352,7 @@ function! SlimvHandleEnterInspect()
     let line = getline('.')
     if line[0:9] == 'Inspecting'
         " Reload inspected item
-        call SlimvSend( ['[0]'], 0 )
+        call SlimvSendSilent( ['[0]'] )
         return
     endif
 
@@ -1359,7 +1365,7 @@ function! SlimvHandleEnterInspect()
             let item = matchstr( line, '\d\+' )
         endif
         if item != ''
-            call SlimvSend( ['[' . item . ']'], 0 )
+            call SlimvSendSilent( ['[' . item . ']'] )
             return
         endif
     endif
@@ -1368,7 +1374,7 @@ function! SlimvHandleEnterInspect()
         " Inspector n-th action
         let item = matchstr( line, '\d\+' )
         if item != ''
-            call SlimvSend( ['<' . item . '>'], 0 )
+            call SlimvSendSilent( ['<' . item . '>'] )
             return
         endif
     endif
@@ -1778,6 +1784,7 @@ function! SlimvInspect()
         let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
         if s != ''
             if s:swank_connected
+                call SlimvBeginUpdate()
                 call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
             else
                 call SlimvError( "Not connected to SWANK server." )
@@ -2011,7 +2018,7 @@ function! SlimvDescribe(arg)
             return arglist
         endif
     else
-        return msg
+        return substitute(msg,'^\n*','','')
     endif
 endfunction
 
