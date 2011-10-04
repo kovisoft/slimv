@@ -599,25 +599,27 @@ def swank_listen():
                         params = r[1][1]
                         logprint('params: ' + str(params))
                         if type(params) == str:
-                            to_ignore = [':frame-call']
+                            element = params.lower()
+                            to_ignore = [':frame-call', ':quit-inspector']
+                            to_nodisp = [':describe-symbol']
+                            to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':disassemble-form', \
+                                         ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':swank-toggle-trace']
                             if action and action.name in to_ignore:
                                 # Just ignore the output for this message
                                 pass
+                            elif element == 'nil' and action and action.name == ':inspector-pop':
+                                # Quit inspector
+                                vim.command('b #')
+                            elif element != 'nil' and action and action.name in to_nodisp:
+                                # Do not display output, just store it in actions
+                                action.result = unquote(params)
                             else:
-                                element = params.lower()
                                 retval = retval + new_line(retval)
                                 if element != 'nil':
                                     retval = retval + unquote(params)
                                     if action:
                                         action.result = retval
-                                # List of actions needing a prompt
-                                to_prompt = [':describe-symbol', ':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', \
-                                             ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':disassemble-form', \
-                                             ':swank-toggle-trace']
-                                if element == 'nil' and action and action.name == ':inspector-pop':
-                                    # Quit inspector
-                                    vim.command('b #')
-                                elif element == 'nil' or (action and action.name in to_prompt):
+                                if element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
                                     retval = retval + new_line(retval) + prompt + '> '
 
