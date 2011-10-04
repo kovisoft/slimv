@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.0
-" Last Change:  03 Oct 2011
+" Last Change:  04 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -326,6 +326,8 @@ let s:current_buf = -1                                    " Swank action was req
 let s:current_win = -1                                    " Swank action was requested from this window
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
+let s:sldb_name      = 'Slimv.SLDB'                       " Name of the SLDB buffer
+let s:inspect_name   = 'Slimv.INSPECT'                    " Name of the Inspect buffer
 
 " =====================================================================
 "  General utility functions
@@ -490,7 +492,7 @@ function! SlimvTimer()
         " Put '<Insert>' twice into the typeahead buffer, which should not do anything
         " just switch to replace/insert mode then back to insert/replace mode
         " But don't do this for readonly buffers
-        if bufname('%') != 'Slimv.SLDB' && bufname('%') != 'Slimv.INSPECT'
+        if bufname('%') != s:sldb_name && bufname('%') != s:inspect_name
             call feedkeys("\<insert>\<insert>")
         endif
     else
@@ -667,7 +669,7 @@ endfunction
 
 " Open a new Inspect buffer
 function SlimvOpenInspectBuffer()
-    call SlimvOpenBuffer( 'Slimv.INSPECT' )
+    call SlimvOpenBuffer( s:inspect_name )
 
     " Add keybindings valid only for the Inspect buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
@@ -677,7 +679,7 @@ endfunction
 
 " Open a new SLDB buffer
 function SlimvOpenSldbBuffer()
-    call SlimvOpenBuffer( 'Slimv.SLDB' )
+    call SlimvOpenBuffer( s:sldb_name )
 
     " Add keybindings valid only for the SLDB buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterSldb()<CR>
@@ -1400,7 +1402,7 @@ endfunction
 function! SlimvDebugCommand( cmd )
     if s:swank_connected
         if s:debug_activated
-            if bufname('%') != 'Slimv.SLDB'
+            if bufname('%') != s:sldb_name
                 call SlimvOpenSldbBuffer()
             endif
             call SlimvQuitSldb()
@@ -1609,7 +1611,7 @@ endfunction
 function! s:DebugFrame()
     if s:swank_connected && s:debug_activated
         " Check if we are in SLDB
-        let repl_buf = bufnr( g:slimv_repl_file )
+        let repl_buf = bufnr( s:sldb_name )
         if repl_buf != -1 && repl_buf == bufnr( "%" )
             let line = getline('.')
             let item = matchstr( line, '\d\+' )
