@@ -15,7 +15,7 @@ Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP se
 
 Slimv opens the lisp REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
 
-Slimv supports SLIME's debugger, profiler, cross reference, arglist, indentation, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
+Slimv supports SLIME's debugger, inspector, profiler, cross reference, arglist, indentation, symbol name completion functions. The script also has a Common Lisp Hyperspec lookup feature and it is able to lookup symbols in the Clojure API, as well as in JavaDoc.
 
 Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square and curly braces, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slimv also implements many paredit.el s-expression handling functions, like Split/Join/Wrap/Splice. Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element in or out of the list, rather you move the opening or closing parenthesis over the element or sub-list.
 
@@ -129,6 +129,8 @@ See the included documentation for more complete installation and customization 
 --------------------------------------------------------------------------------
 Script versions
 --------------------------------------------------------------------------------
+
+0.9.0: Separate buffers for SLDB and Inspector, toggle frame information in SLDB buffer by pressing Enter, look up source when pressing Enter on filename with location in SLDB, added option g:swank_block_size to override Swank output buffer size (thanks to stassats on #lisp and Philipp Marek), removed old non-swank functionality, removed option g:slimv_repl_open, paredit: new mappings [[ and ]] for previous and next defun, bugfixes: various refresh problems (thanks to Philipp Marek), disable debug mode when reconnecting Swank (by Philipp Marek), display multi-line debug condition and frame source location, quote characters in compile (by Philipp Marek), use proper SLDB level when invoking restart (by Philipp Marek), restore all lisp keyword characters in iskeyword, indentation of defgeneric, use proper filename and location when compiling defun or region, buffer corruption when re-triggering timer in insert mode, <End> moved cursor to the right edge of screen in REPL buffer when virtualmode=all.
 
 0.8.6: Handle cl:in-package, common-lisp:in-package (thanks to Philipp Marek), added option g:swank_host to allow connecting to remote Swank server, autodetection of Cake for Clojure (thanks to Chris Cahoon), set paredit mode also for .cl and .rkt files, recognise domain reversed package names in form com.gigamonkeys.pathnames (thanks to has2k1), added curly braces rainbow parenthesis for Clojure, added paredit handling of curly braces for Clojure, use SlimvIndent also for Clojure, handle line number returned in :compilation-result, bugfixes: removed double newline in :read-string (text input), when editing with cw in paredit mode, keep ending whitespaces (thanks to Mats Rauhala), compilation error when Swank does not return file name, skip dot character when Swank returns a dotted pair (a . b).
 

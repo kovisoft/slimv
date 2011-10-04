@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 03 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 04 Oct 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.0
@@ -166,10 +166,6 @@ For the Swank options plese visit |swank-configuration|.
                              switched on.
 
 |g:slimv_python|             Path for the Python interpreter.
-
-|g:slimv_repl_dir|           Directory path for the Lisp REPL buffer file.
-
-|g:slimv_repl_file|          Filename without path for the REPL buffer file.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
@@ -363,19 +359,6 @@ whole string in double quotes or escape the spaces with a backslash.
 This option is empty by default, which means that the command associated with
 the .html extension (on Windows) or returned by the Python webbrowser package
 (on Linux) is used to start the browser.
-
-                                                             *g:slimv_repl_dir*
-Directory path for the Lisp REPL buffer file. By default this is a directory
-for temporary files, something like /tmp/ on Linux or
-"C:\Documents and Settings\Username\Local Settings\Temp\" on Windows.
-The directory name must end with the pathname separator (/ or \).
-See also |g:slimv_repl_file|.
-
-                                                            *g:slimv_repl_file*
-The Lisp REPL output is written to a temporary file by the SWANK client.
-|g:slimv_repl_file| defines the filename part of the REPL output file without
-the directory path. The complete REPL filename is built from
-|g:slimv_repl_dir| and |g:slimv_repl_file|.
 
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
@@ -647,9 +630,9 @@ before resuming execution.
 -------------------------------------------------------------------------------
 INVOKE RESTARTS                                                *swank-restarts*
 
-In case of an error or when the Lisp process is interrupted SLDB displays
-the condition and the list of possible restarts, each line startin with the
-restart identifier, for example:
+In case of an error or when the Lisp process is interrupted Slimv presents
+the Swank debugger (SLDB) buffer. SLDB displays the condition and the list of
+possible restarts, each line startin with the restart identifier, for example:
 
 DIVISION-BY-ZERO detected
    [Condition of type DIVISION-BY-ZERO]
@@ -673,8 +656,9 @@ The most frequently used restarts have the following shortcuts defined:
 -------------------------------------------------------------------------------
 DISPLAY BACKTRACE                                             *swank-backtrace*
 
-SLDB displays the backtrace for the calling frames, each line starting with
-the frame identifier, for example:
+The Swank debugger (SLDB) is presented in a separate dedicated buffer.
+Below the Restarts section SLDB displays the backtrace for the calling frames,
+each line starting with the frame identifier, for example:
 
 Backtrace:
   0: (CCL::%FIXNUM-TRUNCATE #<Unknown Arguments>)
@@ -686,8 +670,11 @@ Backtrace:
 
 
 If you press Enter in normal mode on a frame line then frame information
-with the local variable bindings for that frame are displayed at the bottom
-of the SLDB printout.
+with the local variable bindings and source location information for that frame
+are displayed in a fold. Pressing Enter again toggles the fold close/open.
+
+If you press Enter on a filename with source location information then Slimv
+opens the given file in a buffer at the specified location.
 
 Some commands have modified behaviour when used on a frame:
 
@@ -748,7 +735,8 @@ SWANK server. In this case the Hyperspec database is used for symbol lookup.
 -------------------------------------------------------------------------------
 INSPECTOR                                                       *swank-inspect*
 
-The Enter key is remapped in normal mode for traversing the inspector output.
+The Swank Inspector is presented in a separate buffer. In the Inspect buffer
+the Enter key is remapped in normal mode for traversing the inspector output.
 
 When pressing Enter on the top line starting with 'Inspecting' then the
 currently inspected value is reloaded.
@@ -759,8 +747,10 @@ identifier) then nn-th action is called.
 When pressing Enter on a line starting with [nn] (where nn is the part
 identifier) then nn-th part is inspected.
 
-When pressing Enter on the last line starting with [<<] then the inspector
-is popped up one level.
+When pressing Enter on the last line starting with [<<] or pressing <Backspace>
+then the inspector is popped up one level, or if this was the topmost level
+then Slimv exits the Inspector.
+Pressing <Leader>q also exits the Inspector.
 
 
 If debugger is activated and the cursor is placed on a frame line in the
@@ -1223,6 +1213,26 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.0  - Separate buffers for SLDB and Inspector.
+       - Toggle frame information in SLDB buffer by pressing Enter.
+       - Look up source when pressing Enter on filename with location in SLDB.
+       - Added option g:swank_block_size to override Swank output buffer size
+         (thanks to stassats on #lisp and Philipp Marek).
+       - Removed old non-swank functionality.
+       - Removed option g:slimv_repl_open.
+       - Paredit: new mappings [[ and ]] for previous and next defun.
+       - Bugfix: various refresh problems (thanks to Philipp Marek).
+       - Bugfix: disable debug mode when reconnecting Swank (by Philipp Marek).
+       - Bugfix: display multi-line debug condition and frame source location,
+         quote characters in compile (by Philipp Marek).
+       - Bugfix: use proper SLDB level when invoking restart (by Philipp Marek).
+       - Bugfix: restore all lisp keyword characters in iskeyword.
+       - Bugfix: indentation of defgeneric.
+       - Bugfix: use proper filename and location when compiling defun or region.
+       - Bugfix: buffer corruption when re-triggering timer in insert mode.
+       - Bugfix: <End> moved cursor to the right edge of screen in REPL buffer
+         when virtualmode=all.
+
 0.8.6  - Handle cl:in-package, common-lisp:in-package (thanks to Philipp Marek).
        - Added option g:swank_host to allow connecting to remote Swank server.
        - Autodetection of Cake for Clojure (thanks to Chris Cahoon).
@@ -1518,7 +1528,8 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 - Vim register "s is used for all form selections, so its original content is
   destroyed.
 - Vim mark 's is used to mark the end of the REPL buffer, i.e. the beginning
-  of the "command line".
+  of the "command line", also the for the location of the current frame in
+  the SLDB buffer.
 - Needs Vim version 7.0 or above, because of the intensive use of lists.
 - Needs the same Python version that Vim is compiled against
 - It is not possible to run separate Lisp and Clojure REPL in the same
@@ -1529,8 +1540,8 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 TODO                                                               *slimv-todo*
 
 - Add missing SLIME functions to the SWANK client.
-- Separate SLDB/Inspector/etc buffers from the REPL buffer.
-- Allow connecting remote SWANK server (outside of localhost).
+- Continue separating other buffers (e.g. Threads) from the REPL buffer.
+- Allow connecting remote SWANK server (outside of localhost) via SSH.
 
 ===============================================================================
 CREDITS                                                         *slimv-credits*
