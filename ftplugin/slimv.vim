@@ -1306,6 +1306,7 @@ function! SlimvHandleEnterSldb()
                 endif
                 " Display item-th frame
                 call SlimvMakeFold()
+                call setpos( "'s", [0, line('.'), col('.'), 0] )
                 if b:SlimvImplementation() != 'clisp'
                     " These are not implemented for CLISP
                     silent execute 'python swank_frame_call("' . item . '")'

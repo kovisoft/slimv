@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.0
-# Last Change:  29 Sep 2011
+# Last Change:  04 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -452,6 +452,7 @@ def swank_parse_frame_call(struct):
     Parse frame call output
     """
     vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('normal! `s')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -468,6 +469,7 @@ def swank_parse_frame_source(struct):
     'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
     """
     vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('normal! `s')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -488,6 +490,7 @@ def swank_parse_locals(struct):
     Parse frame locals output
     """
     vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('normal! `s')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
