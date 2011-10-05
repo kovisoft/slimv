@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 04 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 05 Oct 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.0
@@ -701,15 +701,15 @@ connected to the SWANK server.
 -------------------------------------------------------------------------------
 DESCRIBE SYMBOL                                                *swank-describe*
 
-When you hover your mouse over a symbol's name then the symbol description
+When you hover your mouse over a function's name then the function description
 is requested from SWANK and displayed in a tooltip, called balloonexpr in
 Vim terms. This functionality requires that Vim is compiled with the
 +balloon_eval feature enabled.
 
-If you don't have +balloon_eval then it is possible to select the
-Describe-Symbol menu item from the Slimv/Documentation submenu, or press
-the <Leader>s keyboard shortcut, which then displays the symbol description
-in the REPL buffer.
+If you don't have +balloon_eval or want to get the description for a general
+symbol then it is possible to select the Describe-Symbol menu item from the
+Slimv/Documentation submenu, or press the <Leader>s keyboard shortcut,
+which then displays the symbol description in the Vim message area.
 
 Note: the symbol description is not displayed when Slimv is not connected
 to the SWANK server.
