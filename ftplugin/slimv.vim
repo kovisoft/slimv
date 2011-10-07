@@ -1000,7 +1000,9 @@ function! SlimvSend( args, echoing, output )
         " Open a new line for the output
         call append( '$', '' )
     endif
-    call SlimvMarkBufferEnd()
+    if a:output
+        call SlimvMarkBufferEnd()
+    endif
     call SlimvCommand( 'python swank_input("s:swank_form")' )
     let s:swank_package = ''
     let s:refresh_disabled = 0

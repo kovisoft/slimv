@@ -473,8 +473,12 @@ def swank_parse_frame_source(struct, action):
     win = vim.current.window
     line = win.cursor[0]
     if type(struct) == list and len(struct) == 4:
-        [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
-        fname = format_filename(struct[1][1])
+        if struct[1] == 'nil':
+            [lnum, cnum] = [int(struct[2][1]), 0]
+            fname = 'Unknown file'
+        else:
+            [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
+            fname = format_filename(struct[1][1])
         if lnum > 0:
             s = '      in ' + fname + ' line ' + str(lnum)
         else:
