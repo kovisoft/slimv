@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  06 Oct 2011
+" Last Change:  07 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1622,12 +1622,13 @@ function! s:DebugFrame()
         " Check if we are in SLDB
         let repl_buf = bufnr( s:sldb_name )
         if repl_buf != -1 && repl_buf == bufnr( "%" )
-            let line = getline('.')
-            let item = matchstr( line, '\d\+' )
-            if item != ''
-                let section = getline( line('.') - item - 1 )
-                if section[0:9] == 'Backtrace:'
-                    return item
+            let bcktrpos = search( '^Backtrace:', 'bcnW' )
+            let framepos = search( '^\s*\d\+', 'bcnW' )
+            if framepos > 0 && bcktrpos > 0 && framepos > bcktrpos
+                let line = getline( framepos )
+                let item = matchstr( line, '^\s*\d\+' )
+                if item != ''
+                    return substitute( item, '\s', '', 'g' )
                 endif
             endif
         endif
@@ -1651,7 +1652,7 @@ function! SlimvInteractiveEval()
     let frame = s:DebugFrame()
     if frame != ''
         " We are in the debugger, eval expression in the frame the cursor stands on
-        let e = input( 'Eval in frame: ' )
+        let e = input( 'Eval in frame ' . frame . ': ' )
         if e != ''
             let result = SlimvCommandGetResponse( ':eval-string-in-frame', 'python swank_eval_in_frame("' . e . '", ' . frame . ')' )
             if result != ''
@@ -1778,10 +1779,11 @@ function! SlimvInspect()
     let frame = s:DebugFrame()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
-        let s = input( 'Inspect in frame ' . frame . ': ' )
-        call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
-        call SlimvRefreshReplBuffer()
-        return
+        let s = input( 'Inspect in frame ' . frame . ': ', SlimvSelectSymbolExt() )
+        if s != ''
+            call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
+            call SlimvRefreshReplBuffer()
+        endif
     else
         let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
         if s != ''

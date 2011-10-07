@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.0
-# Last Change:  04 Oct 2011
+# Version:      0.9.1
+# Last Change:  07 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -477,12 +477,12 @@ def swank_parse_frame_source(struct):
         [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
         fname = format_filename(struct[1][1])
         if lnum > 0:
-            s = '     in ' + fname + ' line ' + str(lnum)
+            s = '    in ' + fname + ' line ' + str(lnum)
         else:
-            s = '     in ' + fname + ' byte ' + struct[2][1]
+            s = '    in ' + fname + ' byte ' + struct[2][1]
         buf[line:line] = s.splitlines();
     else:
-        buf[line:line] = ['     No source line information']
+        buf[line:line] = ['    No source line information']
     vim.command('call SlimvEndUpdate()')
 
 def swank_parse_locals(struct):
@@ -495,12 +495,12 @@ def swank_parse_locals(struct):
     win = vim.current.window
     line = win.cursor[0]
     if type(struct) == list:
-        lines = '    Locals:\n'
+        lines = '    Locals:'
         for f in struct:
             name  = parse_plist(f, ':name')
             id    = parse_plist(f, ':id')
             value = parse_plist(f, ':value')
-            lines = lines + '      ' + name + ' = ' + value + '\n'
+            lines = lines + '\n      ' + name + ' = ' + value
     else:
         lines = '    No locals'
     buf[line:line] = lines.split("\n")
