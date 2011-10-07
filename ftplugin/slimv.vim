@@ -1313,12 +1313,12 @@ function! SlimvHandleEnterSldb()
                 " Display item-th frame
                 call SlimvMakeFold()
                 call setpos( "'s", [0, line('.'), col('.'), 0] )
+                silent execute 'python swank_frame_locals("' . item . '")'
                 if b:SlimvImplementation() != 'clisp'
                     " These are not implemented for CLISP
-                    silent execute 'python swank_frame_call("' . item . '")'
                     silent execute 'python swank_frame_source_loc("' . item . '")'
+                    silent execute 'python swank_frame_call("' . item . '")'
                 endif
-                silent execute 'python swank_frame_locals("' . item . '")'
                 return
             endif
             if search( '^Restarts:', 'bnW' ) > 0
@@ -1779,7 +1779,12 @@ function! SlimvInspect()
     let frame = s:DebugFrame()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
-        let s = input( 'Inspect in frame ' . frame . ': ', SlimvSelectSymbolExt() )
+        let sym = SlimvSelectSymbolExt()
+        if matchstr( sym, '^\d\+' ) != ''
+            " No symbol selected, this is just a number
+            let sym = ''
+        endif
+        let s = input( 'Inspect in frame ' . frame . ': ', sym )
         if s != ''
             call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
             call SlimvRefreshReplBuffer()
