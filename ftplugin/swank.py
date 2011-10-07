@@ -170,9 +170,10 @@ def parse_sexpr( sexpr ):
 ###############################################################################
 
 class swank_action:
-    def __init__ (self, id, name):
+    def __init__ (self, id, name, data):
         self.id = id
         self.name = name
+        self.data = data
         self.result = ''
         self.pending = True
 
@@ -447,12 +448,11 @@ def swank_parse_list_threads(tl):
         idx = idx + 1
     return buf
 
-def swank_parse_frame_call(struct):
+def swank_parse_frame_call(struct, action):
     """
     Parse frame call output
     """
-    vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('normal! `s')
+    vim.command('call SlimvGotoFrame(' + action.data + ')')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -462,14 +462,13 @@ def swank_parse_frame_call(struct):
         buf[line:line] = ['No frame call information']
     vim.command('call SlimvEndUpdate()')
 
-def swank_parse_frame_source(struct):
+def swank_parse_frame_source(struct, action):
     """
     Parse frame source output
     http://comments.gmane.org/gmane.lisp.slime.devel/9961 ;-(
     'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
     """
-    vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('normal! `s')
+    vim.command('call SlimvGotoFrame(' + action.data + ')')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -485,12 +484,11 @@ def swank_parse_frame_source(struct):
         buf[line:line] = ['      No source line information']
     vim.command('call SlimvEndUpdate()')
 
-def swank_parse_locals(struct):
+def swank_parse_locals(struct, action):
     """
     Parse frame locals output
     """
-    vim.command('call SlimvOpenSldbBuffer()')
-    vim.command('normal! `s')
+    vim.command('call SlimvGotoFrame(' + action.data + ')')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -687,11 +685,11 @@ def swank_listen():
                                         retval = retval + '\n' + '  ' + f
                                     retval = retval + '\n' + prompt + '> '
                                 elif action.name == ':frame-call':
-                                    swank_parse_frame_call(params)
+                                    swank_parse_frame_call(params, action)
                                 elif action.name == ':frame-source-location':
-                                    swank_parse_frame_source(params)
+                                    swank_parse_frame_source(params, action)
                                 elif action.name == ':frame-locals-and-catch-tags':
-                                    swank_parse_locals(params)
+                                    swank_parse_locals(params, action)
                                 elif action.name == ':profiled-functions':
                                     retval = retval + '\n' + 'Profiled functions:\n'
                                     for f in params:
@@ -733,14 +731,14 @@ def swank_listen():
         empty_last_line = (retval[-1] == '\n')
     return retval
 
-def swank_rex(action, cmd, package, thread):
+def swank_rex(action, cmd, package, thread, data=''):
     """
     Send an :emacs-rex command to SWANK
     """
     global id
     id = id + 1
     key = str(id)
-    actions[key] = swank_action(key, action)
+    actions[key] = swank_action(key, action, data)
     form = '(:emacs-rex ' + cmd + ' ' + package + ' ' + thread + ' ' + str(id) + ')\n'
     swank_send(form)
 
@@ -790,7 +788,7 @@ def swank_eval(exp):
 
 def swank_eval_in_frame(exp, n):
     cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ')'
-    swank_rex(':eval-string-in-frame', cmd, get_swank_package(), current_thread)
+    swank_rex(':eval-string-in-frame', cmd, get_swank_package(), current_thread, str(n))
 
 def swank_pprint_eval(exp):
     cmd = '(swank:pprint-eval ' + requote(exp) + ')'
@@ -801,7 +799,7 @@ def swank_interrupt():
 
 def swank_invoke_restart(level, restart):
     cmd = '(swank:invoke-nth-restart-for-emacs ' + level + ' ' + restart + ')'
-    swank_rex(':invoke-nth-restart-for-emacs', cmd, 'nil', current_thread)
+    swank_rex(':invoke-nth-restart-for-emacs', cmd, 'nil', current_thread, restart)
 
 def swank_throw_toplevel():
     swank_rex(':throw-to-toplevel', '(swank:throw-to-toplevel)', 'nil', current_thread)
@@ -818,15 +816,15 @@ def swank_require(contrib):
 
 def swank_frame_call(frame):
     cmd = '(swank-backend:frame-call ' + frame + ')'
-    swank_rex(':frame-call', cmd, 'nil', current_thread)
+    swank_rex(':frame-call', cmd, 'nil', current_thread, frame)
 
 def swank_frame_source_loc(frame):
     cmd = '(swank:frame-source-location ' + frame + ')'
-    swank_rex(':frame-source-location', cmd, 'nil', current_thread)
+    swank_rex(':frame-source-location', cmd, 'nil', current_thread, frame)
 
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-and-catch-tags ' + frame + ')'
-    swank_rex(':frame-locals-and-catch-tags', cmd, 'nil', current_thread)
+    swank_rex(':frame-locals-and-catch-tags', cmd, 'nil', current_thread, frame)
 
 def swank_set_package(pkg):
     cmd = '(swank:set-package "' + pkg + '")'
@@ -867,18 +865,18 @@ def swank_inspect(symbol):
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
-    swank_rex(':inspect-nth-part', cmd, 'nil', 't')
+    swank_rex(':inspect-nth-part', cmd, 'nil', 't', str(n))
 
 def swank_inspector_nth_action(n):
     cmd = '(swank:inspector-call-nth-action ' + str(n) + ')'
-    swank_rex(':inspector-call-nth-action', cmd, 'nil', 't')
+    swank_rex(':inspector-call-nth-action', cmd, 'nil', 't', str(n))
 
 def swank_inspector_pop():
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
 def swank_inspect_in_frame(symbol, n):
     cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
-    swank_rex(':inspect-in-frame', cmd, get_swank_package(), current_thread)
+    swank_rex(':inspect-in-frame', cmd, get_swank_package(), current_thread, str(n))
 
 def swank_quit_inspector():
     swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
@@ -957,11 +955,11 @@ def swank_list_threads():
 
 def swank_kill_thread(index):
     cmd = '(swank:kill-nth-thread ' + str(index) + ')'
-    swank_rex(':kill-thread', cmd, get_package(), 't')
+    swank_rex(':kill-thread', cmd, get_package(), 't', str(index))
 
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
-    swank_rex(':debug-thread', cmd, get_package(), 't')
+    swank_rex(':debug-thread', cmd, get_package(), 't', str(index))
 
 ###############################################################################
 # Generic SWANK connection handling

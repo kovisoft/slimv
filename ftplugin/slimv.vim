@@ -734,6 +734,22 @@ function SlimvQuitSldb()
     b #
 endfunction
 
+" Open SLDB buffer and place cursor on the given frame
+function SlimvGotoFrame( frame )
+    call SlimvOpenSldbBuffer()
+    let bcktrpos = search( '^Backtrace:', 'bcnw' )
+    let line = getline( '.' )
+    let item = matchstr( line, '^\s*' . a:frame .  ':' )
+    if item != '' && line('.') > bcktrpos
+        " Already standing on the frame
+        return
+    endif
+
+    " Must locate the frame starting from the 'Backtrace:' string
+    call search( '^Backtrace:', 'bcw' )
+    call search( '^\s*' . a:frame .  ':', 'w' )
+endfunction
+
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
     if SlimvGetFiletype() == 'clojure'
@@ -1312,7 +1328,6 @@ function! SlimvHandleEnterSldb()
                 endif
                 " Display item-th frame
                 call SlimvMakeFold()
-                call setpos( "'s", [0, line('.'), col('.'), 0] )
                 silent execute 'python swank_frame_locals("' . item . '")'
                 if b:SlimvImplementation() != 'clisp'
                     " These are not implemented for CLISP
