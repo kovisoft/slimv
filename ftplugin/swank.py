@@ -384,9 +384,9 @@ def swank_parse_xref(struct):
             if key == ':error':
                 buf = buf + 'no source information\n'
             elif type(unquote(e[1][1])) == str:
-                buf = unquote(e[1][1]) + '\n'
+                buf = buf + unquote(e[1][1]) + '\n'
             else:
-                buf = unquote(e[1][1][1]) + '\n'
+                buf = buf + unquote(e[1][1][1]) + '\n'
     return buf
 
 def swank_parse_compile(struct):
