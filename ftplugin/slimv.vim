@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  07 Oct 2011
+" Last Change:  08 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1639,11 +1639,14 @@ function! s:DebugFrame()
         " Check if we are in SLDB
         let repl_buf = bufnr( s:sldb_name )
         if repl_buf != -1 && repl_buf == bufnr( "%" )
-            let bcktrpos = search( '^Backtrace:', 'bcnW' )
-            let framepos = search( '^\s*\d\+', 'bcnW' )
+            let bcktrpos = search( '^Backtrace:', 'bcnw' )
+            let framepos = line( '.' )
+            if matchstr( getline('.'), '^\s\+\d\+:' ) == ''
+                let framepos = search( '^\s\+\d\+', 'bcnw' )
+            endif
             if framepos > 0 && bcktrpos > 0 && framepos > bcktrpos
                 let line = getline( framepos )
-                let item = matchstr( line, '^\s*\d\+' )
+                let item = matchstr( line, '^\s\+\d\+' )
                 if item != ''
                     return substitute( item, '\s', '', 'g' )
                 endif
@@ -1796,10 +1799,21 @@ function! SlimvInspect()
     let frame = s:DebugFrame()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
-        let sym = SlimvSelectSymbolExt()
-        if matchstr( sym, '^\d\+' ) != ''
-            " No symbol selected, this is just a number
+        let line = getline( '.' )
+        if matchstr( line, '^\s\+\d\+:' ) != ''
+            " This is the base frame line in form '  1: xxxxx'
             let sym = ''
+        elseif matchstr( line, '^\s\+in "\(.*\)" \(line\|byte\)' ) != ''
+            " This is the source location line
+            let sym = ''
+        elseif matchstr( line, '^\s\+No source line information' ) != ''
+            " This is the no source location line
+            let sym = ''
+        elseif matchstr( line, '^\s\+Locals:' ) != ''
+            " This is the 'Locals' line
+            let sym = ''
+        else
+            let sym = SlimvSelectSymbolExt()
         endif
         let s = input( 'Inspect in frame ' . frame . ': ', sym )
         if s != ''
