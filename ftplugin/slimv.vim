@@ -1815,7 +1815,7 @@ function! SlimvInspect()
         else
             let sym = SlimvSelectSymbolExt()
         endif
-        let s = input( 'Inspect in frame ' . frame . ': ', sym )
+        let s = input( 'Inspect in frame ' . frame . ' (evaluated): ', sym )
         if s != ''
             call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
             call SlimvRefreshReplBuffer()
