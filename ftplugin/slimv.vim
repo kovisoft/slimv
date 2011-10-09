@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  08 Oct 2011
+" Last Change:  09 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1817,6 +1817,7 @@ function! SlimvInspect()
         endif
         let s = input( 'Inspect in frame ' . frame . ' (evaluated): ', sym )
         if s != ''
+            call SlimvBeginUpdate()
             call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
             call SlimvRefreshReplBuffer()
         endif
