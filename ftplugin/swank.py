@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.1
-# Last Change:  07 Oct 2011
+# Last Change:  09 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -214,7 +214,7 @@ def parse_plist(lst, keyword):
             return unquote(lst[i+1])
     return ''
 
-def parse_location(fname, loc):
+def parse_filepos(fname, loc):
     lnum = 1
     cnum = 1
     pos = loc
@@ -236,6 +236,32 @@ def format_filename(fname):
     if fname.find(' '):
         fname = '"' + fname + '"'
     return fname
+
+def parse_location(lst):
+    fname = ''
+    line  = ''
+    pos   = ''
+    if lst[0] == ':location':
+        if type(lst[1]) == str:
+            return unquote(lst[1])
+        for l in lst[1:]:
+            if l[0] == ':file':
+                fname = l[1]
+            if l[0] == ':line':
+                line = l[1]
+            if l[0] == ':position':
+                pos = l[1]
+        if fname == '':
+            fname = 'Unknown file'
+        if line != '':
+            return 'in ' + format_filename(fname) + ' line ' + line
+        if pos != '':
+            [lnum, cnum] = parse_filepos(unquote(fname), int(pos))
+            if lnum > 0:
+                return 'in ' + format_filename(fname) + ' line ' + str(lnum)
+            else:
+                return 'in ' + format_filename(fname) + ' byte ' + pos
+    return 'no source line information'
 
 def unicode_len(text):
     return len(unicode(text, "utf-8"))
@@ -378,15 +404,7 @@ def swank_parse_xref(struct):
     """
     buf = ''
     for e in struct:
-        buf = buf + unquote(e[0]) + ' - '
-        if len(e) > 1:
-            key = e[1][0]
-            if key == ':error':
-                buf = buf + 'no source information\n'
-            elif type(unquote(e[1][1])) == str:
-                buf = buf + unquote(e[1][1]) + '\n'
-            else:
-                buf = buf + unquote(e[1][1][1]) + '\n'
+        buf = buf + unquote(e[0]) + ' - ' + parse_location(e[1]) + '\n'
     return buf
 
 def swank_parse_compile(struct):
@@ -427,7 +445,7 @@ def swank_parse_compile(struct):
                     lnum = pos
                     cnum = 1
                 else:
-                    [lnum, cnum] = parse_location(fname, int(pos))
+                    [lnum, cnum] = parse_filepos(fname, int(pos))
                 msg = msg.replace("'", "' . \"'\" . '")
                 qfentry = "{'filename':'"+fname+"','lnum':'"+str(lnum)+"','col':'"+str(cnum)+"','text':'"+msg+"'}"
                 logprint(qfentry)
@@ -474,10 +492,10 @@ def swank_parse_frame_source(struct, action):
     line = win.cursor[0]
     if type(struct) == list and len(struct) == 4:
         if struct[1] == 'nil':
-            [lnum, cnum] = [int(struct[2][1]), 0]
+            [lnum, cnum] = [int(struct[2][1]), 1]
             fname = 'Unknown file'
         else:
-            [lnum, cnum] = parse_location(unquote(struct[1][1]), int(struct[2][1]))
+            [lnum, cnum] = parse_filepos(unquote(struct[1][1]), int(struct[2][1]))
             fname = format_filename(struct[1][1])
         if lnum > 0:
             s = '      in ' + fname + ' line ' + str(lnum)
