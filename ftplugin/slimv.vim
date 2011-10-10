@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  09 Oct 2011
+" Last Change:  10 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1547,7 +1547,15 @@ function! SlimvGetRegion() range
         let firstcol = col( a:firstline ) - 1
         let lastcol  = col( a:lastline  ) - 2
     else
+        " No range was selected, select current paragraph
+        normal! vap
+        execute "normal! \<Esc>"
+        call setpos( '.', oldpos ) 
         let lines = getline( "'<", "'>" )
+        if lines == [] || lines == ['']
+            call SlimvError( "No range selected." )
+            return []
+        endif
         let firstcol = col( "'<" ) - 1
         let lastcol  = col( "'>" ) - 2
     endif
@@ -1574,7 +1582,9 @@ endfunction
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
     let lines = SlimvGetRegion()
-    call SlimvEval( lines )
+    if lines != []
+        call SlimvEval( lines )
+    endif
 endfunction
 
 " Eval contents of the 's' register
@@ -2014,6 +2024,9 @@ endfunction
 function! SlimvCompileRegion() range
     let oldpos = getpos( '.' ) 
     let lines = SlimvGetRegion()
+    if lines == []
+        return
+    endif
     let region = join( lines, "\n" )
     if s:swank_connected
         let s:swank_form = region
