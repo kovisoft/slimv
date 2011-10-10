@@ -226,6 +226,11 @@ if !exists( 'g:slimv_repl_wrap' )
     let g:slimv_repl_wrap = 1
 endif
 
+" Wrap long lines in SLDB buffer
+if !exists( 'g:slimv_sldb_wrap' )
+    let g:slimv_sldb_wrap = 0
+endif
+
 " Maximum number of lines echoed from the evaluated form
 if !exists( 'g:slimv_echolines' )
     let g:slimv_echolines = 4
@@ -647,7 +652,7 @@ function! SlimvOpenReplBuffer()
         noremap  <buffer> <silent>        j      gj
         noremap  <buffer> <silent>        0      g0
         noremap  <buffer> <silent>        $      :call <SID>EndOfScreenLine()<CR>
-        set wrap
+        setlocal wrap
     endif
 
     hi SlimvNormal term=none cterm=none gui=none
@@ -696,6 +701,11 @@ function SlimvOpenSldbBuffer()
     setlocal foldmethod=marker
     setlocal foldmarker={{{,}}}
     setlocal foldtext=substitute(getline(v:foldstart),'{{{','','')
+    setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,{,},[,]
+    if g:slimv_sldb_wrap
+        setlocal wrap
+    endif
+
     if version < 703
         " conceal mechanism is defined since Vim 7.3
         syn match Ignore /{{{/
@@ -1652,7 +1662,7 @@ function! s:DebugFrame()
             let bcktrpos = search( '^Backtrace:', 'bcnw' )
             let framepos = line( '.' )
             if matchstr( getline('.'), '^\s\+\d\+:' ) == ''
-                let framepos = search( '^\s\+\d\+', 'bcnw' )
+                let framepos = search( '^\s\+\d\+:', 'bcnw' )
             endif
             if framepos > 0 && bcktrpos > 0 && framepos > bcktrpos
                 let line = getline( framepos )
