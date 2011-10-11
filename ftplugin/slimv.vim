@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  10 Oct 2011
+" Last Change:  11 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -331,6 +331,7 @@ let s:current_buf = -1                                    " Swank action was req
 let s:current_win = -1                                    " Swank action was requested from this window
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
+let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
 let s:sldb_name      = 'Slimv.SLDB'                       " Name of the SLDB buffer
 let s:inspect_name   = 'Slimv.INSPECT'                    " Name of the Inspect buffer
 
@@ -715,7 +716,7 @@ function SlimvOpenSldbBuffer()
         syn match Comment /{{{/ conceal
         syn match Comment /}}}/ conceal
     endif
-    syn match Type /^\s*\d\+:/
+    syn match Type /^\s\{0,2}\d\{1,3}:/
     syn match Type /^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$/
 endfunction
 
@@ -1329,9 +1330,9 @@ function! SlimvHandleEnterSldb()
     let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
-        let item = matchstr( line, '^\s*\d\+' )
+        let item = matchstr( line, s:frame_def )
         if item != ''
-            let item = substitute( item, '\s', '', 'g' )
+            let item = substitute( item, '\s\|:', '', 'g' )
             if search( '^Backtrace:', 'bnW' ) > 0
                 if foldlevel('.')
                     " With a fold just toggle visibility
@@ -1661,14 +1662,14 @@ function! s:DebugFrame()
         if repl_buf != -1 && repl_buf == bufnr( "%" )
             let bcktrpos = search( '^Backtrace:', 'bcnw' )
             let framepos = line( '.' )
-            if matchstr( getline('.'), '^\s\+\d\+:' ) == ''
-                let framepos = search( '^\s\+\d\+:', 'bcnw' )
+            if matchstr( getline('.'), s:frame_def ) == ''
+                let framepos = search( s:frame_def, 'bcnw' )
             endif
             if framepos > 0 && bcktrpos > 0 && framepos > bcktrpos
                 let line = getline( framepos )
-                let item = matchstr( line, '^\s\+\d\+' )
+                let item = matchstr( line, s:frame_def )
                 if item != ''
-                    return substitute( item, '\s', '', 'g' )
+                    return substitute( item, '\s\|:', '', 'g' )
                 endif
             endif
         endif
@@ -1820,7 +1821,7 @@ function! SlimvInspect()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
         let line = getline( '.' )
-        if matchstr( line, '^\s\+\d\+:' ) != ''
+        if matchstr( line, s:frame_def ) != ''
             " This is the base frame line in form '  1: xxxxx'
             let sym = ''
         elseif matchstr( line, '^\s\+in "\(.*\)" \(line\|byte\)' ) != ''
