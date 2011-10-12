@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.1
-# Last Change:  09 Oct 2011
+# Last Change:  12 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -501,7 +501,15 @@ def swank_parse_frame_source(struct, action):
             s = '      in ' + fname + ' line ' + str(lnum)
         else:
             s = '      in ' + fname + ' byte ' + struct[2][1]
-        buf[line:line] = s.splitlines();
+        slines = s.splitlines()
+        if len(slines) > 2:
+            # Make a fold (closed) if there are too many lines
+            slines[ 0] = slines[ 0] + '{{{'
+            slines[-1] = slines[-1] + '}}}'
+            buf[line:line] = slines
+            vim.command(str(line+1) + 'foldclose')
+        else:
+            buf[line:line] = slines
     else:
         buf[line:line] = ['      No source line information']
     vim.command('call SlimvEndUpdate()')
