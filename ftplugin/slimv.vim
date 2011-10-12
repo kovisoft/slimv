@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.1
-" Last Change:  11 Oct 2011
+" Last Change:  12 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1330,15 +1330,15 @@ function! SlimvHandleEnterSldb()
     let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
+        if foldlevel('.')
+            " With a fold just toggle visibility
+            normal za
+            return
+        endif
         let item = matchstr( line, s:frame_def )
         if item != ''
             let item = substitute( item, '\s\|:', '', 'g' )
             if search( '^Backtrace:', 'bnW' ) > 0
-                if foldlevel('.')
-                    " With a fold just toggle visibility
-                    normal za
-                    return
-                endif
                 " Display item-th frame
                 call SlimvMakeFold()
                 silent execute 'python swank_frame_locals("' . item . '")'
