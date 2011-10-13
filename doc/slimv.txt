@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 13 Oct 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.9.0
+                               Version 0.9.1
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -175,6 +175,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
 |g:slimv_simple_compl|       Use simple completion instead of fuzzy completion.
+
+|g:slimv_sldb_wrap|          Set wrap mode for the SLDB buffer.
 
 |g:slimv_swank_clojure|      Command used to start the Clojure SWANK server.
 
@@ -409,6 +411,11 @@ in the next display line.
 This is the default behaviour as it is how regular REPL windows work. This
 mode also enables keybindings for cursor movements, so that an <Up> keypress
 will move the cursor one line on the display and not one line in the document.
+
+                                                            *g:slimv_sldb_wrap*
+Set wrap mode for the SLDB buffer, which means the lines longer than the
+window width will not be hidden to the right. Instead they will be continued
+in the next display line. Disabled by default.
 
                                                             *g:slimv_echolines*
 If a long form is evaluated then echo only this number of lines from the
@@ -1212,6 +1219,22 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.9.1  - Improved frame number identification in SLDB buffer.
+       - Moved frame source location above frame locals in SLDB.
+       - Fold frame source location if more than 2 lines.
+       - Inspect-In-Frame: preselect symbol under cursor only in variable lines.
+       - Inspect-In-Frame: open Inspector in the other window.
+       - Improved XRef file location parsing.
+       - Use current paragraph when no range set for Eval-Region and
+         Compile-Region.
+       - Added option g:slimv_sldb_wrap, do not set wrap for source buffers.
+       - Added Set-Breakpoint command mapped to <leader>B (thanks to
+         Philipp Marek), changed Profile-By-Substring mapping to <leader>P.
+       - Set Lisp keyword characters also in SLDB buffer.
+       - Bugfix: error messages at Connect-Server.
+       - Bugfix: error message for frame source location without filename.
+       - Bugfix: XRef output sometimes cut.
 
 0.9.0  - Separate buffers for SLDB and Inspector.
        - Toggle frame information in SLDB buffer by pressing Enter.
