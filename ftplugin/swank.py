@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.2
-# Last Change:  16 Oct 2011
+# Last Change:  17 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -462,7 +462,7 @@ def swank_parse_list_threads(tl):
     logprint(str(lst))
     idx = 0
     for t in lst:
-        buf = buf + "\n%3d. %3d: %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]))
+        buf = buf + "\n%3d. ID%3d: %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]))
         idx = idx + 1
     return buf
 
