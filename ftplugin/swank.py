@@ -631,7 +631,7 @@ def swank_listen():
                             to_ignore = [':frame-call', ':quit-inspector']
                             to_nodisp = [':describe-symbol']
                             to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':disassemble-form', \
-                                         ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':swank-toggle-trace']
+                                         ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':swank-toggle-trace', 'sldb-break']
                             if action and action.name in to_ignore:
                                 # Just ignore the output for this message
                                 pass
@@ -913,6 +913,10 @@ def swank_inspect_in_frame(symbol, n):
 
 def swank_quit_inspector():
     swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
+
+def swank_set_break(symbol):
+    cmd = '(swank:sldb-break"' + symbol + '")'
+    swank_rex(':sldb-break', cmd, get_package(), 't')
 
 def swank_toggle_trace(symbol):
     cmd = '(swank:swank-toggle-trace "' + symbol + '")'
