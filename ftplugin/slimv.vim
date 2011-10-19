@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  17 Oct 2011
+" Last Change:  19 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2100,13 +2100,6 @@ function! SlimvDescribe(arg)
     endif
 endfunction
 
-" Setup balloonexp to display symbol description
-if g:slimv_balloon && has( 'balloon_eval' )
-    "setlocal balloondelay=100
-    setlocal ballooneval
-    setlocal balloonexpr=SlimvDescribe(v:beval_text)
-endif
-
 " Apropos of the selected symbol
 function! SlimvApropos()
     call SlimvEvalForm1( g:slimv_template_apropos, SlimvSelectSymbol() )
@@ -2351,6 +2344,13 @@ function! SlimvInitBuffer()
     au InsertLeave * :let &showmode=s:save_showmode
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
     inoremap <silent> <buffer> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
+
+    " Setup balloonexp to display symbol description
+    if g:slimv_balloon && has( 'balloon_eval' )
+        "setlocal balloondelay=100
+        setlocal ballooneval
+        setlocal balloonexpr=SlimvDescribe(v:beval_text)
+    endif
 endfunction
 
 " Edit commands
