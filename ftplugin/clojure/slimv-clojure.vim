@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.9.1
-" Last Change:  07 Oct 2011
+" Version:      0.9.2
+" Last Change:  20 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -114,9 +114,9 @@ function! b:SlimvImplementation()
     return 'clojure'
 endfunction
 
-" Filename for the REPL buffer file
-function! b:SlimvREPLFile()
-    return 'Slimv.REPL.clj'
+" Filetype specific initialization for the REPL buffer
+function! b:SlimvInitRepl()
+    set filetype=clojure
 endfunction
 
 " Lookup symbol in the list of Clojure Hyperspec symbol databases

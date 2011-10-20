@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 20 Oct 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.9.1
+                               Version 0.9.2
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -151,6 +151,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
+|g:slimv_inspect_name|       Name of the Inspect buffer.
+
 |g:slimv_javadoc_root|       Base URL for the JavaDoc.
 
 |g:slimv_keybindings|        Predefined Slimv keybindings. Possible values:
@@ -167,6 +169,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_python|             Path for the Python interpreter.
 
+|g:slimv_repl_name|          Name of the REPL buffer.
+
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
 
@@ -175,6 +179,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
 |g:slimv_simple_compl|       Use simple completion instead of fuzzy completion.
+
+|g:slimv_sldb_name|          Name of the SLDB buffer.
 
 |g:slimv_sldb_wrap|          Set wrap mode for the SLDB buffer.
 
@@ -361,6 +367,21 @@ whole string in double quotes or escape the spaces with a backslash.
 This option is empty by default, which means that the command associated with
 the .html extension (on Windows) or returned by the Python webbrowser package
 (on Linux) is used to start the browser.
+
+                                                            *g:slimv_repl_name*
+Name of the REPL buffer. Default is 'REPL'. Space and some other special
+characters need to be escaped (e.g. 'Slimv\ REPL', '\#REPL\#').
+Not all special characters are allowed, e.g. '*' does not work in Windows.
+
+                                                            *g:slimv_sldb_name*
+Name of the SLDB buffer. Default is 'SLDB'. Space and some other special
+characters need to be escaped (e.g. 'Slimv\ Debugger', '\#SLDB\#').
+Not all special characters are allowed, e.g. '*' does not work in Windows.
+
+                                                         *g:slimv_inspect_name*
+Name of the Inspect buffer. Default is 'INSPECT'. Space and some other special
+characters need to be escaped (e.g. 'Slimv\ Incpector', '\#INSPECT\#').
+Not all special characters are allowed, e.g. '*' does not work in Windows.
 
                                                            *g:slimv_repl_split*
 Open the Lisp REPL buffer in a split window or in a separate buffer in Vim.
