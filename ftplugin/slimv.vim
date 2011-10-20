@@ -1334,6 +1334,21 @@ function! SlimvHandleEnterSldb()
     let line = getline('.')
     if s:debug_activated
         " Check if Enter was pressed in a section printed by the SWANK debugger
+        " The source specification is within a fold, so it has to be tested first
+        let mlist = matchlist( line, '^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$' )
+        if len(mlist)
+            if g:slimv_repl_split
+                " Switch back to other window
+                execute "wincmd w"
+            endif
+            " Jump to the file at the specified position
+            if mlist[2] == 'line'
+                exec ":edit +" . mlist[3] . " " . mlist[1]
+            else
+                exec ":edit +" . mlist[3] . "go " . mlist[1]
+            endif
+            return
+        endif
         if foldlevel('.')
             " With a fold just toggle visibility
             normal za
@@ -1359,20 +1374,6 @@ function! SlimvHandleEnterSldb()
                 silent execute 'python swank_invoke_restart("' . s:debug_activated . '", "' . item . '")'
                 return
             endif
-        endif
-        let mlist = matchlist( line, '^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$' )
-        if len(mlist)
-            if g:slimv_repl_split
-                " Switch back to other window
-                execute "wincmd w"
-            endif
-            " Jump to the file at the specified position
-            if mlist[2] == 'line'
-                exec ":edit +" . mlist[3] . " " . mlist[1]
-            else
-                exec ":edit +" . mlist[3] . "go " . mlist[1]
-            endif
-            return
         endif
     endif
 
