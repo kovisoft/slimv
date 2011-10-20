@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  19 Oct 2011
+" Last Change:  20 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -211,9 +211,19 @@ if !exists( 'g:slimv_impl' )
     let g:slimv_impl = b:SlimvImplementation()
 endif
 
-" Filename for the REPL buffer file
-if !exists( 'g:slimv_repl_file' )
-    let g:slimv_repl_file = b:SlimvREPLFile()
+" REPL buffer name
+if !exists( 'g:slimv_repl_name' )
+    let g:slimv_repl_name = 'REPL'
+endif
+
+" SLDB buffer name
+if !exists( 'g:slimv_sldb_name' )
+    let g:slimv_sldb_name = 'SLDB'
+endif
+
+" INSPECT buffer name
+if !exists( 'g:slimv_inspect_name' )
+    let g:slimv_inspect_name = 'INSPECT'
 endif
 
 " Shall we open REPL buffer in split window?
@@ -316,7 +326,6 @@ endif
 let s:prompt = ''                                         " Lisp prompt in the last line
 let s:indent = ''                                         " Most recent indentation info
 let s:last_update = 0                                     " The last update time for the REPL buffer
-let s:last_size = 0                                       " The last size of the REPL buffer
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
 let s:save_showmode = &showmode                           " The original value for 'showmode'
 let s:python_initialized = 0                              " Is the embedded Python initialized?
@@ -332,8 +341,6 @@ let s:current_win = -1                                    " Swank action was req
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
-let s:sldb_name      = 'Slimv.SLDB'                       " Name of the SLDB buffer
-let s:inspect_name   = 'Slimv.INSPECT'                    " Name of the Inspect buffer
 
 " =====================================================================
 "  General utility functions
@@ -397,7 +404,7 @@ endfunction
 " Stop updating the REPL buffer and switch back to caller
 function! SlimvEndUpdateRepl()
     call SlimvMarkBufferEnd()
-    let repl_buf = bufnr( g:slimv_repl_file )
+    let repl_buf = bufnr( g:slimv_repl_name )
     let repl_win = bufwinnr( repl_buf )
     if repl_buf != s:current_buf && repl_win != -1 && !s:debug_activated
         " Switch back to the caller buffer/window
@@ -476,7 +483,7 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
-    let repl_buf = bufnr( g:slimv_repl_file )
+    let repl_buf = bufnr( g:slimv_repl_name )
     if repl_buf == -1
         " REPL buffer not loaded
         return
@@ -497,7 +504,7 @@ function! SlimvTimer()
         " Put '<Insert>' twice into the typeahead buffer, which should not do anything
         " just switch to replace/insert mode then back to insert/replace mode
         " But don't do this for readonly buffers
-        if bufname('%') != s:sldb_name && bufname('%') != s:inspect_name
+        if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name
             call feedkeys("\<insert>\<insert>")
         endif
     else
@@ -526,7 +533,7 @@ endfunction
 " Called when entering REPL buffer
 function! SlimvReplEnter()
     call SlimvAddReplMenu()
-    execute "au FileChangedRO " . g:slimv_repl_file . " :call SlimvRefreshModeOff()"
+    execute "au FileChangedRO " . g:slimv_repl_name . " :call SlimvRefreshModeOff()"
     call SlimvRefreshModeOn()
 endfunction
 
@@ -612,7 +619,8 @@ endfunction
 
 " Open a new REPL buffer
 function! SlimvOpenReplBuffer()
-    call SlimvOpenBuffer( g:slimv_repl_file )
+    call SlimvOpenBuffer( g:slimv_repl_name )
+    call b:SlimvInitRepl()
     if !g:slimv_repl_syntax
         set syntax=
     endif
@@ -660,21 +668,17 @@ function! SlimvOpenReplBuffer()
     hi SlimvCursor term=reverse cterm=reverse gui=reverse
 
     " Add autocommands specific to the REPL buffer
-    execute "au FileChangedShell " . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
-    execute "au FocusGained "      . g:slimv_repl_file . " :call SlimvRefreshReplBuffer()"
-    execute "au BufEnter "         . g:slimv_repl_file . " :call SlimvReplEnter()"
-    execute "au BufLeave "         . g:slimv_repl_file . " :call SlimvReplLeave()"
-
-    filetype on
-    redraw
-    let s:last_size = 0
+    execute "au FileChangedShell " . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
+    execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
+    execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
+    execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
 
     call SlimvRefreshReplBuffer()
 endfunction
 
 " Open a new Inspect buffer
 function SlimvOpenInspectBuffer()
-    call SlimvOpenBuffer( s:inspect_name )
+    call SlimvOpenBuffer( g:slimv_inspect_name )
 
     " Add keybindings valid only for the Inspect buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
@@ -684,7 +688,7 @@ endfunction
 
 " Open a new SLDB buffer
 function SlimvOpenSldbBuffer()
-    call SlimvOpenBuffer( s:sldb_name )
+    call SlimvOpenBuffer( g:slimv_sldb_name )
 
     " Add keybindings valid only for the SLDB buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterSldb()<CR>
@@ -1438,7 +1442,7 @@ endfunction
 function! SlimvDebugCommand( cmd )
     if s:swank_connected
         if s:debug_activated
-            if bufname('%') != s:sldb_name
+            if bufname('%') != g:slimv_sldb_name
                 call SlimvOpenSldbBuffer()
             endif
             call SlimvQuitSldb()
@@ -1538,7 +1542,7 @@ endfunction
 " This is a quite dummy function that just evaluates the empty string
 function! SlimvConnectServer()
     call SlimvBeginUpdate()
-    let repl_buf = bufnr( g:slimv_repl_file )
+    let repl_buf = bufnr( g:slimv_repl_name )
     let repl_win = bufwinnr( repl_buf )
     if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
         call SlimvOpenReplBuffer()
@@ -1658,7 +1662,7 @@ endfunction
 function! s:DebugFrame()
     if s:swank_connected && s:debug_activated
         " Check if we are in SLDB
-        let repl_buf = bufnr( s:sldb_name )
+        let repl_buf = bufnr( g:slimv_sldb_name )
         if repl_buf != -1 && repl_buf == bufnr( "%" )
             let bcktrpos = search( '^Backtrace:', 'bcnw' )
             let framepos = line( '.' )

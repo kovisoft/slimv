@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.8.4
-" Last Change:  28 May 2011
+" Version:      0.9.2
+" Last Change:  20 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -125,9 +125,9 @@ function! b:SlimvImplementation()
     return 'clisp'
 endfunction
 
-" Filename for the REPL buffer file
-function! b:SlimvREPLFile()
-    return 'Slimv.REPL.lisp'
+" Filetype specific initialization for the REPL buffer
+function! b:SlimvInitRepl()
+    set filetype=lisp
 endfunction
 
 " Lookup symbol in the list of Lisp Hyperspec symbol databases
