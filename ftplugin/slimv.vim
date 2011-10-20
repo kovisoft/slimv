@@ -1441,7 +1441,7 @@ endfunction
 
 " Select a specific restart in debugger
 function! SlimvDebugCommand( cmd )
-    if s:swank_connected
+    if SlimvConnectSwank()
         if s:debug_activated
             if bufname('%') != g:slimv_sldb_name
                 call SlimvOpenSldbBuffer()
@@ -1452,24 +1452,20 @@ function! SlimvDebugCommand( cmd )
         else
             call SlimvError( "Debugger is not activated." )
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " List current Lisp threads
 function! SlimvListThreads()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommand( 'python swank_list_threads()' )
         call SlimvRefreshReplBuffer()
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Kill thread selected from the Thread List
 function! SlimvKillThread()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let line = getline('.')
         let item = matchstr( line, '\d\+' )
         let item = input( 'Thread to kill: ', item )
@@ -1477,14 +1473,12 @@ function! SlimvKillThread()
             call SlimvCommand( 'python swank_debug_thread(' . item . ')' )
             call SlimvRefreshReplBuffer()
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Debug thread selected from the Thread List
 function! SlimvDebugThread()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let line = getline('.')
         let item = matchstr( line, '\d\+' )
         let item = input( 'Thread to debug: ', item )
@@ -1492,8 +1486,6 @@ function! SlimvDebugThread()
             call SlimvCommand( 'python swank_debug_thread(' . item . ')' )
             call SlimvRefreshReplBuffer()
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -1761,7 +1753,7 @@ endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
-    if s:swank_connected
+    if SlimvConnectSwank()
         if !SlimvSelectForm()
             return
         endif
@@ -1772,69 +1764,62 @@ endfunction
 
 " Macroexpand the current top level form
 function! SlimvMacroexpandAll()
-    if s:swank_connected
+    if SlimvConnectSwank()
         if !SlimvSelectForm()
             return
         endif
         let s:swank_form = SlimvGetSelection()
         call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Set a breakpoint on the beginning of a function
 function! SlimvBreak()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s = input( 'Set breakpoint: ', SlimvSelectSymbol() )
         if s != ''
             call SlimvCommandUsePackage( 'python swank_set_break("' . s . '")' )
             redraw!
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Switch trace on for the selected function (toggle for swank)
 function! SlimvTrace()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s = input( '(Un)trace: ', SlimvSelectSymbol() )
         if s != ''
             call SlimvCommandUsePackage( 'python swank_toggle_trace("' . s . '")' )
             redraw!
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Switch trace off for the selected function (or all functions for swank)
 function! SlimvUntrace()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s:refresh_disabled = 1
         call SlimvCommand( 'python swank_untrace_all()' )
         let s:refresh_disabled = 0
         call SlimvRefreshReplBuffer()
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Disassemble the selected function
 function! SlimvDisassemble()
-    let s = input( 'Disassemble: ', SlimvSelectSymbol() )
-    if s != ''
-        if s:swank_connected
+    if SlimvConnectSwank()
+        let s = input( 'Disassemble: ', SlimvSelectSymbol() )
+        if s != ''
             call SlimvCommandUsePackage( 'python swank_disassemble("' . s . '")' )
-        else
-            call SlimvError( "Not connected to SWANK server." )
         endif
     endif
 endfunction
 
 " Inspect symbol under cursor
 function! SlimvInspect()
+    if !SlimvConnectSwank()
+        return
+    endif
     let frame = s:DebugFrame()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
@@ -1863,25 +1848,19 @@ function! SlimvInspect()
     else
         let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
         if s != ''
-            if s:swank_connected
-                call SlimvBeginUpdate()
-                call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
-            else
-                call SlimvError( "Not connected to SWANK server." )
-            endif
+            call SlimvBeginUpdate()
+            call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
         endif
     endif
 endfunction
 
 " Cross reference: who calls
 function! SlimvXrefBase( text, cmd )
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s = input( a:text, SlimvSelectSymbol() )
         if s != ''
             call SlimvCommandUsePackage( 'python swank_xref("' . s . '", "' . a:cmd . '")' )
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -1929,64 +1908,52 @@ endfunction
 
 " Switch or toggle profiling on for the selected function
 function! SlimvProfile()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s = input( '(Un)profile: ', SlimvSelectSymbol() )
         if s != ''
             call SlimvCommandUsePackage( 'python swank_toggle_profile("' . s . '")' )
             redraw!
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Switch profiling on based on substring
 function! SlimvProfileSubstring()
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s = input( 'Profile by matching substring: ', SlimvSelectSymbol() )
         if s != ''
             let p = input( 'Package (RET for all packages): ' )
             call SlimvCommandUsePackage( 'python swank_profile_substring("' . s . '","' . p . '")' )
             redraw!
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Switch profiling completely off
 function! SlimvUnprofileAll()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_unprofile_all()' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Display list of profiled functions
 function! SlimvShowProfiled()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_profiled_functions()' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Report profiling results
 function! SlimvProfileReport()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_profile_report()' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
 " Reset profiling counters
 function! SlimvProfileReset()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_profile_reset()' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -1999,11 +1966,9 @@ function! SlimvCompileDefun()
         call setpos( '.', oldpos ) 
         return
     endif
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s:swank_form = SlimvGetSelection()
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2017,7 +1982,7 @@ function! SlimvCompileLoadFile()
             write
         endif
     endif
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s:compiled_file = ''
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
         let starttime = localtime()
@@ -2028,8 +1993,6 @@ function! SlimvCompileLoadFile()
             call SlimvCommandUsePackage( 'python swank_load_file("' . s:compiled_file . '")' )
             let s:compiled_file = ''
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2043,10 +2006,8 @@ function! SlimvCompileFile()
             write
         endif
     endif
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2057,11 +2018,9 @@ function! SlimvCompileRegion() range
         return
     endif
     let region = join( lines, "\n" )
-    if s:swank_connected
+    if SlimvConnectSwank()
         let s:swank_form = region
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2069,10 +2028,8 @@ endfunction
 
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_describe_symbol("' . SlimvSelectSymbol() . '")' )
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
@@ -2082,6 +2039,8 @@ function! SlimvDescribe(arg)
     if a:arg == ''
         let arg = expand('<cword>')
     endif
+    " We don't want to try connecting here ... the error message would just 
+    " confuse the balloon logic
     if !s:swank_connected
         return ''
     endif
@@ -2300,7 +2259,7 @@ endfunction
 
 " Set current package
 function! SlimvSetPackage()
-    if s:swank_connected
+    if SlimvConnectSwank()
         call SlimvFindPackage()
         let pkg = input( 'Package: ', s:swank_package )
         if pkg != ''
@@ -2309,8 +2268,6 @@ function! SlimvSetPackage()
             let s:refresh_disabled = 0
             call SlimvRefreshReplBuffer()
         endif
-    else
-        call SlimvError( "Not connected to SWANK server." )
     endif
 endfunction
 
