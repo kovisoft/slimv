@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  20 Oct 2011
+" Last Change:  21 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1142,15 +1142,44 @@ function! SlimvIndent( lnum )
         " Hit the start of the file, use zero indent.
         return 0
     endif
+
+    " Handle special indentation style for flet, labels, etc.
+    " First find the outermost containing form (don't go back more than 10 lines)
+    let [lp, cp] = searchpairpos( '(', '', ')', 'nrbW', s:skip_sc, max([pnum-10, 1]) )
+    if lp > 0 && match( getline( lp ), '\c^\s*(\s*\(flet\|labels\|macrolet\)\>' ) >= 0
+        let oldpos = getpos( '.' )
+        " When noexpandtab, = inserts tabs, so the column number is incorrect
+        let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, max([pnum-10, 1]) )
+        if l > 0
+            " If the containing form starts above this line then find the
+            " second outer containing form (start of the binding list)
+            if l == a:lnum - 1 && searchpair( '(', '', ')', 'bW', s:skip_sc, max([pnum-10,1]) ) > 0
+                " Check if the preceeding '(' is really the outermost
+                if search( '(', 'bW' ) > 0 && line('.') == lp
+                    " This is the first body-line of a binding
+                    call setpos( '.', oldpos )
+                    return c + 1
+                endif
+            elseif l == lp && c == cp
+                " We are in the outermost form, search for the (end of the) binding list
+                if search( '(' ) > 0
+                    exe 'normal! %'
+                    if a:lnum == line('.') + 1
+                        " This is the first line after the end of the binding list
+                        call setpos( '.', oldpos )
+                        return c + 1
+                    endif
+                endif
+            endif
+        endif
+        " Restore all cursor movements
+        call setpos( '.', oldpos )
+    endif
+
     " Find start of current form
     let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
     if l == pnum
         let line = getline( l )
-        let parent = strpart( line, 0, c )
-        if match( parent, '\c(\s*\(flet\|labels\|macrolet\)\s*(\s*(\s*$' ) >= 0
-            " Handle special indentation style for flet, labels, etc.
-            return c + 1
-        endif
         " Found opening paren in the previous line, let's find out the function name
         let func = matchstr( line, '\<\k*\>', c )
         " If it's a keyword, keep the indentation straight

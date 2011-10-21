@@ -1,7 +1,7 @@
 " lisp.vim:
 "               Lisp indent plugin for Slimv
-" Version:      0.8.3
-" Last Change:  14 May 2011
+" Version:      0.9.2
+" Last Change:  21 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -16,5 +16,6 @@ endif
 
 setlocal nolisp
 setlocal autoindent
+setlocal expandtab
 setlocal indentexpr=SlimvIndent(v:lnum)
 
