@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 22 Oct 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.2
@@ -150,6 +150,9 @@ For the Swank options plese visit |swank-configuration|.
                              being evaluated.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
+
+|g:slimv_indent_maxlines|    Maximum number of lines searched backwards for
+                             indenting special forms
 
 |g:slimv_inspect_name|       Name of the Inspect buffer.
 
@@ -445,6 +448,10 @@ mostly unnecessary information. Closing parens are added to the end even if
 the end of the form is not echoed, so paren balance is kept.
 If this option is set to zero then no line is echoed at all, if set to -1
 then all lines are always echoed.
+
+                                                      *g:slimv_indent_maxlines*
+Maximum number of lines searched backwards for indenting special forms, like
+flet, labels, macrolet. Setting it to a high value may slow down indenting.
 
                                                               *g:slimv_balloon*
 Specifies if describe tooltips are on (see |swank-describe|).
