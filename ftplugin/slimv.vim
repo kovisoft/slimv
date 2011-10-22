@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  21 Oct 2011
+" Last Change:  22 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -305,6 +305,11 @@ if !exists( 'g:slimv_leader' )
     endif
 endif
 
+" Maximum number of lines searched backwards for indenting special forms
+if !exists( 'g:slimv_indent_maxlines' )
+    let g:slimv_indent_maxlines = 20
+endif
+
 
 " =====================================================================
 "  Template definitions
@@ -341,6 +346,7 @@ let s:current_win = -1                                    " Swank action was req
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
+let s:spec_indent = 'flet\|labels\|macrolet'              " List of symbols need special indenting
 
 " =====================================================================
 "  General utility functions
@@ -1144,16 +1150,19 @@ function! SlimvIndent( lnum )
     endif
 
     " Handle special indentation style for flet, labels, etc.
-    " First find the outermost containing form (don't go back more than 10 lines)
-    let [lp, cp] = searchpairpos( '(', '', ')', 'nrbW', s:skip_sc, max([pnum-10, 1]) )
-    if lp > 0 && match( getline( lp ), '\c^\s*(\s*\(flet\|labels\|macrolet\)\>' ) >= 0
+    " First find the outermost containing form, but don't
+    " go back more than g:slimv_indent_maxlines lines.
+    let backline = max([pnum-g:slimv_indent_maxlines, 1])
+    let lp = searchpair( '(', '', ')', 'nrbW', s:skip_sc, backline )
+    if lp > 0 && match( getline( lp ), '\c^.*(\s*\('.s:spec_indent.'\)\>' ) >= 0
+        " Find start of the flet in case it's quoted or contained in a form
+        let cp = match( getline( lp ), '\c(\s*\('.s:spec_indent.'\)\>' ) + 1
         let oldpos = getpos( '.' )
-        " When noexpandtab, = inserts tabs, so the column number is incorrect
-        let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, max([pnum-10, 1]) )
+        let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
         if l > 0
             " If the containing form starts above this line then find the
             " second outer containing form (start of the binding list)
-            if l == a:lnum - 1 && searchpair( '(', '', ')', 'bW', s:skip_sc, max([pnum-10,1]) ) > 0
+            if l == a:lnum - 1 && searchpair( '(', '', ')', 'bW', s:skip_sc, backline ) > 0
                 " Check if the preceeding '(' is really the outermost
                 if search( '(', 'bW' ) > 0 && line('.') == lp
                     " This is the first body-line of a binding
