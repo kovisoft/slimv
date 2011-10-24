@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  22 Oct 2011
+" Last Change:  24 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -627,6 +627,7 @@ endfunction
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_name )
     call b:SlimvInitRepl()
+    call PareditInitBuffer()
     if !g:slimv_repl_syntax
         set syntax=
     endif
@@ -1150,31 +1151,35 @@ function! SlimvIndent( lnum )
     endif
 
     " Handle special indentation style for flet, labels, etc.
-    " First find the outermost containing form, but don't
-    " go back more than g:slimv_indent_maxlines lines.
+    " When searching for containing forms, don't go back
+    " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
-    let lp = searchpair( '(', '', ')', 'nrbW', s:skip_sc, backline )
-    if lp > 0 && match( getline( lp ), '\c^.*(\s*\('.s:spec_indent.'\)\>' ) >= 0
-        " Find start of the flet in case it's quoted or contained in a form
-        let cp = match( getline( lp ), '\c(\s*\('.s:spec_indent.'\)\>' ) + 1
-        let oldpos = getpos( '.' )
-        let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
-        if l > 0
-            " If the containing form starts above this line then find the
-            " second outer containing form (start of the binding list)
-            if l == a:lnum - 1 && searchpair( '(', '', ')', 'bW', s:skip_sc, backline ) > 0
-                " Check if the preceeding '(' is really the outermost
-                if search( '(', 'bW' ) > 0 && line('.') == lp
-                    " This is the first body-line of a binding
+    let oldpos = getpos( '.' )
+    " Find beginning of the innermost containing form
+    let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+    if l > 0
+        " Is this a form with special indentation?
+        if match( getline(l), '\c^(\s*\('.s:spec_indent.'\)\>', c-1 ) >= 0
+            " Search for the binding list and jump to its end
+            if search( '(' ) > 0
+                exe 'normal! %'
+                if line('.') == pnum
+                    " We are indenting the first line after the end of the binding list
                     call setpos( '.', oldpos )
                     return c + 1
                 endif
-            elseif l == lp && c == cp
-                " We are in the outermost form, search for the (end of the) binding list
-                if search( '(' ) > 0
-                    exe 'normal! %'
-                    if a:lnum == line('.') + 1
-                        " This is the first line after the end of the binding list
+            endif
+        elseif l == pnum
+            " If the containing form starts above this line then find the
+            " second outer containing form (possible start of the binding list)
+            let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+            if l2 > 0
+                " Go one level higher and check if we reached a special form
+                let [l3, c3] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+                if l3 > 0
+                    " Is this a form with special indentation?
+                    if match( getline(l3), '\c^(\s*\('.s:spec_indent.'\)\>', c3-1 ) >= 0
+                        " This is the first body-line of a binding
                         call setpos( '.', oldpos )
                         return c + 1
                     endif
@@ -1185,12 +1190,10 @@ function! SlimvIndent( lnum )
         call setpos( '.', oldpos )
     endif
 
-    " Find start of current form
-    let [l, c] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, pnum )
+    " Check if the current form started in the previous nonblank line
     if l == pnum
-        let line = getline( l )
         " Found opening paren in the previous line, let's find out the function name
-        let func = matchstr( line, '\<\k*\>', c )
+        let func = matchstr( getline(l), '\<\k*\>', c )
         " If it's a keyword, keep the indentation straight
         if strpart(func, 0, 1) == ':'
             return c
