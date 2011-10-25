@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.2
-" Last Change:  24 Oct 2011
+" Last Change:  25 Oct 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1504,14 +1504,24 @@ function! SlimvListThreads()
     endif
 endfunction
 
-" Kill thread selected from the Thread List
-function! SlimvKillThread()
+" Kill thread(s) selected from the Thread List
+function! SlimvKillThread() range
     if SlimvConnectSwank()
-        let line = getline('.')
-        let item = matchstr( line, '\d\+' )
-        let item = input( 'Thread to kill: ', item )
-        if item != ''
-            call SlimvCommand( 'python swank_debug_thread(' . item . ')' )
+        if a:firstline == a:lastline
+            let line = getline('.')
+            let item = matchstr( line, '\d\+' )
+            let item = input( 'Thread to kill: ', item )
+            if item != ''
+                call SlimvCommand( 'python swank_kill_thread(' . item . ')' )
+                call SlimvRefreshReplBuffer()
+            endif
+        else
+            for line in getline(a:firstline, a:lastline)
+                let item = matchstr( line, '\d\+' )
+                if item != ''
+                    call SlimvCommand( 'python swank_kill_thread(' . item . ')' )
+                endif
+            endfor
             call SlimvRefreshReplBuffer()
         endif
     endif
