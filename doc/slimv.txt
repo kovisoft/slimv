@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 26 Oct 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.2
@@ -862,6 +862,7 @@ currently implemented in the Slimv SWANK client.
   swank:frame-source-location
   swank:fuzzy-completions
   swank:init-inspector
+  swank:inspect-frame-var
   swank:inspect-in-frame
   swank:inspect-nth-part
   swank:inspector-call-nth-action
