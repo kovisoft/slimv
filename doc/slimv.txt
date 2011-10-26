@@ -117,7 +117,7 @@ CONFIGURATION                                             *slimv-configuration*
 |slimv-keyboard|             Keyboard mappings
 
 -------------------------------------------------------------------------------
-                                                                *slimv_options*
+                                                                *slimv-options*
 
 The list below contains an alphabetical collection of Slimv options.
 Below that list follows the detailed explanation on each option.
@@ -503,7 +503,7 @@ Example:
     let g:slimv_template_apropos = '(apropos "%1")'
 
 -------------------------------------------------------------------------------
-                                                               *slimv_keyboard*
+                                                               *slimv-keyboard*
 
 The default keybindings (|g:slimv_keybindings|=1) and another easy to remember
 built-in keybinding set (|g:slimv_keybindings|=2) for Slimv are the following.
@@ -632,7 +632,7 @@ EVALUATION                                                         *swank-eval*
 There are various methods for evaluating an s-expression in the SWANK server.
 It is possible to eval the current top level form, the current subform, the
 visually selected area, or the whole buffer. Consult the "Evaluation commands"
-section in |slimv_keyboard| for the possible functions with their respective
+section in |slimv-keyboard| for the possible functions with their respective
 keyboard shortcuts.
 
 
