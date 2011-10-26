@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.2
-# Last Change:  23 Oct 2011
+# Last Change:  26 Oct 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -40,6 +40,7 @@ prompt          = 'SLIMV'       # Command prompt
 package         = 'COMMON-LISP-USER' # Current package
 actions         = dict()        # Swank actions (like ':write-string'), by message id
 indent_info     = dict()        # Data of :indentation-update
+frame_locals    = dict()        # Map frame variable names to their index
 
 
 ###############################################################################
@@ -518,17 +519,22 @@ def swank_parse_locals(struct, action):
     """
     Parse frame locals output
     """
-    vim.command('call SlimvGotoFrame(' + action.data + ')')
+    frame_num = action.data
+    vim.command('call SlimvGotoFrame(' + frame_num + ')')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
     if type(struct) == list:
         lines = '    Locals:'
+        num = 0
         for f in struct:
             name  = parse_plist(f, ':name')
             id    = parse_plist(f, ':id')
             value = parse_plist(f, ':value')
             lines = lines + '\n      ' + name + ' = ' + value
+            # Remember variable index in frame
+            frame_locals[str(frame_num) + " " + name] = num
+            num = num + 1
     else:
         lines = '    No locals'
     buf[line:line] = lines.split("\n")
@@ -748,6 +754,7 @@ def swank_listen():
                     current_thread = r[1]
                     sldb_level = r[2]
                     vim.command('let s:debug_activated=' + sldb_level)
+                    frame_locals.clear()
 
                 elif message == ':debug-return':
                     debug_active = False
@@ -807,6 +814,7 @@ def swank_connection_info():
     global log
     actions.clear()
     indent_info.clear()
+    frame_locals.clear()
     debug_activated = False
     if vim.eval('exists("g:swank_log") && g:swank_log') != '0':
         log = True
@@ -908,7 +916,11 @@ def swank_inspector_pop():
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
 def swank_inspect_in_frame(symbol, n):
-    cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
+    key = str(n) + " " + symbol
+    if frame_locals.has_key(key):
+        cmd = '(swank:inspect-frame-var ' + str(n) + " " + str(frame_locals[key]) + ')'
+    else:
+        cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
     swank_rex(':inspect-in-frame', cmd, get_swank_package(), current_thread, str(n))
 
 def swank_quit_inspector():
