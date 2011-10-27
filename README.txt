@@ -44,6 +44,7 @@ Debug commands:
     *  Toggle Trace
     *  Untrace All
     *  Disassemble
+    *  Set Breakpoint
     *  Inspect
     *  Abort
     *  Quit to Toplevel
@@ -129,6 +130,8 @@ See the included documentation for more complete installation and customization 
 --------------------------------------------------------------------------------
 Script versions
 --------------------------------------------------------------------------------
+
+0.9.2: Added option g:swank_log to enable swank debug log. Added options g:slimv_repl_name, g:slimv_sldb_name, g:slimv_inspect_name. Added option g:slimv_indent_maxlines. Changed Debug-Thread mapping to <leader>dT (g:slimv_keybindings=2) due to conflict with Generate-Tags. Label thread ID in thread list (by Philipp Marek). Set balloonexpr for all buffers (thanks to Philipp Marek). Connect swank server when needed instead of printing an error message (by Philipp Marek). Set expandtab for lisp and clojure files. Kill-Thread kills all threads in the selected range (by Philipp Marek). Bugfixes: Added missing parts of Set-Breakpoint introduced in 0.9.1. Test source lookup (upon pressing Enter) before testing fold toggle in SLDB (by Philipp Marek). Indentation of flet, labels, macrolet. Kill-Thread now really kills thread (by Philipp Marek). Inspect gensyms in frame (by Philipp Marek).
 
 0.9.1: Improved frame number identification in SLDB buffer. Moved frame source location above frame locals in SLDB. Fold frame source location if more than 2 lines. Inspect-In-Frame: preselect symbol under cursor only in variable lines, open Inspector in the other window. Improved XRef file location parsing. Use current paragraph when no range set for Eval-Region and Compile-Region. Added option g:slimv_sldb_wrap, do not set wrap for source buffers. Added Set-Breakpoint command mapped to <leader>B (thanks to Philipp Marek), changed Profile-By-Substring mapping to <leader>P. Set Lisp keyword characters also in SLDB buffer. Bugfixes: Error messages at Connect-Server. Error message for frame source location without filename. XRef output sometimes cut.
 
