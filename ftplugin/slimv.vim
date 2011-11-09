@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.2
-" Last Change:  25 Oct 2011
+" Version:      0.9.3
+" Last Change:  09 Nov 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -170,7 +170,11 @@ function! SlimvSwankCommand()
             return '!start /MIN ' . cmd
         elseif g:slimv_osx
             return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
+        elseif $STY != ''
+	    " GNU screen under Linux
+	    return '! screen -X eval "title slimv" "screen ' . cmd . '" "select slimv"'
         else
+	    " Must be Linux
             return '! xterm -iconic -e ' . cmd . ' &'
         endif
     endif

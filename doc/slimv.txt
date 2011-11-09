@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 27 Oct 2011
+*slimv.txt*                    Slimv                 Last Change: 09 Nov 2011
 
 Slimv                                                                  *slimv*
-                               Version 0.9.2
+                               Version 0.9.3
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -315,8 +315,12 @@ performance you may want to increase the block size, e.g. to 64 kbytes:
 Host name or IP address of the SWANK server. Default value is 'localhost'.
 The SWANK server may run on a remote machine, but currently only unencrypted
 plain socket communication is supported, no SSH or whatsoever.
+
 Please note that if the SWANK server is on a remote machine then Slimv is
 unable to start it, so you need to run the SWANK server manually.
+Actually there is a workaround for this: run Vim inside a GNU screen session.
+Slimv will autodetect this and modify the Swank command so that the Swank
+server is run inside a newly opened virtual terminal in screen.
 
                                                                  *g:swank_port*
 The SWANK server is connected to port 4005 by default. This can be changed
@@ -1250,6 +1254,9 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.3  - Start Swank server in virtual terminal when running in GNU screen
+         on Linux (thanks to Oleg Terenchuk).
+
 0.9.2  - Added option g:swank_log to enable swank debug log.
        - Added options g:slimv_repl_name, g:slimv_sldb_name, g:slimv_inspect_name.
        - Added option g:slimv_indent_maxlines.
@@ -1657,8 +1664,8 @@ ideas, suggestions on the SWANK integration.
 Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
-Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala for additional
-notes and contributions.
+Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk
+for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
