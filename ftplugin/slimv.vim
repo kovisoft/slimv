@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  09 Nov 2011
+" Last Change:  12 Nov 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -565,14 +565,15 @@ endfunction
 
 " View the given file in a top/bottom/left/right split window
 function! s:SplitView( filename )
-    if winnr('$') == 2
-        " We have exactly two windows
-         if bufnr("%") == s:current_buf && winnr() == s:current_win
+    if winnr('$') >= 2
+        " We have already at least two windows
+        if bufnr("%") == s:current_buf && winnr() == s:current_win
             " Keep the current window on screen, use the other window for the new buffer
-            execute "wincmd w"
-         endif
+            execute "wincmd p"
+        endif
         execute "silent view! " . a:filename
     else
+        " No windows yet, need to split
         if g:slimv_repl_split == 1
             execute "silent topleft sview! " . a:filename
         elseif g:slimv_repl_split == 2
@@ -1384,7 +1385,7 @@ function! SlimvHandleEnterSldb()
         if len(mlist)
             if g:slimv_repl_split
                 " Switch back to other window
-                execute "wincmd w"
+                execute "wincmd p"
             endif
             " Jump to the file at the specified position
             if mlist[2] == 'line'
