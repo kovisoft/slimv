@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 09 Nov 2011
+*slimv.txt*                    Slimv                 Last Change: 13 Nov 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -1605,16 +1605,14 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 
 - Vim register "s is used for all form selections, so its original content is
   destroyed.
-- Vim mark 's is used to mark the end of the REPL buffer, i.e. the beginning
-  of the "command line", also the for the location of the current frame in
-  the SLDB buffer.
 - Needs Vim version 7.0 or above, because of the intensive use of lists.
 - Needs the same Python version that Vim is compiled against
 - It is not possible to run separate Lisp and Clojure REPL in the same
   Slimv session.
-- Recent macvim (OS X) versions seem to have a Python 2.7 binding problem
+- Recent macvim (OS X) 64-bit versions seem to have a Python 2.7 binding problem
   causing segmentation faults when Slimv tries to connect to the Swank server.
-  One possible solution is to rebuild macvim with Python binding changed to 2.6.
+  One possible solution is to use the 32-bit version of macvim.
+  Another solution is to rebuild macvim with Python binding changed to 2.6.
 
 
 ===============================================================================
