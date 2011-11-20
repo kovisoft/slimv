@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  13 Nov 2011
+" Last Change:  20 Nov 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -31,34 +31,6 @@ endif
 " =====================================================================
 "  Functions used by global variable definitions
 " =====================================================================
-
-" Try to autodetect Python executable
-function! SlimvAutodetectPython()
-    if !g:slimv_cygwin && executable( 'python' )
-        return 'python'
-    endif
-
-    if g:slimv_windows || g:slimv_cygwin
-        " Try to find Python on the standard installation places
-        " For Cygwin we need to use the Windows Python instead of the Cygwin Python
-        let pythons = split( globpath( 'c:/python*,c:/Program Files/python*', 'python.exe' ), '\n' )
-        if len( pythons ) == 0
-            " Go deeper in subdirectories
-            let pythons = split( globpath( 'c:/python*/**,c:/Program Files/python*/**', 'python.exe' ), '\n' )
-            if len( pythons ) == 0
-                return ''
-            endif
-        endif
-        let pycmd = pythons[0]
-        if match( pycmd, ' ' ) >= 0
-            " Convert Python command to short 8.3 format if path contains spaces
-            let pycmd = fnamemodify( pycmd, ':8' )
-        endif
-        return pycmd
-    else
-        return ''
-    endif
-endfunction
 
 " Convert Cygwin path to Windows path, if needed
 function! s:Cygpath( path )
@@ -193,11 +165,6 @@ endif
 " TCP port number to use for the SWANK server
 if !exists( 'g:swank_port' )
     let g:swank_port = 4005
-endif
-
-" Find Python (if not given in vimrc)
-if !exists( 'g:slimv_python' )
-    let g:slimv_python = SlimvAutodetectPython()
 endif
 
 " Find Lisp (if not given in vimrc)
@@ -2221,22 +2188,20 @@ function! SlimvLookup( word )
         endif
         if exists( "g:slimv_browser_cmd" )
             " We have an given command to start the browser
-            silent execute '! ' . g:slimv_browser_cmd . ' ' . page
+            silent execute '! ' . g:slimv_browser_cmd . ' ' . page . ' &'
         else
             if g:slimv_windows
                 " Run the program associated with the .html extension
                 silent execute '! start ' . page
             else
                 " On Linux it's not easy to determine the default browser
-                " Ask help from Python webbrowser package
-                if g:slimv_python == ''
-                    let g:slimv_python = input( 'Enter Python path (or fill g:slimv_python in your vimrc): ', '', 'file' )
-                endif
-                if g:slimv_python == ''
-                    return
-                endif
-                let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
-                silent execute '! ' . g:slimv_python . ' -c "' . pycmd . '"'
+		if executable( 'xdg-open' )
+                    silent execute '! xdg-open ' . page . ' &'
+	        else
+                    " xdg-open not installed, ask help from Python webbrowser package
+                    let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
+                    silent execute '! python -c "' . pycmd . '"'
+		endif
             endif
         endif
         " This is needed especially when using text browsers

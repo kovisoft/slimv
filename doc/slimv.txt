@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Nov 2011
+*slimv.txt*                    Slimv                 Last Change: 20 Nov 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -99,7 +99,7 @@ To install the script:
     This will generate all the help tags for any file located in the doc
     directory.
   - Enter path definitions into your vimrc (if the default values are not
-    valid for your Vim/Python/Lisp installation).
+    valid for your Vim/Lisp installation).
     See |slimv-configuration| below on how to do this.
 
 
@@ -170,8 +170,6 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_package|            If nonzero, Slimv package/namespace handling is
                              switched on.
 
-|g:slimv_python|             Path for the Python interpreter.
-
 |g:slimv_repl_name|          Name of the REPL buffer.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
@@ -208,30 +206,19 @@ For the Swank options plese visit |swank-configuration|.
 
 Note: Most options require to restart the Vim session when modified.
 
-Slimv tries to autodetect the Python and Lisp installation directories,
-however the algorithm is not very sophisticated.
+Slimv tries to autodetect the Lisp installation directory, however the
+algorithm is not very sophisticated.
 If the installation directories are put in the path, then the autodetection
 should find them (this is usually the case on Linux). Otherwise (on Windows)
 some frequently used directories are searched under C:\ and C:\Program Files.
-For a minimum, Slimv needs to know the path of the existing Python and Lisp
-installations, so if autodetection does not work for you, then set the
-following global variables in your vimrc.
+For a minimum, Slimv needs to know the path of the existing Lisp installation,
+so if autodetection does not work for you, then set the following global
+variables in your vimrc.
 
 Note: On Windows use the / (slash) character instead of \ (backslash) as the
       directory separator to avoid any incidental character escaping problems
       while the paths are beeing passed between the Slimv processes.
       On Linux this is not an issue.
-
-                                                               *g:slimv_python*
-This is the installation path of the Python interpreter.
-Normally the Python path is autodetected, but sometimes autodetection fails
-and you need to set up the path in your .vimrc file explicitly.
-If the Python path contains space characters then either the spaces should be
-escaped (Linux) or the short 8.3 filename format should be used (Windows).
-Enclosing the full Python path in double quotes may also work, but this depends
-on the command string handling of the console command used (xterm/cmd.exe/etc).
-Example:
-    let g:slimv_python = 'C:/MyPythonDir/python.exe'
 
                                                                  *g:slimv_lisp*
 This is the installation path of the Lisp interpreter.
@@ -248,7 +235,7 @@ Example:
                                                             *g:slimv_swank_cmd*
                                                         *g:slimv_swank_clojure*
                                                          *g:slimv_swank_scheme*
-Slimv tries to autodetect your Python/Lisp/SWANK installation.
+Slimv tries to autodetect your Lisp/SWANK installation.
 If the location for the SWANK server is not identified by the script, or you
 want to use a different command for starting the SWANK server, then you may
 want to customize the g:slimv_swank_cmd (general) and g:slimv_swank_clojure
@@ -372,8 +359,9 @@ Specifies the command to start the browser in order to display the Common Lisp
 Hyperspec or the Clojure API. If the command contains spaces then enclose the
 whole string in double quotes or escape the spaces with a backslash.
 This option is empty by default, which means that the command associated with
-the .html extension (on Windows) or returned by the Python webbrowser package
-(on Linux) is used to start the browser.
+the .html extension (on Windows) or xdg-open (on Linux) is used to start the
+browser. If xdg-open is not installed then the Python webbrowser package is
+used to identify the default browser on Linux.
 
                                                             *g:slimv_repl_name*
 Name of the REPL buffer. Default is 'REPL'. Space and some other special
@@ -1188,7 +1176,6 @@ FAQ                                                                 *slimv-faq*
          :echo SlimvSwankCommand()         
      Also check the following Slimv variables in Vim, maybe they are not
      correctly autodetected and you need to override them in your .vimrc:
-         :echo g:slimv_python
          :echo g:slimv_lisp
          :echo g:slimv_swank_cmd   (or g:slimv_swank_clojure for Clojure)
 
