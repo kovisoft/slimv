@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  20 Nov 2011
+" Last Change:  30 Nov 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -299,7 +299,6 @@ endif
 "  Other non-global script variables
 " =====================================================================
 
-let s:prompt = ''                                         " Lisp prompt in the last line
 let s:indent = ''                                         " Most recent indentation info
 let s:last_update = 0                                     " The last update time for the REPL buffer
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
@@ -314,8 +313,6 @@ let s:compiled_file = ''                                  " Name of the compiled
 let s:au_curhold_set = 0                                  " Whether the autocommand has been set
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = -1                                    " Swank action was requested from this window
-let s:repl_eof_line = 1                                   " Line number of the end of the REPL buffer
-let s:repl_eof_col = 1                                    " Column number of the end of the REPL buffer
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
@@ -357,7 +354,7 @@ endfunction
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer()
-    if line( '.' ) >= s:repl_eof_line
+    if line( '.' ) >= b:repl_prompt_line
         " Go to the end of file only if the user did not move up from here
         normal! G$
     endif
@@ -368,9 +365,9 @@ endfunction
 function! SlimvMarkBufferEnd()
     setlocal nomodified
     call SlimvEndOfReplBuffer()
-    let s:repl_eof_line = line( '$' )
-    let s:repl_eof_col = len( getline('$') ) + 1
-    let s:prompt = getline( s:repl_eof_line )
+    let b:repl_prompt_line = line( '$' )
+    let b:repl_prompt_col = len( getline('$') ) + 1
+    let b:repl_prompt = getline( b:repl_prompt_line )
 endfunction
 
 " Save caller buffer identification
@@ -609,6 +606,11 @@ function! SlimvOpenReplBuffer()
     if !g:slimv_repl_syntax
         set syntax=
     endif
+
+    " Prompt and its line and column number in the REPL buffer
+    let b:repl_prompt = ''
+    let b:repl_prompt_line = 1
+    let b:repl_prompt_col = 1
 
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
@@ -1023,9 +1025,9 @@ endfunction
 " Set command line after the prompt
 function! SlimvSetCommandLine( cmd )
     let line = getline( "." )
-    if line( "." ) == s:repl_eof_line
-        " The prompt is in the line marked by s:repl_eof_line
-        let promptlen = len( s:prompt )
+    if line( "." ) == b:repl_prompt_line
+        " The prompt is in the line marked by b:repl_prompt_line
+        let promptlen = len( b:repl_prompt )
     else
         let promptlen = 0
     endif
@@ -1209,15 +1211,15 @@ endfunction
 " Arguments: close = add missing closing parens
 function! SlimvSendCommand( close )
     call SlimvRefreshModeOn()
-    let lastline = s:repl_eof_line
-    let lastcol  = s:repl_eof_col
+    let lastline = b:repl_prompt_line
+    let lastcol  = b:repl_prompt_col
     if lastline > 0
         if line( "." ) >= lastline
             " Trim the prompt from the beginning of the command line
             " The user might have overwritten some parts of the prompt
             let cmdline = getline( lastline )
             let c = 0
-            while c < lastcol - 1 && cmdline[c] == s:prompt[c]
+            while c < lastcol - 1 && cmdline[c] == b:repl_prompt[c]
                 let c = c + 1
             endwhile
             let cmd = [ strpart( getline( lastline ), c ) ]
@@ -1293,7 +1295,7 @@ endfunction
 
 " Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
-    if line( "." ) == s:repl_eof_line && col( "." ) <= s:repl_eof_col
+    if line( "." ) == b:repl_prompt_line && col( "." ) <= b:repl_prompt_col
         " No BS allowed before the previous EOF mark
         return ""
     else
@@ -1321,7 +1323,7 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
-    if line( "." ) >= s:repl_eof_line
+    if line( "." ) >= b:repl_prompt_line
         if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos == len( g:slimv_cmdhistory )
             call SlimvMarkBufferEnd()
             startinsert!
@@ -1334,7 +1336,7 @@ endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
-    if line( "." ) >= s:repl_eof_line
+    if line( "." ) >= b:repl_prompt_line
         call s:NextCommand()
     else
         normal! gj
@@ -1439,7 +1441,7 @@ endfunction
 " Go to command line and recall previous command from command history
 function! SlimvPreviousCommand()
     call SlimvEndOfReplBuffer()
-    if line( "." ) >= s:repl_eof_line
+    if line( "." ) >= b:repl_prompt_line
         call s:PreviousCommand()
     endif
 endfunction
@@ -1447,7 +1449,7 @@ endfunction
 " Go to command line and recall next command from command history
 function! SlimvNextCommand()
     call SlimvEndOfReplBuffer()
-    if line( "." ) >= s:repl_eof_line
+    if line( "." ) >= b:repl_prompt_line
         call s:NextCommand()
     endif
 endfunction
