@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  30 Nov 2011
+" Last Change:  01 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -281,6 +281,10 @@ if !exists( 'g:slimv_indent_maxlines' )
     let g:slimv_indent_maxlines = 20
 endif
 
+" Maximum length of the REPL buffer
+if !exists( 'g:slimv_repl_max_len' )
+    let g:slimv_repl_max_len = 0
+endif
 
 " =====================================================================
 "  Template definitions
@@ -383,6 +387,31 @@ endfunction
 
 " Stop updating the REPL buffer and switch back to caller
 function! SlimvEndUpdateRepl()
+    " Keep only the last g:slimv_repl_max_len lines
+    let lastline = line('$')
+    let prompt_offset = lastline - b:repl_prompt_line
+    if g:slimv_repl_max_len > 0 && lastline > g:slimv_repl_max_len
+        let start = ''
+        let ending = s:CloseForm( getline( 1, lastline - g:slimv_repl_max_len ) )
+        if match( ending, ')\|\]\|}\|"' ) >= 0
+            " Reverse the ending and replace matched characters with their pairs
+            let start = join( reverse( split( ending, '.\zs' ) ), '' )
+            let start = substitute( start, ')', '(', 'g' )
+            let start = substitute( start, ']', '[', 'g' )
+            let start = substitute( start, '}', '{', 'g' )
+        endif
+
+        " Delete extra lines
+        execute "python vim.current.buffer[0:" . (lastline - g:slimv_repl_max_len) . "] = []"
+
+        " Re-balance the beginning of the buffer
+        if start != ''
+            call append( 0, start . " .... ; output shortened" )
+        endif
+        let b:repl_prompt_line = line( '$' ) - prompt_offset
+    endif
+
+    " Mark current prompt position
     call SlimvMarkBufferEnd()
     let repl_buf = bufnr( g:slimv_repl_name )
     let repl_win = bufwinnr( repl_buf )
@@ -608,9 +637,11 @@ function! SlimvOpenReplBuffer()
     endif
 
     " Prompt and its line and column number in the REPL buffer
-    let b:repl_prompt = ''
-    let b:repl_prompt_line = 1
-    let b:repl_prompt_col = 1
+    if !exists( 'b:repl_prompt' )
+        let b:repl_prompt = ''
+        let b:repl_prompt_line = 1
+        let b:repl_prompt_col = 1
+    endif
 
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
