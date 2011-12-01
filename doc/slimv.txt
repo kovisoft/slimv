@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Nov 2011
+*slimv.txt*                    Slimv                 Last Change: 01 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -169,6 +169,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_package|            If nonzero, Slimv package/namespace handling is
                              switched on.
+
+|g:slimv_repl_max_len|       Maximum number of lines in the REPL buffer.
 
 |g:slimv_repl_name|          Name of the REPL buffer.
 
@@ -408,6 +410,13 @@ The default value is 200 (=0.2 sec).
                                                               *g:slimv_package*
 If nonzero then Slimv package/namespace handling is switched on. Please find
 details in the |slimv-package| section.
+
+                                                         *g:slimv_repl_max_len*
+Maximum number of lines for the REPL buffer. Only the last this number of lines
+are kept in the REPL buffer, all lines before that are erased, but some opening
+parens and/or double quotes may remain in order to maintain their balanced
+state. The default value for this option is 0, meaning that the number of lines
+is unlimited, i.e. no line is ever erased.
 
                                                           *g:slimv_repl_syntax*
 Enables syntax highlighting for the REPL buffer. Switched off by default for
