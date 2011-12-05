@@ -1204,7 +1204,8 @@ function! SlimvIndent( lnum )
     " Check if the current form started in the previous nonblank line
     if l == pnum
         " Found opening paren in the previous line, let's find out the function name
-        let func = matchstr( getline(l), '\<\k*\>', c )
+        let line = getline(l)
+        let func = matchstr( line, '\<\k*\>', c )
         " If it's a keyword, keep the indentation straight
         if strpart(func, 0, 1) == ':'
             return c
@@ -1222,10 +1223,17 @@ function! SlimvIndent( lnum )
         " Remove package specification
         let func = substitute(func, '^.*:', '', '')
         if func != '' && s:swank_connected
+            " Look how many arguments are on the same line
+            " Contract strings, remove comments, parens and other special characters
+            let line = substitute( line, '".\{-}[^\\]"', '""', 'g' )
+            let line = substitute( line, ';.*$', '', 'g' )
+            let line = substitute( line, "[()\\[\\]{}#'`,]", '', 'g' )
+            let args_here = len( split( line ) ) - 1
+            " Get swank indent info
             let s:indent = ''
             silent execute 'python get_indent_info("' . func . '")'
-            if s:indent >= '0' && s:indent <= '9'
-                " Function has &body argument, so indent by 2 spaces from the opening '('
+            if s:indent == args_here
+                " The next one is an &body argument, so indent by 2 spaces from the opening '('
                 return c + 1
             endif
         endif
