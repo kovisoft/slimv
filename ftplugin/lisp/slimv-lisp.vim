@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.9.2
-" Last Change:  20 Oct 2011
+" Version:      0.9.3
+" Last Change:  06 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -19,95 +19,59 @@ if !exists( 'g:slimv_lisp_loaded' )
 
 let g:slimv_lisp_loaded = 1
 
+" Descriptor array for various lisp implementations
+" The structure of an array element is:
+"     [ executable, implementation, platform, search path]
+" where:
+"     executable  - may contain wildcards but only if a search path is present
+"     platform    - 'w' (Windows) or 'l' (Linux = non-Windows), '' for all
+"     search path - commma separated list, may contain wildcard characters
+let s:lisp_desc = [
+\ [ 'sbcl',        'sbcl',      '',  '' ],
+\ [ 'clisp',       'clisp',     '',  '' ],
+\ [ 'gcl',         'clisp',     '',  '' ],
+\ [ 'cmucl',       'cmu',       '',  '' ],
+\ [ 'ecl',         'ecl',       '',  '' ],
+\ [ 'acl',         'allegro',   '',  '' ],
+\ [ 'mlisp',       'allegro',   '',  '' ],
+\ [ 'mlisp8',      'allegro',   '',  '' ],
+\ [ 'alisp',       'allegro',   '',  '' ],
+\ [ 'alisp8',      'allegro',   '',  '' ],
+\ [ 'lwl',         'lispworks', '',  '' ],
+\ [ 'wx86cl',      'clozure',   'w', '' ],
+\ [ 'lx86cl',      'clozure',   'l', '' ],
+\ [ '*lisp.exe',   'clisp',     'w',
+\   'c:/*lisp*,c:/*lisp*/*,c:/*lisp*/bin/*,c:/Program Files/*lisp*,c:/Program Files/*lisp*/*,c:/Program Files/*lisp*/bin/*' ],
+\ [ 'gcl.exe',     'clisp',     'w', 'c:/gcl*,c:/Program Files/gcl*' ],
+\ [ 'cmucl.exe',   'cmu',       'w', 'c:/cmucl*,c:/Program Files/cmucl*' ],
+\ [ '*lisp*.exe',  'allegro',   'w', 'c:/acl*,c:/Program Files/acl*,c:/Program Files/*lisp*/bin/acl*' ],
+\ [ 'ecl.exe',     'ecl',       'w', 'c:/ecl*,c:/Program Files/ecl*' ],
+\ [ 'wx86cl.exe',  'clozure',   'w', 'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*' ],
+\ [ 'sbcl.exe',    'sbcl',      'w', 'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*'] ]
+
 " Try to autodetect Lisp executable
 " Returns list [Lisp executable, Lisp implementation]
-function! b:SlimvAutodetect()
-    " Check the easy cases
-    if executable( 'sbcl' )
-        " Steel Bank Common Lisp
-        return ['sbcl', 'sbcl']
-    endif
-    if executable( 'clisp' )
-        " Common Lisp
-        return ['clisp', 'clisp']
-    endif
-    if executable( 'gcl' )
-        " GNU Common Lisp
-        return ['gcl', 'clisp']
-    endif
-    if executable( 'cmucl' )
-        " Carnegie Mellon University Common Lisp
-        return ['cmucl', 'cmu']
-    endif
-    if executable( 'ecl' )
-        " Embeddable Common Lisp
-        return ['ecl', 'ecl']
-    endif
-    if executable( 'acl' )
-        " Allegro Common Lisp
-        return ['acl', 'allegro']
-    endif
-    if executable( 'mlisp' )
-        " Allegro Common Lisp
-        return ['mlisp', 'allegro']
-    endif
-    if executable( 'mlisp8' )
-        " Allegro Common Lisp
-        return ['mlisp8', 'allegro']
-    endif
-    if executable( 'alisp' )
-        " Allegro Common Lisp
-        return ['alisp', 'allegro']
-    endif
-    if executable( 'alisp8' )
-        " Allegro Common Lisp
-        return ['alisp8', 'allegro']
-    endif
-    if executable( 'lwl' )
-        " LispWorks
-        return ['lwl', 'lispworks']
-    endif
-    if g:slimv_windows && executable( 'wx86cl' )
-        " Clozure CL
-        return ['wx86cl', 'clozure']
-    endif
-    if !g:slimv_windows && executable( 'lx86cl' )
-        " Clozure CL
-        return ['lx86cl', 'clozure']
-    endif
-
-    if g:slimv_windows
-        " Try to find Lisp on the standard installation places
-        let lisps = split( globpath( 'c:/*lisp*,c:/*lisp*/*,c:/*lisp*/bin/*,c:/Program Files/*lisp*,c:/Program Files/*lisp*/*,c:/Program Files/*lisp*/bin/*', '*lisp.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
+function! b:SlimvAutodetect( preferred )
+    for lisp in s:lisp_desc
+        if     lisp[2] == 'w' && !g:slimv_windows
+            " Valid only on Windows
+        elseif lisp[2] == 'l' &&  g:slimv_windows
+            " Valid only on Linux
+        elseif a:preferred != '' && a:preferred != lisp[1]
+            " Not the preferred implementation
+        elseif lisp[3] != ''
+            " A search path is given
+            let lisps = split( globpath( lisp[3], lisp[0] ), '\n' )
+            if len( lisps ) > 0
+                return [lisps[0], lisp[1]]
+            endif
+        else
+            " Single executable is given without path
+            if executable( lisp[0] )
+                return lisp[0:1]
+            endif
         endif
-        let lisps = split( globpath( 'c:/gcl*,c:/Program Files/gcl*', 'gcl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clisp']
-        endif
-        let lisps = split( globpath( 'c:/cmucl*,c:/Program Files/cmucl*', 'cmucl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'cmu']
-        endif
-        let lisps = split( globpath( 'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*', 'sbcl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'sbcl']
-        endif
-        let lisps = split( globpath( 'c:/acl*,c:/Program Files/acl*,c:/Program Files/*lisp*/bin/acl*', '*lisp*.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'allegro']
-        endif
-        let lisps = split( globpath( 'c:/ecl*,c:/Program Files/ecl*', 'ecl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'ecl']
-        endif
-        let lisps = split( globpath( 'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*', 'wx86cl.exe' ), '\n' )
-        if len( lisps ) > 0
-            return [lisps[0], 'clozure']
-        endif
-    endif
-
+    endfor
     return ['', '']
 endfunction
 
@@ -118,11 +82,57 @@ function! b:SlimvImplementation()
         return tolower( g:slimv_impl )
     endif
 
-    if exists( 'g:slimv_lisp' ) && match( tolower( g:slimv_lisp ), 'sbcl' ) >= 0
+    let lisp = tolower( g:slimv_lisp )
+    if match( lisp, 'sbcl' ) >= 0
         return 'sbcl'
+    endif
+    if match( lisp, 'cmu' ) >= 0
+        return 'cmu'
+    endif
+    if match( lisp, 'acl' ) >= 0 || match( lisp, 'alisp' ) >= 0 || match( lisp, 'mlisp' ) >= 0
+        return 'allegro'
+    endif
+    if match( lisp, 'ecl' ) >= 0
+        return 'ecl'
+    endif
+    if match( lisp, 'x86cl' ) >= 0
+        return 'clozure'
+    endif
+    if match( lisp, 'lwl' ) >= 0
+        return 'lispworks'
     endif
 
     return 'clisp'
+endfunction
+
+" Try to autodetect SWANK and build the command to load the SWANK server
+function! b:SlimvSwankLoader()
+    " First check if SWANK is bundled with Slimv
+    let swanks = split( globpath( &runtimepath, 'slime/start-swank.lisp'), '\n' )
+    if len( swanks ) == 0
+        " Try to find SWANK in the standard SLIME installation locations
+        if g:slimv_windows || g:slimv_cygwin
+            let swanks = split( globpath( 'c:/slime/,c:/*lisp*/slime/,c:/*lisp*/site/lisp/slime/,c:/Program Files/*lisp*/site/lisp/slime/', 'start-swank.lisp' ), '\n' )
+        else
+            let swanks = split( globpath( '/usr/share/common-lisp/source/slime/', 'start-swank.lisp' ), '\n' )
+        endif
+    endif
+    if len( swanks ) == 0
+        return ''
+    endif
+
+    " Build proper SWANK loader command for the Lisp implementation used
+    if g:slimv_impl == 'sbcl'
+        return '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
+    elseif g:slimv_impl == 'clisp'
+        return '"' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
+    elseif g:slimv_impl == 'allegro'
+        return '"' . g:slimv_lisp . '" -L "' . swanks[0] . '"'
+    elseif g:slimv_impl == 'cmu'
+        return '"' . g:slimv_lisp . '" -load "' . swanks[0] . '"'
+    else
+        return '"' . g:slimv_lisp . '" -l "' . swanks[0] . '"'
+    endif
 endfunction
 
 " Filetype specific initialization for the REPL buffer

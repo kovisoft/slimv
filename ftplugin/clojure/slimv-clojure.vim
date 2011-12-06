@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.9.2
-" Last Change:  20 Oct 2011
+" Version:      0.9.3
+" Last Change:  06 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -48,7 +48,7 @@ endfunction
 
 " Try to autodetect Clojure executable
 " Returns list [Clojure executable, Clojure implementation]
-function! b:SlimvAutodetect()
+function! b:SlimvAutodetect( preferred )
     " Firts try the most basic setup: everything in the path
     if executable( 'lein' )
         return ['"lein repl"', 'clojure']
@@ -112,6 +112,24 @@ function! b:SlimvImplementation()
     endif
 
     return 'clojure'
+endfunction
+
+" Try to autodetect SWANK and build the command to load the SWANK server
+function! b:SlimvSwankLoader()
+    " First autodetect Leiningen and Cake
+    if executable( 'lein' )
+        return '"lein swank"'
+    elseif executable( 'cake' )
+        return '"cake swank"'
+    else
+        " Check if swank-clojure is bundled with Slimv
+        let swanks = split( globpath( &runtimepath, 'swank-clojure/swank/swank.clj'), '\n' )
+        if len( swanks ) == 0
+            return ''
+        endif
+        let sclj = substitute( swanks[0], '\', '/', "g" )
+        return g:slimv_lisp . ' -i "' . sclj . '" -e "(swank.swank/start-repl)" -r'
+    endif
 endfunction
 
 " Filetype specific initialization for the REPL buffer

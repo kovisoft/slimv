@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  01 Dec 2011
+" Last Change:  06 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -85,58 +85,7 @@ function! SlimvSwankCommand()
         let g:slimv_lisp = input( 'Enter Lisp path (or fill g:slimv_lisp in your vimrc): ', '', 'file' )
     endif
 
-    let cmd = ''
-    if SlimvGetFiletype() == 'clojure'
-        " First autodetect Leiningen and Cake
-        if executable( 'lein' )
-            let cmd = '"lein swank"'
-        elseif executable( 'cake' )
-            let cmd = '"cake swank"'
-        else
-            " Check if swank-clojure is bundled with Slimv
-            let swanks = split( globpath( &runtimepath, 'swank-clojure/swank/swank.clj'), '\n' )
-            if len( swanks ) == 0
-                return ''
-            endif
-            let sclj = substitute( swanks[0], '\', '/', "g" )
-            let cmd = g:slimv_lisp . ' -i "' . sclj . '" -e "(swank.swank/start-repl)" -r'
-        endif
-    elseif SlimvGetFiletype() == 'scheme'
-        let swanks = split( globpath( &runtimepath, 'slime/contrib/swank-mit-scheme.scm'), '\n' )
-        if len( swanks ) == 0
-            return ''
-        endif
-        if b:SlimvImplementation() == 'mit'
-            let cmd = '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
-        endif
-    else
-        " First check if SWANK is bundled with Slimv
-        let swanks = split( globpath( &runtimepath, 'slime/start-swank.lisp'), '\n' )
-        if len( swanks ) == 0
-            " Try to find SWANK in the standard SLIME installation locations
-            if g:slimv_windows || g:slimv_cygwin
-                let swanks = split( globpath( 'c:/slime/,c:/*lisp*/slime/,c:/*lisp*/site/lisp/slime/,c:/Program Files/*lisp*/site/lisp/slime/', 'start-swank.lisp' ), '\n' )
-            else
-                let swanks = split( globpath( '/usr/share/common-lisp/source/slime/', 'start-swank.lisp' ), '\n' )
-            endif
-        endif
-        if len( swanks ) == 0
-            return ''
-        endif
-
-        " Build proper SWANK start command for the Lisp implementation used
-        if b:SlimvImplementation() == 'sbcl'
-            let cmd = '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
-        elseif b:SlimvImplementation() == 'clisp'
-            let cmd = '"' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
-        elseif b:SlimvImplementation() == 'allegro'
-            let cmd = '"' . g:slimv_lisp . '" -L "' . swanks[0] . '"'
-        elseif b:SlimvImplementation() == 'cmu'
-            let cmd = '"' . g:slimv_lisp . '" -load "' . swanks[0] . '"'
-        else
-            let cmd = '"' . g:slimv_lisp . '" -l "' . swanks[0] . '"'
-        endif
-    endif
+    let cmd = b:SlimvSwankLoader()
     if cmd != ''
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
@@ -169,7 +118,13 @@ endif
 
 " Find Lisp (if not given in vimrc)
 if !exists( 'g:slimv_lisp' )
-    let lisp = b:SlimvAutodetect()
+    let lisp = ['', '']
+    if exists( 'g:slimv_preferred' )
+        let lisp = b:SlimvAutodetect( tolower(g:slimv_preferred) )
+    endif
+    if lisp[0] == ''
+        let lisp = b:SlimvAutodetect( '' )
+    endif
     let g:slimv_lisp = lisp[0]
     if !exists( 'g:slimv_impl' )
         let g:slimv_impl = lisp[1]
@@ -1421,7 +1376,7 @@ function! SlimvHandleEnterSldb()
                 " Display item-th frame
                 call SlimvMakeFold()
                 silent execute 'python swank_frame_locals("' . item . '")'
-                if b:SlimvImplementation() != 'clisp'
+                if g:slimv_impl != 'clisp'
                     " These are not implemented for CLISP
                     silent execute 'python swank_frame_source_loc("' . item . '")'
                     silent execute 'python swank_frame_call("' . item . '")'
