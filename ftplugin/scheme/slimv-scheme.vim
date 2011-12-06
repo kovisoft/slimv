@@ -1,7 +1,7 @@
 " slimv-scheme.vim:
 "               Scheme filetype plugin for Slimv
-" Version:      0.9.2
-" Last Change:  20 Oct 2011
+" Version:      0.9.3
+" Last Change:  06 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -21,7 +21,7 @@ let g:slimv_scheme_loaded = 1
 
 " Try to autodetect Scheme executable
 " Returns list [Scheme executable, Scheme implementation]
-function! b:SlimvAutodetect()
+function! b:SlimvAutodetect( preferred )
     " Currently only MIT Scheme on Linux
     if executable( 'scheme' )
         " MIT Scheme
@@ -39,6 +39,18 @@ function! b:SlimvImplementation()
     endif
 
     return 'mit'
+endfunction
+
+" Try to autodetect SWANK and build the command to load the SWANK server
+function! b:SlimvSwankLoader()
+    let swanks = split( globpath( &runtimepath, 'slime/contrib/swank-mit-scheme.scm'), '\n' )
+    if len( swanks ) == 0
+        return ''
+    endif
+    if g:slimv_impl == 'mit'
+        return '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
+    endif
+    return ''
 endfunction
 
 " Filetype specific initialization for the REPL buffer

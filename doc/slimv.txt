@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 01 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 06 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -170,6 +170,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_package|            If nonzero, Slimv package/namespace handling is
                              switched on.
 
+|g:slimv_preferred|          Name of the preferred lisp implementation.
+
 |g:slimv_repl_max_len|       Maximum number of lines in the REPL buffer.
 
 |g:slimv_repl_name|          Name of the REPL buffer.
@@ -233,6 +235,23 @@ startup. If the autodetection fails, set this to the actual Lisp
 implementation.
 Example:
     let g:slimv_impl = 'sbcl'
+
+                                                            *g:slimv_preferred*
+Name of the preferred lisp implementation. The autodetection mechanism tries to
+choose this one if possible, i.e. if installed and found in the path or in the
+standard installation directories.
+It's typical use is when there are multiple lisps present in the system and
+the autodetection chooses an undesired implementation.
+
+Valid choices are for lisp:
+    'sbcl', 'clisp', 'cmu', 'ecl', 'allegro', 'lispworks', 'clozure'
+For Scheme:
+    'mit'
+
+Example:
+    let g:slimv_preferred = 'clisp'
+This means that Slimv will use clisp even if both sbcl and clisp are installed
+and the autodetection would choose sbcl.
 
                                                             *g:slimv_swank_cmd*
                                                         *g:slimv_swank_clojure*
