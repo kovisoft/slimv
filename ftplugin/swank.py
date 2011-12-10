@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.3
-# Last Change:  13 Nov 2011
+# Last Change:  10 Dec 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -457,15 +457,21 @@ def swank_parse_compile(struct):
     return buf
 
 def swank_parse_list_threads(tl):
-    buf = ''
+    vim.command('call SlimvOpenThreadsBuffer()')
+    buf = vim.current.buffer
+    buf[:] = ['Idx    ID  Status                 Name                   Priority', \
+              '---    --  ------                 ----                   --------']
     lst = tl[1]
     headers = lst.pop(0)
     logprint(str(lst))
     idx = 0
     for t in lst:
-        buf = buf + "\n%3d. ID%3d: %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]))
+        priority = ''
+        if len(t) > 3:
+            priority = unquote(t[3])
+        buf.append(["%3d:  %3d  %-22s %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]), priority)])
         idx = idx + 1
-    return buf
+    vim.command('call SlimvEndUpdate()')
 
 def swank_parse_frame_call(struct, action):
     """
@@ -634,7 +640,7 @@ def swank_listen():
                         logprint('params: ' + str(params))
                         if type(params) == str:
                             element = params.lower()
-                            to_ignore = [':frame-call', ':quit-inspector']
+                            to_ignore = [':frame-call', ':quit-inspector', ':kill-thread']
                             to_nodisp = [':describe-symbol']
                             to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':disassemble-form', \
                                          ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':swank-toggle-trace', 'sldb-break']
@@ -706,8 +712,7 @@ def swank_listen():
                                         compl = "\n".join(map(lambda x: x[0], params))
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':list-threads':
-                                    retval = retval + swank_parse_list_threads(r[1])
-                                    retval = retval + new_line(retval) + prompt + '> '
+                                    swank_parse_list_threads(r[1])
                                 elif action.name == ':xref':
                                     retval = retval + '\n' + swank_parse_xref(r[1][1])
                                     retval = retval + new_line(retval) + prompt + '> '
@@ -1000,15 +1005,15 @@ def swank_profile_reset():
 
 def swank_list_threads():
     cmd = '(swank:list-threads)'
-    swank_rex(':list-threads', cmd, get_package(), 't')
+    swank_rex(':list-threads', cmd, get_swank_package(), 't')
 
 def swank_kill_thread(index):
     cmd = '(swank:kill-nth-thread ' + str(index) + ')'
-    swank_rex(':kill-thread', cmd, get_package(), 't', str(index))
+    swank_rex(':kill-thread', cmd, get_swank_package(), 't', str(index))
 
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
-    swank_rex(':debug-thread', cmd, get_package(), 't', str(index))
+    swank_rex(':debug-thread', cmd, get_swank_package(), 't', str(index))
 
 ###############################################################################
 # Generic SWANK connection handling

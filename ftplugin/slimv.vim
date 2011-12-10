@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  06 Dec 2011
+" Last Change:  10 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -150,6 +150,11 @@ endif
 " INSPECT buffer name
 if !exists( 'g:slimv_inspect_name' )
     let g:slimv_inspect_name = 'INSPECT'
+endif
+
+" THREADS buffer name
+if !exists( 'g:slimv_threads_name' )
+    let g:slimv_threads_name = 'THREADS'
 endif
 
 " Shall we open REPL buffer in split window?
@@ -468,7 +473,7 @@ function! SlimvTimer()
         " Put '<Insert>' twice into the typeahead buffer, which should not do anything
         " just switch to replace/insert mode then back to insert/replace mode
         " But don't do this for readonly buffers
-        if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name
+        if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
             call feedkeys("\<insert>\<insert>")
         endif
     else
@@ -659,6 +664,16 @@ function SlimvOpenInspectBuffer()
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
 endfunction
 
+" Open a new Threads buffer
+function SlimvOpenThreadsBuffer()
+    call SlimvOpenBuffer( g:slimv_threads_name )
+
+    " Add keybindings valid only for the Threads buffer
+    "noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterThreads()<CR>
+    noremap  <buffer> <silent> <Backspace>   :call SlimvKillThread()<CR>
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitThreads()<CR>'
+endfunction
+
 " Open a new SLDB buffer
 function SlimvOpenSldbBuffer()
     call SlimvOpenBuffer( g:slimv_sldb_name )
@@ -710,6 +725,15 @@ function SlimvQuitInspect()
     silent! %d
     call SlimvEndUpdate()
     call SlimvCommand( 'python swank_quit_inspector()' )
+    b #
+endfunction
+
+" Quit Threads
+function SlimvQuitThreads()
+    " Clear the contents of the Threads buffer
+    setlocal noreadonly
+    silent! %d
+    call SlimvEndUpdate()
     b #
 endfunction
 
@@ -1484,11 +1508,15 @@ function! SlimvKillThread() range
         if a:firstline == a:lastline
             let line = getline('.')
             let item = matchstr( line, '\d\+' )
-            let item = input( 'Thread to kill: ', item )
+            if bufname('%') != g:slimv_threads_name
+                " We are not in the Threads buffer, not sure which thread to kill
+                let item = input( 'Thread to kill: ', item )
+            endif
             if item != ''
                 call SlimvCommand( 'python swank_kill_thread(' . item . ')' )
                 call SlimvRefreshReplBuffer()
             endif
+            echomsg 'Thread ' . item . ' is killed.'
         else
             for line in getline(a:firstline, a:lastline)
                 let item = matchstr( line, '\d\+' )
@@ -1498,6 +1526,7 @@ function! SlimvKillThread() range
             endfor
             call SlimvRefreshReplBuffer()
         endif
+        call SlimvListThreads()
     endif
 endfunction
 
