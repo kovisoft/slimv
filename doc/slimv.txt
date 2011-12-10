@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 06 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 10 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -194,6 +194,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_swank_cmd|          Command used to start the Lisp SWANK server.
 
 |g:slimv_swank_scheme|       Command used to start the Scheme SWANK server.
+
+|g:slimv_threads_name|       Name of the Threads buffer.
 
 |g:slimv_timeout|            Timeout defined for starting up or connecting
                              to the SWANK server.
@@ -397,6 +399,11 @@ Not all special characters are allowed, e.g. '*' does not work in Windows.
                                                          *g:slimv_inspect_name*
 Name of the Inspect buffer. Default is 'INSPECT'. Space and some other special
 characters need to be escaped (e.g. 'Slimv\ Incpector', '\#INSPECT\#').
+Not all special characters are allowed, e.g. '*' does not work in Windows.
+
+                                                         *g:slimv_threads_name*
+Name of the Threads buffer. Default is 'THREADS'. Space and some other special
+characters need to be escaped (e.g. 'Slimv\ Threads', '\#THREADS\#').
 Not all special characters are allowed, e.g. '*' does not work in Windows.
 
                                                            *g:slimv_repl_split*
@@ -641,6 +648,7 @@ For a complete reference of SWANK functions implemented see |swank-functions|.
 |swank-describe|             Describe symbol in tooltip
 |swank-completions|          List of possible symbol completions
 |swank-inspect|              Inspector
+|swank-threads|              Threads
 |swank-trace|                Trace function
 |swank-profile|              Profiler
 |swank-xref|                 Cross Reference
@@ -814,6 +822,22 @@ Backtrace section, then the Inspect command inspects objects in the given
 frame. It means that it is possible to examine the value of local variables
 within the scope of the given frame ("inspect-in-frame").
 
+
+-------------------------------------------------------------------------------
+THREADS                                                         *swank-threads*
+
+The Swank Threads are presented in a separate buffer.
+
+When the cursor is placed on a thread-line and <Backspace> is pressed or the
+Kill-Thread function is selected (<Leader>K by default) then the given thread
+is killed.
+If multiple thread-lines are selected then all selected threads are killed.
+
+When the cursor is placed on a thread-line and the Debug-Thread function is
+selected (<Leader>G by default) then the given thread is interrupted and the
+debugger is invoked.
+
+Pressing <Leader>q exits the Threads buffer.
 
 -------------------------------------------------------------------------------
 TRACE                                                             *swank-trace*
