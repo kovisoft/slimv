@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 10 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 12 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -828,14 +828,15 @@ THREADS                                                         *swank-threads*
 
 The Swank Threads are presented in a separate buffer.
 
-When the cursor is placed on a thread-line and <Backspace> is pressed or the
-Kill-Thread function is selected (<Leader>K by default) then the given thread
-is killed.
-If multiple thread-lines are selected then all selected threads are killed.
+When the cursor is placed on a thread-line and <Backspace> or <Leader>k is
+pressed or the Kill-Thread function is selected then the given thread is killed.
+If multiple thread-lines are selected then all marked threads are killed.
 
-When the cursor is placed on a thread-line and the Debug-Thread function is
-selected (<Leader>G by default) then the given thread is interrupted and the
+When the cursor is placed on a thread-line and <Leader>d is pressed or the
+Debug-Thread function is selected then the given thread is interrupted and the
 debugger is invoked.
+
+Pressing <Leader>r refreshes the thread list.
 
 Pressing <Leader>q exits the Threads buffer.
 

@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  10 Dec 2011
+" Last Change:  12 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -670,7 +670,10 @@ function SlimvOpenThreadsBuffer()
 
     " Add keybindings valid only for the Threads buffer
     "noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterThreads()<CR>
-    noremap  <buffer> <silent> <Backspace>   :call SlimvKillThread()<CR>
+    noremap  <buffer> <silent> <Backspace>                        :call SlimvKillThread()<CR>
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'r      :call SlimvListThreads()<CR>'
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'d      :call SlimvDebugThread()<CR>'
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'k      :call SlimvKillThread()<CR>'
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitThreads()<CR>'
 endfunction
 

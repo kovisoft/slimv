@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.3
-# Last Change:  10 Dec 2011
+# Last Change:  12 Dec 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -346,6 +346,7 @@ def swank_parse_inspect(struct):
     buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
     pcont = parse_plist(struct, ':content')
     cont = pcont[0]
+    istate = pcont[1]
     lst = []
     linestart = 0
     for el in cont:
@@ -371,6 +372,8 @@ def swank_parse_inspect(struct):
             lst.append(text)
             if text == "\n":
                 linestart = len(lst)
+    if istate > 1000:
+        lst.append(" [--more--]")
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])
     vim.command('call SlimvEndUpdate()')
@@ -459,8 +462,8 @@ def swank_parse_compile(struct):
 def swank_parse_list_threads(tl):
     vim.command('call SlimvOpenThreadsBuffer()')
     buf = vim.current.buffer
-    buf[:] = ['Idx    ID  Status                 Name                   Priority', \
-              '---    --  ------                 ----                   --------']
+    buf[:] = ['Idx  ID    Status                 Name                   Priority', \
+              '---- ----  --------------------   --------------------   ---------']
     lst = tl[1]
     headers = lst.pop(0)
     logprint(str(lst))
