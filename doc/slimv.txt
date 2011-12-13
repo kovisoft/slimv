@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 12 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 13 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -815,6 +815,11 @@ When pressing Enter on the last line starting with [<<] or pressing <Backspace>
 then the inspector is popped up one level, or if this was the topmost level
 then Slimv exits the Inspector.
 Pressing <Leader>q also exits the Inspector.
+
+If the object is too big to be fully displayed, this is signaled by the
+[--more--] text. When pressing Enter on the line containing [--more--] then
+the next part of the inspected object is queried from the swank server and
+displayed in the Inspect buffer.
 
 
 If debugger is activated and the cursor is placed on a frame line in the

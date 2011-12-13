@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  12 Dec 2011
+" Last Change:  13 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -657,11 +657,17 @@ endfunction
 " Open a new Inspect buffer
 function SlimvOpenInspectBuffer()
     call SlimvOpenBuffer( g:slimv_inspect_name )
+    let b:range_start = 0
+    let b:range_end   = 0
 
     " Add keybindings valid only for the Inspect buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
     noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
+
+    syn match Type /^\[\d\+\]/
+    syn match Type /^\[<<\]/
+    syn match Type /\[--more--\]$/
 endfunction
 
 " Open a new Threads buffer
@@ -1453,6 +1459,13 @@ function! SlimvHandleEnterInspect()
             call SlimvSendSilent( ['<' . item . '>'] )
             return
         endif
+    endif
+
+    if line =~ ' [--more--\]$'
+        " More data follows
+        call SlimvCommand( 'python swank_inspector_range()' )
+        call SlimvRefreshReplBuffer()
+        return
     endif
 
     " No special treatment, perform the original function
