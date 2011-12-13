@@ -669,7 +669,7 @@ def swank_listen():
                         logprint('params: ' + str(params))
                         if type(params) == str:
                             element = params.lower()
-                            to_ignore = [':frame-call', ':quit-inspector', ':kill-thread']
+                            to_ignore = [':frame-call', ':quit-inspector', ':kill-thread', ':debug-thread']
                             to_nodisp = [':describe-symbol']
                             to_prompt = [':undefine-function', ':swank-macroexpand-1', ':swank-macroexpand-all', ':disassemble-form', \
                                          ':load-file', ':toggle-profile-fdefinition', ':profile-by-substring', ':swank-toggle-trace', 'sldb-break']
