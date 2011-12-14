@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.3
-# Last Change:  13 Dec 2011
+# Last Change:  14 Dec 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -384,7 +384,7 @@ def swank_parse_inspect_content(pcont):
         vim.command(vc)
         vc = ":let b:range_end=" + end
         vim.command(vc)
-        lst.append(" [--more--]")
+        lst.append("\n[--more--]")
     buf = vim.current.buffer
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])

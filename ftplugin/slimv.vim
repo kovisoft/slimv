@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  13 Dec 2011
+" Last Change:  14 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -667,7 +667,7 @@ function SlimvOpenInspectBuffer()
 
     syn match Type /^\[\d\+\]/
     syn match Type /^\[<<\]/
-    syn match Type /\[--more--\]$/
+    syn match Type /^\[--more--\]$/
 endfunction
 
 " Open a new Threads buffer
@@ -1439,7 +1439,12 @@ function! SlimvHandleEnterInspect()
     endif
 
     if line[0] == '['
-        if line[0:3] == '[<<]'
+        if line =~ '^[--more--\]$'
+            " More data follows, fetch next part
+            call SlimvCommand( 'python swank_inspector_range()' )
+            call SlimvRefreshReplBuffer()
+            return
+        elseif line[0:3] == '[<<]'
             " Pop back up in the inspector
             let item = '-1'
         else
@@ -1459,13 +1464,6 @@ function! SlimvHandleEnterInspect()
             call SlimvSendSilent( ['<' . item . '>'] )
             return
         endif
-    endif
-
-    if line =~ ' [--more--\]$'
-        " More data follows
-        call SlimvCommand( 'python swank_inspector_range()' )
-        call SlimvRefreshReplBuffer()
-        return
     endif
 
     " No special treatment, perform the original function
@@ -2292,7 +2290,7 @@ function! SlimvOmniComplete( findstart, base )
         " Locate the start of the symbol name
         call s:SetKeyword()
         let upto = strpart( getline( '.' ), 0, col( '.' ) - 1)
-        let p = match(upto, '\k\+$')
+        let p = match(upto, '\(\k\|\.\)\+$')
         return p 
     else
         return SlimvComplete( a:base )
