@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.3
-# Last Change:  14 Dec 2011
+# Last Change:  21 Dec 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -348,7 +348,8 @@ def swank_parse_inspect_content(pcont):
     buf = vim.current.buffer
     # First 3 lines are filled in swank_parse_inspect()
     buf[3:] = []
-    inspect_content = inspect_content + pcont[0]  # Append to the previous content
+    if type(pcont[0]) == list:
+        inspect_content = inspect_content + pcont[0]  # Append to the previous content
     istate = pcont[1]
     start  = pcont[2]
     end    = pcont[3]
@@ -384,7 +385,10 @@ def swank_parse_inspect_content(pcont):
         vim.command(vc)
         vc = ":let b:range_end=" + end
         vim.command(vc)
-        lst.append("\n[--more--]")
+        if lst[linestart][0] == '[':
+            lst.append("\n[--more--]")
+        else:
+            lst[linestart:] = "[--more--]"
     buf = vim.current.buffer
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])
@@ -936,11 +940,11 @@ def swank_return_string(s):
 
 def swank_inspect(symbol):
     cmd = '(swank:init-inspector "' + symbol + '")'
-    swank_rex(':init-inspector', cmd, get_package(), 't')
+    swank_rex(':init-inspector', cmd, get_swank_package(), 't')
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
-    swank_rex(':inspect-nth-part', cmd, 'nil', 't', str(n))
+    swank_rex(':inspect-nth-part', cmd, get_swank_package(), 't', str(n))
 
 def swank_inspector_nth_action(n):
     cmd = '(swank:inspector-call-nth-action ' + str(n) + ')'
