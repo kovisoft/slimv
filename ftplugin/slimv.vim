@@ -1212,10 +1212,19 @@ function! SlimvIndent( lnum )
         let func = substitute(func, '^.*:', '', '')
         if func != '' && s:swank_connected
             " Look how many arguments are on the same line
-            " Contract strings, remove comments, parens and other special characters
             let args = strpart( line, c )
+            " Contract strings, remove comments
             let args = substitute( args, '".\{-}[^\\]"', '""', 'g' )
             let args = substitute( args, ';.*$', '', 'g' )
+            " Contract subforms by replacing them with a single character
+            let args0 = ''
+            while args != args0
+                let args0 = args
+                let args = substitute( args, '([^()]*)',     'x', 'g' )
+                let args = substitute( args, '\[[^\[\]]*\]', 'x', 'g' )
+                let args = substitute( args, '{[^{}]*}',     'x', 'g' )
+            endwhile
+            " Remove leftover parens and other special characters
             let args = substitute( args, "[()\\[\\]{}#'`,]", '', 'g' )
             let args_here = len( split( args ) ) - 1
             " Get swank indent info
