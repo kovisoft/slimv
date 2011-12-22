@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.3
-" Last Change:  14 Dec 2011
+" Last Change:  22 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1204,7 +1204,7 @@ function! SlimvIndent( lnum )
                 return c + 1
             endif
         else
-            if match( func, 'defgeneric$' ) >= 0
+            if match( func, 'defgeneric$' ) >= 0 || match( func, 'aif$' ) >= 0
                 return c + 1
             endif
         endif

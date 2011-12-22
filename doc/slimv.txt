@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 22 Dec 2011
 
 Slimv                                                                  *slimv*
                                Version 0.9.3
@@ -1301,6 +1301,23 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.9.3  - Start Swank server in virtual terminal when running in GNU screen
          on Linux (thanks to Oleg Terenchuk).
+       - Reuse a window for slimv also when there are three or more windows open.
+       - Don't go to end of REPL buffer if user moved the cursor away from EOF.
+       - Use xdg-open for default browser in Linux.
+       - Removed option g:slimv_python.
+       - Added option g:slimv_repl_max_len for limiting the number of lines in
+         the REPL buffer.
+       - Added option g:slimv_preferred to choose preferred lisp implementation.
+       - Query additional parts of big inspected object upon pressing Enter on
+         [--more--].
+       - Thread List is displayed and handled in a separate Threads buffer.
+       - Bugfix: window navigation problems between source/REPL/SLDB/etc.
+       - Bugfix: error messages when Swank server window is closed.
+       - Bugfix: return control to vim after starting browser defined by
+         g:slimv_browser_cmd.
+       - Bugfix: fixed indentation of arguments before &body argument.
+       - Bugfix: autocomplete for dotted package/namespace names.
+       - Bugfix: indentation of aif.
 
 0.9.2  - Added option g:swank_log to enable swank debug log.
        - Added options g:slimv_repl_name, g:slimv_sldb_name, g:slimv_inspect_name.
