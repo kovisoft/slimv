@@ -1,7 +1,7 @@
 " slimv-syntax-clojure.vim:
 "               Clojure syntax plugin for Slimv
-" Version:      0.8.6
-" Last Change:  09 Aug 2011
+" Version:      0.9.4
+" Last Change:  26 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -23,6 +23,7 @@ runtime syntax/**/lisp.vim
 " Add [] and {} to the lisp_rainbow handling
 syn match			 lispSymbol			  contained			   ![^()\[\]{}'`,"; \t]\+!
 syn match			 lispBarSymbol			  contained			   !|..\{-}|!
+syn match			 lispAtom			  "'[^ \t()\[\]{}]\+"		   contains=lispAtomMark
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen1 
     syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen2 
