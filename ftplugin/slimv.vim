@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.3
-" Last Change:  22 Dec 2011
+" Version:      0.9.4
+" Last Change:  26 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1191,9 +1191,22 @@ function! SlimvIndent( lnum )
 
     " Check if the current form started in the previous nonblank line
     if l == pnum
-        " Found opening paren in the previous line, let's find out the function name
+        " Found opening paren in the previous line
         let line = getline(l)
-        let func = matchstr( line, '\<\k*\>', c )
+        let form = strpart( line, c )
+        " Contract strings, remove comments
+        let form = substitute( form, '".\{-}[^\\]"', '""', 'g' )
+        let form = substitute( form, ';.*$', '', 'g' )
+        " Contract subforms by replacing them with a single character
+        let f = ''
+        while form != f
+            let f = form
+            let form = substitute( form, '([^()]*)',     '0', 'g' )
+            let form = substitute( form, '\[[^\[\]]*\]', '0', 'g' )
+            let form = substitute( form, '{[^{}]*}',     '0', 'g' )
+        endwhile
+        " Find out the function name
+        let func = matchstr( form, '\<\k*\>', c )
         " If it's a keyword, keep the indentation straight
         if strpart(func, 0, 1) == ':'
             return c
@@ -1212,21 +1225,8 @@ function! SlimvIndent( lnum )
         let func = substitute(func, '^.*:', '', '')
         if func != '' && s:swank_connected
             " Look how many arguments are on the same line
-            let args = strpart( line, c )
-            " Contract strings, remove comments
-            let args = substitute( args, '".\{-}[^\\]"', '""', 'g' )
-            let args = substitute( args, ';.*$', '', 'g' )
-            " Contract subforms by replacing them with a single character
-            let args0 = ''
-            while args != args0
-                let args0 = args
-                let args = substitute( args, '([^()]*)',     'x', 'g' )
-                let args = substitute( args, '\[[^\[\]]*\]', 'x', 'g' )
-                let args = substitute( args, '{[^{}]*}',     'x', 'g' )
-            endwhile
-            " Remove leftover parens and other special characters
-            let args = substitute( args, "[()\\[\\]{}#'`,]", '', 'g' )
-            let args_here = len( split( args ) ) - 1
+            let form = substitute( form, "[()\\[\\]{}#'`,]", '', 'g' )
+            let args_here = len( split( form ) ) - 1
             " Get swank indent info
             let s:indent = ''
             silent execute 'python get_indent_info("' . func . '")'
