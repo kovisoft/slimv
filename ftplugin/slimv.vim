@@ -1626,12 +1626,10 @@ function! SlimvConnectServer()
 endfunction
 
 " Get the last region (visual block)
-function! SlimvGetRegion() range
+function! SlimvGetRegion(first, last)
     let oldpos = getpos( '.' ) 
-    if mode() == 'v' || mode() == 'V'
-        let lines = getline( a:firstline, a:lastline )
-        let firstcol = col( a:firstline ) - 1
-        let lastcol  = col( a:lastline  ) - 2
+    if a:first < a:last || ( a:first == line( "'<" ) && a:last == line( "'>" ) )
+        let lines = getline( a:first, a:last )
     else
         " No range was selected, select current paragraph
         normal! vap
@@ -1642,9 +1640,9 @@ function! SlimvGetRegion() range
             call SlimvError( "No range selected." )
             return []
         endif
-        let firstcol = col( "'<" ) - 1
-        let lastcol  = col( "'>" ) - 2
     endif
+    let firstcol = col( "'<" ) - 1
+    let lastcol  = col( "'>" ) - 2
     if lastcol >= 0
         let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
     else
@@ -1667,7 +1665,7 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    let lines = SlimvGetRegion()
+    let lines = SlimvGetRegion(a:firstline, a:lastline)
     if lines != []
         call SlimvEval( lines )
     endif
@@ -2091,7 +2089,7 @@ endfunction
 
 function! SlimvCompileRegion() range
     let oldpos = getpos( '.' ) 
-    let lines = SlimvGetRegion()
+    let lines = SlimvGetRegion(a:firstline, a:lastline)
     if lines == []
         return
     endif
