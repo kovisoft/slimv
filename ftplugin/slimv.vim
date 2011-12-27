@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  26 Dec 2011
+" Last Change:  27 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -281,6 +281,7 @@ let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\
                                                           " Skip matches inside string or comment 
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
 let s:spec_indent = 'flet\|labels\|macrolet'              " List of symbols need special indenting
+let s:binding_form = 'let\|let\*'                         " List of symbols with binding list
 
 " =====================================================================
 "  General utility functions
@@ -1157,6 +1158,15 @@ function! SlimvIndent( lnum )
     " Find beginning of the innermost containing form
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
+        if SlimvGetFiletype() == 'clojure'
+            " Is this a clojure form with [] binding list?
+            call setpos( '.', oldpos )
+            let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
+            if lb >= l && (lb > l || cb > c)
+                call setpos( '.', oldpos )
+                return cb
+            endif
+        endif
         " Is this a form with special indentation?
         if match( getline(l), '\c^(\s*\('.s:spec_indent.'\)\>', c-1 ) >= 0
             " Search for the binding list and jump to its end
@@ -1173,6 +1183,18 @@ function! SlimvIndent( lnum )
             " second outer containing form (possible start of the binding list)
             let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
             if l2 > 0
+                if SlimvGetFiletype() != 'clojure'
+                    if l2 == l && match( getline(l2), '\c^(\s*\('.s:binding_form.'\)\>', c2-1 ) >= 0
+                        " Is this a lisp form with binding list?
+                        call setpos( '.', oldpos )
+                        return c
+                    endif
+                    if match( getline(l2), '\c^(\s*cond\>', c2-1 ) >= 0 && match( getline(l), '\c^(\s*t\>', c-1 ) >= 0
+                        " Is this the 't' case for a 'cond' form?
+                        call setpos( '.', oldpos )
+                        return c
+                    endif
+                endif
                 " Go one level higher and check if we reached a special form
                 let [l3, c3] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
                 if l3 > 0
@@ -1206,7 +1228,7 @@ function! SlimvIndent( lnum )
             let form = substitute( form, '{[^{}]*}',     '0', 'g' )
         endwhile
         " Find out the function name
-        let func = matchstr( form, '\<\k*\>', c )
+        let func = matchstr( form, '\<\k*\>' )
         " If it's a keyword, keep the indentation straight
         if strpart(func, 0, 1) == ':'
             return c
@@ -1230,7 +1252,7 @@ function! SlimvIndent( lnum )
             " Get swank indent info
             let s:indent = ''
             silent execute 'python get_indent_info("' . func . '")'
-            if s:indent == args_here
+            if s:indent != '' && s:indent == args_here
                 " The next one is an &body argument, so indent by 2 spaces from the opening '('
                 return c + 1
             endif
