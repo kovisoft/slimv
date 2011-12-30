@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.3
-# Last Change:  21 Dec 2011
+# Version:      0.9.4
+# Last Change:  30 Dec 2011
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -859,7 +859,7 @@ def swank_connection_info():
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
-    swank_rex(':create-repl', '(swank:create-repl nil)', 'nil', 't')
+    swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), 't')
 
 def swank_eval(exp):
     cmd = '(swank:listener-eval ' + requote(exp) + ')'
@@ -891,7 +891,7 @@ def swank_invoke_continue():
 
 def swank_require(contrib):
     cmd = "(swank:swank-require '" + contrib + ')'
-    swank_rex(':swank-require', cmd, 'nil', ':repl-thread')
+    swank_rex(':swank-require', cmd, 'nil', 't')
 
 def swank_frame_call(frame):
     cmd = '(swank-backend:frame-call ' + frame + ')'
