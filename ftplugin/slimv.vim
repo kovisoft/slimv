@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  27 Dec 2011
+" Last Change:  30 Dec 2011
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -429,13 +429,16 @@ function! SlimvCommand( cmd )
 endfunction
 
 " Execute the given SWANK command, wait for and return the response
-function! SlimvCommandGetResponse( name, cmd )
+function! SlimvCommandGetResponse( name, cmd, timeout )
     let s:refresh_disabled = 1
     call SlimvCommand( a:cmd )
     let msg = ''
     let s:swank_action = ''
     let starttime = localtime()
-    let cmd_timeout = 3
+    let cmd_timeout = a:timeout
+    if cmd_timeout == 0
+        let cmd_timeout = 3
+    endif
     while s:swank_action == '' && localtime()-starttime < cmd_timeout
         python swank_output( 0 )
         redir => msg
@@ -957,7 +960,7 @@ function! SlimvConnectSwank()
             call SlimvSwankResponse()
         endwhile
         if s:swank_version >= '2008-12-23'
-            call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()' )
+            call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()', g:slimv_timeout )
         endif
         let s:swank_connected = 1
         if g:slimv_simple_compl == 0
@@ -1606,7 +1609,7 @@ function! SlimvArglist()
             let arg = matchstr( line, '\<\k*\>', c0 )
             if arg != ''
                 " Ask function argument list from SWANK
-                let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")' )
+                let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
                 if msg != ''
                     " Print argument list in status line with newlines removed.
                     " Disable showmode until the next ESC to prevent
@@ -1790,7 +1793,7 @@ function! SlimvInteractiveEval()
         " We are in the debugger, eval expression in the frame the cursor stands on
         let e = input( 'Eval in frame ' . frame . ': ' )
         if e != ''
-            let result = SlimvCommandGetResponse( ':eval-string-in-frame', 'python swank_eval_in_frame("' . e . '", ' . frame . ')' )
+            let result = SlimvCommandGetResponse( ':eval-string-in-frame', 'python swank_eval_in_frame("' . e . '", ' . frame . ')', 0 )
             if result != ''
                 redraw
                 echo result
@@ -2142,13 +2145,13 @@ function! SlimvDescribe(arg)
     if !s:swank_connected
         return ''
     endif
-    let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")' )
+    let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
     if arglist == ''
         " Not able to fetch arglist, assuming function is not defined
         " Skip calling describe, otherwise SWANK goes into the debugger
         return ''
     endif
-    let msg = SlimvCommandGetResponse( ':describe-function', 'python swank_describe_function("' . arg . '")' )
+    let msg = SlimvCommandGetResponse( ':describe-function', 'python swank_describe_function("' . arg . '")', 0 )
     if msg == ''
         " No describe info, display arglist
         if match( arglist, arg ) != 1
@@ -2291,9 +2294,9 @@ function! SlimvComplete( base )
     endif
     if s:swank_connected
         if g:slimv_simple_compl
-            let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")' )
+            let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")', 0 )
         else
-            let msg = SlimvCommandGetResponse( ':fuzzy-completions', 'python swank_fuzzy_completions("' . a:base . '")' )
+            let msg = SlimvCommandGetResponse( ':fuzzy-completions', 'python swank_fuzzy_completions("' . a:base . '")', 0 )
         endif
         if msg != ''
             " We have a completion list from SWANK
