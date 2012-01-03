@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.4
-# Last Change:  30 Dec 2011
+# Last Change:  03 Jan 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -420,6 +420,7 @@ def swank_parse_debug(struct):
     for i in range( len(restarts) ):
         r0 = unquote( restarts[i][0] )
         r1 = unquote( restarts[i][1] )
+        r1 = r1.replace("\n", " ")
         buf.append([str(i).rjust(3) + ': [' + r0 + '] ' + r1])
     buf.append(['', 'Backtrace:'])
     for f in frames:
