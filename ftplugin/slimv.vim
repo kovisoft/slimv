@@ -1699,6 +1699,10 @@ endfunction
 " Eval contents of the 's' register
 function! SlimvEvalSelection()
     let lines = [SlimvGetSelection()]
+    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        " If this is the REPL buffer then go to EOF
+        normal! G$
+    endif
     call SlimvEval( lines )
 endfunction
 
@@ -1819,22 +1823,32 @@ endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         if !SlimvSelectForm()
             return
         endif
         let s:swank_form = SlimvGetSelection()
+        if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+            " If this is the REPL buffer then go to EOF
+            normal! G$
+        endif
         call SlimvCommandUsePackage( 'python swank_macroexpand("s:swank_form")' )
     endif
 endfunction
 
 " Macroexpand the current top level form
 function! SlimvMacroexpandAll()
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         if !SlimvSelectForm()
             return
         endif
         let s:swank_form = SlimvGetSelection()
+        if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+            " If this is the REPL buffer then go to EOF
+            normal! G$
+        endif
         call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
     endif
 endfunction
