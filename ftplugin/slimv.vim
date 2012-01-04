@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  30 Dec 2011
+" Last Change:  04 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -319,7 +319,7 @@ endfunction
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer()
-    if line( '.' ) >= b:repl_prompt_line
+    if line( '.' ) >= b:repl_prompt_line - 1
         " Go to the end of file only if the user did not move up from here
         normal! G$
     endif
@@ -1816,41 +1816,6 @@ function! SlimvUndefineFunction()
 endfunction
 
 " ---------------------------------------------------------------------
-
-" General part of the various macroexpand functions
-function! SlimvMacroexpandGeneral( command )
-    call SlimvFindDefunStart()
-    let line = getline( "." )
-    if match( line, '(\s*defmacro\s' ) < 0
-        " The form does not contain 'defmacro', put it in a macroexpand block
-        if !SlimvSelectForm()
-            return
-        endif
-        let m = "(" . a:command . " '" . SlimvGetSelection() . ")"
-    else
-        " The form is a 'defmacro', so do a macroexpand from the macro name and parameters
-        if SlimvGetFiletype() == 'clojure'
-            " Some Vim configs (e.g. matchit.vim) include the trailing ']' after '%' in Visual mode
-            silent normal! vt[%ht]"sy
-        else
-            silent normal! vt(])"sy
-        endif
-        let m = SlimvGetSelection() . '))'
-        let m = substitute( m, "defmacro\\s*", a:command . " '(", 'g' )
-        if SlimvGetFiletype() == 'clojure'
-            " Remove opening bracket from the parameter list
-            " TODO: fix this for multi-line macro header
-            let m = substitute( m, "\\[\\(.*\\)", "\\1", 'g' )
-        else
-            " Remove opening brace from the parameter list
-            " The nice regular expression below says: remove the third '('
-            " ( + something + ( + something + ( + something -> ( + something + ( + something + something
-            " TODO: fix this for multi-line macro header
-            let m = substitute( m, "\\(([^()]*([^()]*\\)(\\(.*\\)", "\\1\\2", 'g' )
-        endif
-    endif
-    return m
-endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
