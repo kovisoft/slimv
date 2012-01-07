@@ -146,6 +146,12 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_ctags|              OS command to generate tags file.
 
+|g:slimv_disable_clojure|    Disable Slimv for Clojure files.
+
+|g:slimv_disable_lisp|       Disable Slimv for Lisp files.
+
+|g:slimv_disable_scheme|     Disable Slimv for Scheme files.
+
 |g:slimv_echolines|          Echo only this number of lines from the form
                              being evaluated.
 
@@ -254,6 +260,16 @@ Example:
     let g:slimv_preferred = 'clisp'
 This means that Slimv will use clisp even if both sbcl and clisp are installed
 and the autodetection would choose sbcl.
+
+                                                      *g:slimv_disable_clojure*
+                                                         *g:slimv_disable_lisp*
+                                                       *g:slimv_disable_scheme*
+If any of these options are set then the Slimv will not be loaded and enabled
+for the corresponding filetype.
+
+Example:
+You want to use Slimv for Lisp but don't want to use it for Scheme:
+    let g:slimv_disable_scheme = 1
 
                                                             *g:slimv_swank_cmd*
                                                         *g:slimv_swank_clojure*

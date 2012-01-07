@@ -1,7 +1,7 @@
 " slimv-scheme.vim:
 "               Scheme filetype plugin for Slimv
-" Version:      0.9.3
-" Last Change:  06 Dec 2011
+" Version:      0.9.4
+" Last Change:  07 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,7 +10,7 @@
 " =====================================================================
 "
 "  Load Once:
-if exists("b:did_ftplugin")
+if exists("b:did_ftplugin") || exists("g:slimv_disable_scheme")
     finish
 endif
 
