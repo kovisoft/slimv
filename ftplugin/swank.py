@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.4
-# Last Change:  03 Jan 2012
+# Last Change:  12 Jan 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -31,6 +31,7 @@ id              = 0             # Message id
 debug           = False
 log             = False         # Set this to True in order to enable logging
 logfile         = 'swank.log'   # Logfile name in case logging is on
+pid             = '0'           # Process id
 current_thread  = '0'
 debug_active    = False         # Swank debugger is active
 debug_activated = False         # Swank debugger was activated
@@ -346,8 +347,8 @@ def swank_parse_inspect_content(pcont):
 
     cur_line = vim.eval('line(".")')
     buf = vim.current.buffer
-    # First 3 lines are filled in swank_parse_inspect()
-    buf[3:] = []
+    # First 2 lines are filled in swank_parse_inspect()
+    buf[2:] = []
     if type(pcont[0]) == list:
         inspect_content = inspect_content + pcont[0]  # Append to the previous content
     istate = pcont[1]
@@ -390,10 +391,13 @@ def swank_parse_inspect_content(pcont):
         else:
             lst[linestart:] = "[--more--]"
     buf = vim.current.buffer
+    buf.append([''])
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])
     vim.command('normal! ' + cur_line + 'G')
-    vim.command('call SlimvEndUpdate()')
+    vim.command('normal! 3G0')
+    vim.command('call SlimvHelp(2)')
+    vim.command('normal! j')
 
 def swank_parse_inspect(struct):
     """
@@ -403,7 +407,7 @@ def swank_parse_inspect(struct):
 
     vim.command('call SlimvOpenInspectBuffer()')
     buf = vim.current.buffer
-    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
+    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------']
     pcont = parse_plist(struct, ':content')
     inspect_content = []
     swank_parse_inspect_content(pcont)
@@ -493,8 +497,11 @@ def swank_parse_compile(struct):
 def swank_parse_list_threads(tl):
     vim.command('call SlimvOpenThreadsBuffer()')
     buf = vim.current.buffer
-    buf[:] = ['Idx  ID    Status                 Name                   Priority', \
-              '---- ----  --------------------   --------------------   ---------']
+    buf[:] = ['Threads in pid '+pid, '--------------------']
+    vim.command('call SlimvHelp(2)')
+    buf.append(['', 'Idx  ID    Status                 Name                   Priority', \
+                    '---- ----  --------------------   --------------------   ---------'])
+    vim.command('normal! G0')
     lst = tl[1]
     headers = lst.pop(0)
     logprint(str(lst))
@@ -505,6 +512,7 @@ def swank_parse_list_threads(tl):
             priority = unquote(t[3])
         buf.append(["%3d:  %3d  %-22s %-22s %s" % (idx, int(t[0]), unquote(t[2]), unquote(t[1]), priority)])
         idx = idx + 1
+    vim.command('normal! j')
     vim.command('call SlimvEndUpdate()')
 
 def swank_parse_frame_call(struct, action):
@@ -589,6 +597,7 @@ def swank_listen():
     global current_thread
     global prompt
     global package
+    global pid
 
     retval = ''
     msgcount = 0
