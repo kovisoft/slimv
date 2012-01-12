@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  10 Jan 2012
+" Last Change:  12 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -663,8 +663,10 @@ function SlimvOpenInspectBuffer()
     call SlimvOpenBuffer( g:slimv_inspect_name )
     let b:range_start = 0
     let b:range_end   = 0
+    let b:help = SlimvHelpInspect()
 
     " Add keybindings valid only for the Inspect buffer
+    noremap  <buffer> <silent>        <F1>   :call SlimvToggleHelp()<CR>
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
     noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
@@ -677,9 +679,11 @@ endfunction
 " Open a new Threads buffer
 function SlimvOpenThreadsBuffer()
     call SlimvOpenBuffer( g:slimv_threads_name )
+    let b:help = SlimvHelpThreads()
 
     " Add keybindings valid only for the Threads buffer
     "noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterThreads()<CR>
+    noremap  <buffer> <silent>        <F1>                        :call SlimvToggleHelp()<CR>
     noremap  <buffer> <silent> <Backspace>                        :call SlimvKillThread()<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'r      :call SlimvListThreads()<CR>'
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'d      :call SlimvDebugThread()<CR>'
@@ -757,6 +761,55 @@ function SlimvQuitSldb()
     silent! %d
     call SlimvEndUpdate()
     b #
+endfunction
+
+" Create help text for Inspect buffer
+function SlimvHelpInspect()
+    let help = []
+    call add( help, '<F1>        : toggle this help' )
+    call add( help, '<Enter>     : open object or select action under cursor' )
+    call add( help, '<Backspace> : go back to previous object' )
+    call add( help, g:slimv_leader . 'q          : quit' )
+    return help
+endfunction
+
+" Create help text for Threads buffer
+function SlimvHelpThreads()
+    let help = []
+    call add( help, '<F1>        : toggle this help' )
+    call add( help, '<Backspace> : kill thread' )
+    call add( help, g:slimv_leader . 'k          : kill thread' )
+    call add( help, g:slimv_leader . 'd          : debug thread' )
+    call add( help, g:slimv_leader . 'r          : refresh' )
+    call add( help, g:slimv_leader . 'q          : quit' )
+    return help
+endfunction
+
+" Write help text to current buffer at given line
+function SlimvHelp( line )
+    setlocal noreadonly
+    if exists( 'b:help_shown' )
+        let help = b:help
+    else
+        let help = ['Press <F1> for Help']
+    endif
+    let b:help_line = a:line
+    call append( b:help_line, help )
+    call SlimvEndUpdate()
+endfunction
+
+" Toggle help
+function SlimvToggleHelp()
+    if exists( 'b:help_shown' )
+        let lines = len( b:help )
+        unlet b:help_shown
+    else
+        let lines = 1
+        let b:help_shown = 1
+    endif
+    setlocal noreadonly
+    execute ":" . (b:help_line+1) . "," . (b:help_line+lines) . "d"
+    call SlimvHelp( b:help_line )
 endfunction
 
 " Open SLDB buffer and place cursor on the given frame
