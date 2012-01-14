@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  12 Jan 2012
+" Last Change:  14 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -898,7 +898,7 @@ endfunction
 
 " Return the contents of register 's'
 function! SlimvGetSelection()
-    return getreg( '"s' )
+    return getreg( 's' )
 endfunction
 
 " Find the given string backwards and put it in front of the current selection
@@ -1730,7 +1730,7 @@ function! SlimvGetRegion(first, last)
 
     " Find and add package/namespace definition in front of the region
     if g:slimv_package
-        call setreg( '"s', '' )
+        call setreg( 's', '' )
         call SlimvFindPackage()
         let sel = SlimvGetSelection()
         if sel != ''
@@ -1743,7 +1743,18 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    let lines = SlimvGetRegion(a:firstline, a:lastline)
+    if v:register == '"'
+        let lines = SlimvGetRegion(a:firstline, a:lastline)
+    else
+        " Register was passed, so eval register contents instead
+        let reg = getreg( v:register )
+        let ending = s:CloseForm( [reg] )
+        if ending == 'ERROR'
+            call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
+            return
+        endif
+        let lines = [reg . ending]
+    endif
     if lines != []
         call SlimvEval( lines )
     endif
@@ -2144,9 +2155,20 @@ function! SlimvCompileFile()
     endif
 endfunction
 
+" Compile buffer lines in the given range
 function! SlimvCompileRegion() range
-    let oldpos = getpos( '.' ) 
-    let lines = SlimvGetRegion(a:firstline, a:lastline)
+    if v:register == '"'
+        let lines = SlimvGetRegion(a:firstline, a:lastline)
+    else
+        " Register was passed, so compile register contents instead
+        let reg = getreg( v:register )
+        let ending = s:CloseForm( [reg] )
+        if ending == 'ERROR'
+            call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
+            return
+        endif
+        let lines = [reg . ending]
+    endif
     if lines == []
         return
     endif
