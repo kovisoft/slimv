@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Dec 2011
+*slimv.txt*                    Slimv                 Last Change: 14 Jan 2012
 
 Slimv                                                                  *slimv*
-                               Version 0.9.3
+                               Version 0.9.4
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -576,7 +576,7 @@ sequence, then you may want to fine tune these Vim options:
     Evaluation commands:
     ,d      ,ed      Eval Defun (current top level form)
     ,e      ,ee      Eval Current Expression (current subform)
-    ,r      ,er      Eval Region (visual selection)
+["x],r  ["x],er      Eval Region (visual selection) [or text in register x]
     ,b      ,eb      Eval Buffer
     ,v      ,ei      Interactive Eval (evaluates in frame when in SLDB)
     ,u      ,eu      Undefine Function
@@ -600,7 +600,7 @@ sequence, then you may want to fine tune these Vim options:
     ,D      ,cd      Compile Defun
     ,L      ,cl      Compile and Load File
     ,F      ,cf      Compile File
-    ,R      ,cr      Compile Region
+["x],R  ["x],cr      Compile Region [or text in register x]
 
     Cross Reference commands
     ,xc     ,xc      Who Calls
