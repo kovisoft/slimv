@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Jan 2012
+*slimv.txt*                    Slimv                 Last Change: 16 Jan 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.4
@@ -574,9 +574,9 @@ sequence, then you may want to fine tune these Vim options:
     ,(      ,(t      Paredit Toggle
 
     Evaluation commands:
-    ,d      ,ed      Eval Defun (current top level form)
-    ,e      ,ee      Eval Current Expression (current subform)
-["x],r  ["x],er      Eval Region (visual selection) [or text in register x]
+["x],d  ["x],ed      Eval Defun (current top level form) [put in register x]
+["x],e  ["x],ee      Eval Current Expression (current subform) [put in reg. x]
+["x],r  ["x],er      Eval Region (visual selection) [or text from register x]
     ,b      ,eb      Eval Buffer
     ,v      ,ei      Interactive Eval (evaluates in frame when in SLDB)
     ,u      ,eu      Undefine Function
@@ -600,7 +600,7 @@ sequence, then you may want to fine tune these Vim options:
     ,D      ,cd      Compile Defun
     ,L      ,cl      Compile and Load File
     ,F      ,cf      Compile File
-["x],R  ["x],cr      Compile Region [or text in register x]
+["x],R  ["x],cr      Compile Region [or text from register x]
 
     Cross Reference commands
     ,xc     ,xc      Who Calls
@@ -643,6 +643,29 @@ sequence, then you may want to fine tune these Vim options:
     ,<Up>   ,rp      Previous Input
     ,<Down> ,rn      Next Input
     ,z      ,rr      Refresh REPL Buffer
+
+Note:
+Some mappings accept an optional "x prefix (where x is a register name)
+similarly to Vim's p (put) and y (yank) commands. These commands may
+additionally use the given Vim register to store or retrieve text.
+
+Commands "Eval Defun" and "Eval Current Expression" also store the form being
+evaluated in the given register. When using uppercase register name, the
+current form is appended to the contents of the register.
+
+Commands "Eval Region" and "Compile Region" use the contents of the given
+register (instead of the selected region) for evaluation or compilation.
+
+This feature may be used for remembering and recalling a test form used for
+testing parts of the code.
+
+Sample workflow:
+    1. place the cursor on the test form
+    2. "a,d stores the test form in register 'a' and evaluates it
+    3. test fails, bug is in other parts of code, try to fix it
+    4. send fixed code to the swank server the usual way
+    5. "a,r recalls the test form from register 'a' and evaluates it
+    7. repeat steps 3.-5.
 
 
 Also see |slimv-repl| for additional keybindings valid only in the REPL buffer.
