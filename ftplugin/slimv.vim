@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  14 Jan 2012
+" Last Change:  16 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -901,11 +901,20 @@ function! SlimvGetSelection()
     return getreg( 's' )
 endfunction
 
-" Find the given string backwards and put it in front of the current selection
-" if it is a valid Lisp form (i.e. not inside comment or string)
-function! SlimvFindAddSel( string )
+" Find language specific package/namespace definition backwards
+" Set it as the current package for the next swank action
+function! SlimvFindPackage()
+    if !g:slimv_package || SlimvGetFiletype() == 'scheme'
+        return
+    endif
+    let oldpos = getpos( '.' )
+    if SlimvGetFiletype() == 'clojure'
+        let string = 'in-ns'
+    else
+        let string = '\(cl:\|common-lisp:\|\)in-package'
+    endif
     let found = 0
-    let searching = search( '(\s*' . a:string . '\s', 'bcW' )
+    let searching = search( '(\s*' . string . '\s', 'bcW' )
     while searching
         " Search for the previos occurrence
         if synIDattr( synID( line('.'), col('.'), 0), 'name' ) !~ '[Ss]tring\|[Cc]omment'
@@ -913,7 +922,7 @@ function! SlimvFindAddSel( string )
             let found = 1
             break
         endif
-        let searching = search( '(\s*' . a:string . '\s', 'bW' )
+        let searching = search( '(\s*' . string . '\s', 'bW' )
     endwhile
     if found
         silent normal! ww
@@ -923,20 +932,6 @@ function! SlimvFindAddSel( string )
         else
             let s:swank_package = ''
         endif
-    endif
-endfunction
-
-" Find and add language specific package/namespace definition before the
-" cursor position and if exists then add it in front of the current selection
-function! SlimvFindPackage()
-    if !g:slimv_package || SlimvGetFiletype() == 'scheme'
-        return
-    endif
-    let oldpos = getpos( '.' )
-    if SlimvGetFiletype() == 'clojure'
-        call SlimvFindAddSel( 'in-ns' )
-    else
-        call SlimvFindAddSel( '\(cl:\|common-lisp:\|\)in-package' )
     endif
     call setpos( '.', oldpos )
 endfunction
@@ -1728,15 +1723,8 @@ function! SlimvGetRegion(first, last)
     endif
     let lines[0] = lines[0][firstcol : ]
 
-    " Find and add package/namespace definition in front of the region
-    if g:slimv_package
-        call setreg( 's', '' )
-        call SlimvFindPackage()
-        let sel = SlimvGetSelection()
-        if sel != ''
-            let lines = [sel] + lines
-        endif
-    endif
+    " Find and set package/namespace definition preceding the region
+    call SlimvFindPackage()
     call setpos( '.', oldpos ) 
     return lines
 endfunction
@@ -1760,9 +1748,14 @@ function! SlimvEvalRegion() range
     endif
 endfunction
 
-" Eval contents of the 's' register
-function! SlimvEvalSelection()
-    let lines = [SlimvGetSelection()]
+" Eval contents of the 's' register, optionally store it in another register
+function! SlimvEvalSelection( outreg )
+    let sel = SlimvGetSelection()
+    if a:outreg != '"'
+        " Register was passed, so store current selection in register
+        call setreg( a:outreg, sel )
+    endif
+    let lines = [sel]
     if bufnr( "%" ) == bufnr( g:slimv_repl_name )
         " If this is the REPL buffer then go to EOF
         normal! G$
@@ -1805,13 +1798,14 @@ endfunction
 
 " Evaluate top level form at the cursor pos
 function! SlimvEvalDefun()
+    let outreg = v:register
     let oldpos = getpos( '.' ) 
     if !SlimvSelectDefun()
         return
     endif
     call SlimvFindPackage()
     call setpos( '.', oldpos ) 
-    call SlimvEvalSelection()
+    call SlimvEvalSelection( outreg )
 endfunction
 
 " Evaluate the whole buffer
@@ -1845,13 +1839,14 @@ endfunction
 
 " Evaluate current s-expression at the cursor pos
 function! SlimvEvalExp()
+    let outreg = v:register
     let oldpos = getpos( '.' ) 
     if !SlimvSelectForm()
         return
     endif
     call SlimvFindPackage()
     call setpos( '.', oldpos ) 
-    call SlimvEvalSelection()
+    call SlimvEvalSelection( outreg )
 endfunction
 
 " Evaluate expression entered interactively
