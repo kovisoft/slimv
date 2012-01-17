@@ -909,7 +909,7 @@ function! SlimvFindPackage()
     endif
     let oldpos = getpos( '.' )
     if SlimvGetFiletype() == 'clojure'
-        let string = 'in-ns'
+        let string = '\(in-ns\|ns\)'
     else
         let string = '\(cl:\|common-lisp:\|\)in-package'
     endif
