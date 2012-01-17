@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  16 Jan 2012
+" Last Change:  17 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2357,6 +2357,9 @@ function! SlimvComplete( base )
     " No completion yet, try to fetch it from the Hyperspec database
     let res = []
     let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
+    if symbol == []
+        return []
+    endif
     call sort( symbol )
     for m in symbol
         if m =~ '^' . a:base
