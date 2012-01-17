@@ -928,7 +928,8 @@ function! SlimvFindPackage()
         silent normal! ww
         let l:packagename_tokens = split(expand('<cWORD>'),')\|\s')
         if l:packagename_tokens != []
-            let s:swank_package = l:packagename_tokens[0]
+            " Remove quote character from package name
+            let s:swank_package = substitute( l:packagename_tokens[0], "'", '', '' )
         else
             let s:swank_package = ''
         endif
