@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.4
-# Last Change:  12 Jan 2012
+# Last Change:  17 Jan 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -336,6 +336,10 @@ def swank_recv(msglen, timeout):
                     sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
                     swank_disconnect()
                     return rec
+                if len(data) == 0:
+                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    swank_disconnect()
+                    return rec
                 rec = rec + data
     rec = ''
 
@@ -386,10 +390,10 @@ def swank_parse_inspect_content(pcont):
         vim.command(vc)
         vc = ":let b:range_end=" + end
         vim.command(vc)
-        if lst[linestart][0] == '[':
-            lst.append("\n[--more--]")
-        else:
+        if linestart >= 0 and linestart < len(lst) and (len(lst[linestart]) == 0 or lst[linestart][0] != '['):
             lst[linestart:] = "[--more--]"
+        else:
+            lst.append("\n[--more--]")
     buf = vim.current.buffer
     buf.append([''])
     buf.append("".join(lst).split("\n"))
