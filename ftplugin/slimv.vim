@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  17 Jan 2012
+" Last Change:  20 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1750,13 +1750,18 @@ function! SlimvEvalRegion() range
 endfunction
 
 " Eval contents of the 's' register, optionally store it in another register
-function! SlimvEvalSelection( outreg )
+" Also optionally add a test form for quick testing (not stored in 'outreg')
+function! SlimvEvalSelection( outreg, testform )
     let sel = SlimvGetSelection()
     if a:outreg != '"'
         " Register was passed, so store current selection in register
         call setreg( a:outreg, sel )
     endif
     let lines = [sel]
+    if a:testform != ''
+        " Append optional test form at the tail
+        let lines = lines + [a:testform]
+    endif
     if bufnr( "%" ) == bufnr( g:slimv_repl_name )
         " If this is the REPL buffer then go to EOF
         normal! G$
@@ -1797,8 +1802,8 @@ endfunction
 "  Special functions
 " =====================================================================
 
-" Evaluate top level form at the cursor pos
-function! SlimvEvalDefun()
+" Evaluate and test top level form at the cursor pos
+function! SlimvEvalTestDefun( testform )
     let outreg = v:register
     let oldpos = getpos( '.' ) 
     if !SlimvSelectDefun()
@@ -1806,7 +1811,12 @@ function! SlimvEvalDefun()
     endif
     call SlimvFindPackage()
     call setpos( '.', oldpos ) 
-    call SlimvEvalSelection( outreg )
+    call SlimvEvalSelection( outreg, a:testform )
+endfunction
+
+" Evaluate top level form at the cursor pos
+function! SlimvEvalDefun()
+    call SlimvEvalTestDefun( '' )
 endfunction
 
 " Evaluate the whole buffer
@@ -1838,8 +1848,8 @@ function! s:DebugFrame()
     return ''
 endfunction
 
-" Evaluate current s-expression at the cursor pos
-function! SlimvEvalExp()
+" Evaluate and test current s-expression at the cursor pos
+function! SlimvEvalTestExp( testform )
     let outreg = v:register
     let oldpos = getpos( '.' ) 
     if !SlimvSelectForm()
@@ -1847,7 +1857,12 @@ function! SlimvEvalExp()
     endif
     call SlimvFindPackage()
     call setpos( '.', oldpos ) 
-    call SlimvEvalSelection( outreg )
+    call SlimvEvalSelection( outreg, a:testform )
+endfunction
+
+" Evaluate current s-expression at the cursor pos
+function! SlimvEvalExp()
+    call SlimvEvalTestExp( '' )
 endfunction
 
 " Evaluate expression entered interactively
