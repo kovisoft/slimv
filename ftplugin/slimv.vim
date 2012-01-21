@@ -238,7 +238,7 @@ endif
 
 " Maximum number of lines searched backwards for indenting special forms
 if !exists( 'g:slimv_indent_maxlines' )
-    let g:slimv_indent_maxlines = 20
+    let g:slimv_indent_maxlines = 50
 endif
 
 " Maximum length of the REPL buffer
@@ -1207,8 +1207,9 @@ function! SlimvIndent( lnum )
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
     let oldpos = getpos( '.' )
-    let outer = ''
+    let indent_keyword = 1
     " Find beginning of the innermost containing form
+    normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
         if SlimvGetFiletype() == 'clojure'
@@ -1221,7 +1222,8 @@ function! SlimvIndent( lnum )
             endif
         endif
         " Is this a form with special indentation?
-        if match( getline(l), '\c^(\s*\('.s:spec_indent.'\)\>', c-1 ) >= 0
+        let line = strpart( getline(l), c-1 )
+        if match( line, '\c^(\s*\('.s:spec_indent.'\)\>' ) >= 0
             " Search for the binding list and jump to its end
             if search( '(' ) > 0
                 exe 'normal! %'
@@ -1236,27 +1238,42 @@ function! SlimvIndent( lnum )
             " second outer containing form (possible start of the binding list)
             let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
             if l2 > 0
-                let outer = strpart( getline(l2), c2-1 )
+                let line2 = strpart( getline(l2), c2-1 )
                 if SlimvGetFiletype() != 'clojure'
-                    if l2 == l && match( outer, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
+                    if l2 == l && match( line2, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
                         call setpos( '.', oldpos )
                         return c
                     endif
-                    if match( outer, '\c^(\s*cond\>' ) >= 0 && match( getline(l), '\c^(\s*t\>', c-1 ) >= 0
+                    if match( line2, '\c^(\s*cond\>' ) >= 0 && match( line, '\c^(\s*t\>' ) >= 0
                         " Is this the 't' case for a 'cond' form?
                         call setpos( '.', oldpos )
                         return c
+                    endif
+                    if match( line2, '\c^(\s*defpackage\>' ) >= 0
+                        let indent_keyword = 0
                     endif
                 endif
                 " Go one level higher and check if we reached a special form
                 let [l3, c3] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
                 if l3 > 0
                     " Is this a form with special indentation?
-                    if match( getline(l3), '\c^(\s*\('.s:spec_indent.'\)\>', c3-1 ) >= 0
+                    let line3 = strpart( getline(l3), c3-1 )
+                    if match( line3, '\c^(\s*\('.s:spec_indent.'\)\>' ) >= 0
                         " This is the first body-line of a binding
                         call setpos( '.', oldpos )
                         return c + 1
+                    endif
+                    if match( line3, '\c^(\s*defsystem\>' ) >= 0
+                        let indent_keyword = 0
+                    endif
+                    " Finally go to the topmost level to check for some forms with special keyword indenting
+                    let [l4, c4] = searchpairpos( '(', '', ')', 'brW', s:skip_sc, backline )
+                    if l4 > 0
+                        let line4 = strpart( getline(l4), c4-1 )
+                        if match( line4, '\c^(\s*defsystem\>' ) >= 0
+                            let indent_keyword = 0
+                        endif
                     endif
                 endif
             endif
@@ -1284,12 +1301,8 @@ function! SlimvIndent( lnum )
         " Find out the function name
         let func = matchstr( form, '\<\k*\>' )
         " If it's a keyword, keep the indentation straight
-        if strpart(func, 0, 1) == ':'
-            if SlimvGetFiletype() != 'clojure' && match( outer, '\c^(\s*defpackage\>' ) >= 0
-                " Handle keyword arguments in (defpackage) differently
-            else
-                return c
-            endif
+        if indent_keyword && strpart(func, 0, 1) == ':'
+            return c
         endif
         if SlimvGetFiletype() == 'clojure'
             " Fix clojure specific indentation issues not handled by the default lisp.vim
