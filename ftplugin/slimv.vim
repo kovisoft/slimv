@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  20 Jan 2012
+" Last Change:  21 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1207,6 +1207,7 @@ function! SlimvIndent( lnum )
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
     let oldpos = getpos( '.' )
+    let outer = ''
     " Find beginning of the innermost containing form
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
@@ -1235,13 +1236,14 @@ function! SlimvIndent( lnum )
             " second outer containing form (possible start of the binding list)
             let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
             if l2 > 0
+                let outer = strpart( getline(l2), c2-1 )
                 if SlimvGetFiletype() != 'clojure'
-                    if l2 == l && match( getline(l2), '\c^(\s*\('.s:binding_form.'\)\>', c2-1 ) >= 0
+                    if l2 == l && match( outer, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
                         call setpos( '.', oldpos )
                         return c
                     endif
-                    if match( getline(l2), '\c^(\s*cond\>', c2-1 ) >= 0 && match( getline(l), '\c^(\s*t\>', c-1 ) >= 0
+                    if match( outer, '\c^(\s*cond\>' ) >= 0 && match( getline(l), '\c^(\s*t\>', c-1 ) >= 0
                         " Is this the 't' case for a 'cond' form?
                         call setpos( '.', oldpos )
                         return c
@@ -1283,7 +1285,11 @@ function! SlimvIndent( lnum )
         let func = matchstr( form, '\<\k*\>' )
         " If it's a keyword, keep the indentation straight
         if strpart(func, 0, 1) == ':'
-            return c
+            if SlimvGetFiletype() != 'clojure' && match( outer, '\c^(\s*defpackage\>' ) >= 0
+                " Handle keyword arguments in (defpackage) differently
+            else
+                return c
+            endif
         endif
         if SlimvGetFiletype() == 'clojure'
             " Fix clojure specific indentation issues not handled by the default lisp.vim
