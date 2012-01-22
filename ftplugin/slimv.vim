@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.4
-" Last Change:  21 Jan 2012
+" Last Change:  22 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -239,6 +239,11 @@ endif
 " Maximum number of lines searched backwards for indenting special forms
 if !exists( 'g:slimv_indent_maxlines' )
     let g:slimv_indent_maxlines = 50
+endif
+
+" Special indentation for keyword lists
+if !exists( 'g:slimv_indent_keylists' )
+    let g:slimv_indent_keylists = 1
 endif
 
 " Maximum length of the REPL buffer
@@ -1207,7 +1212,7 @@ function! SlimvIndent( lnum )
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
     let oldpos = getpos( '.' )
-    let indent_keyword = 1
+    let indent_keylists = g:slimv_indent_keylists
     " Find beginning of the innermost containing form
     normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
@@ -1251,7 +1256,7 @@ function! SlimvIndent( lnum )
                         return c
                     endif
                     if match( line2, '\c^(\s*defpackage\>' ) >= 0
-                        let indent_keyword = 0
+                        let indent_keylists = 0
                     endif
                 endif
                 " Go one level higher and check if we reached a special form
@@ -1265,14 +1270,14 @@ function! SlimvIndent( lnum )
                         return c + 1
                     endif
                     if match( line3, '\c^(\s*defsystem\>' ) >= 0
-                        let indent_keyword = 0
+                        let indent_keylists = 0
                     endif
                     " Finally go to the topmost level to check for some forms with special keyword indenting
                     let [l4, c4] = searchpairpos( '(', '', ')', 'brW', s:skip_sc, backline )
                     if l4 > 0
                         let line4 = strpart( getline(l4), c4-1 )
                         if match( line4, '\c^(\s*defsystem\>' ) >= 0
-                            let indent_keyword = 0
+                            let indent_keylists = 0
                         endif
                     endif
                 endif
@@ -1301,7 +1306,7 @@ function! SlimvIndent( lnum )
         " Find out the function name
         let func = matchstr( form, '\<\k*\>' )
         " If it's a keyword, keep the indentation straight
-        if indent_keyword && strpart(func, 0, 1) == ':'
+        if indent_keylists && strpart(func, 0, 1) == ':'
             return c
         endif
         if SlimvGetFiletype() == 'clojure'

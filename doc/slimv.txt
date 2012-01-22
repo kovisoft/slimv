@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 16 Jan 2012
+*slimv.txt*                    Slimv                 Last Change: 22 Jan 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.4
@@ -156,6 +156,8 @@ For the Swank options plese visit |swank-configuration|.
                              being evaluated.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
+
+|g:slimv_indent_keylists|    Enable special indentation for keyword lists.
 
 |g:slimv_indent_maxlines|    Maximum number of lines searched backwards for
                              indenting special forms
@@ -491,6 +493,24 @@ mostly unnecessary information. Closing parens are added to the end even if
 the end of the form is not echoed, so paren balance is kept.
 If this option is set to zero then no line is echoed at all, if set to -1
 then all lines are always echoed.
+
+                                                      *g:slimv_indent_keylists*
+If nonzero then Slimv indents keyword lists like that:
+
+(:foo :bar
+ :baz :boo)
+
+instead of the function-style indentation:
+
+(:foo :bar
+      :baz :boo)
+
+This option is switched on by default. There are however some special forms
+(defpackage, defsystem) that are always indented in the function-style, e.g.:
+
+(defpackage :my-package
+  (:use :cl
+        :my-utils))
 
                                                       *g:slimv_indent_maxlines*
 Maximum number of lines searched backwards for indenting special forms, like
