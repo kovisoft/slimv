@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Jan 2012
+*slimv.txt*                    Slimv                 Last Change: 23 Jan 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.4
@@ -1358,6 +1358,27 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.4  - Added highlighting of [] and {} for Clojure.
+       - Added options to disable Slimv for specific filetypes:
+         g:slimv_disable_clojure, g:slimv_disable_lisp, g:slimv_disable_scheme.
+       - Added option g:slimv_indent_keylists (thanks to Andrew Smirnoff).
+       - Added "set hidden" for safe switching of modified buffers.
+       - Added Help to Inspect and Threads buffers.
+       - Evaluate register contents if Eval-Region prefixed by ["x].
+       - Store form in register if Eval-Defun or Eval-Exp prefixed by ["x].
+       - Increased timeout for :create-repl.
+       - Stay in REPL buffer if Macroexpand performed in REPL.
+       - Search for either (in-ns) or (ns) for Clojure, remove quote character
+         from namespace name.
+       - Added SlimvEvalTestDefun() and SlimvEvalTestExp() for immediate testing
+         of the form(s) being evaluated.
+       - Bugfix: various indentation issues (function name is a subform,
+         let, let*, do, defpackage, defsystem, and [] for Clojure).
+       - Bugfix: Eval-Range problem in visual mode.
+       - Bugfix: SLDB parsing problem with newlines in description of restarts.
+       - Bugfix: REPL autoscroll incidentally stopping (thanks to Andrew Lyon).
+       - Bugfix: added some index out of range checks (thanks to Philipp Marek).
+
 0.9.3  - Start Swank server in virtual terminal when running in GNU screen
          on Linux (thanks to Oleg Terenchuk).
        - Reuse a window for slimv also when there are three or more windows open.
@@ -1783,8 +1804,8 @@ ideas, suggestions on the SWANK integration.
 Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
-Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk
-for additional notes and contributions.
+Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
+Andrew Lyon, Andrew Smirnoff for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
