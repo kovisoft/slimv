@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.4
-" Last Change:  22 Jan 2012
+" Version:      0.9.5
+" Last Change:  24 Jan 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -277,7 +277,7 @@ let s:swank_connected = 0                                 " Is the SWANK server 
 let s:swank_package = ''                                  " Package to use at the next SWANK eval
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
-let s:debug_activated = 0                                 " Are we in the SWANK debugger?
+let s:sldb_level = -1                                     " Are we in the SWANK debugger? -1 == no, else SLDB level
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:au_curhold_set = 0                                  " Whether the autocommand has been set
 let s:current_buf = -1                                    " Swank action was requested from this buffer
@@ -381,7 +381,7 @@ function! SlimvEndUpdateRepl()
     call SlimvMarkBufferEnd()
     let repl_buf = bufnr( g:slimv_repl_name )
     let repl_win = bufwinnr( repl_buf )
-    if repl_buf != s:current_buf && repl_win != -1 && !s:debug_activated
+    if repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
         " Switch back to the caller buffer/window
         if g:slimv_repl_split
             if s:current_win == -1
@@ -1488,7 +1488,7 @@ endfunction
 " Handle normal mode 'Enter' keypress in the SLDB buffer
 function! SlimvHandleEnterSldb()
     let line = getline('.')
-    if s:debug_activated
+    if s:sldb_level >= 0
         " Check if Enter was pressed in a section printed by the SWANK debugger
         " The source specification is within a fold, so it has to be tested first
         let mlist = matchlist( line, '^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$' )
@@ -1527,7 +1527,7 @@ function! SlimvHandleEnterSldb()
             if search( '^Restarts:', 'bnW' ) > 0
                 " Apply item-th restart
                 call SlimvQuitSldb()
-                silent execute 'python swank_invoke_restart("' . s:debug_activated . '", "' . item . '")'
+                silent execute 'python swank_invoke_restart("' . s:sldb_level . '", "' . item . '")'
                 return
             endif
         endif
@@ -1603,7 +1603,7 @@ endfunction
 " Select a specific restart in debugger
 function! SlimvDebugCommand( cmd )
     if SlimvConnectSwank()
-        if s:debug_activated
+        if s:sldb_level >= 0
             if bufname('%') != g:slimv_sldb_name
                 call SlimvOpenSldbBuffer()
             endif
@@ -1851,7 +1851,7 @@ endfunction
 
 " Return frame number if we are in the Backtrace section of the debugger
 function! s:DebugFrame()
-    if s:swank_connected && s:debug_activated
+    if s:swank_connected && s:sldb_level >= 0
         " Check if we are in SLDB
         let repl_buf = bufnr( g:slimv_sldb_name )
         if repl_buf != -1 && repl_buf == bufnr( "%" )
