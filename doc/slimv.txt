@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 23 Jan 2012
+*slimv.txt*                    Slimv                 Last Change: 01 Feb 2012
 
 Slimv                                                                  *slimv*
-                               Version 0.9.4
+                               Version 0.9.5
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -346,9 +346,11 @@ plain socket communication is supported, no SSH or whatsoever.
 
 Please note that if the SWANK server is on a remote machine then Slimv is
 unable to start it, so you need to run the SWANK server manually.
-Actually there is a workaround for this: run Vim inside a GNU screen session.
-Slimv will autodetect this and modify the Swank command so that the Swank
-server is run inside a newly opened virtual terminal in screen.
+Actually there is a workaround for this on Linux: run Vim inside a GNU screen
+session. Slimv will autodetect this and modify the Swank command so that the
+Swank server is run inside a newly opened virtual terminal in screen.
+Slimv also autodetects an existing tmux session, so you can use tmux instead
+of GNU screen for the same purpose.
 
                                                                  *g:swank_port*
 The SWANK server is connected to port 4005 by default. This can be changed

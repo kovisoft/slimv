@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  24 Jan 2012
+" Last Change:  01 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -92,10 +92,13 @@ function! SlimvSwankCommand()
         elseif g:slimv_osx
             return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
         elseif $STY != ''
-	    " GNU screen under Linux
-	    return '! screen -X eval "title slimv" "screen ' . cmd . '" "select slimv"'
+            " GNU screen under Linux
+            return '! screen -X eval "title swank" "screen ' . cmd . '" "select swank"'
+        elseif $TMUX != ''
+            " tmux under Linux
+            return "! tmux new-window -d -n swank '" . cmd . "'"
         else
-	    " Must be Linux
+            " Must be Linux
             return '! xterm -iconic -e ' . cmd . ' &'
         endif
     endif
@@ -711,7 +714,7 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugCommand("swank_invoke_continue")<CR>'
     endif
-    
+
     " Set folding parameters
     setlocal foldmethod=marker
     setlocal foldmarker={{{,}}}
@@ -1029,8 +1032,8 @@ function! SlimvConnectSwank()
             let cmd = cmd . " (make-string " . g:swank_block_size . ")) nil)"
             call SlimvSend( [cmd], 0, 1 )
         endif
-	if exists( "*b:SlimvReplInit" )
-	    " Perform implementation specific REPL initialization if supplied
+        if exists( "*b:SlimvReplInit" )
+            " Perform implementation specific REPL initialization if supplied
             call b:SlimvReplInit( s:lisp_version )
         endif
     endif
@@ -2356,13 +2359,13 @@ function! SlimvLookup( word )
                 silent execute '! start ' . page
             else
                 " On Linux it's not easy to determine the default browser
-		if executable( 'xdg-open' )
+                if executable( 'xdg-open' )
                     silent execute '! xdg-open ' . page . ' &'
-	        else
+                else
                     " xdg-open not installed, ask help from Python webbrowser package
                     let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
                     silent execute '! python -c "' . pycmd . '"'
-		endif
+                endif
             endif
         endif
         " This is needed especially when using text browsers
