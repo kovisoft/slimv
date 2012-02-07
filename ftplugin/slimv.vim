@@ -2352,7 +2352,11 @@ function! SlimvLookup( word )
         endif
         if exists( "g:slimv_browser_cmd" )
             " We have an given command to start the browser
-            silent execute '! ' . g:slimv_browser_cmd . ' ' . page . ' &'
+            if !exists( "g:slimv_browser_cmd_suffix" )
+                " Fork the browser by default
+                let g:slimv_browser_cmd_suffix = '&'
+            endif
+            silent execute '! ' . g:slimv_browser_cmd . ' ' . page . ' ' . g:slimv_browser_cmd_suffix
         else
             if g:slimv_windows
                 " Run the program associated with the .html extension

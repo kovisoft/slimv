@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 01 Feb 2012
+*slimv.txt*                    Slimv                 Last Change: 07 Feb 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.5
@@ -128,6 +128,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_browser_cmd|        If nonempty, this command is used to open the
                              Common Lisp Hyperspec. 
+
+|g:slimv_browser_cmd_suffix| Optional suffix for |g:slimv_browser_cmd|
 
 |g:slimv_clhs_root|          Base URL for the Common Lisp Hyperspec.
 
@@ -405,6 +407,16 @@ This option is empty by default, which means that the command associated with
 the .html extension (on Windows) or xdg-open (on Linux) is used to start the
 browser. If xdg-open is not installed then the Python webbrowser package is
 used to identify the default browser on Linux.
+
+                                                   *g:slimv_browser_cmd_suffix*
+When using option |g:slimv_browser_cmd| the Hyperspec page URL is appended to
+the browser command. However sometimes it might be needed to add a suffix
+at the end of the browser command.
+Slimv automatically adds the "&" suffix in order to fork the browser and
+return control immediately to Vim. If you don't want to fork the browser
+then set |g:slimv_browser_cmd_suffix| to "". Also use this option if you want
+to have extra parameters or commands in the browser command after the URL,
+but in this case remember to add the "&" when forking is needed.
 
                                                             *g:slimv_repl_name*
 Name of the REPL buffer. Default is 'REPL'. Space and some other special
