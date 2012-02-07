@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  01 Feb 2012
+" Last Change:  07 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2616,5 +2616,7 @@ command! -complete=customlist,SlimvCommandComplete -nargs=* Lisp call SlimvEval(
 command! -complete=customlist,SlimvCommandComplete -nargs=* Eval call SlimvEval([<q-args>])
 
 " Switch on syntax highlighting
-syntax on
+if !exists("g:syntax_on")
+    syntax on
+endif
 
