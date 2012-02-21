@@ -1,7 +1,7 @@
 " slimv-syntax-scheme.vim:
 "               Scheme syntax plugin for Slimv
-" Version:      0.8.2
-" Last Change:  27 Apr 2011
+" Version:      0.9.5
+" Last Change:  21 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,7 +10,7 @@
 " =====================================================================
 "
 "  Load Once:
-if exists("b:current_syntax")
+if exists("b:current_syntax") || exists("g:slimv_disable_scheme")
   finish
 endif
 
