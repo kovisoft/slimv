@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  07 Feb 2012
+" Last Change:  22 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -97,6 +97,10 @@ function! SlimvSwankCommand()
         elseif $TMUX != ''
             " tmux under Linux
             return "! tmux new-window -d -n swank '" . cmd . "'"
+        elseif $DISPLAY == ''
+            " No X, no terminal multiplexer. Cannot run swank server.
+            call SlimvErrorWait( 'No X server. Run Vim from screen/tmux or start SWANK server manually.' )
+            return ''
         else
             " Must be Linux
             return '! xterm -iconic -e ' . cmd . ' &'
@@ -1710,20 +1714,20 @@ function! SlimvArglist()
     return ''
 endfunction
 
-" Start and connect slimv server
-" This is a quite dummy function that just evaluates the empty string
+" Start and connect swank server
 function! SlimvConnectServer()
-    call SlimvBeginUpdate()
-    let repl_buf = bufnr( g:slimv_repl_name )
-    let repl_win = bufwinnr( repl_buf )
-    if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
-        call SlimvOpenReplBuffer()
-    endif 
     if s:swank_connected
         python swank_disconnect()
         let s:swank_connected = 0
     endif 
-    call SlimvConnectSwank()
+    call SlimvBeginUpdate()
+    if SlimvConnectSwank()
+        let repl_buf = bufnr( g:slimv_repl_name )
+        let repl_win = bufwinnr( repl_buf )
+        if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
+            call SlimvOpenReplBuffer()
+        endif
+    endif
 endfunction
 
 " Get the last region (visual block)
