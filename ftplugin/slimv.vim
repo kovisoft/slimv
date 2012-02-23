@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  22 Feb 2012
+" Last Change:  23 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1346,6 +1346,12 @@ function! SlimvIndent( lnum )
     set lisp
     let li = lispindent(a:lnum)
     set nolisp
+    let line = strpart( getline(a:lnum-1), li-1 )
+    let gap = matchend( line, '(\s\+\S' )
+    if gap >= 0
+        " Align to the gap between the opening paren and the first atom
+        return li + gap - 2
+    endif
     return li
 endfunction 
 
