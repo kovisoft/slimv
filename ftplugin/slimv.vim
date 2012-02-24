@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  23 Feb 2012
+" Last Change:  24 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1314,7 +1314,13 @@ function! SlimvIndent( lnum )
         let func = matchstr( form, '\<\k*\>' )
         " If it's a keyword, keep the indentation straight
         if indent_keylists && strpart(func, 0, 1) == ':'
-            return c
+            if form =~ '^:\S*\s\+\S'
+                " This keyword has an associated value in the same line
+                return c
+            else
+                " The keyword stands alone in its line with no associated value
+                return c + 1
+            endif
         endif
         if SlimvGetFiletype() == 'clojure'
             " Fix clojure specific indentation issues not handled by the default lisp.vim
@@ -1322,7 +1328,7 @@ function! SlimvIndent( lnum )
                 return c + 1
             endif
         else
-            if match( func, 'defgeneric$' ) >= 0 || match( func, 'aif$' ) >= 0
+            if match( func, 'defgeneric$' ) >= 0 || match( func, 'defsystem$' ) >= 0 || match( func, 'aif$' ) >= 0
                 return c + 1
             endif
         endif
@@ -1347,7 +1353,7 @@ function! SlimvIndent( lnum )
     let li = lispindent(a:lnum)
     set nolisp
     let line = strpart( getline(a:lnum-1), li-1 )
-    let gap = matchend( line, '(\s\+\S' )
+    let gap = matchend( line, '^(\s\+\S' )
     if gap >= 0
         " Align to the gap between the opening paren and the first atom
         return li + gap - 2
