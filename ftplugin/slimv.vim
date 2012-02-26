@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  24 Feb 2012
+" Last Change:  26 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -919,7 +919,7 @@ function! SlimvFindPackage()
     if !g:slimv_package || SlimvGetFiletype() == 'scheme'
         return
     endif
-    let oldpos = getpos( '.' )
+    let oldpos = winsaveview()
     if SlimvGetFiletype() == 'clojure'
         let string = '\(in-ns\|ns\)'
     else
@@ -946,15 +946,15 @@ function! SlimvFindPackage()
             let s:swank_package = ''
         endif
     endif
-    call setpos( '.', oldpos )
+    call winrestview( oldpos )
 endfunction
 
 " Execute the given SWANK command with current package defined
 function! SlimvCommandUsePackage( cmd )
-    let oldpos = getpos( '.' ) 
+    let oldpos = winsaveview()
     call SlimvFindPackage()
     let s:refresh_disabled = 1
-    call setpos( '.', oldpos ) 
+    call winrestview( oldpos ) 
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
     let s:refresh_disabled = 0
@@ -1218,7 +1218,7 @@ function! SlimvIndent( lnum )
     " When searching for containing forms, don't go back
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
-    let oldpos = getpos( '.' )
+    let oldpos = winsaveview()
     let indent_keylists = g:slimv_indent_keylists
     " Find beginning of the innermost containing form
     normal! 0
@@ -1226,10 +1226,10 @@ function! SlimvIndent( lnum )
     if l > 0
         if SlimvGetFiletype() == 'clojure'
             " Is this a clojure form with [] binding list?
-            call setpos( '.', oldpos )
+            call winrestview( oldpos )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
             if lb >= l && (lb > l || cb > c)
-                call setpos( '.', oldpos )
+                call winrestview( oldpos )
                 return cb
             endif
         endif
@@ -1241,7 +1241,7 @@ function! SlimvIndent( lnum )
                 exe 'normal! %'
                 if line('.') == pnum
                     " We are indenting the first line after the end of the binding list
-                    call setpos( '.', oldpos )
+                    call winrestview( oldpos )
                     return c + 1
                 endif
             endif
@@ -1254,12 +1254,12 @@ function! SlimvIndent( lnum )
                 if SlimvGetFiletype() != 'clojure'
                     if l2 == l && match( line2, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
-                        call setpos( '.', oldpos )
+                        call winrestview( oldpos )
                         return c
                     endif
                     if match( line2, '\c^(\s*cond\>' ) >= 0 && match( line, '\c^(\s*t\>' ) >= 0
                         " Is this the 't' case for a 'cond' form?
-                        call setpos( '.', oldpos )
+                        call winrestview( oldpos )
                         return c
                     endif
                     if match( line2, '\c^(\s*defpackage\>' ) >= 0
@@ -1273,7 +1273,7 @@ function! SlimvIndent( lnum )
                     let line3 = strpart( getline(l3), c3-1 )
                     if match( line3, '\c^(\s*\('.s:spec_indent.'\)\>' ) >= 0
                         " This is the first body-line of a binding
-                        call setpos( '.', oldpos )
+                        call winrestview( oldpos )
                         return c + 1
                     endif
                     if match( line3, '\c^(\s*defsystem\>' ) >= 0
@@ -1291,7 +1291,7 @@ function! SlimvIndent( lnum )
             endif
         endif
         " Restore all cursor movements
-        call setpos( '.', oldpos )
+        call winrestview( oldpos )
     endif
 
     " Check if the current form started in the previous nonblank line
@@ -1744,14 +1744,14 @@ endfunction
 
 " Get the last region (visual block)
 function! SlimvGetRegion(first, last)
-    let oldpos = getpos( '.' ) 
+    let oldpos = winsaveview()
     if a:first < a:last || ( a:first == line( "'<" ) && a:last == line( "'>" ) )
         let lines = getline( a:first, a:last )
     else
         " No range was selected, select current paragraph
         normal! vap
         execute "normal! \<Esc>"
-        call setpos( '.', oldpos ) 
+        call winrestview( oldpos ) 
         let lines = getline( "'<", "'>" )
         if lines == [] || lines == ['']
             call SlimvError( "No range selected." )
@@ -1769,7 +1769,7 @@ function! SlimvGetRegion(first, last)
 
     " Find and set package/namespace definition preceding the region
     call SlimvFindPackage()
-    call setpos( '.', oldpos ) 
+    call winrestview( oldpos ) 
     return lines
 endfunction
 
@@ -1848,12 +1848,12 @@ endfunction
 " Evaluate and test top level form at the cursor pos
 function! SlimvEvalTestDefun( testform )
     let outreg = v:register
-    let oldpos = getpos( '.' ) 
+    let oldpos = winsaveview()
     if !SlimvSelectDefun()
         return
     endif
     call SlimvFindPackage()
-    call setpos( '.', oldpos ) 
+    call winrestview( oldpos ) 
     call SlimvEvalSelection( outreg, a:testform )
 endfunction
 
@@ -1894,12 +1894,12 @@ endfunction
 " Evaluate and test current s-expression at the cursor pos
 function! SlimvEvalTestExp( testform )
     let outreg = v:register
-    let oldpos = getpos( '.' ) 
+    let oldpos = winsaveview()
     if !SlimvSelectForm()
         return
     endif
     call SlimvFindPackage()
-    call setpos( '.', oldpos ) 
+    call winrestview( oldpos ) 
     call SlimvEvalSelection( outreg, a:testform )
 endfunction
 
@@ -2159,9 +2159,9 @@ endfunction
 
 " Compile the current top-level form
 function! SlimvCompileDefun()
-    let oldpos = getpos( '.' ) 
+    let oldpos = winsaveview()
     if !SlimvSelectDefun()
-        call setpos( '.', oldpos ) 
+        call winrestview( oldpos ) 
         return
     endif
     if SlimvConnectSwank()
