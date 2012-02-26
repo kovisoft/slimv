@@ -951,10 +951,8 @@ endfunction
 
 " Execute the given SWANK command with current package defined
 function! SlimvCommandUsePackage( cmd )
-    let oldpos = winsaveview()
     call SlimvFindPackage()
     let s:refresh_disabled = 1
-    call winrestview( oldpos ) 
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
     let s:refresh_disabled = 0
@@ -1701,6 +1699,7 @@ function! SlimvArglist()
             let arg = matchstr( line, '\<\k*\>', c0 )
             if arg != ''
                 " Ask function argument list from SWANK
+                call SlimvFindPackage()
                 let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
                 if msg != ''
                     " Print argument list in status line with newlines removed.
@@ -2253,6 +2252,7 @@ function! SlimvDescribe(arg)
     if !s:swank_connected
         return ''
     endif
+    call SlimvFindPackage()
     let arglist = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
     if arglist == ''
         " Not able to fetch arglist, assuming function is not defined
@@ -2405,6 +2405,7 @@ function! SlimvComplete( base )
         return []
     endif
     if s:swank_connected
+        call SlimvFindPackage()
         if g:slimv_simple_compl
             let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")', 0 )
         else
