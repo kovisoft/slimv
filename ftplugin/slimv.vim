@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  26 Feb 2012
+" Last Change:  02 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -236,7 +236,7 @@ endif
 
 " Custom <Leader> for the Slimv plugin
 if !exists( 'g:slimv_leader' )
-    if exists( 'mapleader' )
+    if exists( 'mapleader' ) && mapleader != ' '
         let g:slimv_leader = mapleader
     else
         let g:slimv_leader = ','
