@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 07 Feb 2012
+*slimv.txt*                    Slimv                 Last Change: 02 Mar 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.5
@@ -387,8 +387,10 @@ Other values mean no predefined keybinding is wanted.
 
                                                                *g:slimv_leader*
 This option allows a custom <Leader> setting for the Slimv keybindings.
-By default it has the same value as |mapleader|. If neither g:slimv_leader nor
-mapleader are defined then the default <Leader> is "," in Slimv.
+By default it has the same value as |mapleader|, except when |mapleader| is
+<Space> which <Leader> is currently not supported by Slimv.
+If neither g:slimv_leader nor |mapleader| are defined or |mapleader| is <Space>
+then the default <Leader> is "," in Slimv.
 Example:
     let g:slimv_leader = '\'
 If this is set in the .vimrc then Eval-Defun will be mapped to \d instead of ,d.
