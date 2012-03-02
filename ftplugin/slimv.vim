@@ -292,7 +292,8 @@ let s:current_win = -1                                    " Swank action was req
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
-let s:spec_indent = 'flet\|labels\|macrolet'              " List of symbols need special indenting
+let s:spec_indent = 'flet\|labels\|macrolet\|symbol-macrolet'
+                                                          " List of symbols need special indenting
 let s:binding_form = 'let\|let\*'                         " List of symbols with binding list
 
 " =====================================================================
