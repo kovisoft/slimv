@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  02 Mar 2012
+" Last Change:  04 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -871,17 +871,23 @@ endfunction
 function! SlimvSelectForm()
     " Search the opening '(' if we are standing on a special form prefix character
     let c = col( '.' ) - 1
+    let firstchar = getline( '.' )[c]
     while c < len( getline( '.' ) ) && match( "'`#", getline( '.' )[c] ) >= 0
         normal! l
         let c = c + 1
     endwhile
     normal! va(o
-    " Handle '() or #'() etc. type special syntax forms
-    let c = col( '.' ) - 2
-    while c >= 0 && match( ' \t()', getline( '.' )[c] ) < 0
-        normal! h
-        let c = c - 1
-    endwhile
+    if firstchar != '(' && line("'<") == line("'>") && col("'<") == col("'>")
+        " Empty selection and no paren found, select current word instead
+        normal! aw
+    else
+        " Handle '() or #'() etc. type special syntax forms
+        let c = col( '.' ) - 2
+        while c >= 0 && match( ' \t()', getline( '.' )[c] ) < 0
+            normal! h
+            let c = c - 1
+        endwhile
+    endif
     silent normal! "sy
     let sel = SlimvGetSelection()
     if sel == ''
