@@ -876,8 +876,10 @@ function! SlimvSelectForm()
         normal! l
         let c = c + 1
     endwhile
+    let p1 = getpos('.')
     normal! va(o
-    if firstchar != '(' && line("'<") == line("'>") && col("'<") == col("'>")
+    let p2 = getpos('.')
+    if firstchar != '(' && p1[1] == p2[1] && p1[2] == p2[2]
         " Empty selection and no paren found, select current word instead
         normal! aw
     else
