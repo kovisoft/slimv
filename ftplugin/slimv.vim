@@ -294,6 +294,7 @@ let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\
 let s:frame_def = '^\s\{0,2}\d\{1,3}:'                    " Regular expression to match SLDB restart or frame identifier
 let s:spec_indent = 'flet\|labels\|macrolet\|symbol-macrolet'
                                                           " List of symbols need special indenting
+let s:spec_param = 'defmacro'                             " List of symbols with special parameter list
 let s:binding_form = 'let\|let\*'                         " List of symbols with binding list
 
 " =====================================================================
@@ -1258,6 +1259,15 @@ function! SlimvIndent( lnum )
             let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
             if l2 > 0
                 let line2 = strpart( getline(l2), c2-1 )
+                if match( line2, '\c^(\s*\('.s:spec_param.'\)\>' ) >= 0
+                    if search( '(' ) > 0
+                        if line('.') == l && col('.') == c
+                            " This is the parameter list of a special form
+                            call winrestview( oldpos )
+                            return c
+                        endif
+                    endif
+                endif
                 if SlimvGetFiletype() != 'clojure'
                     if l2 == l && match( line2, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
