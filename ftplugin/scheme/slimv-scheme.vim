@@ -1,7 +1,7 @@
 " slimv-scheme.vim:
 "               Scheme filetype plugin for Slimv
-" Version:      0.9.4
-" Last Change:  07 Jan 2012
+" Version:      0.9.5
+" Last Change:  06 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -68,10 +68,16 @@ endfunction
 " Source Slimv general part
 runtime ftplugin/**/slimv.vim
 
-endif "!exists( 'g:slimv_lisp_loaded' )
+endif "!exists( 'g:slimv_scheme_loaded' )
 " ---------- End of part loaded once ----------
 
 runtime ftplugin/**/lisp.vim
+
+" The balloonexpr of MIT-Scheme is broken. Disable it.
+let g:slimv_balloon = 0
+
+" The fuzzy completion of MIT-Scheme is broken. Disable it.
+let g:slimv_simple_compl = 1
 
 " Must be called for each lisp buffer
 call SlimvInitBuffer()
