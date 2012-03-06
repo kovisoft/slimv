@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  05 Mar 2012
+" Last Change:  06 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1032,7 +1032,7 @@ function! SlimvConnectSwank()
             call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()', g:slimv_timeout )
         endif
         let s:swank_connected = 1
-        if g:slimv_simple_compl == 0
+        if g:slimv_simple_compl == 0 && SlimvGetFiletype() != 'scheme'
             python swank_require('swank-fuzzy')
             call SlimvSwankResponse()
         endif
@@ -2542,7 +2542,7 @@ function! SlimvInitBuffer()
     inoremap <silent> <buffer> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
 
     " Setup balloonexp to display symbol description
-    if g:slimv_balloon && has( 'balloon_eval' )
+    if g:slimv_balloon && has( 'balloon_eval' ) && SlimvGetFiletype() != 'scheme'
         "setlocal balloondelay=100
         setlocal ballooneval
         setlocal balloonexpr=SlimvDescribe(v:beval_text)
