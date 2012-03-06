@@ -1032,7 +1032,7 @@ function! SlimvConnectSwank()
             call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()', g:slimv_timeout )
         endif
         let s:swank_connected = 1
-        if g:slimv_simple_compl == 0 && SlimvGetFiletype() != 'scheme'
+        if g:slimv_simple_compl == 0
             python swank_require('swank-fuzzy')
             call SlimvSwankResponse()
         endif
@@ -2542,7 +2542,7 @@ function! SlimvInitBuffer()
     inoremap <silent> <buffer> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
 
     " Setup balloonexp to display symbol description
-    if g:slimv_balloon && has( 'balloon_eval' ) && SlimvGetFiletype() != 'scheme'
+    if g:slimv_balloon && has( 'balloon_eval' )
         "setlocal balloondelay=100
         setlocal ballooneval
         setlocal balloonexpr=SlimvDescribe(v:beval_text)
