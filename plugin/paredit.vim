@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.5
-" Last Change:  27 Jan 2012
+" Last Change:  07 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -200,7 +200,7 @@ function! PareditOpfunc( func, type, visualmode )
     let ve_save = &virtualedit
     set virtualedit=all
     let regname = v:register
-    let reg_save = @@
+    let save_0 = getreg( '0' )
 
     if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
         silent exe "normal! `<" . a:type . "`>"
@@ -222,6 +222,10 @@ function! PareditOpfunc( func, type, visualmode )
     else
         silent exe "normal! y"
         let putreg = getreg( '"' )
+        if a:func == 'd'
+            " Register "0 is corrupted by the above 'y' command
+            call setreg( '0', save_0 ) 
+        endif
 
         " Find and keep unbalanced matched characters in the region
         let endingwhitespace = matchstr(putreg, "\\s*$")
@@ -233,7 +237,7 @@ function! PareditOpfunc( func, type, visualmode )
         endif
 
         if matched == ''
-            silent exe "normal! gvx"
+            silent exe "normal! gvd"
         else
             silent exe "normal! gvc" . matched
             silent exe "normal! l"
@@ -245,8 +249,12 @@ function! PareditOpfunc( func, type, visualmode )
 
     let &selection = sel_save
     let &virtualedit = ve_save
-    let @@ = reg_save
-    call setreg( regname, putreg ) 
+    if a:func == 'd' && regname == '"'
+        " Do not currupt the '"' register and hence the "0 register
+        call setreg( '1', putreg ) 
+    else
+        call setreg( regname, putreg ) 
+    endif
 endfunction
 
 " Set delete mode also saving repeat count
