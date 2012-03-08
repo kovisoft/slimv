@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.5
-" Last Change:  07 Feb 2012
+" Last Change:  08 Feb 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -303,12 +303,19 @@ endfunction
 
 " Paste text from put register in a balanced way
 function! PareditPut( cmd )
-    let reg_save = @@
-    let putreg = getreg( v:register )
+    let regname = v:register
+    let reg_save = getreg( regname )
+    let putreg = reg_save
 
     " Find unpaired matched characters by eliminating paired ones
     let matched = s:GetMatchedChars( putreg, s:InsideString( '.' ), s:InsideComment( '.' ) )
     let matched = s:Unbalanced( matched )
+
+    if matched !~ '\S\+'
+        " Register contents is balanced, perform default put function
+        silent exe "normal! " . (v:count>1 ? v:count : '') . (regname=='"' ? '' : '"'.regname) . a:cmd
+        return
+    endif
 
     " Replace all unpaired matched characters with a space in order to keep balance
     let i = 0
@@ -320,13 +327,9 @@ function! PareditPut( cmd )
     endwhile
 
     " Store balanced text in put register and call the appropriate put command
-    call setreg( '"', putreg ) 
-    if v:count > 1
-        silent exe "normal! " . v:count . a:cmd
-    else
-        silent exe "normal! " . a:cmd
-    endif
-    let @@ = reg_save
+    call setreg( regname, putreg ) 
+    silent exe "normal! " . (v:count>1 ? v:count : '') . (regname=='"' ? '' : '"'.regname) . a:cmd
+    call setreg( regname, reg_save ) 
 endfunction
 
 " Toggle paredit mode
