@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.5
-" Last Change:  06 Mar 2012
+" Last Change:  07 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2002,6 +2002,10 @@ endfunction
 
 " Switch trace on for the selected function (toggle for swank)
 function! SlimvTrace()
+    if SlimvGetFiletype() == 'scheme'
+        call SlimvError( "Tracing is not supported by swank-scheme." )
+        return
+    endif
     if SlimvConnectSwank()
         let s = input( '(Un)trace: ', SlimvSelectSymbol() )
         if s != ''
@@ -2013,6 +2017,10 @@ endfunction
 
 " Switch trace off for the selected function (or all functions for swank)
 function! SlimvUntrace()
+    if SlimvGetFiletype() == 'scheme'
+        call SlimvError( "Tracing is not supported by swank-scheme." )
+        return
+    endif
     if SlimvConnectSwank()
         let s:refresh_disabled = 1
         call SlimvCommand( 'python swank_untrace_all()' )
