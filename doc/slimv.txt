@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Mar 2012
+*slimv.txt*                    Slimv                 Last Change: 10 Mar 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.5
@@ -1304,11 +1304,12 @@ FAQ                                                                 *slimv-faq*
 - Q: There is no SWANK server opened when I evaluate a form in Vim.
 - A: There may be many reasons for that. Try to run the SWANK server manually,
      Slimv detects if a SWANK server is running and is able to connect it.
-     Check if the port number matches in Slimv and the SWANK server.
-     Verify the SWANK server command autodetected by Slimv:
+     - Check if the port number matches in Slimv and the SWANK server and
+       :dont-close is set to 't'.
+     - Verify the SWANK server command autodetected by Slimv:
          :echo SlimvSwankCommand()         
-     Also check the following Slimv variables in Vim, maybe they are not
-     correctly autodetected and you need to override them in your .vimrc:
+     - Also check the following Slimv variables in Vim, maybe they are not
+       correctly autodetected and you need to override them in your .vimrc:
          :echo g:slimv_lisp
          :echo g:slimv_swank_cmd   (or g:slimv_swank_clojure for Clojure)
 
@@ -1328,6 +1329,21 @@ FAQ                                                                 *slimv-faq*
      there should be an ftplugin/lisp subdirectory containing slimv-lisp.vim.
      Also make sure that no other ftplugin/lisp.vim is loaded that prevents
      loading of the Slimv scripts.
+
+- Q: I experience weird problems when using the plugin, e.g. incorrect key
+     mappings, strange error messages, indentation missing, etc.
+- A: You may have an installation problem, try to completely remove then
+     reinstall the plugin.
+     It may also cause problems when you have the Slimv repository checked
+     out directly into vimfiles. Checkout the project to somewhere else and
+     copy only the relevant Slimv files to vimfiles.
+     Most problems may be spot by enabling Vim's verbose mode and examining
+     the resulting logfile. Either run Vim this way: 'vim -V20test.log' or
+     enable verbose mode runtime just before the problem happens:
+         :set verbosefile=test.log
+         :set verbose=20
+     It is also possible to save a log of the communication between Slimv and
+     the swank server by setting g:swank_log=1 in the .vimrc.
 
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: Not all SLIME functions are implemented in the SWANK client, however
@@ -1373,6 +1389,26 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.9.5  - Use correct SLDB level when invoking restart.
+       - Autodetect tmux session on Linux (thanks to Brett Kosinski).
+       - Enable syntax only once to avoid reload of syntax plugins.
+       - Added option g:slimv_browser_cmd_suffix.
+       - Skip syntax and indent file for disabled filetypes.
+       - Check the presence of X on Linux.
+       - Indentation fixes: keywords, gap after '(', defsystem, defmacro,
+         symbol-macrolet.
+       - Use winsaveview()/winrestview() for remembering current view when
+         moving around (e.g. searching for package).
+       - Find package for arglist and completion.
+       - Ignore mapleader when it's <Space>.
+       - Print SLDB error description also into the REPL buffer.
+       - Evaluate keyword if using Eval-Defun outside of s-expression.
+       - Disable unsupported swank features for Scheme.
+       - Bugfix: Paredit 'cw' at the end of line.
+       - Bugfix: omit REPL prompt from Eval-Defun and Eval-Expression.
+       - Bugfix: printing of '\n' and other escaped characters.
+       - Bugfix: Paredit delete and put corrupted the "0 register.
 
 0.9.4  - Added highlighting of [] and {} for Clojure.
        - Added options to disable Slimv for specific filetypes:
@@ -1821,7 +1857,8 @@ Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
-Andrew Lyon, Andrew Smirnoff for additional notes and contributions.
+Andrew Lyon, Andrew Smirnoff, Brett Kosinski for additional notes and
+contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
