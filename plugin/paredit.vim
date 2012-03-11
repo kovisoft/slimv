@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.9.5
-" Last Change:  08 Feb 2012
+" Version:      0.9.6
+" Last Change:  11 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -351,11 +351,27 @@ endfunction
 
 " Is the current cursor position inside a comment?
 function! s:InsideComment( ... )
+    if &syntax == ''
+        " No help from syntax engine,
+        " remove strings and search for ';' up to the cursor position
+        let line = strpart( getline('.'), 0, col('.') - 1 )
+        let line = substitute( line, '\\"', '', 'g' )
+        let line = substitute( line, '"[^"]*"', '', 'g' )
+        return match( line, ';' ) >= 0
+    endif
     return s:SynIDMatch( '[Cc]omment', a:0 ? a:1 : '.', 1 )
 endfunction
 
 " Is the current cursor position inside a string?
 function! s:InsideString( ... )
+    if &syntax == ''
+        " No help from syntax engine,
+        " count quote characters up to the cursor position
+        let line = strpart( getline('.'), 0, col('.') - 1 )
+        let line = substitute( line, '\\"', '', 'g' )
+        let quotes = substitute( line, '[^"]', '', 'g' )
+        return len(quotes) % 2
+    endif
     return s:SynIDMatch( '[Ss]tring', a:0 ? a:1 : '.', 0 )
 endfunction
 
