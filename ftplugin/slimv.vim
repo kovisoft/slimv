@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.5
-" Last Change:  07 Mar 2012
+" Version:      0.9.6
+" Last Change:  11 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1464,6 +1464,26 @@ function! SlimvCloseForm()
     normal! %
 endfunction
 
+" Handle insert mode 'Tab' keypress by doing completion or indentation
+function! SlimvHandleTab()
+    if pumvisible()
+        " Completions menu is active, go to next match
+        return "\<C-N>"
+    endif
+    let c = col('.')
+    if c > 1 && getline('.')[c-2] =~ '\k'
+        " At the end of a keyword, bring up completions
+        return "\<C-X>\<C-O>"
+    endif
+    let indent = SlimvIndent(line('.')) + 1
+    if c < indent && getline('.') !~ '\S\+'
+        " We are left from the autoindent position, do an autoindent
+        return repeat(" ", indent-c)
+    endif
+    " No keyword to complete, no need for autoindent, just enter a <Tab>
+    return "\<Tab>"
+endfunction
+
 " Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
     if line( "." ) == b:repl_prompt_line && col( "." ) <= b:repl_prompt_col
@@ -2547,7 +2567,7 @@ function! SlimvInitBuffer()
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     au InsertLeave * :let &showmode=s:save_showmode
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
-    inoremap <silent> <buffer> <Tab>      <C-R>=pumvisible() ? "\<lt>C-N>" : "\<lt>C-X>\<lt>C-O>"<CR>
+    inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
 
     " Setup balloonexp to display symbol description
     if g:slimv_balloon && has( 'balloon_eval' )
