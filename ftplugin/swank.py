@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.5
-# Last Change:  07 Mar 2012
+# Version:      0.9.6
+# Last Change:  12 Mar 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -33,6 +33,7 @@ log             = False         # Set this to True in order to enable logging
 logfile         = 'swank.log'   # Logfile name in case logging is on
 pid             = '0'           # Process id
 current_thread  = '0'
+use_unicode     = True          # Use unicode message length counting
 debug_active    = False         # Swank debugger is active
 debug_activated = False         # Swank debugger was activated
 read_string     = None          # Thread and tag in Swank read string mode
@@ -277,7 +278,10 @@ def parse_location(lst):
     return 'no source line information'
 
 def unicode_len(text):
-    return len(unicode(text, "utf-8"))
+    if use_unicode:
+        return len(unicode(text, "utf-8"))
+    else:
+        return len(text)
 
 def swank_send(text):
     global sock
@@ -606,6 +610,7 @@ def swank_parse_locals(struct, action):
 
 def swank_listen():
     global output_port
+    global use_unicode
     global debug_active
     global debug_activated
     global read_string
@@ -746,6 +751,9 @@ def swank_listen():
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
                                 vim.command('let s:swank_version="' + ver + '"')
+                                if ver >= '2011-11-08':
+                                    # Recent swank servers count bytes instead of unicode characters
+                                    use_unicode = False
                                 vim.command('let s:lisp_version="' + imp[':version'] + '"')
                                 retval = retval + new_line(retval)
                                 retval = retval + imp[':type'] + ' ' + imp[':version'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
