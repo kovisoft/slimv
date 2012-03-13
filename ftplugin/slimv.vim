@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.6
-" Last Change:  11 Mar 2012
+" Last Change:  13 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1663,9 +1663,12 @@ function! SlimvDebugCommand( cmd )
             if bufname('%') != g:slimv_sldb_name
                 call SlimvOpenSldbBuffer()
             endif
-            call SlimvQuitSldb()
             call SlimvCommand( 'python ' . a:cmd . '()' )
             call SlimvRefreshReplBuffer()
+            if s:swank_actions_pending == 0 && s:sldb_level < 0
+                " Swank exited the debugger
+                call SlimvQuitSldb()
+            endif
         else
             call SlimvError( "Debugger is not activated." )
         endif
