@@ -6,6 +6,9 @@
 
 (in-package :swank)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (swank-require :swank-util))
+
 (defmethod emacs-inspect ((symbol symbol))
   (let ((package (symbol-package symbol)))
     (multiple-value-bind (_symbol status) 
@@ -828,7 +831,7 @@ SPECIAL-OPERATOR groups."
     (:newline) "  "
     ,@(when position
         `((:action "[visit file and show current position]"
-                   ,(lambda () (ed-in-emacs `(,pathname :charpos ,position)))
+                   ,(lambda () (ed-in-emacs `(,pathname :position ,position :bytep t)))
                    :refreshp nil)
           (:newline)))))
 

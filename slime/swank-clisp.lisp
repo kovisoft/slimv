@@ -135,11 +135,24 @@
                        :name file 
                        :type type)))))
 
+;;;; UTF 
+
+(defimplementation string-to-utf8 (string)
+  (let ((enc (load-time-value 
+              (ext:make-encoding :charset "utf-8" :line-terminator :unix)
+              t)))
+    (ext:convert-string-to-bytes string enc)))
+
+(defimplementation utf8-to-string (octets)
+  (let ((enc (load-time-value 
+              (ext:make-encoding :charset "utf-8" :line-terminator :unix)
+              t)))
+    (ext:convert-string-from-bytes octets enc)))
+
 ;;;; TCP Server
 
-(defimplementation create-socket (host port)
-  (declare (ignore host))
-  (socket:socket-server port))
+(defimplementation create-socket (host port &key backlog)
+  (socket:socket-server port :interface host :backlog (or backlog 5)))
 
 (defimplementation local-port (socket)
   (socket:socket-server-port socket))
@@ -151,9 +164,11 @@
                                       &key external-format buffering timeout)
   (declare (ignore buffering timeout))
   (socket:socket-accept socket
-                        :buffered nil ;; XXX should be t
-                        :element-type 'character
-                        :external-format external-format))
+                        :buffered buffering ;; XXX may not work if t
+                        :element-type (if external-format 
+                                          'character
+                                          '(unsigned-byte 8))
+                        :external-format (or external-format :default)))
 
 #-win32
 (defimplementation wait-for-input (streams &optional timeout)
@@ -171,6 +186,41 @@
             (let ((ready (loop for (s _ . x) in streams
                                if x collect s)))
               (when ready (return ready))))))))
+
+#+win32
+(defimplementation wait-for-input (streams &optional timeout)
+  (assert (member timeout '(nil t)))
+  (loop
+   (cond ((check-slime-interrupts) (return :interrupt))
+         (t 
+          (let ((ready (remove-if-not #'input-available-p streams)))
+            (when ready (return ready)))
+          (when timeout (return nil))
+          (sleep 0.1)))))
+
+#+win32
+;; Some facts to remember (for the next time we need to debug this):
+;;  - interactive-sream-p returns t for socket-streams
+;;  - listen returns nil for socket-streams
+;;  - (type-of <socket-stream>) is 'stream
+;;  - (type-of *terminal-io*) is 'two-way-stream
+;;  - stream-element-type on our sockets is usually (UNSIGNED-BYTE 8)
+;;  - calling socket:socket-status on non sockets signals an error,
+;;    but seems to mess up something internally.
+;;  - calling read-char-no-hang on sockets does not signal an error,
+;;    but seems to mess up something internally.
+(defun input-available-p (stream)
+  (case (stream-element-type stream)
+    (character
+     (let ((c (read-char-no-hang stream nil nil)))
+       (cond ((not c)
+              nil)
+             (t
+              (unread-char c stream)
+              t))))
+    (t
+     (eq (socket:socket-status (cons stream :input) 0 0)
+         :input))))
 
 ;;;; Coding systems
 
@@ -586,8 +636,15 @@ Execute BODY with NAME's function slot set to FUNCTION."
   (dynamic-flet ((sys::c-warn *orig-c-warn*))
     (signal-compiler-warning cstring args :style-warning *orig-c-style-warn*)))
 
-(defun c-error (cstring &rest args)
-  (signal-compiler-warning cstring args :error *orig-c-error*))
+(defun c-error (&rest args)
+  (signal (make-condition 'compiler-condition
+                          :severity :error
+                          :message (apply #'format nil
+                                          (if (= (length args) 3)
+                                              (cdr args)
+                                              args))
+                          :location (compiler-note-location)))
+  (apply *orig-c-error* args))
 
 (defimplementation call-with-compilation-hooks (function)
   (handler-bind ((warning #'handle-notification-condition))

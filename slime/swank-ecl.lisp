@@ -62,13 +62,13 @@
   (car (sb-bsd-sockets:host-ent-addresses
         (sb-bsd-sockets:get-host-by-name name))))
 
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (let ((socket (make-instance 'sb-bsd-sockets:inet-socket
 			       :type :stream
 			       :protocol :tcp)))
     (setf (sb-bsd-sockets:sockopt-reuse-address socket) t)
     (sb-bsd-sockets:socket-bind socket (resolve-hostname host) port)
-    (sb-bsd-sockets:socket-listen socket 5)
+    (sb-bsd-sockets:socket-listen socket (or backlog 5))
     socket))
 
 (defimplementation local-port (socket)
@@ -84,7 +84,13 @@
   (sb-bsd-sockets:socket-make-stream (accept socket)
                                      :output t
                                      :input t
-                                     :buffering buffering
+                                     :buffering (ecase buffering
+                                                  ((t) :full)
+                                                  ((nil) :none)
+                                                  (:line line))
+                                     :element-type (if external-format
+                                                       'character 
+                                                       '(unsigned-byte 8))
                                      :external-format external-format))
 (defun accept (socket)
   "Like socket-accept, but retry on EAGAIN."
@@ -205,6 +211,7 @@
 (defun signal-compiler-condition (&rest args)
   (signal (apply #'make-condition 'compiler-condition args)))
 
+#-ecl-bytecmp
 (defun handle-compiler-message (condition)
   ;; ECL emits lots of noise in compiler-notes, like "Invoking
   ;; external command".
@@ -220,6 +227,7 @@
                  (warning                :warning))
      :location (condition-location condition))))
 
+#-ecl-bytecmp
 (defun condition-location (condition)
   (let ((file     (c:compiler-message-file condition))
         (position (c:compiler-message-file-position condition)))
@@ -232,6 +240,9 @@
         (make-error-location "No location found."))))
 
 (defimplementation call-with-compilation-hooks (function)
+  #-ecl-bytecmp
+  (funcall function)
+  #-ecl-bytecmp
   (handler-bind ((c:compiler-message #'handle-compiler-message))
     (funcall function)))
 
