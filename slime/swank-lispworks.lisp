@@ -62,6 +62,14 @@
                                 :check-redefinition-p nil)
        ,(funcall *original-defimplementation* whole env))))
 
+;;; UTF8
+
+(defimplementation string-to-utf8 (string)
+  (ef:encode-lisp-string string :utf-8))
+
+(defimplementation utf8-to-string (octets)
+  (ef:decode-external-string octets :utf-8))
+
 ;;; TCP server
 
 (defimplementation preferred-communication-style ()
@@ -72,10 +80,11 @@
     (fixnum socket)
     (comm:socket-stream (comm:socket-stream-socket socket))))
 
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (multiple-value-bind (socket where errno)
       #-(or lispworks4.1 (and macosx lispworks4.3))
-      (comm::create-tcp-socket-for-service port :address host)
+      (comm::create-tcp-socket-for-service port :address host
+                                           :backlog (or backlog 5))
       #+(or lispworks4.1 (and macosx lispworks4.3))
       (comm::create-tcp-socket-for-service port)
     (cond (socket socket)
@@ -96,25 +105,34 @@
   (declare (ignore buffering))
   (let* ((fd (comm::get-fd-from-socket socket)))
     (assert (/= fd -1))
-    (assert (valid-external-format-p external-format))
-    (cond ((member (first external-format) '(:latin-1 :ascii))
+    (cond ((not external-format)
            (make-instance 'comm:socket-stream
                           :socket fd
                           :direction :io
                           :read-timeout timeout
-                          :element-type 'base-char))
+                          :element-type '(unsigned-byte 8)))
           (t
-           (make-flexi-stream 
-            (make-instance 'comm:socket-stream
-                           :socket fd
-                           :direction :io
-                           :read-timeout timeout
-                           :element-type '(unsigned-byte 8))
-            external-format)))))
+           (assert (valid-external-format-p external-format))
+           (ecase (first external-format)
+             ((:latin-1 :ascii)
+              (make-instance 'comm:socket-stream
+                             :socket fd
+                             :direction :io
+                             :read-timeout timeout
+                             :element-type 'base-char))
+             (:utf-8
+              (make-flexi-stream 
+               (make-instance 'comm:socket-stream
+                              :socket fd
+                              :direction :io
+                              :read-timeout timeout
+                              :element-type '(unsigned-byte 8))
+               external-format)))))))
 
 (defun make-flexi-stream (stream external-format)
   (unless (member :flexi-streams *features*)
-    (error "Cannot use external format ~A without having installed flexi-streams in the inferior-lisp."
+    (error "Cannot use external format ~A~
+            without having installed flexi-streams in the inferior-lisp."
            external-format))
   (funcall (read-from-string "FLEXI-STREAMS:MAKE-FLEXI-STREAM")
            stream
@@ -131,13 +149,12 @@
 (defvar *external-format-to-coding-system*
   '(((:latin-1 :eol-style :lf) 
      "latin-1-unix" "iso-latin-1-unix" "iso-8859-1-unix")
-    ((:latin-1) 
-     "latin-1" "iso-latin-1" "iso-8859-1")
-    ((:utf-8) "utf-8")
+    ;;((:latin-1) "latin-1" "iso-latin-1" "iso-8859-1")
+    ;;((:utf-8) "utf-8")
     ((:utf-8 :eol-style :lf) "utf-8-unix")
-    ((:euc-jp) "euc-jp")
+    ;;((:euc-jp) "euc-jp")
     ((:euc-jp :eol-style :lf) "euc-jp-unix")
-    ((:ascii) "us-ascii")
+    ;;((:ascii) "us-ascii")
     ((:ascii :eol-style :lf) "us-ascii-unix")))
 
 (defimplementation find-external-format (coding-system)
@@ -642,7 +659,7 @@ Return NIL if the symbol is unbound."
     (with-open-file (stream file)
       (let ((pos 
              #-(or lispworks4.1 lispworks4.2)
-             (dspec-stream-position stream dspec)))
+             (ignore-errors (dspec-stream-position stream dspec))))
         (if pos
             (list :position (1+ pos))
             (dspec-function-name-position dspec `(:position 1)))))))
@@ -927,6 +944,26 @@ function names like \(SETF GET)."
     (mp:with-lock ((mailbox.mutex mbox))
       (setf (mailbox.queue mbox)
             (nconc (mailbox.queue mbox) (list message))))))
+
+(let ((alist '())
+      (lock (mp:make-lock :name "register-thread")))
+
+  (defimplementation register-thread (name thread)
+    (declare (type symbol name))
+    (mp:with-lock (lock)
+      (etypecase thread
+        (null 
+         (setf alist (delete name alist :key #'car)))
+        (mp:process
+         (let ((probe (assoc name alist)))
+           (cond (probe (setf (cdr probe) thread))
+                 (t (setf alist (acons name thread alist))))))))
+    nil)
+
+  (defimplementation find-registered (name)
+    (mp:with-lock (lock)
+      (cdr (assoc name alist)))))
+
 
 (defimplementation set-default-initial-binding (var form)
   (setq mp:*process-initial-bindings* 

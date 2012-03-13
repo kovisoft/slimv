@@ -38,15 +38,16 @@
       result)))
 
 (defmethod xref-doit ((type (eql :depends-on)) thing)
-  (loop for dependency in (who-depends-on thing)
-        for asd-file = (asdf:system-definition-pathname dependency)
-        when asd-file
+  (when (typep thing '(or string symbol))
+    (loop for dependency in (who-depends-on thing)
+          for asd-file = (asdf:system-definition-pathname dependency)
+          when asd-file
           collect (list dependency
                         (swank-backend::make-location
                          `(:file ,(namestring asd-file))
                          `(:position 1)
                          `(:snippet ,(format nil "(defsystem :~A" dependency)
-                           :align t)))))
+                           :align t))))))
 
 
 (defslimefun operate-on-system-for-emacs (system-name operation &rest keywords)
@@ -140,9 +141,12 @@ already knows."
        t))
 
 (defslimefun asdf-system-directory (name)
-  (cl:directory-namestring
-   (cl:truename
-    (asdf:system-definition-pathname (asdf:find-system name)))))
+  (let ((truename
+          (truename
+           (asdf:system-definition-pathname (asdf:find-system name)))))
+    (namestring
+     (make-pathname :device (pathname-device truename)
+                    :directory (pathname-directory truename)))))
 
 (defun system-contains-file-p (module pathname pathname-name)
   (some #'(lambda (component)

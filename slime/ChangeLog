@@ -1,3 +1,782 @@
+2012-03-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-ccl.lisp: If 'xref is not provided warn about it but
+	continue.
+
+2012-03-06  Helmut Eller  <heller@common-lisp.net>
+
+	Fix SBCL backend for Windows.
+
+	* swank-sbcl.lisp (fd-stream-input-buffer-empty-p): Restore it.
+
+2012-03-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (swank-require): Ensure that provide as called.
+
+2012-02-12  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-ecl.lisp (accept-connection): Use the proper element-type
+	for the stream.
+
+2012-02-12  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-clisp.lisp (c-error): The number of parameters to
+	sys::c-warn was changed, accommodate both versions.
+
+2012-02-07  Martin Simmons <martin@lispworks.com>
+
+	* swank-lispworks.lisp (dspec-file-position): Fall back to regexp
+	search if dspec-stream-position gets an error.
+
+2012-01-06  Helmut Eller  <heller@common-lisp.net>
+
+	Add a "sentinel thread" to protect access to global lists.
+
+	* swank.lisp (start-sentinel, sentinel, send-to-sentinel)
+	(sentinel-serve, sentinel-stop-server, sentinel-maybe-exit): New.
+	(make-connection, close-connection, setup-server, stop-server):
+	Use the sentinel.
+	(close-connection%): Factored out.
+	* swank-backend.lisp (register-thread, find-registered): New.
+	* swank-allegro.lisp: Implement it.
+	* swank-ccl.lisp:
+	* swank-lispworks.lisp:
+	* swank-sbcl.lisp:
+
+2012-01-02  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-loader.lisp (lisp-version-string): Append -no-threads to
+	SBCL without threads.
+
+2011-12-24  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el (slime-init-command): Don't call
+	`slime-to-lisp-filename', the lisp is not yet connected and if
+	there's another connection it will use the wrong translation.
+
+2011-12-24  Stas Boukarev  <stassats@gmail.com>
+
+	* swank.lisp (throw-to-toplevel): If *sldb-quit-restart* is not
+	found, try to invoke the last restart, which usually is a
+	top-level abort restart. This is useful when the debugger is
+	invoked from a non-slime thread.
+
+2011-12-23  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el (slime-cycle-connections): Add
+	`slime-cycle-connections-hook', to be used by slime-repl.
+
+2011-12-21  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-sbcl.lisp (input-ready-p): Don't use
+	sb-impl::fd-stream-fd-type if it's not present.
+
+2011-12-12  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el (slime-compile-region): Run slime-flash-region
+	directly, not from `slime-before-compile-functions', which is run
+	also for C-c C-k.
+
+2011-12-10  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (auto-flush-loop): Don't use call-with-io-timeout.
+	Removing it had no effect on the number of failed tests.  If you
+	want it back, first create a test case to demonstrate the problem.
+	* swank-backend.lisp: Mention that locks should only be used in
+	swank-gray.lisp.
+
+2011-12-10  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp: Move io-redirection to contrib/swank-repl.lisp.
+
+2011-12-10  Helmut Eller  <heller@common-lisp.net>
+
+	Make *active-threads* a slot of the connection struct.
+
+	* swank.lisp (*active-threads*): Deleted
+	([struct] multithreaded-connection): New slot active-threads.
+	(find-worker-thread, interrupt-worker-thread)
+	(thread-for-evaluation): Update accordingly.
+	(add-active-thread, remove-active-thread): New helpers.
+
+2011-12-10  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-loader.lisp (delete-stale-contrib-fasl-files): New.
+	(compile-contribs): Use it.
+
+2011-12-09  Helmut Eller  <heller@common-lisp.net>
+
+	Create an extra thread for the indentation cache.
+
+	* swank.lisp (indentation-cache-loop): New.
+	([struct] multithreaded-connection): New slot
+	indentation-cache-thread.
+	(control-thread, cleanup-connection-threads): Create/kill it.
+	(send-to-indentation-cache): New function.
+	(update-indentation-information, sync-indentation-to-emacs): Use
+	it.
+	(perform-indentation-update, update-indentation/delta-for-emacs):
+	Add package as argument; that used to be *buffer-package.  Can
+	again be simpler as the indentation-cache-thread doesn't share the
+	cache with others.
+	(handle-indentation-cache-request, symbol-packages): New helpers.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (*slime-interrupts-enabled*): Describe the idea
+	behind the interrupt handling code a bit.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	Make *event-queue* and *events-enqueued* slots of the connection
+	struct.
+
+	* swank.lisp (*event-queue*, *events-enqueued*): Deleted
+	([struct] singlethreaded-connection): New slots event-queue and
+	events-enqueued.
+	(poll-for-event, send-event, wait-for-event/event-loop): Update
+	accordingly.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el ([xemacs]): Use (find-coding-system 'utf-8-unix)
+	instead of checking the XEmacs version to decide when 'un-define
+	is required.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (send-to-emacs): Add a without-slime-interrupts to
+	protect send/receive from arbitrary interrupts.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	Move flow control from dispatch-event to send-to-emacs.
+
+	* swank.lisp (*send-counter*): New thread local variable.
+	(with-connection): Bind it.
+	(send-to-emacs): Call maybe-slow-down.
+	(maybe-slow-down, ping-pong): Go through dispatch-event instead of
+	writing to the socket directly.
+	(dispatch-event): Re-add thread arg to :ping/:emacs-pong.
+	Also add a :test-delay event.
+	(perform-indentation-update): Use with-connection to bind
+	*emacs-connection* and *send-counter*.
+	(background-message): Remove reference to connection.slowdown.
+	(flow-control-test): New support code for testing flow-control.
+	([defstruct] connection): Delete send-counter and slowdown slots.
+
+	* slime.el (slime-dispatch-event): Re-add thread arg to
+	:ping/:emacs-pong and :test-delay event.
+	([test] flow-control): New test.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-update-system-indentation): Moved to
+	contrib/slime-indentation.el.
+
+2011-12-07  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-batch-test): Forgot to rename slime-run-one-test
+	to slime-run-test here.
+	(slime-net-connect): Remove coding-system argument.
+	(slime-xref-insert-recompilation-flags): Use insert-char instead
+	of (dotimes (i ..) (insert " " ..)) to avoid the compiler warning.
+	([test] break, slime-forward-sexp): Use _i in dotimes.
+
+2011-12-07  Stas Boukarev  <stassats@gmail.com>
+
+	* doc/.cvsignore: Add html.tgz
+
+2011-12-07  Didier Verna  <didier@xemacs.org>
+
+	* doc/.cvsignore: Add more files generated by Texinfo (.kys, .fns
+	and .vrs).
+
+2011-12-05  Didier Verna  <didier@xemacs.org>
+
+	* slime.el ([xemacs]): Don't require 'un-define in XEmacs 21.5 and
+	later. Mule-UCS is not needed anymore because of internal Unicode
+	support (and conflicts with it).
+
+2011-12-06  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el (slime-compile-region): Check connection before running
+	hooks, invoking slime-flash-region doesn't make much sense when
+	there's no connection.
+
+2011-12-05  Helmut Eller  <heller@common-lisp.net>
+
+	Move flow control into dispatch-event.
+
+	* swank.lisp (maybe-slow-down, ping-pong): New functions.
+	(dispatch-event): Use it. Also require connection argument.
+	Update callers accordingly.
+	([defstruct] connection): New slots: send-counter and slowdown.
+	* slime.el (slime-dispatch-event): Drop thread from
+	:ping/:emacs-ping messages.
+
+	Use subclasses of connection.  Wasn't neccessary for flow control
+	but seems like a good idea for the future.
+
+	* swank.lisp (multithreaded-connection)
+	(singlethreaded-connection): New
+	(make-connection): Create multi/single threaded variant depending
+	on style argument.
+	([defstruct] serve-requests, cleanup): Delete slots.  Dispatch on
+	connection type instead.
+	(stop-serving-requests): New.
+	(close-connection): Use it.  Can't use
+	*use-dedicated-output-stream* here.
+
+	* swank.lisp (background-message): Do nothing if
+	connection.slowdown is set.
+
+2011-12-05  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el ([test] arglist): swank::create-server now has an
+	optional argument.  Use swank::compute-backtrace instead.
+
+2011-12-05  Stas Boukarev  <stassats@gmail.com>
+
+	* start-swank.lisp: Remove :coding-system argument.
+
+2011-12-04  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (interrupt-worker-thread): Don't use find-repl-thread
+	as fallback.
+
+2011-12-04  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp: Minor cleanups.
+	* swank-rpc.lisp:
+
+2011-12-04  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (create-repl): Moved to contrib/swank-repl.lisp.
+	(*use-dedicated-output-stream*, *dedicated-output-stream-port*
+	(*dedicated-output-stream-buffering*, open-streams)
+	(make-output-function, send-user-output)
+	(make-output-function-for-target, make-output-stream-for-target)
+	(open-dedicated-output-stream, find-repl-thread)
+	(spawn-repl-thread, repl-loop, initialize-streams-for-connection)
+	(read-user-input-from-emacs,  *listener-eval-function*)
+	(listener-eval, *send-repl-results-function*, repl-eval)
+	(clear-repl-variables, track-package, send-repl-results-to-emacs)
+	(redirect-trace-output);
+	* swank-loader.lisp (*contribs*): Add swank-repl.
+
+2011-12-04  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-loader.lisp (*contribs*): Add swank-mrepl.
+
+2011-12-04  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-rpc.lisp (read-chunk): Signal end-of-file we had no input.
+
+2011-12-03  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (wait-for-input): Another go at this. Rip out POLL,
+	build on top of just INPUT-READY-P.
+	(input-ready-p): Outside Windows, use SYSREAD-MAY-BLOCK-P to check.
+
+2011-12-03  Gábor Melis  <mega@retes.hu>
+
+	* swank-allegro.lisp (set-default-initial-binding): In 9.0 alpha,
+	*CL-DEFAULT-SPECIAL-BINDINGS* is [soon to be] deprecated.  It's
+	otherwise the same EXCL:*REQUIRED-TOP-LEVEL-BINDINGS* (i.e. no
+	change in behavior).
+
+2011-12-03  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-clisp.lisp (wait-for-input): Add a version for windows.
+
+2011-12-02  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-sbcl.lisp (wait-for-input): Define only if
+	#+os-provides-poll or #+win32.
+
+2011-12-02  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (listener-channel): Moved to contrib/swank-mrepl.lisp
+	(create-listener, initial-listener-bindings, spawn-listener-thread).
+
+2011-12-01  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-sbcl.lisp (wait-for-input): Call poll(2).
+	* swank-backend.lisp (wait-for-streams, wait-for-one-stream):
+	Deleted. Wouldn't work on binary streams.
+
+2011-12-01  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-loader.lisp (*contribs*): Add swank-util.
+
+2011-12-01  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-cmucl.lisp (method-location): Special case accessors.
+
+2011-11-29  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (do-symbols*, classify-symbol)
+	(symbol-classification-string): Moved to contrib/swank-util.lisp.
+
+2011-11-29  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (to-line): Increase default limit to 512.
+	(frame-locals-for-emacs): Let *print-right-margin* override
+	default line width.
+
+2011-11-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (create-server): Add a :backlog argument.
+	(setup-server): Pass it along.
+
+	* swank-backend.lisp (create-socket): Backlog argument.
+	* swank-abcl.lisp: Implement it.
+	* swank-allegro.lisp:
+	* swank-ccl.lisp:
+	* swank-clisp.lisp:
+	* swank-cmucl.lisp:
+	* swank-corman.lisp:
+	* swank-ecl.lisp:
+	* swank-lispworks.lisp:
+	* swank-sbcl.lisp:
+	* swank-scl.lisp:
+
+2011-11-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-cmucl.lisp (make-socket-io-stream): Create character
+	stream if external-format is non-nil.
+
+2011-11-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (create-server): Remove coding-system argument.
+	([defstruct] connection): Remove coding-system slot.
+	(connection.external-format, *coding-system*): Deleted.
+	(make-connection, start-server, create-server, setup-server)
+	(accept-connections): Drop coding-system arg.
+
+	(connection-info): Return supported coding systems.
+	(create-repl, open-dedicated-output-stream)
+	(open-streams, initialize-streams-for-connection): Add
+	coding-system arg.
+
+	* slime.el (slime-init-command): Ignore the coding-system arg.
+	(slime-connection-coding-systems): New connection variable.
+	(slime-set-connection-info): Set it.
+
+2011-11-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (eval-in-frame-aux): Don't bind *package* during
+	eval.
+
+2011-11-21  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-cmucl.lisp: Trigger compilation of utf8 stuff before first
+	real use.
+
+2011-11-21  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (*sldb-printer-bindings*): Removed.  Rather useless
+	since the change from 2009-02-26.  It could at best have some
+	influence on the way conditions are printed.  *sldb-string-length*
+	and *sldb-bitvector-length* where both nil so
+	*sldb-pprint-dispatch-table* was also not used by default.  In
+	summary, spending 3 pages for something that's not used by default
+	was pretty silly.  One variable less where we can get the defaults
+	wrong.
+
+2011-11-21  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (sldb-eval-in-frame): Try to figure the package out.
+	Ask Lisp if the function for frame was defined in a particular
+	package and use it to read the form.
+	(sldb-read-form-for-frame): New helper.
+
+	* swank-backend (frame-package): New.
+	* swank-cmucl (frame-package): Implement it.
+
+	* swank.lisp (frame-package-name, eval-in-frame-aux): New.
+	(eval-string-in-frame, pprint-eval-string-in-frame): Use package
+	argument.
+
+2011-11-19  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (restart-frame): Make it possible to restart
+	frames of anonymous functions -- at least some of the time.
+
+2011-11-16  Stas Boukarev  <stassats@gmail.com>
+
+	* swank.lisp (open-dedicated-output-stream): Open a stream with
+	the right coding system.
+	Change (:open-dedicated-output-stream port) message to
+	(:open-dedicated-output-stream port coding-system), because Emacs
+	can no longer determine the coding system based on the main
+	network streams since they are binary now.
+
+2011-11-11  Anton Kovalenko  <anton@sw4me.com>
+
+	* slime.el (slime-ed): add bytep argument to destructure-case.
+	When it's true, position is interpreted as byte offset.
+
+2011-11-08  Helmut Eller  <heller@common-lisp.net>
+
+	Restore old header format.
+
+	* swank-rpc.lisp (parse-header, write-header)
+	* slime.el (slime-net-decode-length, slime-net-encode-length)
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-ecl.lisp (accept-connection): Fix buffering arg.
+	* swank-cmucl.lisp (accept-connection): Fix buffering arg.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-run-test): Renamed from slime-run-one-test.
+	(slime-toggle-test-debug-on-error): New.
+	([test] break): Longer timeouts.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	Add portable versions for string-to-utf8 and utf8-to-string.
+
+	* swank-backend.lisp (default-string-to-utf8)
+	(default-utf8-to-string): New.
+	(string-to-utf8, utf8-to-string): Use default implementations.
+
+	* swank-lispworks.lisp (make-flexi-stream): Restored.
+	(utf8-stream): Deleted.  The utf8 stuff is now used for the
+	default implementation of utf8-to-string and would cause name
+	clashes.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-allegro.lisp (swank-compile-string): For reader errors
+	return nil not (values nil nil t).
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	New wire format.
+
+	Switch from character streams to binary streams.  Counting
+	characters was error prone because some Lisps use utf-16
+	internally and so READ-SEQUENCE can't be used easily.
+
+	The new format looks so:
+
+	  | byte0 | 3 bytes length |
+	  |    ... payload ...     |
+
+	The playload is an s-exp encoded as UTF-8 string.  byte0 is
+	currently always 0; other values are reserved for future use.
+
+	* swank-rpc.lisp (write-message): Use new format.
+	(write-header, parse-header, asciify, encoding-error): New.
+
+	* swank.lisp (accept-connections): Create a binary stream.
+	(input-available-p): Can't read-char-no-hang on binary streams.
+
+	* slime.el (slime-net-connect): Use binary as coding system.
+	(slime-net-send, slime-net-read, slime-net-decode-length)
+	(slime-net-encode-length, slime-net-have-input-p): Use new format.
+	(slime-unibyte-string, slime-handle-net-read-error): New.
+	(featurep): Require 'un-define for XEmacs.
+
+	* swank-sbcl.lisp (input-ready-p): Use sb-sys:wait-until-fd-usable.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (close-connection): Fix thinko.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-backend.lisp (accept-connection): Improve docstring.  In
+	particular say that we want a binary stream if the EXTERNAL-FORMAT
+	argument is nil.
+
+	* swank-abcl.lisp (accept-connection): Make it so.
+	* swank-clisp.lisp (accept-connection): Make it so.
+	* swank-cmucl.lisp (accept-connection): Make it so.
+	* swank-lispworks.lisp (accept-connection): Make it so.
+	* swank-sbcl.lisp (accept-connection): Make it so.
+	* swank-scl.lisp (accept-connection): Make it so.
+
+2011-11-06  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-backend.lisp (utf8-to-string, string-to-utf8): New.
+
+	* swank-sbcl.lisp (string-to-utf8, string-to-utf8): Implemented	.
+	* swank-lispworks.lisp (string-to-utf8, string-to-utf8): Implemented.
+	* swank-cmucl.lisp (string-to-utf8, string-to-utf8): Implemented.
+	* swank-clisp.lisp (string-to-utf8, string-to-utf8): Implemented.
+	* swank-ccl.lisp (string-to-utf8, string-to-utf8): Implemented.
+	* swank-allegro.lisp (string-to-utf8, string-to-utf8): Implemented.
+	* swank-abcl.lisp (string-to-utf8, string-to-utf8): Implemented.
+	(octets-to-jbytes, jbytes-to-octets): New helpers.
+
+2011-11-03  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (close-connection): Be more careful with non-ascii.
+
+2011-11-03  Helmut Eller  <heller@common-lisp.net>
+
+	Remove dependecy on FLEXI-STREAMS for Lispworks.
+
+	* swank-lispworks.lisp (make-flexi-stream): Deleted.
+	(utf8-stream): New class to do the transcoding.
+	(accept-connection): Use it.
+
+2011-10-19  Andrew Myers <asm198@gmail.com>
+
+	* swank-allegro.lisp (frob-allegro-field-def): Add missing type to
+	ecase for inspector.
+
+2011-10-13  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (all-completions): Remove mixed case syms e.g |Foo|.
+	"fo" is not a prefix of "|Foo|" and it would be problematic later.
+
+2011-10-05  Stas Boukarev  <stassats@gmail.com>
+
+	* swank.lisp (clear-repl-variables): New functions, clears *, /,
+	and + variables.
+
+2011-09-28  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el: Remove (require 'hideshow), it's not used anymore.
+	Spotted by Leo Liu.
+
+2011-09-27  Mark Evenson  <evenson@panix.com>
+
+	* swank-abcl.lisp (describe-symbol-for-emacs): Differentiate
+	between function, generic function, special forms, and macros by
+	copying SBCL implementation.
+
+2011-09-13  Christophe Rhodes  <csr21@cantab.net>
+
+	* slime.el (slime-simple-complete-symbol): only display "Complete
+	but not unique" message if the partial completion figures in the
+	completion list.
+
+2011-08-31  Anton Kovalenko  <anton@sw4me.com>
+
+	* swank-sbcl.lisp (preferred-communication-style): check for
+	:sb-thread before :win32, so :spawn is preferred for threaded
+	Windows builds.
+
+2011-08-31  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (make-socket-io-stream): Backwards compatibility with
+	SBCL < 1.0.42.43 -- and bugfix.
+
+2011-08-26  Mark Evenson  <evenson@panix.com>
+
+	* swank-abcl.lisp (class-slots): Use exported symbol allowing
+	classes with non-standard metaobjects to be inspected.
+
+2011-08-18  Helmut Eller  <heller@common-lisp.net>
+
+	Fix line numbers for compiler notes if is narrowing was in effect.
+
+	* slime.el (slime-canonicalized-location): Widen before calling
+	line-number-at-pos.
+
+2011-08-17  Stas Boukarev  <stassats@gmail.com>
+
+	* swank-allegro.lisp (with-redirected-y-or-n-p): Fix modern-mode
+	issues.
+	Patch by Andrew Myers.
+
+2011-08-09  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (make-socket-io-stream): Use :SERVE-EVENTS T when
+	using :FD-HANDLER as the communication style. SBCL will soon stop
+	serving events by default on socket streams.
+
+2011-08-08  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-unintern-symbol): New command.
+	* swank.lisp (unintern-symbol): Lisp-side implementation.
+
+2011-07-03  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (debug-var-info): New function: calls
+	SB-DI::DEBUG-VAR-INFO when available.
+	(frame-locals, frame-var-value): Treat more-context and more-count
+	vars specially.
+
+2011-06-21  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank.lisp (*indentation-cache-lock*): Deleted.
+	(perform-indentation-update): Spawn a new thread to handle the
+	indentation update when using threads. Move cache-clearing to
+	UPDATE-INDENTATION/DELTA-FOR-EMACS. Replace the old cache by
+	the one returned from U-I/D-F-E.
+	(update-indentation/delta-for-emacs): When clearing the cache,
+	allocate a new table. When threads are being used, copy the
+	cache before mutation, to ensure that caches possibly seen by other
+	threads are write-only by then.
+
+2011-06-18  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank.lisp (*indentation-cache-lock*): New variable:
+	hash-table updates aren't necessarily thread-safe.
+	(perform-indentation-update, update-indentation/delta-for-emacs):
+	Grab the lock when necessary -- in delta-for-emacs we hold on to
+	it a bit longer than necessary, but the code is easier to read
+	this way.
+
+2011-06-16  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank.lisp (macro-indentation): Restore the old simple version.
+
+	* swank-sbcl.lisp (compiling-from-buffer-p): PROBE-FILE to
+	handle cases there the tmp-directory is a symlink.
+	(compiling-from-file-p): Ditto.
+
+2011-06-14  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-backend.lisp (call-with-io-timeout): New DEFINTERFACE.
+	* swank-sbcl.lisp (call-with-io-timeout): DEFIMPLEMENTATION for it.
+	* swank.lisp (auto-flush-loop): Call FINISH-OUTPUT using
+	CALL-WITH-IO-TIMEOUT to prevent deadlocks.
+
+	* swank.lisp (macro-indentation): Fix handling of lambda-list
+	keywords other than &rest and &body.
+
+	* slime.el (slime-update-system-indentation): Remove stale specs
+	from common-lisp-system-indentation when new one arrives.
+
+2011-06-10  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank.lisp (macro-indentation): Walk the lambda-list
+	to construct a better indentation spec instead of just
+	looking for &BODY.
+
+2011-06-09  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (execv): Stupid SBCL hackers breaking backwards
+	compatibility again: SB-POSIX:SYSCALL-ERROR has a required
+	argument in 1.0.49, but accepts no arguments in older ones. Use
+	plain ERROR instead.
+
+	Support for per-package derived indentation, when
+	slime-indentation is used.
+
+	* swank.lisp (update-indentation/delta-for-emacs): Tell Emacs
+	which packages the symbol is available in. Unless
+	slime-indentation is used, this information is just dropped on the
+	floor.
+
+	* slime.el (slime-update-system-indentation): New function. Use
+	this to inform indentation about derived specs when
+	`common-lisp-system-indentation' is bound.
+	(slime-handle-indentation-update): Adjust to support per-package
+	derived indentation specs when slime-indentation is available.
+
+2011-05-27  Helmut Eller  <heller@common-lisp.net>
+
+	Fix "wrong number of args" problem with slime-inspector-quit.
+	Reported by Anton Kovalenko.
+
+	* slime.el (slime-popup-buffer-quit-function)
+	(slime-quit-threads-buffer): Drop the kill-buffer-p argument.
+
+2011-05-24  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (destructure-case): Fix "`_' not left unused" warnings.
+	Insert an (ignore) form for empty bodies; this inhibts the
+	compiler transformation that leads to the spurios warning.  This
+	has no runtime cost in compiled code, since the compiler
+	recognizes (ignore) and emits no code for it.
+	(slime-flatten-tree): Deleted. No longer used.
+
+2011-05-23  Stas Boukarev  <stassats@gmail.com>
+
+	* swank.lisp (sdlb-print-condition): New (or old new)
+	function. It was bound by P in sldb-mode, but for some reason it
+	was lost.
+
+2011-05-23  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-apropos-label-properties): Deleted.  Just
+	auto-load apropos-mode.
+	(slime-print-apropos): Use the variable apropos-label-face
+	which seems to exist in all relevant Emacsen.
+
+2011-05-22  Helmut Eller  <heller@common-lisp.net>
+
+	Turn on lexical-binding for slime.el.
+	This mostly involves prefixing unused variables
+	with underscores to shut up the compiler, but
+	also some less harmless changes.
+
+	* slime.el (slime-dispatching-connection, slime-current-thread):
+	Add defvars.
+	(slime-connect): called-interactively-p wants 1 arg in Emacs 24
+	but none in Emacs 22.  So we can't use it; instead add an extra
+	optional arg and set that to non-nil in the interactive spec.
+	(slime-read-from-minibuffer): Actually use the history arg.
+	(slime-inspector-quit): Drop the unused kill-buffer arg from the
+	lambda-list.
+	(slime-run-tests): Can't specbind slime-repl-history-file without
+	variable declation.  I don't want to declare it here so I just
+	eliminated it and let somebody else fix slime-repl.el.
+
+2011-05-21  Helmut Eller  <heller@common-lisp.net>
+
+	Minor tweaks to avoid some compiler warnings.
+
+	* slime.el (slime-modeline-string, slime-buffer-connection):
+	Declare variables.
+	(slime-flatten-tree): Helper function.
+	(destructure-case): Use it, and make '_ ignorable if
+	it occurs in some pattern.
+	(slime-connect): Avoid obsolete functions:
+	string-to-int -> string-to-number
+	interactive-p -> called-interactively-p
+	(slime-complete-maybe-restore-window-configuration)
+	last-command-char -> last-command-event
+	completion-base-size ->  completion-base-position
+	(slime-xref-mode-map): Use call-interactively
+	when calling the remapped next-line/previous-line commands.
+
+2011-05-09  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* swank-sbcl.lisp (swank-compile-string): Use :SOURCE-NAMESTRING
+	to provide the name of the actual source file, and
+	:ALLOW-OTHER-KEYS for compatibility with pre-1.0.48.1 versions.
+	This allows SBCL to get uninteresting redefinition muffling right.
+	(*trap-load-time-warnings*): Default to T to make the redefinition
+	notes more visible, especially now that redefinition muffling hides
+	the boring ones.
+
+2011-05-08  Nikodemus Siivola  <nikodemus@random-state.net>
+
+	* slime.el (slime-intern-indentation-spec): New function. Converts
+	strings in an indentation spec to symbols.
+	(slime-handle-indentation-update): Intern the indentation spec
+	using slime-intern-indentation-spec, so that lisp side can pass
+	complex indentation specs.
+	* contrib/swank-indentation.lisp (application-indentation-hint):
+	Downcase symbol names -- any symbol in an indentation spec is
+	pretty much guaranteed to have a lowecase name on the Emacs side.
+
+2011-04-16  Stas Boukarev  <stassats@gmail.com>
+
+	* slime.el (slime-load-failed-fasl): New variable. Accepts `ask',
+	`always', and `never' symbols. Loads or not loads fasls produced by
+	compile-file which returned non-nil failure-p.
+
+2011-04-14  Stas Boukarev  <stassats@gmail.com>
+
+	* swank.lisp (list-threads): Call `use-threads-p' only when
+	*emacs-connection* is non-nil. `use-threads-p' wouldn't work in
+	this case, and there is no need to remove a worker thread from the
+	list if it's not connected.
+	This fixes an issue with calling swank:stop-server when slime
+	isn't connected.
+
 2011-03-13  Stas Boukarev  <stassats@gmail.com>
 
 	* swank.lisp (format-restarts-for-emacs): Add

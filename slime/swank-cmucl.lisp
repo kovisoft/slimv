@@ -63,6 +63,21 @@
   )
 
 (in-package :swank-backend)
+
+;;; UTF8
+
+(locally (declare (ext:inhibit-warnings 3))
+  (stream:octets-to-string
+   (stream:string-to-octets "compile utf8 transcoder" :external-format :utf-8)
+   :external-format :utf-8))
+
+(defimplementation string-to-utf8 (string)
+  (let ((ef (load-time-value (stream::find-external-format :utf-8) t)))
+    (stream:string-to-octets string :external-format ef)))
+
+(defimplementation utf8-to-string (octets)
+  (let ((ef (load-time-value (stream::find-external-format :utf-8) t)))
+    (stream:octets-to-string octets :external-format ef)))
 
 
 ;;;; TCP server
@@ -77,16 +92,17 @@
   :sigio)
 
 #-(or darwin mips)
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (let* ((addr (resolve-hostname host))
          (addr (if (not (find-symbol "SOCKET-ERROR" :ext))
                    (ext:htonl addr)
                    addr)))
-    (ext:create-inet-listener port :stream :reuse-address t :host addr)))
+    (ext:create-inet-listener port :stream :reuse-address t :host addr
+                              :backlog (or backlog 5))))
 
 ;; There seems to be a bug in create-inet-listener on Mac/OSX and Irix.
 #+(or darwin mips)
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (declare (ignore host))
   (ext:create-inet-listener port :stream :reuse-address t))
 
@@ -102,8 +118,11 @@
                                       external-format buffering timeout)
   (declare (ignore timeout))
   (make-socket-io-stream (ext:accept-tcp-connection socket) 
-                         (or buffering :full)
-                         (or external-format :iso-8859-1)))
+                         (ecase buffering
+                           ((t) :full)
+                           (:line :line)
+                           ((nil) :none))
+                         external-format))
 
 ;;;;; Sockets
 
@@ -119,11 +138,9 @@
     (car (ext:host-entry-addr-list hostent))))
 
 (defvar *external-format-to-coding-system*
-  '((:iso-8859-1
-     "latin-1" "latin-1-unix" "iso-latin-1-unix"
-     "iso-8859-1" "iso-8859-1-unix")
+  '((:iso-8859-1 "iso-latin-1-unix")
     #+unicode
-    (:utf-8 "utf-8" "utf-8-unix")))
+    (:utf-8 "utf-8-unix")))
 
 (defimplementation find-external-format (coding-system)
   (car (rassoc-if (lambda (x) (member coding-system x :test #'equal))
@@ -131,11 +148,15 @@
 
 (defun make-socket-io-stream (fd buffering external-format)
   "Create a new input/output fd-stream for FD."
-  #-unicode(declare (ignore external-format))
-  (sys:make-fd-stream fd :input t :output t :element-type 'base-char
-                      :buffering buffering
-                      #+unicode :external-format 
-                      #+unicode external-format))
+  (cond (external-format
+         (sys:make-fd-stream fd :input t :output t 
+                             :element-type 'character
+                             :buffering buffering
+                             :external-format external-format))
+        (t
+         (sys:make-fd-stream fd :input t :output t 
+                             :element-type '(unsigned-byte 8)
+                             :buffering buffering))))
 
 (defimplementation make-fd-stream (fd external-format)
   (make-socket-io-stream fd :full external-format))
@@ -1054,10 +1075,19 @@ Signal an error if no constructor can be found."
          (qualifiers (pcl:method-qualifiers method)))
     `(method ,name ,@qualifiers ,(pcl::unparse-specializers specializers))))
 
-;; XXX maybe special case setters/getters
 (defun method-location (method)
-  (function-location (or (pcl::method-fast-function method)
-                         (pcl:method-function method))))
+  (typecase method
+    (pcl::standard-accessor-method
+     (definition-source-location
+         (cond ((pcl::definition-source method) 
+                method)
+               (t
+                (pcl::slot-definition-class
+                 (pcl::accessor-method-slot-definition method))))
+         (pcl::accessor-method-slot-name method)))
+    (t
+     (function-location (or (pcl::method-fast-function method)
+                            (pcl:method-function method))))))
 
 (defun genericp (fn)
   (typep fn 'generic-function))
@@ -1623,6 +1653,17 @@ A utility for debugging DEBUG-FUNCTION-ARGLIST."
 
 (defimplementation frame-catch-tags (index)
   (mapcar #'car (di:frame-catches (nth-frame index))))
+
+(defimplementation frame-package (frame-number)
+  (let* ((frame (nth-frame frame-number))
+         (dbg-fun (di:frame-debug-function frame)))
+    (typecase dbg-fun
+      (di::compiled-debug-function
+       (let* ((comp (di::compiled-debug-function-component dbg-fun))
+              (dbg-info (kernel:%code-debug-info comp)))
+         (typecase dbg-info
+           (c::compiled-debug-info
+            (find-package (c::compiled-debug-info-package dbg-info)))))))))
 
 (defimplementation return-from-frame (index form)
   (let ((sym (find-symbol (string 'find-debug-tag-for-frame)

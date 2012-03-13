@@ -26,9 +26,10 @@
 (defimplementation preferred-communication-style ()
   :spawn)
 
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (let ((addr (resolve-hostname host)))
-    (ext:create-inet-listener port :stream :host addr :reuse-address t)))
+    (ext:create-inet-listener port :stream :host addr :reuse-address t
+                              :backlog (or backend 5))))
 
 (defimplementation local-port (socket)
   (nth-value 1 (ext::get-socket-host-and-port (socket-fd socket))))
@@ -38,8 +39,7 @@
 
 (defimplementation accept-connection (socket 
                                       &key external-format buffering timeout)
-  (let ((external-format (or external-format :default))
-        (buffering (or buffering :full))
+  (let ((buffering (or buffering :full))
         (fd (socket-fd socket)))
       (loop
        (let ((ready (sys:wait-until-fd-usable fd :input timeout)))
@@ -47,7 +47,11 @@
            (error "Timeout accepting connection on socket: ~S~%" socket)))
        (let ((new-fd (ignore-errors (ext:accept-tcp-connection fd))))
          (when new-fd
-           (return (make-socket-io-stream new-fd external-format buffering)))))))
+           (return (make-socket-io-stream new-fd external-format 
+                                          (ecase buffering
+                                            ((t) :full)
+                                            ((nil) :none)
+                                            (:line :line)))))))))
 
 (defimplementation set-stream-timeout (stream timeout)
   (check-type timeout (or null real))
@@ -82,15 +86,22 @@
 
 (defun make-socket-io-stream (fd external-format buffering)
   "Create a new input/output fd-stream for 'fd."
-  (let* ((stream (sys:make-fd-stream fd :input t :output t
-                                     :element-type 'base-char
-                                     :buffering buffering
-                                     :external-format external-format)))
-    ;; Ignore character conversion errors.  Without this the communication
-    ;; channel is prone to lockup if a character conversion error occurs.
-    (setf (lisp::character-conversion-stream-input-error-value stream) #\?)
-    (setf (lisp::character-conversion-stream-output-error-value stream) #\?)
-    stream))
+  (cond ((not external-format)
+         (sys:make-fd-stream fd :input t :output t :buffering buffering
+                             :element-type '(unsigned-byte 8)))
+        (t
+         (let* ((stream (sys:make-fd-stream fd :input t :output t
+                                            :element-type 'base-char
+                                            :buffering buffering
+                                            :external-format external-format)))
+           ;; Ignore character conversion errors.  Without this the
+           ;; communication channel is prone to lockup if a character
+           ;; conversion error occurs.
+           (setf (lisp::character-conversion-stream-input-error-value stream)
+                 #\?)
+           (setf (lisp::character-conversion-stream-output-error-value stream)
+                 #\?)
+           stream))))
 
 
 ;;;; Stream handling

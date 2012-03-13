@@ -23,7 +23,9 @@
 (import-from :ccl *gray-stream-symbols* :swank-backend)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (require 'xref))
+  (multiple-value-bind (ok err) (ignore-errors (require 'xref))
+    (unless ok
+      (warn "~a~%" err))))
 
 ;;; swank-mop
 
@@ -82,15 +84,23 @@
   (let ((str (symbol-name sym)))
     `(or (find-symbol ,str :swank)
          (error "There is no symbol named ~a in the SWANK package" ,str))))
+;;; UTF8
+
+(defimplementation string-to-utf8 (string)
+  (ccl:encode-string-to-octets string :external-format :utf-8))
+
+(defimplementation utf8-to-string (octets)
+  (ccl:decode-string-from-octets octets :external-format :utf-8))
 
 ;;; TCP Server
 
 (defimplementation preferred-communication-style ()
   :spawn)
 
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (ccl:make-socket :connect :passive :local-port port 
-                   :local-host host :reuse-address t))
+                   :local-host host :reuse-address t
+                   :backlog (or backlog 5)))
 
 (defimplementation local-port (socket)
   (ccl:local-port socket))
@@ -227,8 +237,8 @@
   (delete-duplicates
    (mapcan #'find-definitions
            (if inverse 
-             (ccl:get-relation relation name :wild :exhaustive t)
-             (ccl:get-relation relation :wild name :exhaustive t)))
+             (ccl::get-relation relation name :wild :exhaustive t)
+             (ccl::get-relation relation :wild name :exhaustive t)))
    :test 'equal))
 
 (defimplementation who-binds (name)
@@ -751,6 +761,25 @@
            (return (car tail)))))
      (when (eq timeout t) (return (values nil t)))
      (ccl:timed-wait-on-semaphore (mailbox.semaphore mbox) 1))))
+
+(let ((alist '())
+      (lock (ccl:make-lock "register-thread")))
+
+  (defimplementation register-thread (name thread)
+    (declare (type symbol name))
+    (ccl:with-lock-grabbed (lock)
+      (etypecase thread
+        (null 
+         (setf alist (delete name alist :key #'car)))
+        (ccl:process
+         (let ((probe (assoc name alist)))
+           (cond (probe (setf (cdr probe) thread))
+                 (t (setf alist (acons name thread alist))))))))
+    nil)
+
+  (defimplementation find-registered (name)
+    (ccl:with-lock-grabbed (lock)
+      (cdr (assoc name alist)))))
 
 (defimplementation set-default-initial-binding (var form)
   (eval `(ccl::def-standard-initial-binding ,var ,form)))

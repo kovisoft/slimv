@@ -58,7 +58,7 @@
   (mop::%slot-definition-name slot))
 
 (defun class-slots (class)
-  (mop::%class-slots class))
+  (mop:class-slots class))
 
 (defun method-generic-function (method)
   (mop::%method-generic-function method))
@@ -131,7 +131,7 @@
 (defimplementation preferred-communication-style ()
   :spawn)
 
-(defimplementation create-socket (host port)
+(defimplementation create-socket (host port &key backlog)
   (ext:make-server-socket port))
 
 (defimplementation local-port (socket)
@@ -144,7 +144,48 @@
                                       &key external-format buffering timeout)
   (declare (ignore buffering timeout))
   (ext:get-socket-stream (ext:socket-accept socket)
-                         :external-format external-format))
+                         :element-type (if external-format 
+                                           'character 
+                                           '(unsigned-byte 8))
+                         :external-format (or external-format :default)))
+
+;;;; UTF8 
+
+;; faster please!
+(defimplementation string-to-utf8 (s)
+  (jbytes-to-octets
+   (java:jcall 
+    (java:jmethod "java.lang.String" "getBytes" "java.lang.String")
+    s
+    "UTF8")))
+
+(defimplementation utf8-to-string (u)
+  (java:jnew 
+   (java:jconstructor "org.armedbear.lisp.SimpleString" 
+                      "java.lang.String")
+   (java:jnew (java:jconstructor "java.lang.String" "[B" "java.lang.String")
+              (octets-to-jbytes u)
+              "UTF8")))
+
+(defun octets-to-jbytes (octets)
+  (declare (type octets (simple-array (unsigned-byte 8) (*))))
+  (let* ((len (length octets))
+         (bytes (java:jnew-array "byte" len)))
+    (loop for byte across octets
+          for i from 0
+          do (java:jstatic (java:jmethod "java.lang.reflect.Array"  "setByte" 
+                            "java.lang.Object" "int" "byte")
+                           "java.lang.relect.Array"
+                           bytes i byte))
+    bytes))
+
+(defun jbytes-to-octets (jbytes)
+  (let* ((len (java:jarray-length jbytes))
+         (octets (make-array len :element-type '(unsigned-byte 8))))
+    (loop for i from 0 below len
+          for jbyte = (java:jarray-ref jbytes i)
+          do (setf (aref octets i) jbyte))
+    octets))
 
 ;;;; External formats
 
@@ -239,9 +280,14 @@
       (maybe-push
        :variable (when (boundp symbol)
                    (doc 'variable)))
-      (maybe-push
-       :function (if (fboundp symbol)
-                     (doc 'function)))
+      (when (fboundp symbol)
+        (maybe-push
+         (cond ((macro-function symbol)     :macro)
+	       ((special-operator-p symbol) :special-operator)
+	       ((typep (fdefinition symbol) 'generic-function)
+                :generic-function)
+	       (t :function))
+         (doc 'function)))
       (maybe-push
        :class (if (find-class symbol nil)
                   (doc 'class)))
@@ -634,7 +680,7 @@ part of *sysdep-pathnames* in swank.loader.lisp.
            `((:action "[compute toString()]" ,to-string) (:newline)))
        (loop :for (label . value) :in (sys:inspected-parts o)
           :appending (label-value-line label value)))))
-  
+
 ;;;; Multithreading
 
 (defimplementation spawn (fn &key name)

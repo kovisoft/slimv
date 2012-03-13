@@ -213,6 +213,11 @@ Otherwise NIL is returned."
 
 ;;;; Arglist Printing
 
+(defun undummy (x)
+  (if (typep x 'arglist-dummy)
+      (arglist-dummy.string-representation x)
+      (prin1-to-string x)))
+
 (defun print-decoded-arglist (arglist &key operator provided-args highlight)
   (macrolet ((space ()
                ;; Kludge: When OPERATOR is not given, we don't want to
@@ -257,7 +262,8 @@ Otherwise NIL is returned."
                  (with-highlighting (:index index)
                    (if (null init-value)
                        (print-arg arg)
-                       (format t "~:@<~A ~S~@:>" arg init-value))))
+                       (format t "~:@<~A ~A~@:>"
+                               (undummy arg) (undummy init-value)))))
              (incf index))
           (&key :initially
              (when (arglist.key-p arglist)
@@ -271,9 +277,10 @@ Otherwise NIL is returned."
                    (print-arglist-recursively arg :index keyword))
                  (with-highlighting (:index keyword)
                    (cond ((and init (keywordp keyword))
-                          (format t "~:@<~A ~S~@:>" keyword init))
+                          (format t "~:@<~A ~A~@:>" keyword (undummy init)))
                          (init
-                          (format t "~:@<(~S ..) ~S~@:>" keyword init))
+                          (format t "~:@<(~A ..) ~A~@:>"
+                                  (undummy keyword) (undummy init)))
                          ((not (keywordp keyword))
                           (format t "~:@<(~S ..)~@:>" keyword))
                          (t
@@ -1085,9 +1092,12 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 ;;; considered.
 
 (defslimefun autodoc (raw-form &key print-right-margin)
-  "Return a string representing the arglist for the deepest subform in
+  "Return a list of two elements. 
+First, a string representing the arglist for the deepest subform in
 RAW-FORM that does have an arglist. The highlighted parameter is
-wrapped in ===> X <===."
+wrapped in ===> X <===.
+
+Second, a boolean value telling whether the returned string can be cached."
   (handler-bind ((serious-condition
                   #'(lambda (c)
                       (unless (debug-on-swank-error)
@@ -1098,16 +1108,18 @@ wrapped in ===> X <===."
       (multiple-value-bind (form arglist obj-at-cursor form-path)
           (find-subform-with-arglist (parse-raw-form raw-form))
         (cond ((boundp-and-interesting obj-at-cursor)
-               (print-variable-to-string obj-at-cursor))
+               (list (print-variable-to-string obj-at-cursor) nil))
               (t
-               (with-available-arglist (arglist) arglist
-                 (decoded-arglist-to-string
-                  arglist
-                  :print-right-margin print-right-margin
-                  :operator (car form)
-                  :highlight (form-path-to-arglist-path form-path
-                                                        form
-                                                        arglist)))))))))
+               (list
+                (with-available-arglist (arglist) arglist
+                  (decoded-arglist-to-string
+                   arglist
+                   :print-right-margin print-right-margin
+                   :operator (car form)
+                   :highlight (form-path-to-arglist-path form-path
+                                                         form
+                                                         arglist)))
+                t)))))))
 
 (defun boundp-and-interesting (symbol)
   (and symbol
@@ -1488,8 +1500,8 @@ datum for subsequent logics to rely on."
                          :quoted-symbol)
                         ((search "#'" string :end2 (min length 2))
                          :sharpquoted-symbol)
-                        ((and (eql (aref string 0) #\")
-                              (eql (aref string (1- length)) #\"))
+                        ((char= (char string 0) (char string (1- length))
+                                #\")
                          :string)
                         (t
                          :symbol))))
@@ -1505,7 +1517,9 @@ datum for subsequent logics to rely on."
             (:symbol             symbol)
             (:quoted-symbol      `(quote ,symbol))
             (:sharpquoted-symbol `(function ,symbol))
-            (:string             string))
+            (:string             (if (> length 1)
+                                     (subseq string 1 (1- length))
+                                     string)))
 	  (make-arglist-dummy string)))))
   
 (defun test-print-arglist ()
