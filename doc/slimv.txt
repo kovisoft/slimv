@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 10 Mar 2012
+*slimv.txt*                    Slimv                 Last Change: 14 Mar 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.5
@@ -479,15 +479,15 @@ state. The default value for this option is 0, meaning that the number of lines
 is unlimited, i.e. no line is ever erased.
 
                                                           *g:slimv_repl_syntax*
-Enables syntax highlighting for the REPL buffer. Switched off by default for
-two reasons:
-  1. The REPL buffer also contains the REPL output, which is generally not
-     related to s-expressions, therefore may confuse syntax coloring.
+Enables syntax highlighting for the REPL buffer. It is enabled by default but
+one may want to switch it off for these reasons:
+  1. The REPL buffer contains s-expressions and their output mixed. The REPL
+     output is generally not related to s-expressions, therefore may confuse
+     syntax coloring.
   2. REPL output may contain very long lines, which significantly slows down
-     syntax coloring in Vim. If you really want to enable syntax highlighting
-     for the REPL buffer, then it is recommended to adjust the |synmaxcol|
-     parameter to a relatively low value in order to increase syntax coloring
-     speed.
+     syntax coloring in Vim. If you don't want to switch REPL syntax coloring
+     completely off then it is recommended to adjust the |synmaxcol| parameter
+     to a relatively low value to increase syntax coloring speed.
 
                                                             *g:slimv_repl_wrap*
 Set wrap mode for the REPL buffer, which means the lines longer than the
