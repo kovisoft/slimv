@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.6
-" Last Change:  13 Mar 2012
+" Last Change:  14 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -186,7 +186,7 @@ endif
 
 " Syntax highlighting for the REPL buffer
 if !exists( 'g:slimv_repl_syntax' )
-    let g:slimv_repl_syntax = 0
+    let g:slimv_repl_syntax = 1
 endif
 
 " Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
@@ -605,12 +605,65 @@ function s:EndOfScreenLine()
     endif
 endfunction
 
+" Set special syntax rules for the REPL buffer
+function! SlimvSetSyntaxRepl()
+    syn match replPrompt /^\S\+>/
+    hi def link replPrompt Type
+
+if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
+
+    syn region lispParen0           matchgroup=hlLevel0 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+
+ if SlimvGetFiletype() == 'clojure'
+    syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+
+    syn region lispParen0           matchgroup=hlLevel0 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+ endif
+
+else
+
+    syn region lispList             matchgroup=Delimiter start="("    skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>" contains=@lispListCluster
+    syn region lispBQList           matchgroup=PreProc   start="`("   skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>" contains=@lispListCluster
+
+endif
+
+endfunction
+
 " Open a new REPL buffer
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_name )
     call b:SlimvInitRepl()
     call PareditInitBuffer()
-    if !g:slimv_repl_syntax
+    if g:slimv_repl_syntax
+        call SlimvSetSyntaxRepl()
+    else
         set syntax=
     endif
 
