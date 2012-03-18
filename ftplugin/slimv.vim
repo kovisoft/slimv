@@ -1961,6 +1961,11 @@ endfunction
 " Evaluate the whole buffer
 function! SlimvEvalBuffer()
     let lines = getline( 1, '$' )
+    if SlimvGetFiletype() == 'scheme'
+        " Swank-scheme requires us to pass a single s-expression
+        " so embed buffer lines in a (begin ...) block
+        let lines = ['(begin'] + lines + [')']
+    endif
     call SlimvEval( lines )
 endfunction
 
