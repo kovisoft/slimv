@@ -1884,6 +1884,11 @@ function! SlimvEvalRegion() range
         let lines = [reg . ending]
     endif
     if lines != []
+        if SlimvGetFiletype() == 'scheme'
+            " Swank-scheme requires us to pass a single s-expression
+            " so embed buffer lines in a (begin ...) block
+            let lines = ['(begin'] + lines + [')']
+        endif
         call SlimvEval( lines )
     endif
 endfunction
