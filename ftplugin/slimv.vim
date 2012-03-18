@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.6
-" Last Change:  14 Mar 2012
+" Last Change:  18 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1825,6 +1825,8 @@ function! SlimvConnectServer()
     if s:swank_connected
         python swank_disconnect()
         let s:swank_connected = 0
+	" Give swank server some time for disconnecting
+        sleep 500m
     endif 
     call SlimvBeginUpdate()
     if SlimvConnectSwank()
