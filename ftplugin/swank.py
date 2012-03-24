@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.6
-# Last Change:  12 Mar 2012
+# Last Change:  24 Mar 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -33,6 +33,7 @@ log             = False         # Set this to True in order to enable logging
 logfile         = 'swank.log'   # Logfile name in case logging is on
 pid             = '0'           # Process id
 current_thread  = '0'
+lisp_true       = 't'           # TRUE value in the current lisp dialect
 use_unicode     = True          # Use unicode message length counting
 debug_active    = False         # Swank debugger is active
 debug_activated = False         # Swank debugger was activated
@@ -746,6 +747,9 @@ def swank_listen():
                                 conn_info = make_keys(params)
                                 pid = conn_info[':pid']
                                 ver = conn_info.get(':version', 'nil')
+                                if len(ver) == 8:
+                                    # Convert version to YYYY-MM-DD format
+                                    ver = ver[0:4] + '-' + ver[4:6] + '-' + ver[6:8]
                                 imp = make_keys( conn_info[':lisp-implementation'] )
                                 pkg = make_keys( conn_info[':package'] )
                                 package = pkg[':name']
@@ -884,16 +888,19 @@ def get_indent_info(name):
 
 def swank_connection_info():
     global log
+    global lisp_true
     actions.clear()
     indent_info.clear()
     frame_locals.clear()
     debug_activated = False
+    if vim.eval('SlimvGetFiletype()') == 'scheme':
+        lisp_true = '#t'
     if vim.eval('exists("g:swank_log") && g:swank_log') != '0':
         log = True
-    swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
+    swank_rex(':connection-info', '(swank:connection-info)', 'nil', lisp_true)
 
 def swank_create_repl():
-    swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), 't')
+    swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), lisp_true)
 
 def swank_eval(exp):
     cmd = '(swank:listener-eval ' + requote(exp) + ')'
@@ -925,7 +932,7 @@ def swank_invoke_continue():
 
 def swank_require(contrib):
     cmd = "(swank:swank-require '" + contrib + ')'
-    swank_rex(':swank-require', cmd, 'nil', 't')
+    swank_rex(':swank-require', cmd, 'nil', lisp_true)
 
 def swank_frame_call(frame):
     cmd = '(swank-backend:frame-call ' + frame + ')'
@@ -945,28 +952,28 @@ def swank_set_package(pkg):
 
 def swank_describe_symbol(fn):
     cmd = '(swank:describe-symbol "' + fn + '")'
-    swank_rex(':describe-symbol', cmd, get_package(), 't')
+    swank_rex(':describe-symbol', cmd, get_package(), lisp_true)
 
 def swank_describe_function(fn):
     cmd = '(swank:describe-function "' + fn + '")'
-    swank_rex(':describe-function', cmd, get_package(), 't')
+    swank_rex(':describe-function', cmd, get_package(), lisp_true)
 
 def swank_op_arglist(op):
     pkg = get_swank_package()
     cmd = '(swank:operator-arglist "' + op + '" ' + pkg + ')'
-    swank_rex(':operator-arglist', cmd, pkg, 't')
+    swank_rex(':operator-arglist', cmd, pkg, lisp_true)
 
 def swank_completions(symbol):
     cmd = '(swank:simple-completions "' + symbol + '" ' + get_swank_package() + ')'
-    swank_rex(':simple-completions', cmd, 'nil', 't')
+    swank_rex(':simple-completions', cmd, 'nil', lisp_true)
 
 def swank_fuzzy_completions(symbol):
     cmd = '(swank:fuzzy-completions "' + symbol + '" ' + get_swank_package() + ' :limit 200 :time-limit-in-msec 2000)' 
-    swank_rex(':fuzzy-completions', cmd, 'nil', 't')
+    swank_rex(':fuzzy-completions', cmd, 'nil', lisp_true)
 
 def swank_undefine_function(fn):
     cmd = '(swank:undefine-function "' + fn + '")'
-    swank_rex(':undefine-function', cmd, get_package(), 't')
+    swank_rex(':undefine-function', cmd, get_package(), lisp_true)
 
 def swank_return_string(s):
     global read_string
@@ -975,18 +982,18 @@ def swank_return_string(s):
 
 def swank_inspect(symbol):
     cmd = '(swank:init-inspector "' + symbol + '")'
-    swank_rex(':init-inspector', cmd, get_swank_package(), 't')
+    swank_rex(':init-inspector', cmd, get_swank_package(), lisp_true)
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
-    swank_rex(':inspect-nth-part', cmd, get_swank_package(), 't', str(n))
+    swank_rex(':inspect-nth-part', cmd, get_swank_package(), lisp_true, str(n))
 
 def swank_inspector_nth_action(n):
     cmd = '(swank:inspector-call-nth-action ' + str(n) + ')'
-    swank_rex(':inspector-call-nth-action', cmd, 'nil', 't', str(n))
+    swank_rex(':inspector-call-nth-action', cmd, 'nil', lisp_true, str(n))
 
 def swank_inspector_pop():
-    swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
+    swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', lisp_true)
 
 def swank_inspect_in_frame(symbol, n):
     key = str(n) + " " + symbol
@@ -1000,39 +1007,39 @@ def swank_inspector_range():
     start = int(vim.eval("b:range_start"))
     end   = int(vim.eval("b:range_end"))
     cmd = '(swank:inspector-range ' + str(end) + " " + str(end+(end-start)) + ')'
-    swank_rex(':inspector-range', cmd, get_swank_package(), 't')
+    swank_rex(':inspector-range', cmd, get_swank_package(), lisp_true)
 
 def swank_quit_inspector():
-    swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
+    swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', lisp_true)
 
 def swank_set_break(symbol):
     cmd = '(swank:sldb-break"' + symbol + '")'
-    swank_rex(':sldb-break', cmd, get_package(), 't')
+    swank_rex(':sldb-break', cmd, get_package(), lisp_true)
 
 def swank_toggle_trace(symbol):
     cmd = '(swank:swank-toggle-trace "' + symbol + '")'
-    swank_rex(':swank-toggle-trace', cmd, get_package(), 't')
+    swank_rex(':swank-toggle-trace', cmd, get_package(), lisp_true)
 
 def swank_untrace_all():
-    swank_rex(':untrace-all', '(swank:untrace-all)', 'nil', 't')
+    swank_rex(':untrace-all', '(swank:untrace-all)', 'nil', lisp_true)
 
 def swank_macroexpand(formvar):
     form = vim.eval(formvar)
     cmd = '(swank:swank-macroexpand-1 ' + requote(form) + ')'
-    swank_rex(':swank-macroexpand-1', cmd, get_package(), 't')
+    swank_rex(':swank-macroexpand-1', cmd, get_package(), lisp_true)
 
 def swank_macroexpand_all(formvar):
     form = vim.eval(formvar)
     cmd = '(swank:swank-macroexpand-all ' + requote(form) + ')'
-    swank_rex(':swank-macroexpand-all', cmd, get_package(), 't')
+    swank_rex(':swank-macroexpand-all', cmd, get_package(), lisp_true)
 
 def swank_disassemble(symbol):
     cmd = '(swank:disassemble-form "' + "'" + symbol + '")'
-    swank_rex(':disassemble-form', cmd, get_package(), 't')
+    swank_rex(':disassemble-form', cmd, get_package(), lisp_true)
 
 def swank_xref(fn, type):
     cmd = "(swank:xref '" + type + " '" + '"' + fn + '")'
-    swank_rex(':xref', cmd, get_package(), 't')
+    swank_rex(':xref', cmd, get_package(), lisp_true)
 
 def swank_compile_string(formvar):
     form = vim.eval(formvar)
@@ -1043,19 +1050,19 @@ def swank_compile_string(formvar):
         # Remove 0x0D, keep 0x0A characters
         pos = str(int(pos) - int(line) + 1)
     cmd = '(swank:compile-string-for-emacs ' + requote(form) + ' nil ' + "'((:position " + str(pos) + ") (:line " + str(line) + " 1)) " + requote(filename) + ' nil)'
-    swank_rex(':compile-string-for-emacs', cmd, get_package(), 't')
+    swank_rex(':compile-string-for-emacs', cmd, get_package(), lisp_true)
 
 def swank_compile_file(name):
-    cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' t)'
-    swank_rex(':compile-file-for-emacs', cmd, get_package(), 't')
+    cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' ' + lisp_true + ')'
+    swank_rex(':compile-file-for-emacs', cmd, get_package(), lisp_true)
 
 def swank_load_file(name):
     cmd = '(swank:load-file ' + requote(name) + ')'
-    swank_rex(':load-file', cmd, get_package(), 't')
+    swank_rex(':load-file', cmd, get_package(), lisp_true)
 
 def swank_toggle_profile(symbol):
     cmd = '(swank:toggle-profile-fdefinition "' + symbol + '")'
-    swank_rex(':toggle-profile-fdefinition', cmd, get_package(), 't')
+    swank_rex(':toggle-profile-fdefinition', cmd, get_package(), lisp_true)
 
 def swank_profile_substring(s, package):
     if package == '':
@@ -1063,31 +1070,31 @@ def swank_profile_substring(s, package):
     else:
         p = requote(package)
     cmd = '(swank:profile-by-substring ' + requote(s) + ' ' + p + ')'
-    swank_rex(':profile-by-substring', cmd, get_package(), 't')
+    swank_rex(':profile-by-substring', cmd, get_package(), lisp_true)
 
 def swank_unprofile_all():
-    swank_rex(':unprofile-all', '(swank:unprofile-all)', 'nil', 't')
+    swank_rex(':unprofile-all', '(swank:unprofile-all)', 'nil', lisp_true)
 
 def swank_profiled_functions():
-    swank_rex(':profiled-functions', '(swank:profiled-functions)', 'nil', 't')
+    swank_rex(':profiled-functions', '(swank:profiled-functions)', 'nil', lisp_true)
 
 def swank_profile_report():
-    swank_rex(':profile-report', '(swank:profile-report)', 'nil', 't')
+    swank_rex(':profile-report', '(swank:profile-report)', 'nil', lisp_true)
 
 def swank_profile_reset():
-    swank_rex(':profile-reset', '(swank:profile-reset)', 'nil', 't')
+    swank_rex(':profile-reset', '(swank:profile-reset)', 'nil', lisp_true)
 
 def swank_list_threads():
     cmd = '(swank:list-threads)'
-    swank_rex(':list-threads', cmd, get_swank_package(), 't')
+    swank_rex(':list-threads', cmd, get_swank_package(), lisp_true)
 
 def swank_kill_thread(index):
     cmd = '(swank:kill-nth-thread ' + str(index) + ')'
-    swank_rex(':kill-thread', cmd, get_swank_package(), 't', str(index))
+    swank_rex(':kill-thread', cmd, get_swank_package(), lisp_true, str(index))
 
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
-    swank_rex(':debug-thread', cmd, get_swank_package(), 't', str(index))
+    swank_rex(':debug-thread', cmd, get_swank_package(), lisp_true, str(index))
 
 ###############################################################################
 # Generic SWANK connection handling
