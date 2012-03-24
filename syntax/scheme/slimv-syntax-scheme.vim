@@ -1,7 +1,7 @@
 " slimv-syntax-scheme.vim:
 "               Scheme syntax plugin for Slimv
-" Version:      0.9.5
-" Last Change:  21 Feb 2012
+" Version:      0.9.6
+" Last Change:  24 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -21,7 +21,12 @@ runtime syntax/**/scheme.vim
 syn region  schemeMultilineComment  start=/#|/ end=/|#/ contains=schemeMultilineComment
 syn keyword schemeExtSyntax     ->environment ->namestring
 syn match   schemeExtSyntax     "#![-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
-syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeDelimiter
+syn match   schemeAtomMark      "'"
+syn match   schemeAtom          "'[^ \t()]\+" contains=schemeAtomMark
+syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeAtom,schemeDelimiter
+
+hi def link schemeAtomMark      Delimiter
+hi def link schemeAtom          Identifier
 
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region schemeParen0           matchgroup=hlLevel0 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen1
@@ -34,9 +39,7 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region schemeParen7 contained matchgroup=hlLevel7 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen8
     syn region schemeParen8 contained matchgroup=hlLevel8 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen9
     syn region schemeParen9 contained matchgroup=hlLevel9 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen0
-endif
 
-if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     if &bg == "dark"
         hi def hlLevel0 ctermfg=red         guifg=red1
         hi def hlLevel1 ctermfg=yellow      guifg=orange1
