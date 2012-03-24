@@ -616,7 +616,7 @@ function! SlimvSetSyntaxRepl()
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
 
     if SlimvGetFiletype() == 'scheme'
-        syn cluster replListCluster contains=@lispListCluster,schemeSyntax,schemeFunc,schemeString,schemeChar,schemeNumber,schemeBoolean,schemeDelimiter,schemeConstant,schemeComment,schemeMultilineComment,schemeExtSyntax,schemeExtFunc
+        syn cluster replListCluster contains=@schemeListCluster
     else
         syn cluster replListCluster contains=@lispListCluster
     endif
