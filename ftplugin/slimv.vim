@@ -610,6 +610,7 @@ endfunction
 " Set special syntax rules for the REPL buffer
 function! SlimvSetSyntaxRepl()
     syn match replPrompt /^\S\+>/
+    syn match replPrompt /^(\S\+)>/
     hi def link replPrompt Type
 
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
