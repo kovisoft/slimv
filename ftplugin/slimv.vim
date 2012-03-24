@@ -614,39 +614,45 @@ function! SlimvSetSyntaxRepl()
 
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
 
-    syn region lispParen0           matchgroup=hlLevel0 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
-    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
-    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
-    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
-    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
-    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
-    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
-    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
-    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
-    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+    if SlimvGetFiletype() == 'scheme'
+        syn cluster replListCluster contains=@lispListCluster,schemeSyntax,schemeFunc,schemeString,schemeChar,schemeNumber,schemeBoolean,schemeDelimiter,schemeConstant,schemeComment,schemeMultilineComment,schemeExtSyntax,schemeExtFunc
+    else
+        syn cluster replListCluster contains=@lispListCluster
+    endif
+
+    syn region lispParen0           matchgroup=hlLevel0 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"              contains=@replListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen0
 
  if SlimvGetFiletype() == 'clojure'
-    syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
-    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
-    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
-    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
-    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
-    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
-    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
-    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
-    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
-    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+    syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"              contains=@replListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen0
 
-    syn region lispParen0           matchgroup=hlLevel0 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"              contains=@lispListCluster,lispParen1,replPrompt
-    syn region lispParen1 contained matchgroup=hlLevel1 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen2
-    syn region lispParen2 contained matchgroup=hlLevel2 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen3
-    syn region lispParen3 contained matchgroup=hlLevel3 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen4
-    syn region lispParen4 contained matchgroup=hlLevel4 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen5
-    syn region lispParen5 contained matchgroup=hlLevel5 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen6
-    syn region lispParen6 contained matchgroup=hlLevel6 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen7
-    syn region lispParen7 contained matchgroup=hlLevel7 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen8
-    syn region lispParen8 contained matchgroup=hlLevel8 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen9
-    syn region lispParen9 contained matchgroup=hlLevel9 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@lispListCluster,lispParen0
+    syn region lispParen0           matchgroup=hlLevel0 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"              contains=@replListCluster,lispParen1,replPrompt
+    syn region lispParen1 contained matchgroup=hlLevel1 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen2
+    syn region lispParen2 contained matchgroup=hlLevel2 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen3
+    syn region lispParen3 contained matchgroup=hlLevel3 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen4
+    syn region lispParen4 contained matchgroup=hlLevel4 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen5
+    syn region lispParen5 contained matchgroup=hlLevel5 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen6
+    syn region lispParen6 contained matchgroup=hlLevel6 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen7
+    syn region lispParen7 contained matchgroup=hlLevel7 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen8
+    syn region lispParen8 contained matchgroup=hlLevel8 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen9
+    syn region lispParen9 contained matchgroup=hlLevel9 start="`\={"  skip="|.\{-}|" end="}"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen0
  endif
 
 else
