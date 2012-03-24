@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.6
-" Last Change:  18 Mar 2012
+" Last Change:  24 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -286,7 +286,6 @@ let s:swank_form = ''                                     " Form to send to SWAN
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:sldb_level = -1                                     " Are we in the SWANK debugger? -1 == no, else SLDB level
 let s:compiled_file = ''                                  " Name of the compiled file
-let s:au_curhold_set = 0                                  " Whether the autocommand has been set
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = -1                                    " Swank action was requested from this window
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
@@ -503,8 +502,8 @@ endfunction
 " Switch refresh mode on:
 " refresh REPL buffer on frequent Vim events
 function! SlimvRefreshModeOn()
-    if ! s:au_curhold_set
-        let s:au_curhold_set = 1
+    if !exists( 'b:au_curhold_set' )
+        let b:au_curhold_set = 1
         execute "au CursorHold   * :call SlimvTimer()"
         execute "au CursorHoldI  * :call SlimvTimer()"
     endif
@@ -514,13 +513,16 @@ endfunction
 function! SlimvRefreshModeOff()
     execute "au! CursorHold"
     execute "au! CursorHoldI"
-    let s:au_curhold_set = 0
+    unlet b:au_curhold_set
 endfunction
 
 " Called when entering REPL buffer
 function! SlimvReplEnter()
     call SlimvAddReplMenu()
-    execute "au FileChangedRO " . g:slimv_repl_name . " :call SlimvRefreshModeOff()"
+    if !exists( 'b:au_filechanged_set' )
+        let b:au_filechanged_set = 1
+        execute "au FileChangedRO " . g:slimv_repl_name . " :call SlimvRefreshModeOff()"
+    endif
     call SlimvRefreshModeOn()
 endfunction
 
@@ -716,11 +718,14 @@ function! SlimvOpenReplBuffer()
     hi SlimvNormal term=none cterm=none gui=none
     hi SlimvCursor term=reverse cterm=reverse gui=reverse
 
-    " Add autocommands specific to the REPL buffer
-    execute "au FileChangedShell " . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
-    execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
-    execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
-    execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
+    if !exists( 'b:au_bufenter_set' )
+        " Add autocommands specific to the REPL buffer
+        let b:au_bufenter_set = 1
+        execute "au FileChangedShell " . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
+        execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
+        execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
+        execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
+    endif
 
     call SlimvRefreshReplBuffer()
 endfunction
@@ -2633,7 +2638,10 @@ function! SlimvInitBuffer()
     " Map space to display function argument list in status line
     inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
-    au InsertLeave * :let &showmode=s:save_showmode
+    if !exists( 'b:au_insertleave_set' )
+        let b:au_insertleave_set = 1
+        au InsertLeave * :let &showmode=s:save_showmode
+    endif
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
     inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
 
