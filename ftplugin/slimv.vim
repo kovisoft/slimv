@@ -359,6 +359,25 @@ function! SlimvBeginUpdate()
     endif
 endfunction
 
+" Switch to the buffer/window that was active before a swank action
+function! SlimvRestoreFocus()
+    let buf = bufnr( "%" )
+    let win = bufwinnr( "%" )
+    if buf != s:current_buf && win != -1
+        " Switch to the caller buffer/window
+        if g:slimv_repl_split
+            if s:current_win == -1
+                let s:current_win = winnr('#')
+            endif
+            if s:current_win > 0 && s:current_win != win
+                execute s:current_win . "wincmd w"
+            endif
+        else
+            execute "buf " . s:current_buf
+        endif
+    endif
+endfunction
+
 " Stop updating the REPL buffer and switch back to caller
 function! SlimvEndUpdateRepl()
     " Keep only the last g:slimv_repl_max_len lines
@@ -1731,7 +1750,11 @@ function! SlimvDebugCommand( cmd )
             call SlimvRefreshReplBuffer()
             if s:swank_actions_pending == 0 && s:sldb_level < 0
                 " Swank exited the debugger
+                if bufname('%') != g:slimv_sldb_name
+                    call SlimvOpenSldbBuffer()
+                endif
                 call SlimvQuitSldb()
+                call SlimvRestoreFocus()
             endif
         else
             call SlimvError( "Debugger is not activated." )
