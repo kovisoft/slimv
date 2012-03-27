@@ -795,13 +795,13 @@ function SlimvOpenSldbBuffer()
     " Add keybindings valid only for the SLDB buffer
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterSldb()<CR>
     if g:slimv_keybindings == 1
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'a      :call SlimvDebugCommand("swank_invoke_abort")<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'n      :call SlimvDebugCommand("swank_invoke_continue")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'a      :call SlimvDebugAbort()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvDebugQuit()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'n      :call SlimvDebugContinue()<CR>'
     elseif g:slimv_keybindings == 2
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugCommand("swank_invoke_abort")<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugCommand("swank_throw_toplevel")<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugCommand("swank_invoke_continue")<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugAbort()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugQuit()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugContinue()<CR>'
     endif
 
     " Set folding parameters
@@ -1656,9 +1656,12 @@ function! SlimvHandleEnterSldb()
                 " Display item-th frame
                 call SlimvMakeFold()
                 silent execute 'python swank_frame_locals("' . item . '")'
-                if g:slimv_impl != 'clisp'
-                    " These are not implemented for CLISP
+                if SlimvGetFiletype() != 'scheme' && g:slimv_impl != 'clisp'
+                    " Not implemented for CLISP or scheme
                     silent execute 'python swank_frame_source_loc("' . item . '")'
+                endif
+                if SlimvGetFiletype() == 'lisp' && g:slimv_impl != 'clisp'
+                    " Not implemented for CLISP or other lisp dialects
                     silent execute 'python swank_frame_call("' . item . '")'
                 endif
                 return
@@ -1740,7 +1743,7 @@ function! SlimvInterrupt()
 endfunction
 
 " Select a specific restart in debugger
-function! SlimvDebugCommand( cmd )
+function! SlimvDebugCommand( name, cmd )
     if SlimvConnectSwank()
         if s:sldb_level >= 0
             if bufname('%') != g:slimv_sldb_name
@@ -1748,18 +1751,33 @@ function! SlimvDebugCommand( cmd )
             endif
             call SlimvCommand( 'python ' . a:cmd . '()' )
             call SlimvRefreshReplBuffer()
-            if s:swank_actions_pending == 0 && s:sldb_level < 0
+            if s:sldb_level < 0
                 " Swank exited the debugger
                 if bufname('%') != g:slimv_sldb_name
                     call SlimvOpenSldbBuffer()
                 endif
                 call SlimvQuitSldb()
                 call SlimvRestoreFocus()
+            else
+                echomsg 'Debugger re-activated by the SWANK server.'
             endif
         else
             call SlimvError( "Debugger is not activated." )
         endif
     endif
+endfunction
+
+" Various debugger restarts
+function! SlimvDebugAbort()
+    call SlimvDebugCommand( ":sldb-abort", "swank_invoke_abort" )
+endfunction
+
+function! SlimvDebugQuit()
+    call SlimvDebugCommand( ":throw-to-toplevel", "swank_throw_toplevel" )
+endfunction
+
+function! SlimvDebugContinue()
+    call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue" )
 endfunction
 
 " List current Lisp threads
@@ -2706,9 +2724,9 @@ call s:MenuMap( 'Slim&v.De&bugging.Set-&Breakpoint',            g:slimv_leader.'
 call s:MenuMap( 'Slim&v.De&bugging.Disassemb&le\.\.\.',         g:slimv_leader.'l',  g:slimv_leader.'dd',  ':call SlimvDisassemble()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             g:slimv_leader.'i',  g:slimv_leader.'di',  ':call SlimvInspect()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.-SldbSep-',                  '',                  '',                   ':' )
-call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvDebugCommand("swank_invoke_abort")<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugCommand("swank_throw_toplevel")<CR>' )
-call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugCommand("swank_invoke_continue")<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvDebugAbort()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugQuit()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugContinue()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.-ThreadSep-',                '',                  '',                   ':' )
 call s:MenuMap( 'Slim&v.De&bugging.List-T&hreads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Kill-Thread\.\.\.',         g:slimv_leader.'K',  g:slimv_leader.'dk',  ':call SlimvKillThread()<CR>' )
