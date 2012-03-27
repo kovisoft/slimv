@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.6
-" Last Change:  25 Mar 2012
+" Last Change:  27 Mar 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -629,7 +629,7 @@ endfunction
 " Set special syntax rules for the REPL buffer
 function! SlimvSetSyntaxRepl()
     if SlimvGetFiletype() == 'scheme'
-        syn cluster replListCluster contains=@schemeListCluster
+        syn cluster replListCluster contains=@schemeListCluster,lispList
     else
         syn cluster replListCluster contains=@lispListCluster
     endif
