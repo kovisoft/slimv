@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.6
-" Last Change:  27 Mar 2012
+" Version:      0.9.7
+" Last Change:  09 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -504,12 +504,20 @@ endfunction
 " This function re-triggers the CursorHold event
 " after refreshing the REPL buffer
 function! SlimvTimer()
+    let pline = 0
+    if exists( 'b:repl_prompt_line' )
+        let pline = b:repl_prompt_line
+    endif
     call SlimvRefreshReplBuffer()
     if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
-        " Put '<Insert>' twice into the typeahead buffer, which should not do anything
-        " just switch to replace/insert mode then back to insert/replace mode
-        " But don't do this for readonly buffers
-        if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
+        if exists( 'b:repl_prompt_line' ) && line( "." ) == b:repl_prompt_line && b:repl_prompt_line > pline
+            " There are new lines printed in the REPL buffer.
+            " Put an '<End>' into the typeahead buffer to move the cursor to the end of line
+            call feedkeys("\<end>")
+        elseif bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
+            " Put '<Insert>' twice into the typeahead buffer, which should not do anything
+            " just switch to replace/insert mode then back to insert/replace mode
+            " But don't do this for readonly buffers
             call feedkeys("\<insert>\<insert>")
         endif
     else
