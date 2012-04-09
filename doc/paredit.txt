@@ -1,10 +1,11 @@
-*paredit.txt*                    Slimv               Last Change: 05 Sep 2011
+*paredit.txt*                   Paredit              Last Change: 01 Apr 2012
 
-Paredit mode for Slimv                                *paredit* *slimv-paredit*
-                               Version 0.8.6
+Paredit Mode for Vim                                  *paredit* *slimv-paredit*
+                               Version 0.9.6
 
 The paredit.vim plugin performs structured editing of s-expressions used in
-the Lisp or Clojure programming language.
+the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
+but it is also distributed separately as a standalone plugin.
 
 |paredit-mode|               Paredit mode
 |paredit-keys|               Paredit keybindings
@@ -87,8 +88,8 @@ over its pair, so for example if you move the opening parenthesis to the right,
 then it will stop at the matched closing parenthesis.
 
 
-Paredit mode is set by default for .lisp, .cl, .clj, .scm and .rkt files, but
-it is possible to switch it out by putting the following statement in the
+Paredit mode is set by default for .lisp, .cl, .clj, cljs, .scm and .rkt files,
+but it is possible to switch it off by putting the following statement in the
 .vimrc file:
 
     let g:paredit_mode = 0
@@ -98,16 +99,10 @@ it for Arc files (meant to be added to your .vimrc file):
 
     au BufNewFile,BufRead *.arc call PareditInitBuffer()
 
-It is also possible to use the paredit mode alone, without the other parts of
-Slimv. The easiest way to do it is to delete all Slimv related files from the 
-ftplugin directory. If you don't intend to use Slimv's indentation and syntax
-files, then you need to keep only plugin/paredit.vim.
-Another way to prevent Slimv from loading by adding this to your .vimrc file:
-
-    let g:slimv_loaded = 1
-
-Slimv core will not be loaded but paredit will be loaded and assigned to
-.lisp, .clj, .scm, etc files.
+Paredit is part of Slimv, but it is also distributed separately as a standalone
+plugin. If you indend to use the SWANK client and/or Slimv's indentation and
+syntax functions, then please install the Slimv plugin. Otherwise you may want
+to install the Paredit plugin thus omitting other unnecessary files.
 
 
 ===============================================================================
@@ -372,8 +367,8 @@ Number of lines to look backward and forward when checking if the current
 top level form is balanced in paredit mode. Default is 100.
 
                                                                *g:paredit_mode*
-If nonzero then paredit mode is switched on, i.e. Slimv tries to keep the
-balanced state of parens.
+If nonzero then paredit mode is switched on, i.e. the plugin tries to keep the
+balanced state of parens. This is the default behaviour.
 
                                                           *g:paredit_shortmaps*
 If nonzero, paredit is remapping some one-letter normal mode Vim commands that
