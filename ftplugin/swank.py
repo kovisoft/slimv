@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.6
-# Last Change:  25 Mar 2012
+# Version:      0.9.7
+# Last Change:  09 Apr 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -363,7 +363,7 @@ def swank_parse_inspect_content(pcont):
     """
     global inspect_content
 
-    cur_line = vim.eval('line(".")')
+    vim.command('let oldpos=winsaveview()')
     buf = vim.current.buffer
     # First 2 lines are filled in swank_parse_inspect()
     buf[2:] = []
@@ -412,10 +412,9 @@ def swank_parse_inspect_content(pcont):
     buf.append([''])
     buf.append("".join(lst).split("\n"))
     buf.append(['', '[<<]'])
-    vim.command('normal! ' + cur_line + 'G')
     vim.command('normal! 3G0')
     vim.command('call SlimvHelp(2)')
-    vim.command('normal! j')
+    vim.command('call winrestview(oldpos)')
 
 def swank_parse_inspect(struct):
     """
