@@ -1073,9 +1073,8 @@ function! SlimvConnectSwank()
             redir => v
             silent ver
             redir END
-            let pydll = matchstr( v, '\cpython..\.dll' )
-            if ! executable( pydll )
-                call SlimvErrorWait( pydll . ' not found. Unable to run SWANK client.' )
+            if v !~ '+python/dyn'
+                call SlimvErrorWait( 'Vim is compiled without Python dynamic loading. Unable to run SWANK client.' )
                 return 0
             endif
         endif
