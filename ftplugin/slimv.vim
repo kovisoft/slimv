@@ -1067,17 +1067,6 @@ function! SlimvConnectSwank()
             call SlimvErrorWait( 'Vim is compiled without the Python feature. Unable to run SWANK client.' )
             return 0
         endif
-        if g:slimv_windows || g:slimv_cygwin
-            " Verify that Vim is compiled with Python and Python is properly installed
-            let v = ''
-            redir => v
-            silent ver
-            redir END
-            if v !~ '+python/dyn'
-                call SlimvErrorWait( 'Vim is compiled without Python dynamic loading. Unable to run SWANK client.' )
-                return 0
-            endif
-        endif
         python import vim
         execute 'pyfile ' . g:swank_path
         let s:python_initialized = 1
