@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  09 Apr 2012
+" Last Change:  13 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1064,7 +1064,7 @@ endfunction
 function! SlimvConnectSwank()
     if !s:python_initialized
         if ! has('python')
-            call SlimvErrorWait( 'Vim is compiled without the Python feature. Unable to run SWANK client.' )
+            call SlimvErrorWait( 'Vim is compiled without the Python feature or Python is not installed. Unable to run SWANK client.' )
             return 0
         endif
         python import vim
