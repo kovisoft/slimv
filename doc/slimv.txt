@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 31 Mar 2012
+*slimv.txt*                    Slimv                 Last Change: 18 Apr 2012
 
 Slimv                                                                  *slimv*
-                               Version 0.9.6
+                               Version 0.9.7
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1355,6 +1355,12 @@ FAQ                                                                 *slimv-faq*
          :set verbose=20
      It is also possible to save a log of the communication between Slimv and
      the swank server by setting g:swank_log=1 in the .vimrc.
+
+- Q: I get SLDB error messages related to some contributed modules of Slime, e.g.
+     "The loaded code expects an incompatible layout for class SB-PRETTY:PRETTY-STREAM."
+- A: Some contribs are known to be incompatible with some other Lisp
+     packages. Try to disable contribs in slime/start-swank.lisp by setting
+     :load-contribs to 'nil'.
 
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: Not all SLIME functions are implemented in the SWANK client, however
