@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  13 Apr 2012
+" Last Change:  18 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1107,6 +1107,10 @@ function! SlimvConnectSwank()
         while s:swank_version == '' && localtime()-starttime < g:slimv_timeout
             call SlimvSwankResponse()
         endwhile
+        if s:swank_version >= '2011-12-04'
+            python swank_require('swank-repl')
+            call SlimvSwankResponse()
+        endif
         if s:swank_version >= '2008-12-23'
             call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()', g:slimv_timeout )
         endif
