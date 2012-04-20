@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.7
-# Last Change:  09 Apr 2012
+# Last Change:  20 Apr 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -399,15 +399,11 @@ def swank_parse_inspect_content(pcont):
                 linestart = len(lst)
     if int(istate) > int(end):
         # Swank returns end+1000 if there are more entries to request
-        # Save current range for the next request
-        vc = ":let b:range_start=" + start
-        vim.command(vc)
-        vc = ":let b:range_end=" + end
-        vim.command(vc)
         if linestart >= 0 and linestart < len(lst) and (len(lst[linestart]) == 0 or lst[linestart][0] != '['):
             lst[linestart:] = "[--more--]"
         else:
             lst.append("\n[--more--]")
+        lst.append("\n[--all---]")
     buf = vim.current.buffer
     buf.append([''])
     buf.append("".join(lst).split("\n"))
@@ -415,6 +411,15 @@ def swank_parse_inspect_content(pcont):
     vim.command('normal! 3G0')
     vim.command('call SlimvHelp(2)')
     vim.command('call winrestview(oldpos)')
+    if int(istate) > int(end):
+        # There are more entries to request
+        # Save current range for the next request
+        vim.command("let b:range_start=" + start)
+        vim.command("let b:range_end=" + end)
+        vim.command("let b:inspect_more=" + end)
+    else:
+        # No ore entries left
+        vim.command("let b:inspect_more=0")
 
 def swank_parse_inspect(struct):
     """
