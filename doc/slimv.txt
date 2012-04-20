@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 18 Apr 2012
+*slimv.txt*                    Slimv                 Last Change: 20 Apr 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.7
@@ -903,9 +903,12 @@ then Slimv exits the Inspector.
 Pressing <Leader>q also exits the Inspector.
 
 If the object is too big to be fully displayed, this is signaled by the
-[--more--] text. When pressing Enter on the line containing [--more--] then
-the next part of the inspected object is queried from the swank server and
-displayed in the Inspect buffer.
+[--more--] and [--all---] texts. When pressing Enter on the line containing
+[--more--] then the next part of the inspected object is queried from the
+swank server and displayed in the Inspect buffer.
+When pressing Enter on the [--all---] line then all parts of the inspected
+object are fetched recursively up to the timeout defined by |g:slimv_timeout|.
+Pressing <Esc> stops the recursive fetching process.
 
 
 If debugger is activated and the cursor is placed on a frame line in the

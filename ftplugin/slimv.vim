@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  18 Apr 2012
+" Last Change:  20 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -778,7 +778,7 @@ function SlimvOpenInspectBuffer()
 
     syn match Type /^\[\d\+\]/
     syn match Type /^\[<<\]/
-    syn match Type /^\[--more--\]$/
+    syn match Type /^\[--....--\]$/
 endfunction
 
 " Open a new Threads buffer
@@ -1689,10 +1689,38 @@ function! SlimvHandleEnterInspect()
     endif
 
     if line[0] == '['
-        if line =~ '^[--more--\]$'
+        if line =~ '^\[--more--\]$'
             " More data follows, fetch next part
             call SlimvCommand( 'python swank_inspector_range()' )
             call SlimvRefreshReplBuffer()
+            return
+        elseif line =~ '^\[--all---\]$'
+            " More data follows, fetch all parts
+            echon "\rFetching all entries, please wait..."
+            let b:inspect_more = -1
+            call SlimvCommand( 'python swank_inspector_range()' )
+            call SlimvRefreshReplBuffer()
+            let starttime = localtime()
+            while b:inspect_more < 0 && localtime()-starttime < g:slimv_timeout
+                " Wait for the first swank_inspector_range() call to finish
+                call SlimvRefreshReplBuffer()
+            endwhile
+            let starttime = localtime()
+            while b:inspect_more > 0 && localtime()-starttime < g:slimv_timeout
+                " There are more parts to fetch (1 entry is usually 4 parts)
+                echon "\rFetching all entries, please wait [" . (b:inspect_more / 4) . "]"
+                call SlimvCommand( 'python swank_inspector_range()' )
+                call SlimvRefreshReplBuffer()
+                if getchar(1)
+                    " User is impatient, stop fetching
+                    break
+                endif
+            endwhile
+            if b:inspect_more > 0
+                echon "\rFetch exhausted. Select [--all---] to resume."
+            else
+                echon "\rSuccessfully fetched all entries."
+            endif
             return
         elseif line[0:3] == '[<<]'
             " Pop back up in the inspector
