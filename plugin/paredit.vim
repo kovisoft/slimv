@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.9.6
-" Last Change:  13 Mar 2012
+" Version:      0.9.7
+" Last Change:  23 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -383,10 +383,12 @@ function! s:InsideString( ... )
     return s:SynIDMatch( '[Ss]tring', l, c, 0 )
 endfunction
 
-" Is this a Slimv REPL buffer?
+" Is this a Slimv or VimClojure REPL buffer?
 function! s:IsReplBuffer()
     if exists( 'g:slimv_repl_name' )
         return bufnr( g:slimv_repl_name ) == bufnr( '%' )
+    elseif exists( 'b:vimclojure_repl' )
+        return 1
     else
         return 0
     endif
