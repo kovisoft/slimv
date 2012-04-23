@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  20 Apr 2012
+" Last Change:  23 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -510,8 +510,8 @@ function! SlimvTimer()
     endif
     call SlimvRefreshReplBuffer()
     if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
-        if exists( 'b:repl_prompt_line' ) && line( "." ) == b:repl_prompt_line && b:repl_prompt_line > pline
-            " There are new lines printed in the REPL buffer.
+        if exists( 'b:repl_prompt_line' ) && line( "." ) == b:repl_prompt_line && col( "." ) < b:repl_prompt_col
+            " We are in the REPL prompt line before the end of prompt.
             " Put an '<End>' into the typeahead buffer to move the cursor to the end of line
             call feedkeys("\<end>")
         elseif bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
