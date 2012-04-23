@@ -387,8 +387,6 @@ endfunction
 function! s:IsReplBuffer()
     if exists( 'g:slimv_repl_name' )
         return bufnr( g:slimv_repl_name ) == bufnr( '%' )
-    elseif exists( 'b:vimclojure_repl' )
-        return 1
     else
         return 0
     endif
