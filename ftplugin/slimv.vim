@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  23 Apr 2012
+" Last Change:  24 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -334,7 +334,7 @@ endfunction
 function! SlimvEndOfReplBuffer()
     if line( '.' ) >= b:repl_prompt_line - 1
         " Go to the end of file only if the user did not move up from here
-        normal! G$
+        call cursor( line('$'), 99999 )
     endif
 endfunction
 
@@ -504,17 +504,9 @@ endfunction
 " This function re-triggers the CursorHold event
 " after refreshing the REPL buffer
 function! SlimvTimer()
-    let pline = 0
-    if exists( 'b:repl_prompt_line' )
-        let pline = b:repl_prompt_line
-    endif
     call SlimvRefreshReplBuffer()
     if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
-        if exists( 'b:repl_prompt_line' ) && line( "." ) == b:repl_prompt_line && col( "." ) < b:repl_prompt_col
-            " We are in the REPL prompt line before the end of prompt.
-            " Put an '<End>' into the typeahead buffer to move the cursor to the end of line
-            call feedkeys("\<end>")
-        elseif bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
+        if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
             " Put '<Insert>' twice into the typeahead buffer, which should not do anything
             " just switch to replace/insert mode then back to insert/replace mode
             " But don't do this for readonly buffers
@@ -1988,7 +1980,7 @@ function! SlimvEvalSelection( outreg, testform )
     endif
     if bufnr( "%" ) == bufnr( g:slimv_repl_name )
         " If this is the REPL buffer then go to EOF
-        normal! G$
+        call cursor( line('$'), 99999 )
     endif
     call SlimvEval( lines )
 endfunction
@@ -2135,7 +2127,7 @@ function! SlimvMacroexpand()
         let s:swank_form = SlimvGetSelection()
         if bufnr( "%" ) == bufnr( g:slimv_repl_name )
             " If this is the REPL buffer then go to EOF
-            normal! G$
+            call cursor( line('$'), 99999 )
         endif
         call SlimvCommandUsePackage( 'python swank_macroexpand("s:swank_form")' )
     endif
@@ -2151,7 +2143,7 @@ function! SlimvMacroexpandAll()
         let s:swank_form = SlimvGetSelection()
         if bufnr( "%" ) == bufnr( g:slimv_repl_name )
             " If this is the REPL buffer then go to EOF
-            normal! G$
+            call cursor( line('$'), 99999 )
         endif
         call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
     endif
