@@ -126,6 +126,11 @@ function! PareditInitBuffer()
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrapSelection("(",")")<CR>'
         execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrap('."'".'"'."','".'"'."')<CR>"
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrapSelection('."'".'"'."','".'"'."')<CR>"
+        " Spliec s-expression killing backward/forward
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(,S'
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%,S'
+        " Raise s-expression
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'I       yiwdab"0Pb'
         if &ft == 'clojure'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
             inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')

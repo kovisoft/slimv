@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 01 Apr 2012
+*paredit.txt*                   Paredit              Last Change: 24 Apr 2012
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.6
+                               Version 0.9.7
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -180,8 +180,8 @@ Normal Mode:
                    Pressing '<' when standing on a '(' makes the s-expression
                    to the left of the '(' coming into the current list.
                    For example pressing <Leader>< at position marked with |:
-                       (aaa bbb|)        --->    (aaa) bbb
-                       aaa |(bbb)        --->    (aaa bbb)
+                       (aaa bbb|)        --->    (aaa|) bbb
+                       aaa |(bbb)        --->    |(aaa bbb)
 
     <Leader>>      If standing on a delimiter (parenthesis or square bracket)
                    then moves it to the right by slurping or barfing the
@@ -192,22 +192,22 @@ Normal Mode:
                    Pressing '>' when standing on a ')' makes the s-expression
                    to the right of the ')' coming into the current list.
                    For example pressing <Leader>< at position marked with |:
-                       (aaa|) bbb        --->    (aaa bbb)
-                       |(aaa bbb)        --->    aaa (bbb)
+                       (aaa|) bbb        --->    (aaa bbb|)
+                       |(aaa bbb)        --->    aaa |(bbb)
 
     <Leader>J      Join two subsequent lists or strings. The first one must end
                    before the cursor, the second one must start after the
                    cursor position.
                    For example pressing <Leader>J at position marked with |:
-                       (aaa)| (bbb)      --->    (aaa bbb)
-                       "aaa"| "bbb"      --->    "aaa bbb"
+                       (aaa)| (bbb)      --->    (aaa |bbb)
+                       "aaa"| "bbb"      --->    "aaa |bbb"
 
     <Leader>O      Split ("Open") current list or string at the cursor position.
                    Opposite of Join. Key O is selected because for the original
                    Vim mapping J and O are also kind of opposites.
                    For example pressing <Leader>O at position marked with |:
-                       (aaa |bbb)        --->    (aaa) (bbb)
-                       "aaa|bbb"         --->    "aaa" "bbb"
+                       (aaa |bbb)        --->    (aaa) |(bbb)
+                       "aaa|bbb"         --->    "aaa" |"bbb"
 
     <Leader>W      Wrap the current symbol in a pair of parentheses. The cursor
     <Leader>w(     is then positioned on the opening parenthesis, as wrapping
@@ -215,27 +215,45 @@ Normal Mode:
                    the symbol as parameter, so by pressing "a" one can enter
                    the function name right after the newly inserted "(".
                    For example pressing <Leader>W at position marked with |:
-                       (aaa b|bb ccc)    --->    (aaa (bbb) ccc)
+                       (aaa b|bb ccc)    --->    (aaa |(bbb) ccc)
 
     <Leader>w[     Wrap the current symbol in a pair of square brackets,
                    similarly to <Leader>W.
                    For example pressing <Leader>w[ at position marked with |:
-                       (aaa b|bb ccc)    --->    (aaa [bbb] ccc)
+                       (aaa b|bb ccc)    --->    (aaa |[bbb] ccc)
 
     <Leader>w{     Wrap the current symbol in a pair of curly braces,
                    similarly to <Leader>W.
                    For example pressing <Leader>w{ at position marked with |:
-                       (aaa b|bb ccc)    --->    (aaa {bbb} ccc)
+                       (aaa b|bb ccc)    --->    (aaa |{bbb} ccc)
 
     <Leader>w"     Wrap the current symbol in a pair of double quotes,
                    similarly to <Leader>W.
                    For example pressing <Leader>w" at position marked with |:
-                       (aaa b|bb ccc)    --->    (aaa "bbb" ccc)
+                       (aaa b|bb ccc)    --->    (aaa "bbb|" ccc)
 
     <Leader>S      Splice the current list into the containing list, i.e.
                    remove the opening and closing parens. Opposite of wrap.
                    For example pressing <Leader>S at position marked with |:
-                       (aaa (b|bb) ccc)  --->    (aaa bbb ccc)
+                       (aaa (b|bb ccc) ddd)  --->    (aaa |bbb ccc ddd)
+
+    <Leader><Up>   Splice the current list into the containing list by deleting
+                   everything backward from the cursor position up to the
+                   opening paren.
+                   For example pressing <Leader><Up> at position marked with |:
+                       (aaa (bbb |ccc) ddd)  --->    (aaa |ccc ddd)
+
+    <Leader><Down> Splice the current list into the containing list by deleting
+                   everything forward from the cursor position up to the
+                   closing paren.
+                   For example pressing <Leader><Down> at position marked with |:
+                       (aaa (bbb| ccc) ddd)  --->    (aaa |bbb ddd)
+
+    <Leader>I      Raise the current symbol, i.e. replace the current list with
+                   the current symbol by deleting everything else (except the
+                   symbol) in the list, including the eclosing pair of parens.
+                   For example pressing <Leader>I at position marked with |:
+                       (aaa (b|bb ccc) ddd)  --->    (aaa |bbb ddd)
 
     x  or  <Del>   When about to delete a (, ), [, ], or " and there are other
                    characters inside, then just skip it to the right. When
