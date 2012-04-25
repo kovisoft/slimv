@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  24 Apr 2012
+" Last Change:  25 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -329,12 +329,19 @@ function! SlimvShortEcho( msg )
     let &shortmess=saved
 endfunction
 
+" Go to the end of buffer, make sure the cursor is positioned
+" after the last character of the buffer when in insert mode
+function s:EndOfBuffer()
+    normal! G$
+    call cursor( line('$'), 99999 )
+endfunction
+
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
 function! SlimvEndOfReplBuffer()
     if line( '.' ) >= b:repl_prompt_line - 1
         " Go to the end of file only if the user did not move up from here
-        call cursor( line('$'), 99999 )
+        call s:EndOfBuffer()
     endif
 endfunction
 
@@ -1980,7 +1987,7 @@ function! SlimvEvalSelection( outreg, testform )
     endif
     if bufnr( "%" ) == bufnr( g:slimv_repl_name )
         " If this is the REPL buffer then go to EOF
-        call cursor( line('$'), 99999 )
+        call s:EndOfBuffer()
     endif
     call SlimvEval( lines )
 endfunction
@@ -2127,7 +2134,7 @@ function! SlimvMacroexpand()
         let s:swank_form = SlimvGetSelection()
         if bufnr( "%" ) == bufnr( g:slimv_repl_name )
             " If this is the REPL buffer then go to EOF
-            call cursor( line('$'), 99999 )
+            call s:EndOfBuffer()
         endif
         call SlimvCommandUsePackage( 'python swank_macroexpand("s:swank_form")' )
     endif
@@ -2143,7 +2150,7 @@ function! SlimvMacroexpandAll()
         let s:swank_form = SlimvGetSelection()
         if bufnr( "%" ) == bufnr( g:slimv_repl_name )
             " If this is the REPL buffer then go to EOF
-            call cursor( line('$'), 99999 )
+            call s:EndOfBuffer()
         endif
         call SlimvCommandUsePackage( 'python swank_macroexpand_all("s:swank_form")' )
     endif
