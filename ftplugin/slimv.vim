@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  25 Apr 2012
+" Last Change:  26 Apr 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -967,8 +967,9 @@ function! SlimvSelectForm()
         normal! l
         let c = c + 1
     endwhile
+    normal! va(
     let p1 = getpos('.')
-    normal! va(o
+    normal! o
     let p2 = getpos('.')
     if firstchar != '(' && p1[1] == p2[1] && (p1[2] == p2[2] || p1[2] == p2[2]+1)
         " Empty selection and no paren found, select current word instead
