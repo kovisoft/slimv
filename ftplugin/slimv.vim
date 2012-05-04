@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  26 Apr 2012
+" Last Change:  04 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1303,6 +1303,19 @@ function! SlimvIndent( lnum )
     if pnum == 0
         " Hit the start of the file, use zero indent.
         return 0
+    endif
+
+    " Handle multi-line string
+    let plen = len( getline( pnum ) )
+    if synIDattr( synID( pnum, plen, 0), 'name' ) =~ '[Ss]tring' && getline(pnum)[plen-1] != '"'
+        " Previous non-blank line ends with an unclosed string, so this is a multi-line string
+        let qpos = searchpos( '"', 'bn' )
+        if qpos[0] == pnum && qpos[1] > 0
+            " Indent to the opening double quote
+            return qpos[1]
+        else
+            return lispindent( a:lnum )
+        endif
     endif
 
     " Handle special indentation style for flet, labels, etc.
