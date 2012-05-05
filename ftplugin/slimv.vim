@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  04 May 2012
+" Last Change:  05 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -290,6 +290,7 @@ let s:current_buf = -1                                    " Swank action was req
 let s:current_win = -1                                    " Swank action was requested from this window
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
+let s:skip_q = 'getline(".")[col(".")-2] == "\\"'         " Skip escaped double quote characters in matches
 let s:frame_def = '^\s\{0,2}\d\{1,}:'                     " Regular expression to match SLDB restart or frame identifier
 let s:spec_indent = 'flet\|labels\|macrolet\|symbol-macrolet'
                                                           " List of symbols need special indenting
@@ -1304,25 +1305,38 @@ function! SlimvIndent( lnum )
         " Hit the start of the file, use zero indent.
         return 0
     endif
+    let oldpos = winsaveview()
+    let linenum = a:lnum
 
     " Handle multi-line string
     let plen = len( getline( pnum ) )
     if synIDattr( synID( pnum, plen, 0), 'name' ) =~ '[Ss]tring' && getline(pnum)[plen-1] != '"'
         " Previous non-blank line ends with an unclosed string, so this is a multi-line string
-        let qpos = searchpos( '"', 'bn' )
-        if qpos[0] == pnum && qpos[1] > 0
-            " Indent to the opening double quote
-            return qpos[1]
+        let [l, c] = searchpairpos( '"', '', '"', 'bnW', s:skip_q )
+        if l == pnum && c > 0
+            " Indent to the opening double quote (if found)
+            return c
         else
-            return lispindent( a:lnum )
+            return lispindent( linenum )
         endif
+    endif
+    if synIDattr( synID( pnum, 1, 0), 'name' ) =~ '[Ss]tring' && getline(pnum)[0] != '"'
+        " Previous non-blank line is part of a multi-line string
+        " Find the start of the multi-line string (omit \" characters)
+        call cursor( pnum, 1 )
+        let [l, c] = searchpairpos( '"', '', '"', 'bnW', s:skip_q )
+        if l > 0
+            " Pretend that we are really after the first line of the multi-line string
+            let pnum = l
+            let linenum = l + 1
+        endif
+        call winrestview( oldpos )
     endif
 
     " Handle special indentation style for flet, labels, etc.
     " When searching for containing forms, don't go back
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
-    let oldpos = winsaveview()
     let indent_keylists = g:slimv_indent_keylists
     " Find beginning of the innermost containing form
     normal! 0
@@ -1463,9 +1477,9 @@ function! SlimvIndent( lnum )
 
     " Use default Lisp indening
     set lisp
-    let li = lispindent(a:lnum)
+    let li = lispindent(linenum)
     set nolisp
-    let line = strpart( getline(a:lnum-1), li-1 )
+    let line = strpart( getline(linenum-1), li-1 )
     let gap = matchend( line, '^(\s\+\S' )
     if gap >= 0
         " Align to the gap between the opening paren and the first atom
