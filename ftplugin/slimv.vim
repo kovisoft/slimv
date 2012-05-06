@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  05 May 2012
+" Last Change:  06 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1321,14 +1321,25 @@ function! SlimvIndent( lnum )
         endif
     endif
     if synIDattr( synID( pnum, 1, 0), 'name' ) =~ '[Ss]tring' && getline(pnum)[0] != '"'
-        " Previous non-blank line is part of a multi-line string
-        " Find the start of the multi-line string (omit \" characters)
+        " Previous non-blank line is the last line of a multi-line string
         call cursor( pnum, 1 )
-        let [l, c] = searchpairpos( '"', '', '"', 'bnW', s:skip_q )
-        if l > 0
-            " Pretend that we are really after the first line of the multi-line string
-            let pnum = l
-            let linenum = l + 1
+        " First find the end of the multi-line string (omit \" characters)
+        let [lend, cend] = searchpos( '[^\\]"', 'nW' )
+        if lend > 0 && strpart(getline(lend), cend+1) =~ '(\|)\|\[\|\]\|{\|}'
+            " Structural change after the string, no special handling
+        else
+            " Find the start of the multi-line string (omit \" characters)
+            let [l, c] = searchpairpos( '"', '', '"', 'bnW', s:skip_q )
+            if l > 0 && strpart(getline(l), 0, c-1) =~ '^\s*$'
+                " Nothing else before the string: indent to the opening "
+                call winrestview( oldpos )
+                return c - 1
+            endif
+            if l > 0
+                " Pretend that we are really after the first line of the multi-line string
+                let pnum = l
+                let linenum = l + 1
+            endif
         endif
         call winrestview( oldpos )
     endif
