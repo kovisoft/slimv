@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.7
-" Last Change:  24 Apr 2012
+" Last Change:  07 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -129,8 +129,7 @@ function! PareditInitBuffer()
         " Spliec s-expression killing backward/forward
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(,S'
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%,S'
-        " Raise s-expression
-        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'I       yiwdab"0Pb'
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'I   :<C-U>call PareditRaise()<CR>'
         if &ft == 'clojure'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
             inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
@@ -1402,6 +1401,18 @@ function! PareditSplice()
     endif
 endfunction
 
+" Raise: replace containing form with the current symbol or sub-form
+function! PareditRaise()
+    if getline('.')[col('.')-1] =~ b:any_openclose_char
+        " Raise sub-form and re-indent
+        normal! y%d%dab
+        normal! "0P=%
+    else
+        " Raise symbol
+        normal! yiwdab
+        normal! "0Pb
+    endif
+endfunction
 
 " =====================================================================
 "  Autocommands
