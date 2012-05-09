@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  06 May 2012
+" Last Change:  09 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1294,6 +1294,26 @@ function! s:CloseForm( lines )
     return end
 endfunction
 
+" Some multi-byte characters screw up the built-in lispindent()
+" This function is a wrapper that tries to fix it
+function SlimvLispindent( lnum )
+    set lisp
+    let li = lispindent( a:lnum )
+    set nolisp
+    let extra = 0
+    let c = 0
+    while a:lnum > 0 && c < li
+        let bytes = byteidx( getline( a:lnum-1 ), c+1 ) - byteidx( getline( a:lnum-1 ), c )
+        if bytes > 1 && extra < 10
+            " Count the extra bytes (additional unicode bytes)
+            let extra = extra + bytes - 1
+        endif
+        let c = c + 1
+    endwhile
+    " Determine how wrong lispindent() is based on the number of extra bytes
+    return li + [0, 1, 0, -3, -3, -3, -5, -5, -7, -7, -8][extra]
+endfunction
+
 " Return Lisp source code indentation at the given line
 function! SlimvIndent( lnum )
     if a:lnum <= 1
@@ -1317,7 +1337,7 @@ function! SlimvIndent( lnum )
             " Indent to the opening double quote (if found)
             return c
         else
-            return lispindent( linenum )
+            return SlimvLispindent( linenum )
         endif
     endif
     if synIDattr( synID( pnum, 1, 0), 'name' ) =~ '[Ss]tring' && getline(pnum)[0] != '"'
@@ -1486,10 +1506,8 @@ function! SlimvIndent( lnum )
         endif
     endif
 
-    " Use default Lisp indening
-    set lisp
-    let li = lispindent(linenum)
-    set nolisp
+    " Use default Lisp indenting
+    let li = SlimvLispindent(linenum)
     let line = strpart( getline(linenum-1), li-1 )
     let gap = matchend( line, '^(\s\+\S' )
     if gap >= 0
