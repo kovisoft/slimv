@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  09 May 2012
+" Last Change:  10 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1296,22 +1296,65 @@ endfunction
 
 " Some multi-byte characters screw up the built-in lispindent()
 " This function is a wrapper that tries to fix it
+" TODO: implement custom indent procedure and omit lispindent()
 function SlimvLispindent( lnum )
     set lisp
     let li = lispindent( a:lnum )
     set nolisp
+    let backline = max([a:lnum-g:slimv_indent_maxlines, 1])
+    let oldpos = winsaveview()
+    normal! 0
+    " Find containing form
+    let [lhead, chead] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+    if lhead == 0
+        " No containing form, lispindent() is OK
+        call winrestview( oldpos )
+        return li
+    endif
+    " Find outer form
+    let [lparent, cparent] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+    call winrestview( oldpos )
+    if lparent == 0 || lhead != lparent
+        " No outer form or starting above inner form, lispindent() is OK
+        return li
+    endif
+    " Count extra bytes before the function header
+    let header = strpart( getline( lparent ), 0 )
+    let total_extra = 0
     let extra = 0
     let c = 0
-    while a:lnum > 0 && c < li
-        let bytes = byteidx( getline( a:lnum-1 ), c+1 ) - byteidx( getline( a:lnum-1 ), c )
-        if bytes > 1 && extra < 10
-            " Count the extra bytes (additional unicode bytes)
-            let extra = extra + bytes - 1
+    while a:lnum > 0 && c < chead-1
+        let bytes = byteidx( header, c+1 ) - byteidx( header, c )
+        if bytes > 1
+            let total_extra = total_extra + bytes - 1
+            if c >= cparent && extra < 10
+                " Extra bytes in the outer function header
+                let extra = extra + bytes - 1
+            endif
         endif
         let c = c + 1
     endwhile
+    if total_extra == 0  
+        " No multi-byte character, lispindent() is OK
+        return li
+    endif
+    " In some cases ending spaces add up to lispindent() if there are multi-byte characters
+    let ending_sp = len( matchstr( getline( lparent ), ' *$' ) )
     " Determine how wrong lispindent() is based on the number of extra bytes
-    return li + [0, 1, 0, -3, -3, -3, -5, -5, -7, -7, -8][extra]
+    " These values were determined empirically
+    if lparent == a:lnum - 1
+        " Function header is in the previous line
+        if extra == 0 && total_extra > 1
+            let ending_sp = ending_sp + 1
+        endif
+        return li + [0, 1, 0, -3, -3, -3, -5, -5, -7, -7, -8][extra] - ending_sp
+    else
+        " Function header is in an upper line
+        if extra == 0 || total_extra == extra
+            let ending_sp = 0
+        endif
+        return li + [0, 1, 0, -2, -2, -3, -3, -3, -3, -3, -3][extra] - ending_sp
+    endif
 endfunction
 
 " Return Lisp source code indentation at the given line
