@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  10 May 2012
+" Last Change:  14 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1491,9 +1491,10 @@ function! SlimvIndent( lnum )
                 endif
             endif
         endif
-        " Restore all cursor movements
-        call winrestview( oldpos )
     endif
+
+    " Restore all cursor movements
+    call winrestview( oldpos )
 
     " Check if the current form started in the previous nonblank line
     if l == pnum
