@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.7
-" Last Change:  14 May 2012
+" Last Change:  15 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -999,7 +999,7 @@ endfunction
 " Find starting '(' of a top level form
 function! SlimvFindDefunStart()
     let l = line( '.' )
-    let matchb = max( [l-100, 1] )
+    let matchb = max( [l-200, 1] )
     while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb )
     endwhile
 endfunction
@@ -1967,7 +1967,7 @@ function! SlimvArglist()
         let save_ve = &virtualedit
         set virtualedit=onemore
         " Display only if entering the first space after a keyword
-        let matchb = max( [l-100, 1] )
+        let matchb = max( [l-200, 1] )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
         if l0 > 0
             " Found opening paren, let's find out the function name
