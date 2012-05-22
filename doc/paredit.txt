@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 24 Apr 2012
+*paredit.txt*                   Paredit              Last Change: 22 May 2012
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.7
@@ -122,6 +122,8 @@ Insert Mode:
                    outer closing parenthesis, etc, until the closing of the
                    top level form is reached.
                    Inserts ')' when inside comment or string.
+                   If |g:paredit_electric_return| is on then it also re-gathers
+                   electric returns when appropriate.
 
     [              Inserts '[]' and moves the cursor inside. Also adds leading
                    or trailing spaces when needed.
@@ -132,6 +134,8 @@ Insert Mode:
                    outer closing square bracket, etc, until the closing of the
                    top level form is reached.
                    Inserts ']' when inside comment or string.
+                   If |g:paredit_electric_return| is on then it also re-gathers
+                   electric returns when appropriate.
 
     {              Inserts '{}' and moves the cursor inside. Also adds leading
                    or trailing spaces when needed.
@@ -142,6 +146,8 @@ Insert Mode:
                    outer closing curly brace, etc, until the closing of the
                    top level form is reached.
                    Inserts '}' when inside comment or string.
+                   If |g:paredit_electric_return| is on then it also re-gathers
+                   electric returns when appropriate.
 
     "              When outside of string, inserts '""' and moves the cursor
                    inside. When inside string then moves to the closing '"'.                   
@@ -158,6 +164,10 @@ Insert Mode:
                    about to delete the closing part of the matched character
                    with nothing inside, then the whole empty list is removed.
 
+    <Enter>        If |g:paredit_electric_return| is on then insert an
+                   "electric return", i.e. create an empty line by inserting
+                   two newline characters.
+                   
 
 Normal Mode:
 
@@ -360,7 +370,10 @@ available even when paredit mode is switched off.
 ===============================================================================
 PAREDIT OPTIONS                                               *paredit-options*
 
+|g:paredit_electric_return|  If nonzero, electric return feature is enabled.
+
 |g:paredit_leader|           Custom <Leader> setting for Paredit.
+
 |g:paredit_matchlines|       Number of lines to look backward and forward
                              when checking if the current form is balanced.
 
@@ -369,6 +382,20 @@ PAREDIT OPTIONS                                               *paredit-options*
 |g:paredit_shortmaps|        If nonzero, paredit is remapping some one-letter
                              Vim commands that are not frequently used.
 
+
+                                                    *g:paredit_electric_return*
+If nonzero then "electric return" feature is enabled. This means that when an
+<Enter> is pressed before a closing paren in insert mode, paredit will actually
+insert two newlines creating an empty line. The extra newline is consumed at
+pressing the next closing paren. This feature allows linewise editing of the
+subform entered in the next (empty) line.
+In other words <Enter> "opens" parenthetical expressions while editing, ')'
+"closes" them.
+Please note that electric return is disabled for the REPL buffer where
+<Enter> is used to send the command line to the swank server for evaluation.
+
+Please find a video demonstration of the electric return feature here:
+http://img8.imageshack.us/img8/9479/openparen.gif
 
                                                              *g:paredit_leader*
 This option allows a custom <Leader> setting for the Paredit keybindings.

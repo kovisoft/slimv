@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.7
-" Last Change:  07 May 2012
+" Last Change:  22 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -46,6 +46,11 @@ if !exists( 'g:paredit_leader' )
     else
         let g:paredit_leader = ','
     endif
+endif
+
+" Use 'Electric Return', i.e. add double newlines if enter pressed before a closing paren
+if !exists( 'g:paredit_electric_return' )
+    let g:paredit_electric_return = 1
 endif
 
 " =====================================================================
@@ -96,7 +101,7 @@ function! PareditInitBuffer()
     if g:paredit_mode
         " Paredit mode is on: add buffer specific keybindings
         inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
-        inoremap <buffer> <expr>   )            PareditInsertClosing('(',')')
+        inoremap <buffer> <silent> )            <C-O>:<C-U>call PareditInsertClosing('(',')')<CR>
         inoremap <buffer> <expr>   "            PareditInsertQuotes()
         inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
         inoremap <buffer> <expr>   <Del>        PareditDel()
@@ -132,9 +137,9 @@ function! PareditInitBuffer()
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'I   :<C-U>call PareditRaise()<CR>'
         if &ft == 'clojure'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
-            inoremap <buffer> <expr>   ]            PareditInsertClosing('[',']')
+            inoremap <buffer> <silent> ]            <C-O>:<C-U>call PareditInsertClosing('[',']')<CR>
             inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
-            inoremap <buffer> <expr>   }            PareditInsertClosing('{','}')
+            inoremap <buffer> <silent> }            <C-O>:<C-U>call PareditInsertClosing('{','}')<CR>
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrap("[","]")<CR>'
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w{  :<C-U>call PareditWrap("{","}")<CR>'
@@ -168,6 +173,11 @@ function! PareditInitBuffer()
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>call PareditWrapSelection("(",")")<CR>'
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'S  :<C-U>call PareditSplice()<CR>'
         endif
+
+        if g:paredit_electric_return && !s:IsReplBuffer()
+            " No electric return in the REPL buffer
+            inoremap <buffer> <expr>   <CR>         PareditEnter()
+        endif
     else
         " Paredit mode is off: remove keybindings
         silent! iunmap <buffer> (
@@ -194,6 +204,10 @@ function! PareditInitBuffer()
             silent! iunmap <buffer> ]
             silent! iunmap <buffer> {
             silent! iunmap <buffer> }
+        endif
+        if mapcheck( "<CR>", "i" ) == "PareditEnter()"
+            " Remove only if we have added this mapping
+            silent! iunmap <buffer> <CR>
         endif
     endif
 endfunction
@@ -624,21 +638,56 @@ endfunction
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
     if !g:paredit_mode || s:InsideComment() || s:InsideString() || !s:IsBalanced()
-        return a:close
+        call feedkeys( a:close, 'n' )
+        return
     endif
     let line = getline( '.' )
     let pos = col( '.' ) - 1
     if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
         " About to enter a \) or \]
-        return a:close
+        call feedkeys( a:close, 'n' )
+        return
     elseif line[pos] == a:close
-        return "\<Right>"
-    else
-        let open  = escape( a:open , '[]' )
-        let close = escape( a:close, '[]' )
-        return "\<C-O>:call searchpair('" . open . "','','" . close . "','W','" . s:skip_sc . "')\<CR>\<Right>"
-        "TODO: indent after going to closing character
+        if g:paredit_electric_return && line =~ '^\s*)'
+            " Re-gather electric returns in the current line
+            normal! kJl
+        endif
+        " Already have the desired character, move right
+        call feedkeys( "\<Right>", 'n' )
+        return
     endif
+    let open  = escape( a:open , '[]' )
+    let close = escape( a:close, '[]' )
+    let newpos = searchpairpos( open, '', close, 'nW', s:skip_sc )
+    if g:paredit_electric_return && newpos[0] > line('.')
+        " Closing paren is in a line below, check if there are electric returns to re-gather
+        let nextline = getline( line('.') + 1 )
+        let nextline = substitute( nextline, '\s', '', 'g' )
+        if len(nextline) > 0 && nextline[0] == ')'
+            " Re-gather electric returns in the line of the closing ')'
+            call setline( line('.'), substitute( line, '\s*$', '', 'g' ) )
+            normal! Jl
+            call feedkeys( "\<Right>", 'n' )
+            return
+        endif
+        if len(nextline) > 0 && nextline[0] =~ '\]\|}' && &ft == 'clojure' 
+            " Re-gather electric returns in the line of the closing ']' or '}'
+            call setline( line('.'), substitute( line, '\s*$', '', 'g' ) )
+            normal! Jxl
+            call feedkeys( "\<Right>", 'n' )
+            return
+        endif
+    elseif g:paredit_electric_return && line =~ '^\s*)'
+        " Re-gather electric returns in the current line
+        normal! kJl
+        call feedkeys( "\<Right>", 'n' )
+        return
+    endif
+    if newpos[0] > 0
+        call setpos( '.', [0, newpos[0], newpos[1], 0] )
+        call feedkeys( "\<Right>", 'n' )
+    endif
+    "TODO: indent after going to closing character
 endfunction
 
 " Insert an (opening or closing) double quote
@@ -666,6 +715,19 @@ function! PareditInsertQuotes()
     else
         " Outside of string: insert a pair of ""
         return '""' . "\<Left>"
+    endif
+endfunction
+
+" Handle <Enter> keypress, insert electric return if applicable
+function! PareditEnter()
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
+    if g:paredit_electric_return && pos > 0 && line[pos] =~ b:any_closing_char && !s:InsideString() && s:IsBalanced()
+        " Electric Return
+        return "\<CR>\<CR>\<Up>"
+    else
+        " Regular Return
+        return "\<CR>"
     endif
 endfunction
 
