@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Apr 2012
+*slimv.txt*                    Slimv                 Last Change: 29 May 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.7
@@ -1410,6 +1410,25 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.7  - Keep cursor position on expanding [--more--] in the Inspector.
+       - Added [--all---] to Inspector for fetching all parts.
+       - Don't explicitly check for pythonXX.dll, rely on has('python').
+       - Require 'swank-repl' for slime version above 2011-12-04 in case
+         contribs are disabled.
+       - Identify VimClojure REPL prompt position for paredit (thanks to
+         David Greenberg).
+       - Paredit: added <leader><Up> for Splice-killing-backward,
+         <leader><Down> for Splice-killing-forward, <leader>I for Raise.
+       - Paredit: added 'Electric Return' feature and new option
+         g:paredit_electric_return.
+       - Increased the distance to search for the defun start to 200 lines.
+       - Bugfix: positioning the cursor at the end of REPL prompt in insert mode.
+       - Bugfix: handle restart/frame number above 999 (thanks to Philipp Marek).
+       - Bugfix: form selection when cursor is next to the opening paren.
+       - Bugfix: indentation of multi-line strings.
+       - Bugfix: indentation of lines with multi-byte characters.
+       - Bugfix: cursor movement while indenting.
+
 0.9.6  - Perform indenting when <Tab> pressed on whitespace.
        - Added support for newer swank message length counting in bytes.
        - Updated Lisp swank server to version 2012-03-06.
@@ -1895,8 +1914,8 @@ Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
-Andrew Lyon, Andrew Smirnoff, Brett Kosinski for additional notes and
-contributions.
+Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg for additional
+notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
