@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.7
-" Last Change:  15 May 2012
+" Version:      0.9.8
+" Last Change:  30 May 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1039,8 +1039,11 @@ function! SlimvFindPackage()
         let searching = search( '(\s*' . string . '\s', 'bW' )
     endwhile
     if found
+        " Find the package name with all folds open
+        normal! zn
         silent normal! ww
         let l:packagename_tokens = split(expand('<cWORD>'),')\|\s')
+        normal! zN
         if l:packagename_tokens != []
             " Remove quote character from package name
             let s:swank_package = substitute( l:packagename_tokens[0], "'", '', '' )
