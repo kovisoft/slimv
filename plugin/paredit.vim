@@ -669,7 +669,6 @@ function! PareditInsertClosing( open, close )
             call setpos( '.', oldpos )
             let nextline = getline( line('.') + 1 )
         endwhile
-        let nextline = getline( line('.') + 1 )
         let nextline = substitute( nextline, '\s', '', 'g' )
         if len(nextline) > 0 && nextline[0] == ')'
             " Re-gather electric returns in the line of the closing ')'
