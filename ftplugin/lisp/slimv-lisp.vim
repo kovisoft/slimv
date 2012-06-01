@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.9.4
-" Last Change:  07 Jan 2012
+" Version:      0.9.8
+" Last Change:  01 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -47,6 +47,7 @@ let s:lisp_desc = [
 \ [ 'alisp',       'allegro',   '',  '' ],
 \ [ 'alisp8',      'allegro',   '',  '' ],
 \ [ 'lwl',         'lispworks', '',  '' ],
+\ [ 'ccl',         'clozure',   '',  '' ],
 \ [ 'wx86cl',      'clozure',   'w', '' ],
 \ [ 'lx86cl',      'clozure',   'l', '' ],
 \ [ '*lisp.exe',   'clisp',     'w',
