@@ -75,6 +75,7 @@ let s:yank_pos           = []
 
 " Buffer specific initialization
 function! PareditInitBuffer()
+    let b:paredit_init = 1
     " Make sure to include special characters in 'iskeyword'
     " in case they are accidentally removed
     " Also define regular expressions to identify special characters used by paredit
@@ -357,7 +358,10 @@ endfunction
 
 " Toggle paredit mode
 function! PareditToggle()
-    let g:paredit_mode = 1 - g:paredit_mode
+    " Don't disable paredit if it was not initialized yet for the current buffer
+    if exists( 'b:paredit_init') || g:paredit_mode == 0
+        let g:paredit_mode = 1 - g:paredit_mode
+    endif
     echo g:paredit_mode ? 'Paredit mode on' : 'Paredit mode off'
     call PareditInitBuffer()
 endfunction
