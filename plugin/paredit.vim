@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.8
-" Last Change:  03 Jun 2012
+" Last Change:  06 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -551,6 +551,10 @@ function! PareditFindOpening( open, close, select )
         normal! lvh
         let &ve = save_ve
         call searchpair( open, '', close, 'bW', s:skip_sc )
+        if &selection == 'inclusive'
+            " Trim last character from the selection, it will be included anyway
+            normal! oho
+        endif
     endif
 endfunction
 
