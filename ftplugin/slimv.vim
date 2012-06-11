@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  30 May 2012
+" Last Change:  11 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -776,9 +776,10 @@ function SlimvOpenInspectBuffer()
     noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
 
-    syn match Type /^\[\d\+\]/
-    syn match Type /^\[<<\]/
-    syn match Type /^\[--....--\]$/
+    syn match Special /\[\d\+\].\{-}\ze\(\(=\=,\=\s*\[\d\+\]\)\|\(\s*<\d\+>\)\|$\)/
+    syn match String  /<\d\+>.\{-}\ze\(\(\s*\[\d\+\]\)\|\(\s*<\d\+>\)\|$\)/
+    syn match Special /^\[<<\]/
+    syn match Special /^\[--....--\]$/
 endfunction
 
 " Open a new Threads buffer
@@ -1789,6 +1790,29 @@ function! SlimvHandleEnterInspect()
         " Reload inspected item
         call SlimvSendSilent( ['[0]'] )
         return
+    endif
+
+    " Find the closest [dd] or <dd> token to the left of the cursor
+    let [l, c] = searchpos( '\[\d\+\]', 'bncW' )
+    let [l2, c2] = searchpos( '<\d\+>', 'bncW' )
+    if l < line('.') || (l2 == line('.') && c2 > c)
+        let l = l2
+        let c = c2
+    endif
+
+    if l < line('.')
+        " No preceding token found, find the closest [dd] or <dd> to the right
+        let [l, c] = searchpos( '\[\d\+\]', 'ncW' )
+        let [l2, c2] = searchpos( '<\d\+>', 'ncW' )
+        if l == 0 || l > line('.') || (l2 == line('.') && c2 < c)
+            let l = l2
+            let c = c2
+        endif
+    endif
+
+    if l == line( '.' )
+        " Keep the relevant part of the line
+        let line = strpart( line, c-1 )
     endif
 
     if line[0] == '['
