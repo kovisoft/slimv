@@ -776,8 +776,19 @@ function SlimvOpenInspectBuffer()
     noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
     execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
 
-    syn match Special /\[\d\+\].\{-}\ze\(\(=\=,\=\s*\[\d\+\]\)\|\(\s*<\d\+>\)\|$\)/
-    syn match String  /<\d\+>.\{-}\ze\(\(\s*\[\d\+\]\)\|\(\s*<\d\+>\)\|$\)/
+    if version < 703
+        " conceal mechanism is defined since Vim 7.3
+        syn region inspectItem   start="\[\d\+\]\s*" end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1
+        syn region inspectAction start="<\d\+>\s*"   end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1
+    else
+        syn region inspectItem   matchgroup=Ignore start="\[\d\+\]\s*" end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1 concealends
+        syn region inspectAction matchgroup=Ignore start="<\d\+>\s*"   end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1 concealends
+        setlocal conceallevel=3 concealcursor=nc
+    endif
+
+    hi def link inspectItem   Special
+    hi def link inspectAction String
+
     syn match Special /^\[<<\]/
     syn match Special /^\[--....--\]$/
 endfunction
