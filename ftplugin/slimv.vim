@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  11 Jun 2012
+" Last Change:  12 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -961,7 +961,7 @@ function! SlimvSelectSymbolExt()
 endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
-function! SlimvSelectForm()
+function! SlimvSelectForm( extended )
     " Search the opening '(' if we are standing on a special form prefix character
     let c = col( '.' ) - 1
     let firstchar = getline( '.' )[c]
@@ -976,7 +976,7 @@ function! SlimvSelectForm()
     if firstchar != '(' && p1[1] == p2[1] && (p1[2] == p2[2] || p1[2] == p2[2]+1)
         " Empty selection and no paren found, select current word instead
         normal! aw
-    else
+    elseif a:extended || firstchar != '('
         " Handle '() or #'() etc. type special syntax forms (but stop at prompt)
         let c = col( '.' ) - 2
         while c >= 0 && match( ' \t()>', getline( '.' )[c] ) < 0
@@ -1008,7 +1008,7 @@ endfunction
 " Select top level form the cursor is inside and copy it to register 's'
 function! SlimvSelectDefun()
     call SlimvFindDefunStart()
-    return SlimvSelectForm()
+    return SlimvSelectForm( 1 )
 endfunction
 
 " Return the contents of register 's'
@@ -2208,7 +2208,7 @@ endfunction
 function! SlimvEvalTestExp( testform )
     let outreg = v:register
     let oldpos = winsaveview()
-    if !SlimvSelectForm()
+    if !SlimvSelectForm( 1 )
         return
     endif
     call SlimvFindPackage()
@@ -2256,7 +2256,7 @@ endfunction
 function! SlimvMacroexpand()
     call SlimvBeginUpdate()
     if SlimvConnectSwank()
-        if !SlimvSelectForm()
+        if !SlimvSelectForm( 0 )
             return
         endif
         let s:swank_form = SlimvGetSelection()
@@ -2272,7 +2272,7 @@ endfunction
 function! SlimvMacroexpandAll()
     call SlimvBeginUpdate()
     if SlimvConnectSwank()
-        if !SlimvSelectForm()
+        if !SlimvSelectForm( 0 )
             return
         endif
         let s:swank_form = SlimvGetSelection()
