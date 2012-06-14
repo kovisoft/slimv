@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.8
-# Last Change:  11 Jun 2012
+# Last Change:  14 Jun 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -378,17 +378,19 @@ def swank_parse_inspect_content(pcont):
         logprint(str(el))
         if type(el) == list:
             if el[0] == ':action':
-                item = '<' + unquote(el[2]) + '> '
+                item = '{<' + unquote(el[2]) + '>'
+                tail = '<>}'
             else:
-                item = '[' + unquote(el[2]) + '] '
+                item = '{[' + unquote(el[2]) + ']'
+                tail = '[]}'
             lst.insert(len(lst), item)
             linestart = -1
             text = unquote(el[1])
             if text[-len(item):] == ' ' * len(item):
                 # If possible, remove spaces from the end in the length of item info
-                lst.append(text[:-len(item)])
+                lst.append(text[:-len(item)] + tail)
             else:
-                lst.append(text)
+                lst.append(text + tail)
         else:
             text = unquote(el)
             lst.append(text)

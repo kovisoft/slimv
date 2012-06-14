@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  12 Jun 2012
+" Last Change:  14 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -778,11 +778,11 @@ function SlimvOpenInspectBuffer()
 
     if version < 703
         " conceal mechanism is defined since Vim 7.3
-        syn region inspectItem   start="\[\d\+\]\s*" end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1
-        syn region inspectAction start="<\d\+>\s*"   end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1
+        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\[]}"
+        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="<>}"
     else
-        syn region inspectItem   matchgroup=Ignore start="\[\d\+\]\s*" end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1 concealends
-        syn region inspectAction matchgroup=Ignore start="<\d\+>\s*"   end="\s*\(,\|=\)\=\s*\(\[\d\+\]\)\|\(<\d\+>\)\|$"me=s-1 concealends
+        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\[]}" concealends
+        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="<>}" concealends
         setlocal conceallevel=3 concealcursor=nc
     endif
 
@@ -1804,8 +1804,8 @@ function! SlimvHandleEnterInspect()
     endif
 
     " Find the closest [dd] or <dd> token to the left of the cursor
-    let [l, c] = searchpos( '\[\d\+\]', 'bncW' )
-    let [l2, c2] = searchpos( '<\d\+>', 'bncW' )
+    let [l, c] = searchpos( '{\[\d\+\]', 'bncW' )
+    let [l2, c2] = searchpos( '{<\d\+>', 'bncW' )
     if l < line('.') || (l2 == line('.') && c2 > c)
         let l = l2
         let c = c2
@@ -1813,8 +1813,8 @@ function! SlimvHandleEnterInspect()
 
     if l < line('.')
         " No preceding token found, find the closest [dd] or <dd> to the right
-        let [l, c] = searchpos( '\[\d\+\]', 'ncW' )
-        let [l2, c2] = searchpos( '<\d\+>', 'ncW' )
+        let [l, c] = searchpos( '{\[\d\+\]', 'ncW' )
+        let [l2, c2] = searchpos( '{<\d\+>', 'ncW' )
         if l == 0 || l > line('.') || (l2 == line('.') && c2 < c)
             let l = l2
             let c = c2
@@ -1823,7 +1823,7 @@ function! SlimvHandleEnterInspect()
 
     if l == line( '.' )
         " Keep the relevant part of the line
-        let line = strpart( line, c-1 )
+        let line = strpart( line, c )
     endif
 
     if line[0] == '['
