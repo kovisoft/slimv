@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  14 Jun 2012
+" Last Change:  16 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2183,6 +2183,10 @@ endfunction
 
 " Evaluate the whole buffer
 function! SlimvEvalBuffer()
+    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        call SlimvError( "Cannot evaluate the REPL buffer." )
+        return
+    endif
     let lines = getline( 1, '$' )
     if SlimvGetFiletype() == 'scheme'
         " Swank-scheme requires us to pass a single s-expression
@@ -2504,6 +2508,10 @@ endfunction
 
 " Compile and load whole file
 function! SlimvCompileLoadFile()
+    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        call SlimvError( "Cannot compile the REPL buffer." )
+        return
+    endif
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
     if &modified
@@ -2528,6 +2536,10 @@ endfunction
 
 " Compile whole file
 function! SlimvCompileFile()
+    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        call SlimvError( "Cannot compile the REPL buffer." )
+        return
+    endif
     let filename = fnamemodify( bufname(''), ':p' )
     let filename = substitute( filename, '\\', '/', 'g' )
     if &modified
