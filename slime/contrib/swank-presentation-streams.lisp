@@ -74,6 +74,7 @@ be sensitive and remember what object it is in the repl if predicate is true"
     (sb-ext:without-package-locks
       (swank-backend::with-debootstrapping
 	(load (make-pathname 
+               :device (pathname-device swank-loader:*source-directory*)
 	       :name "sbcl-pprint-patch"
 	       :type "lisp"
 	       :directory (pathname-directory swank-loader:*source-directory*)))))))
