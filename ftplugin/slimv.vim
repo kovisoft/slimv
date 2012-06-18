@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  16 Jun 2012
+" Last Change:  18 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -288,6 +288,7 @@ let s:sldb_level = -1                                     " Are we in the SWANK 
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = -1                                    " Swank action was requested from this window
+let s:inspect_path = []                                   " Inspection path of the current object
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
                                                           " Skip matches inside string or comment 
 let s:skip_q = 'getline(".")[col(".")-2] == "\\"'         " Skip escaped double quote characters in matches
@@ -789,7 +790,7 @@ function SlimvOpenInspectBuffer()
     hi def link inspectItem   Special
     hi def link inspectAction String
 
-    syn match Special /^\[<<\]/
+    syn match Special /^\[<<\].*$/
     syn match Special /^\[--....--\]$/
 endfunction
 
@@ -1866,6 +1867,11 @@ function! SlimvHandleEnterInspect()
         else
             " Inspect n-th part
             let item = matchstr( line, '\d\+' )
+            if item != ''
+                " Add item name to the object path
+                let entry = matchstr(line, '\[\d\+\]\s*\zs.\{-}\ze\s*\[\]}')
+                let s:inspect_path = s:inspect_path + [entry]
+            endif
         endif
         if item != ''
             call SlimvSendSilent( ['[' . item . ']'] )
@@ -2354,6 +2360,7 @@ function! SlimvInspect()
     if !SlimvConnectSwank()
         return
     endif
+    let s:inspect_path = []
     let frame = s:DebugFrame()
     if frame != ''
         " Inspect selected for a frame in the debugger's Backtrace section
@@ -2375,6 +2382,7 @@ function! SlimvInspect()
         endif
         let s = input( 'Inspect in frame ' . frame . ' (evaluated): ', sym )
         if s != ''
+            let s:inspect_path = [s]
             call SlimvBeginUpdate()
             call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
             call SlimvRefreshReplBuffer()
@@ -2382,6 +2390,7 @@ function! SlimvInspect()
     else
         let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
         if s != ''
+            let s:inspect_path = [s]
             call SlimvBeginUpdate()
             call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
         endif
