@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.8
-# Last Change:  14 Jun 2012
+# Last Change:  18 Jun 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -406,7 +406,12 @@ def swank_parse_inspect_content(pcont):
     buf = vim.current.buffer
     buf.append([''])
     buf.append("".join(lst).split("\n"))
-    buf.append(['', '[<<]'])
+    inspect_path = vim.eval('s:inspect_path')
+    if len(inspect_path) > 1:
+        ret = '[<<] Return to ' + ' -> '.join(inspect_path[:-1])
+    else:
+        ret = '[<<] Exit Inspector'
+    buf.append(['', ret])
     vim.command('normal! 3G0')
     vim.command('call SlimvHelp(2)')
     vim.command('call winrestview(oldpos)')
@@ -992,6 +997,8 @@ def swank_inspector_nth_action(n):
     swank_rex(':inspector-call-nth-action', cmd, 'nil', 't', str(n))
 
 def swank_inspector_pop():
+    # Remove the last two entries from the inspect path
+    vim.command('let s:inspect_path = s:inspect_path[:-2]')
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
 def swank_inspect_in_frame(symbol, n):
