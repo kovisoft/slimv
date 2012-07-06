@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 29 May 2012
+*slimv.txt*                    Slimv                 Last Change: 06 Jul 2012
 
 Slimv                                                                  *slimv*
-                               Version 0.9.7
+                               Version 0.9.8
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -187,6 +187,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_repl_max_len|       Maximum number of lines in the REPL buffer.
 
 |g:slimv_repl_name|          Name of the REPL buffer.
+
+|g:slimv_repl_simple_eval|   <CR> evaluates form in the REPL buffer.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
@@ -488,6 +490,24 @@ are kept in the REPL buffer, all lines before that are erased, but some opening
 parens and/or double quotes may remain in order to maintain their balanced
 state. The default value for this option is 0, meaning that the number of lines
 is unlimited, i.e. no line is ever erased.
+
+                                                     *g:slimv_repl_simple_eval*
+This option controls the behaviour of insert mode <CR>, <Up>, <Down> in the
+REPL buffer.
+
+If nonzero then:
+    <CR>       Evaluates the form entered in the command line
+    <Up>       Brings up the previous command from the command line history
+    <Down>     Brings up the next command from the command line history
+    <C-CR>     Closes and evaluates the form entered in the command line
+
+If the option is zero then:
+    <C-CR>     Closes and evaluates the form entered in the command line
+    <C-Up>     Brings up the previous command from the command line history
+    <C-Down>   Brings up the next command from the command line history
+    <CR>       Inserts a newline
+    <Up>       Moves the cursor up
+    <Down>     Moves the cursor down
 
                                                           *g:slimv_repl_syntax*
 Enables syntax highlighting for the REPL buffer. It is enabled by default but
@@ -1082,6 +1102,9 @@ Insert Mode:
 
     <Down>         Brings up the next command typed and sent to the Lisp REPL
                    when in the command line.
+
+Please note that the behaviour of <CR>, <Up>, <Down> is affected by the value
+of option |g:slimv_repl_simple_eval|.
 
 
 ===============================================================================
