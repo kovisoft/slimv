@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  18 Jun 2012
+" Last Change:  06 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -187,6 +187,14 @@ endif
 " Syntax highlighting for the REPL buffer
 if !exists( 'g:slimv_repl_syntax' )
     let g:slimv_repl_syntax = 1
+endif
+
+" Specifies the behaviour of insert mode <CR>, <Up>, <Down> in the REPL buffer:
+" 1: <CR>   evaluates,      <Up>/<Down>     brings up command history
+" 0: <C-CR> evaluates,      <C-Up>/<C-Down> brings up command history,
+"    <CR>   opens new line, <Up>/<Down>     moves cursor up/down
+if !exists( 'g:slimv_repl_simple_eval' )
+    let g:slimv_repl_simple_eval = 1
 endif
 
 " Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
@@ -711,11 +719,18 @@ function! SlimvOpenReplBuffer()
     endif
 
     " Add keybindings valid only for the REPL buffer
-    inoremap <buffer> <silent>        <CR>   <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
     inoremap <buffer> <silent>        <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR>
-    inoremap <buffer> <silent>        <Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
-    inoremap <buffer> <silent>        <Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
+
+    if g:slimv_repl_simple_eval
+        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
+    else
+        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>C-O>:call SlimvHandleEnterRepl()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
+    endif
 
     if exists( 'g:paredit_loaded' )
         inoremap <buffer> <silent> <expr> <BS>   PareditBackspace(1)
@@ -1738,6 +1753,55 @@ function SlimvMakeFold()
     setlocal noreadonly
     normal! o    }}}kA {{{0
     setlocal readonly
+endfunction
+
+" Handle insert mode 'Enter' keypress in the REPL buffer
+function! SlimvHandleEnterRepl()
+    " Trim the prompt from the beginning of the command line
+    " The user might have overwritten some parts of the prompt
+    let lastline = b:repl_prompt_line
+    let lastcol  = b:repl_prompt_col
+    let cmdline = getline( lastline )
+    let c = 0
+    while c < lastcol - 1 && cmdline[c] == b:repl_prompt[c]
+        let c = c + 1
+    endwhile
+
+    " Copy command line up to the cursor position
+    if line(".") == lastline
+        let cmd = [ strpart( cmdline, c, col(".") - c - 1 ) ]
+    else
+        let cmd = [ strpart( cmdline, c ) ]
+    endif
+
+    " Build a possible multi-line command up to the cursor line/position
+    let l = lastline + 1
+    while l <= line(".")
+        if line(".") == l
+            call add( cmd, strpart( getline( l ), 0, col(".") - 1) )
+        else
+            call add( cmd, strpart( getline( l ), 0) )
+        endif
+        let l = l + 1
+    endwhile
+
+    " Count the number of opening and closing braces in the command before the cursor
+    let end = s:CloseForm( cmd )
+    if end != 'ERROR' && end != ''
+        " Command part before cursor is unbalanced, insert newline
+        if g:paredit_mode && exists( 'g:paredit_electric_return' ) && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
+            " Apply electric return
+            call feedkeys(PareditEnter(), 'n')
+        else
+            " No electric return handling, just enter a newline
+            call feedkeys("\<CR>", 'n')
+        endif
+        return
+    else
+        " Send current command line for evaluation
+        call cursor( 0, 99999 )
+        call SlimvSendCommand(0)
+    endif
 endfunction
 
 " Handle normal mode 'Enter' keypress in the SLDB buffer

@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 22 May 2012
+*paredit.txt*                   Paredit              Last Change: 06 Jul 2012
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.7
+                               Version 0.9.8
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -391,8 +391,9 @@ pressing the next closing paren. This feature allows linewise editing of the
 subform entered in the next (empty) line.
 In other words <Enter> "opens" parenthetical expressions while editing, ')'
 "closes" them.
-Please note that electric return is disabled for the REPL buffer where
-<Enter> is used to send the command line to the swank server for evaluation.
+Please note that electric return is disabled for the REPL buffer if Slimv
+option |g:slimv_repl_simple_eval| is nonzero. In this case <Enter> is used
+to send the command line to the swank server for evaluation.
 
 Please find a video demonstration of the electric return feature here:
 http://img8.imageshack.us/img8/9479/openparen.gif
