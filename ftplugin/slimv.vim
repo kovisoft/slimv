@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  06 Jul 2012
+" Last Change:  13 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2071,7 +2071,7 @@ function! SlimvArglist()
     let c = col('.') - 1
     let line = getline('.')
     call s:SetKeyword()
-    if s:swank_connected && c > 1 && line[c-2] =~ '\k'
+    if s:swank_connected && c > 1 && line[c-2] =~ '\k\|)\|\]\|}\|"'
         let save_ve = &virtualedit
         set virtualedit=onemore
         " Display only if entering the first space after a keyword
