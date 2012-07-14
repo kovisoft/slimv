@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.8
-" Last Change:  11 Jun 2012
+" Last Change:  14 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -126,6 +126,10 @@ function! PareditInitBuffer()
         vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
         nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
         nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
+        nnoremap <buffer> <silent> cw           :<C-U>call PareditChangeSpec('cw',1)<CR>
+        nnoremap <buffer> <silent> cb           :<C-U>call PareditChangeSpec('cb',0)<CR>
+        nnoremap <buffer> <silent> ciw          :<C-U>call PareditChangeSpec('ciw',1)<CR>
+        nnoremap <buffer> <silent> caw          :<C-U>call PareditChangeSpec('caw',1)<CR>
         nnoremap <buffer> <silent> p            :<C-U>call PareditPut('p')<CR>
         nnoremap <buffer> <silent> P            :<C-U>call PareditPut('P')<CR>
         execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrap("(",")")<CR>'
@@ -200,6 +204,10 @@ function! PareditInitBuffer()
         silent! unmap  <buffer> c
         silent! unmap  <buffer> dd
         silent! unmap  <buffer> cc
+        silent! unmap  <buffer> cw
+        silent! unmap  <buffer> cb
+        silent! unmap  <buffer> ciw
+        silent! unmap  <buffer> caw
         if &ft == 'clojure'
             silent! iunmap <buffer> [
             silent! iunmap <buffer> ]
@@ -323,6 +331,43 @@ function! PareditChangeLines()
         silent exe "normal! V\<Esc>"
     endif
     call PareditChange(visualmode(),1)
+endfunction
+
+" Handle special change command, e.g. cw
+" Check if we may revert to its original Vim function
+" This way '.' can be used to repeat the command
+function! PareditChangeSpec( cmd, dir )
+    let line = getline( '.' )
+    if a:dir == 0
+        " Changing backwards
+        let c =  col( '.' ) - 2
+        while c >= 0 && line[c] =~ b:any_matched_char
+            " Shouldn't delete a matched character, just move left
+            call feedkeys( 'h', 'n')
+            let c = c - 1
+        endwhile
+        if c < 0 && line[0] =~ b:any_matched_char
+            " Can't help, still on matched character, insert instead
+            call feedkeys( 'i', 'n')
+            return
+        endif
+    else
+        " Changing forward
+        let c =  col( '.' ) - 1
+        while c < len(line) && line[c] =~ b:any_matched_char
+            " Shouldn't delete a matched character, just move right
+            call feedkeys( 'l', 'n')
+            let c = c + 1
+        endwhile
+        if c == len(line)
+            " Can't help, still on matched character, append instead
+            call feedkeys( 'a', 'n')
+            return
+        endif
+    endif
+    
+    " Safe to use Vim's built-in change function
+    call feedkeys( a:cmd, 'n')
 endfunction
 
 " Paste text from put register in a balanced way
