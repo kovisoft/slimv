@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  13 Jul 2012
+" Last Change:  14 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -743,11 +743,13 @@ function! SlimvOpenReplBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'/      :call SlimvSendCommand(1)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Up>   :call SlimvPreviousCommand()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Down> :call SlimvNextCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'-      :call SlimvClearReplBuffer()<CR>'
     elseif g:slimv_keybindings == 2
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rs     :call SlimvSendCommand(0)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'ro     :call SlimvSendCommand(1)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rp     :call SlimvPreviousCommand()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rn     :call SlimvNextCommand()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rc     :call SlimvClearReplBuffer()<CR>'
     endif
 
     if g:slimv_repl_wrap
@@ -777,6 +779,14 @@ function! SlimvOpenReplBuffer()
     endif
 
     call SlimvRefreshReplBuffer()
+endfunction
+
+" Clear the contents of the REPL buffer, keeping the last prompt only
+function! SlimvClearReplBuffer()
+    if b:repl_prompt_line > 1
+        execute "normal! gg0d" . (b:repl_prompt_line-1) . "GG$"
+        let b:repl_prompt_line = 1
+    endif
 endfunction
 
 " Open a new Inspect buffer
@@ -3048,6 +3058,7 @@ function! SlimvAddReplMenu()
     amenu &REPL.-REPLSep-                              :
     amenu &REPL.&Previous-Input                        :call SlimvPreviousCommand()<CR>
     amenu &REPL.&Next-Input                            :call SlimvNextCommand()<CR>
+    amenu &REPL.Clear-&REPL                            :call SlimvClearReplBuffer()<CR>
 endfunction
 
 " =====================================================================

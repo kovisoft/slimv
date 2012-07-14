@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 06 Jul 2012
+*slimv.txt*                    Slimv                 Last Change: 14 Jul 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.8
@@ -709,7 +709,7 @@ sequence, then you may want to fine tune these Vim options:
     <C-C>   <C-C>    Interrupt Lisp Process
     ,<Up>   ,rp      Previous Input
     ,<Down> ,rn      Next Input
-    ,z      ,rr      Refresh REPL Buffer
+    ,-      ,rc      Clear REPL
 
 Note:
 Some mappings accept an optional "x prefix (where x is a register name)
