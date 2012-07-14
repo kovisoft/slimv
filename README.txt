@@ -91,6 +91,7 @@ REPL commands:
     *  Set Package
     *  Previous Input
     *  Next Input
+    *  Clear REPL
 
 For more information see the included documentation.
  
