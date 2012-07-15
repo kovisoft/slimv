@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  14 Jul 2012
+" Last Change:  15 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -335,7 +335,7 @@ endfunction
 function! SlimvShortEcho( msg )
     let saved=&shortmess
     set shortmess+=T
-    exe "normal :echomsg a:msg\n"
+    :echomsg a:msg
     let &shortmess=saved
 endfunction
 
@@ -1649,6 +1649,7 @@ function! SlimvSendCommand( close )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
+                call SlimvArglist()
                 let l = line('.') + 1
                 call append( '.', '' )
                 call setline( l, repeat( ' ', SlimvIndent(l) ) )
@@ -1686,6 +1687,16 @@ function! SlimvCloseForm()
         endif
     endif
     normal! %
+endfunction
+
+" Handle insert mode 'Enter' keypress
+function! SlimvHandleEnter()
+    call SlimvArglist()
+    if g:paredit_mode && g:paredit_electric_return
+        call feedkeys(PareditEnter(), 'n')
+    else
+        call feedkeys("\<CR>", 'n')
+    endif
 endfunction
 
 " Handle insert mode 'Tab' keypress by doing completion or indentation
@@ -1799,14 +1810,14 @@ function! SlimvHandleEnterRepl()
     let end = s:CloseForm( cmd )
     if end != 'ERROR' && end != ''
         " Command part before cursor is unbalanced, insert newline
-        if g:paredit_mode && exists( 'g:paredit_electric_return' ) && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
+        call SlimvArglist()
+        if g:paredit_mode && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
             " Apply electric return
             call feedkeys(PareditEnter(), 'n')
         else
             " No electric return handling, just enter a newline
             call feedkeys("\<CR>", 'n')
         endif
-        return
     else
         " Send current command line for evaluation
         call cursor( 0, 99999 )
@@ -2081,7 +2092,7 @@ function! SlimvArglist()
     let c = col('.') - 1
     let line = getline('.')
     call s:SetKeyword()
-    if s:swank_connected && c > 1 && line[c-2] =~ '\k\|)\|\]\|}\|"'
+    if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
         let save_ve = &virtualedit
         set virtualedit=onemore
         " Display only if entering the first space after a keyword
@@ -2089,7 +2100,7 @@ function! SlimvArglist()
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
         if l0 > 0
             " Found opening paren, let's find out the function name
-            let arg = matchstr( line, '\<\k*\>', c0 )
+            let arg = matchstr( getline(l0), '\<\k*\>', c0 )
             if arg != ''
                 " Ask function argument list from SWANK
                 call SlimvFindPackage()
@@ -2944,7 +2955,8 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
+    inoremap <silent> <buffer> <Space>    <C-R>=SlimvArglist()<CR><Space>
+    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>C-O>:call SlimvHandleEnter()\<lt>CR>"<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
