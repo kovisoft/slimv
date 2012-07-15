@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.8
-" Last Change:  14 Jun 2012
+" Last Change:  15 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -179,8 +179,8 @@ function! PareditInitBuffer()
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'S  :<C-U>call PareditSplice()<CR>'
         endif
 
-        if g:paredit_electric_return && !s:IsReplBuffer()
-            " No electric return in the REPL buffer
+        if g:paredit_electric_return && mapcheck( "<CR>", "i" ) == ""
+            " Do not override any possible mapping for <Enter>
             inoremap <buffer> <expr>   <CR>         PareditEnter()
         endif
     else
