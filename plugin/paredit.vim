@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.8
-" Last Change:  15 Jun 2012
+" Last Change:  16 Jun 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -914,6 +914,8 @@ function! s:EraseFwd( count, startcol )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
     let reg = @"
+    let ve_save = &virtualedit
+    set virtualedit=all
     let c = a:count
     while c > 0
         if line[pos] == '\' && line[pos+1] =~ b:any_matched_char && (pos < 1 || line[pos-1] != '\')
@@ -954,6 +956,7 @@ function! s:EraseFwd( count, startcol )
         endif
         let c = c - 1
     endwhile
+    let &virtualedit = ve_save
     call setline( '.', line )
     let @" = reg
 endfunction
