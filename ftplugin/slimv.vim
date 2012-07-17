@@ -1696,11 +1696,15 @@ endfunction
 
 " Handle insert mode 'Enter' keypress
 function! SlimvHandleEnter()
-    call SlimvArglist()
-    if g:paredit_mode && g:paredit_electric_return
-        call feedkeys(PareditEnter(), 'n')
-    else
+    if pumvisible()
         call feedkeys("\<CR>", 'n')
+    else
+        call SlimvArglist()
+        if g:paredit_mode && g:paredit_electric_return
+            call feedkeys(PareditEnter(), 'n')
+        else
+            call feedkeys("\<CR>", 'n')
+        endif
     endif
 endfunction
 
@@ -2130,9 +2134,6 @@ function! SlimvArglist( ... )
         endif
         let &virtualedit=save_ve
     endif
-
-    " Return empty string because this function is called from an insert mode mapping
-    return ''
 endfunction
 
 " Start and connect swank server
@@ -2966,8 +2967,8 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist(1)<CR>
-    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>C-O>:call SlimvHandleEnter()\<lt>CR>"<CR>
+    inoremap <silent> <buffer> <Space>    <Space><C-O>:call SlimvArglist(1)<CR>
+    inoremap <silent> <buffer> <CR>       <C-O>:call SlimvHandleEnter()<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
