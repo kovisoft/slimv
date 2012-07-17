@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  16 Jul 2012
+" Last Change:  17 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2092,9 +2092,10 @@ function! SlimvDebugThread()
 endfunction
 
 " Display function argument list
-function! SlimvArglist()
+" Optional argument is the number of characters typed after the keyword
+function! SlimvArglist( ... )
     let l = line('.')
-    let c = col('.') - 1
+    let c = col('.') - 1 - (a:0 ? a:1 : 0)
     let line = getline('.')
     call s:SetKeyword()
     if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
@@ -2965,7 +2966,7 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <C-R>=SlimvArglist()<CR><Space>
+    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist(1)<CR>
     inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>C-O>:call SlimvHandleEnter()\<lt>CR>"<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
