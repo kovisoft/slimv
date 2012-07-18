@@ -1696,15 +1696,11 @@ endfunction
 
 " Handle insert mode 'Enter' keypress
 function! SlimvHandleEnter()
-    if pumvisible()
-        call feedkeys("\<CR>", 'n')
+    call SlimvArglist()
+    if g:paredit_mode && g:paredit_electric_return
+        call feedkeys(PareditEnter(), 'n')
     else
-        call SlimvArglist()
-        if g:paredit_mode && g:paredit_electric_return
-            call feedkeys(PareditEnter(), 'n')
-        else
-            call feedkeys("\<CR>", 'n')
-        endif
+        call feedkeys("\<CR>", 'n')
     endif
 endfunction
 
@@ -2968,7 +2964,7 @@ endfunction
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
     inoremap <silent> <buffer> <Space>    <Space><C-O>:call SlimvArglist(1)<CR>
-    inoremap <silent> <buffer> <CR>       <C-O>:call SlimvHandleEnter()<CR>
+    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : "\<lt>C-O>:call SlimvHandleEnter()\<lt>CR>"<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
