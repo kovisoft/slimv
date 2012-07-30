@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.8
-# Last Change:  23 Jun 2012
+# Last Change:  30 Jun 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -968,7 +968,7 @@ def swank_completions(symbol):
     swank_rex(':simple-completions', cmd, 'nil', 't')
 
 def swank_fuzzy_completions(symbol):
-    cmd = '(swank:fuzzy-completions "' + symbol + '" ' + get_swank_package() + ' :limit 200 :time-limit-in-msec 2000)' 
+    cmd = '(swank:fuzzy-completions "' + symbol + '" ' + get_swank_package() + ' :limit 2000 :time-limit-in-msec 2000)' 
     swank_rex(':fuzzy-completions', cmd, 'nil', 't')
 
 def swank_undefine_function(fn):
