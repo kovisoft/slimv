@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.8
-" Last Change:  22 Jul 2012
+" Last Change:  30 Jul 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -976,7 +976,7 @@ endfunction
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
     if SlimvGetFiletype() == 'clojure'
-        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
     endif
@@ -2913,8 +2913,7 @@ function! SlimvOmniComplete( findstart, base )
         " Locate the start of the symbol name
         call s:SetKeyword()
         let upto = strpart( getline( '.' ), 0, col( '.' ) - 1)
-        let p = match(upto, '\(\k\|\.\)\+$')
-        return p 
+        return match(upto, '\k\+$')
     else
         return SlimvComplete( a:base )
     endif
