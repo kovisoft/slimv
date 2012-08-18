@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.8
-" Last Change:  16 Jun 2012
+" Last Change:  18 Aug 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1479,7 +1479,7 @@ function! s:WrapSelection( open, close )
     let c0 = col( "'<" )
     let c1 = col( "'>" )
     if &selection == 'inclusive'
-        let c1 = c1 + 1
+        let c1 = c1 + strlen(matchstr(getline(l1)[c1-1 :], '.'))
     endif
     if [l0, c0] == [0, 0] || [l1, c1] == [0, 0]
         " No selection
