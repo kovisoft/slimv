@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.8
-" Last Change:  30 Jul 2012
+" Version:      0.9.9
+" Last Change:  25 Aug 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3013,6 +3013,25 @@ endfunction
 call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     g:slimv_leader.')',  g:slimv_leader.'tc',  ':<C-U>call SlimvCloseForm()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',                  '',                   '<Ins><C-X><C-O>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 g:slimv_leader.'(',  g:slimv_leader.'(t',  ':<C-U>call PareditToggle()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.-PareditSep-',                    '',                  '',                   ':' )
+
+if g:paredit_shortmaps
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Wrap<Tab>'                             .'W',  '',  '',              ':<C-U>call PareditWrap("(",")")<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Spli&ce<Tab>'                           .'S',  '',  '',              ':<C-U>call PareditSplice()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Split<Tab>'                            .'O',  '',  '',              ':<C-U>call PareditSplit()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Join<Tab>'                             .'J',  '',  '',              ':<C-U>call PareditJoin()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Ra&ise<Tab>'             .g:slimv_leader.'I',  '',  '',              ':<C-U>call PareditRaise()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Left<Tab>'                         .'<',  '',  '',              ':<C-U>call PareditMoveLeft()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Right<Tab>'                        .'>',  '',  '',              ':<C-U>call PareditMoveRight()<CR>' )
+else
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Wrap<Tab>'              .g:slimv_leader.'W',  '',  '',              ':<C-U>call PareditWrap("(",")")<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Spli&ce<Tab>'            .g:slimv_leader.'S',  '',  '',              ':<C-U>call PareditSplice()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Split<Tab>'             .g:slimv_leader.'O',  '',  '',              ':<C-U>call PareditSplit()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Join<Tab>'              .g:slimv_leader.'J',  '',  '',              ':<C-U>call PareditJoin()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Ra&ise<Tab>'             .g:slimv_leader.'I',  '',  '',              ':<C-U>call PareditRaise()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Left<Tab>'          .g:slimv_leader.'<',  '',  '',              ':<C-U>call PareditMoveLeft()<CR>' )
+call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Right<Tab>'         .g:slimv_leader.'>',  '',  '',              ':<C-U>call PareditMoveRight()<CR>' )
+endif
 
 " Evaluation commands
 call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Defun',               g:slimv_leader.'d',  g:slimv_leader.'ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
