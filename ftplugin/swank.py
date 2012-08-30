@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.8
-# Last Change:  30 Jun 2012
+# Version:      0.9.9
+# Last Change:  30 Aug 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -44,6 +44,7 @@ actions         = dict()        # Swank actions (like ':write-string'), by messa
 indent_info     = dict()        # Data of :indentation-update
 frame_locals    = dict()        # Map frame variable names to their index
 inspect_content = []            # Partial content of the last Inspect command
+inspect_package = ''            # Package used for the current Inspector
 
 
 ###############################################################################
@@ -981,8 +982,10 @@ def swank_return_string(s):
     read_string = None
 
 def swank_inspect(symbol):
+    global inspect_package
     cmd = '(swank:init-inspector "' + symbol + '")'
-    swank_rex(':init-inspector', cmd, get_swank_package(), 't')
+    inspect_package = get_swank_package() 
+    swank_rex(':init-inspector', cmd, inspect_package, 't')
 
 def swank_inspect_nth_part(n):
     cmd = '(swank:inspect-nth-part ' + str(n) + ')'
@@ -1009,10 +1012,12 @@ def swank_inspector_range():
     start = int(vim.eval("b:range_start"))
     end   = int(vim.eval("b:range_end"))
     cmd = '(swank:inspector-range ' + str(end) + " " + str(end+(end-start)) + ')'
-    swank_rex(':inspector-range', cmd, get_swank_package(), 't')
+    swank_rex(':inspector-range', cmd, inspect_package, 't')
 
 def swank_quit_inspector():
+    global inspect_package
     swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
+    inspect_package = ''
 
 def swank_set_break(symbol):
     cmd = '(swank:sldb-break"' + symbol + '")'
