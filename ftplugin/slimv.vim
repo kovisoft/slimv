@@ -729,7 +729,7 @@ function! SlimvOpenReplBuffer()
         inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
         inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     else
-        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-O>:call SlimvArglistOnEnter()<CR>
+        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
         inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
         inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     endif
@@ -1720,6 +1720,9 @@ function! SlimvArglistOnEnter()
     endif
     let s:arglist_line = 0
     let s:arglist_col = 0
+
+    " This function is called from <C-R>= mappings, must return empty string
+    return ''
 endfunction
 
 " Handle insert mode 'Tab' keypress by doing completion or indentation
@@ -2993,7 +2996,7 @@ endfunction
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
     inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist(line('.'),col('.')-1)<CR>
-    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : SlimvHandleEnter()<CR><C-O>:call SlimvArglistOnEnter()<CR>
+    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
