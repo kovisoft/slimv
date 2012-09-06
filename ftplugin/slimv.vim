@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  05 Sep 2012
+" Last Change:  06 Sep 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1460,6 +1460,23 @@ function! SlimvIndent( lnum )
     " more than g:slimv_indent_maxlines lines.
     let backline = max([pnum-g:slimv_indent_maxlines, 1])
     let indent_keylists = g:slimv_indent_keylists
+
+    " Check if the previous line actually ends with a multi-line subform
+    let parent = pnum
+    let [l, c] = searchpos( ')', 'bW' )
+    if l == pnum
+        let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+        if l > 0
+            " Make sure it is not a top level form and the containing form starts in the same line
+            let [l2, c2] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
+            if l2 == l
+                " Remember the first line of the multi-line form
+                let parent = l
+            endif
+        endif
+    endif
+    call winrestview( oldpos )
+
     " Find beginning of the innermost containing form
     normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
@@ -1545,7 +1562,7 @@ function! SlimvIndent( lnum )
     call winrestview( oldpos )
 
     " Check if the current form started in the previous nonblank line
-    if l == pnum
+    if l == parent
         " Found opening paren in the previous line
         let line = getline(l)
         let form = strpart( line, c )
@@ -1586,6 +1603,8 @@ function! SlimvIndent( lnum )
         let func = substitute(func, '^.*:', '', '')
         if func != '' && s:swank_connected
             " Look how many arguments are on the same line
+            " If an argument is actually a multi-line subform, then replace it with a single character
+            let form = substitute( form, "([^()]*$", '0', 'g' )
             let form = substitute( form, "[()\\[\\]{}#'`,]", '', 'g' )
             let args_here = len( split( form ) ) - 1
             " Get swank indent info
