@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.9
-# Last Change:  30 Aug 2012
+# Last Change:  25 Sep 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -1019,8 +1019,14 @@ def swank_quit_inspector():
     swank_rex(':quit-inspector', '(swank:quit-inspector)', 'nil', 't')
     inspect_package = ''
 
+def swank_break_on_exception(flag):
+    if flag:
+        swank_rex(':break-on-exception', '(swank:break-on-exception "true")', 'nil', current_thread)
+    else:
+        swank_rex(':break-on-exception', '(swank:break-on-exception "false")', 'nil', current_thread)
+
 def swank_set_break(symbol):
-    cmd = '(swank:sldb-break"' + symbol + '")'
+    cmd = '(swank:sldb-break "' + symbol + '")'
     swank_rex(':sldb-break', cmd, get_package(), 't')
 
 def swank_toggle_trace(symbol):

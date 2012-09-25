@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  06 Sep 2012
+" Last Change:  25 Sep 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -293,6 +293,7 @@ let s:swank_package = ''                                  " Package to use at th
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:sldb_level = -1                                     " Are we in the SWANK debugger? -1 == no, else SLDB level
+let s:break_on_exception = 0                              " Enable debugger break on exceptions (for ritz-swank)
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = -1                                    " Swank action was requested from this window
@@ -2445,6 +2446,22 @@ function! SlimvMacroexpandAll()
     endif
 endfunction
 
+" Toggle debugger break on exceptions
+" Only for ritz-swank 0.4.0 and above
+function! SlimvBreakOnException()
+    if SlimvGetFiletype() == 'clojure' && s:swank_version >= '2010-11-13'
+        " swank-clojure is abandoned at protocol version 20100404, so it must be ritz-swank
+        if SlimvConnectSwank()
+            let s:break_on_exception = ! s:break_on_exception
+            call SlimvCommand( 'python swank_break_on_exception(' . s:break_on_exception . ')' )
+            call SlimvRefreshReplBuffer()
+            echomsg 'Break On Exception ' . (s:break_on_exception ? 'enabled.' : 'disabled.')
+        endif
+    else
+        call SlimvError( "This function is implemented only for ritz-swank." )
+    endif
+endfunction
+
 " Set a breakpoint on the beginning of a function
 function! SlimvBreak()
     if SlimvConnectSwank()
@@ -3072,6 +3089,7 @@ call s:MenuMap( 'Slim&v.De&bugging.&Macroexpand-All',           g:slimv_leader.'
 call s:MenuMap( 'Slim&v.De&bugging.Toggle-&Trace\.\.\.',        g:slimv_leader.'t',  g:slimv_leader.'dt',  ':call SlimvTrace()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.U&ntrace-All',               g:slimv_leader.'T',  g:slimv_leader.'du',  ':call SlimvUntrace()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.Set-&Breakpoint',            g:slimv_leader.'B',  g:slimv_leader.'db',  ':call SlimvBreak()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.Break-on-&Exception',        g:slimv_leader.'E',  g:slimv_leader.'de',  ':call SlimvBreakOnException()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.Disassemb&le\.\.\.',         g:slimv_leader.'l',  g:slimv_leader.'dd',  ':call SlimvDisassemble()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Inspect\.\.\.',             g:slimv_leader.'i',  g:slimv_leader.'di',  ':call SlimvInspect()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.-SldbSep-',                  '',                  '',                   ':' )
@@ -3082,7 +3100,6 @@ call s:MenuMap( 'Slim&v.De&bugging.-ThreadSep-',                '',             
 call s:MenuMap( 'Slim&v.De&bugging.List-T&hreads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Kill-Thread\.\.\.',         g:slimv_leader.'K',  g:slimv_leader.'dk',  ':call SlimvKillThread()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Debug-Thread\.\.\.',        g:slimv_leader.'G',  g:slimv_leader.'dT',  ':call SlimvDebugThread()<CR>' )
-
 
 " Compile commands
 call s:MenuMap( 'Slim&v.&Compilation.Compile-&Defun',           g:slimv_leader.'D',  g:slimv_leader.'cd',  ':<C-U>call SlimvCompileDefun()<CR>' )
