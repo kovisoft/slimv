@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.9.4
-" Last Change:  07 Jan 2012
+" Version:      0.9.9
+" Last Change:  03 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -118,7 +118,11 @@ endfunction
 function! b:SlimvSwankLoader()
     " First autodetect Leiningen and Cake
     if executable( 'lein' )
-        return '"lein swank"'
+        if globpath( '~/.lein/plugins', 'lein-ritz*.jar' ) != ''
+            return '"lein ritz ' . g:swank_port . '"'
+        else
+            return '"lein swank"'
+        endif
     elseif executable( 'cake' )
         return '"cake swank"'
     else
