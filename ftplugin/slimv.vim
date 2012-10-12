@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  25 Sep 2012
+" Last Change:  12 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -71,7 +71,7 @@ endfunction
 
 " Try to autodetect SWANK and build the command to start the SWANK server
 function! SlimvSwankCommand()
-    if exists( 'g:slimv_swank_clojure' ) && SlimvGetFiletype() == 'clojure'
+    if exists( 'g:slimv_swank_clojure' ) && SlimvGetFiletype() =~ '.*clojure.*'
         return g:slimv_swank_clojure
     endif
     if exists( 'g:slimv_swank_scheme' ) && SlimvGetFiletype() == 'scheme'
@@ -271,7 +271,7 @@ endif
 " =====================================================================
 
 if !exists( 'g:slimv_template_apropos' )
-    if SlimvGetFiletype() == 'clojure'
+    if SlimvGetFiletype() =~ '.*clojure.*'
         let g:slimv_template_apropos = '(find-doc "%1")'
     else
         let g:slimv_template_apropos = '(apropos "%1")'
@@ -667,7 +667,7 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region lispParen8 contained matchgroup=hlLevel8 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen9
     syn region lispParen9 contained matchgroup=hlLevel9 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen0
 
- if SlimvGetFiletype() == 'clojure'
+ if SlimvGetFiletype() =~ '.*clojure.*'
     syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"              contains=@replListCluster,lispParen1,replPrompt
     syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen2
     syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen3
@@ -976,7 +976,7 @@ endfunction
 
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
-    if SlimvGetFiletype() == 'clojure'
+    if SlimvGetFiletype() =~ '.*clojure.*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
@@ -1068,7 +1068,7 @@ function! SlimvFindPackage()
         return
     endif
     let oldpos = winsaveview()
-    if SlimvGetFiletype() == 'clojure'
+    if SlimvGetFiletype() =~ '.*clojure.*'
         let string = '\(in-ns\|ns\)'
     else
         let string = '\(cl:\|common-lisp:\|\)in-package'
@@ -1326,11 +1326,11 @@ function! s:CloseForm( lines )
             " We are outside of strings and comments, now we shall count parens
             if form[i] == '('
                 let end = ')' . end
-            elseif form[i] == '[' && SlimvGetFiletype() == 'clojure'
+            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*clojure.*'
                 let end = ']' . end
-            elseif form[i] == '{' && SlimvGetFiletype() == 'clojure'
+            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*clojure.*'
                 let end = '}' . end
-            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() == 'clojure')
+            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*clojure.*')
                 if len( end ) == 0 || end[0] != form[i]
                     " Oops, too many closing parens or invalid closing paren
                     return 'ERROR'
@@ -1482,7 +1482,7 @@ function! SlimvIndent( lnum )
     normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
-        if SlimvGetFiletype() == 'clojure'
+        if SlimvGetFiletype() =~ '.*clojure.*'
             " Is this a clojure form with [] binding list?
             call winrestview( oldpos )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
@@ -1518,7 +1518,7 @@ function! SlimvIndent( lnum )
                         endif
                     endif
                 endif
-                if SlimvGetFiletype() != 'clojure'
+                if SlimvGetFiletype() !~ '.*clojure.*'
                     if l2 == l && match( line2, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
                         call winrestview( oldpos )
@@ -1590,7 +1590,7 @@ function! SlimvIndent( lnum )
                 return c + 1
             endif
         endif
-        if SlimvGetFiletype() == 'clojure'
+        if SlimvGetFiletype() =~ '.*clojure.*'
             " Fix clojure specific indentation issues not handled by the default lisp.vim
             if match( func, 'defn$' ) >= 0
                 return c + 1
@@ -2449,7 +2449,7 @@ endfunction
 " Toggle debugger break on exceptions
 " Only for ritz-swank 0.4.0 and above
 function! SlimvBreakOnException()
-    if SlimvGetFiletype() == 'clojure' && s:swank_version >= '2010-11-13'
+    if SlimvGetFiletype() =~ '.*clojure.*' && s:swank_version >= '2010-11-13'
         " swank-clojure is abandoned at protocol version 20100404, so it must be ritz-swank
         if SlimvConnectSwank()
             let s:break_on_exception = ! s:break_on_exception

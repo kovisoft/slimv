@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.9.8
-" Last Change:  18 Aug 2012
+" Version:      0.9.9
+" Last Change:  12 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -37,6 +37,12 @@ endif
 " Use short keymaps, i.e. J instead of <Leader>J
 if !exists( 'g:paredit_shortmaps' )
     let g:paredit_shortmaps = 0
+endif
+
+" Use smart jumping to the nearest paren, curly brace, or square bracket in
+" clojure
+if !exists( 'g:paredit_smartjump' )
+    let g:paredit_smartjump = 0
 endif
 
 " Custom <Leader> for the Paredit plugin
@@ -79,7 +85,7 @@ function! PareditInitBuffer()
     " Make sure to include special characters in 'iskeyword'
     " in case they are accidentally removed
     " Also define regular expressions to identify special characters used by paredit
-    if &ft == 'clojure'
+    if &ft =~ '.*clojure.*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
         let b:any_matched_char   = '(\|)\|\[\|\]\|{\|}\|\"'
         let b:any_matched_pair   = '()\|\[\]\|{}\|\"\"'
@@ -106,10 +112,17 @@ function! PareditInitBuffer()
         inoremap <buffer> <expr>   "            PareditInsertQuotes()
         inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
         inoremap <buffer> <expr>   <Del>        PareditDel()
-        nnoremap <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
-        nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
-        vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-        vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+        if &ft =~ '.*clojure.*' && g:paredit_smartjump
+            nnoremap <buffer> <silent> (            :<C-U>call PareditSmartJumpOpening(0)<CR>
+            nnoremap <buffer> <silent> )            :<C-U>call PareditSmartJumpClosing(0)<CR>
+            vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditSmartJumpOpening(1)<CR>
+            vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditSmartJumpClosing(1)<CR>
+        else
+            nnoremap <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
+            nnoremap <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
+            vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
+            vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+        endif
         nnoremap <buffer> <silent> [[           :<C-U>call PareditFindDefunBck()<CR>
         nnoremap <buffer> <silent> ]]           :<C-U>call PareditFindDefunFwd()<CR>
         nnoremap <buffer> <silent> x            :<C-U>call PareditEraseFwd()<CR>
@@ -140,7 +153,7 @@ function! PareditInitBuffer()
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(,S'
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%,S'
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'I   :<C-U>call PareditRaise()<CR>'
-        if &ft == 'clojure'
+        if &ft =~ '.*clojure.*'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
             inoremap <buffer> <silent> ]            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=onemore<CR><C-O>:<C-U>call PareditInsertClosing('[',']')<CR><C-O>:let &ve=save_ve<CR>
             inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
@@ -208,7 +221,7 @@ function! PareditInitBuffer()
         silent! unmap  <buffer> cb
         silent! unmap  <buffer> ciw
         silent! unmap  <buffer> caw
-        if &ft == 'clojure'
+        if &ft =~ '.*clojure.*'
             silent! iunmap <buffer> [
             silent! iunmap <buffer> ]
             silent! iunmap <buffer> {
@@ -500,7 +513,7 @@ function! s:IsBalanced()
         return 0
     endif
 
-    if &ft == 'clojure'
+    if &ft =~ '.*clojure.*'
         let b1 = searchpair( '\[', '', '\]', 'brnmW', s:skip_sc, matchb )
         let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
         if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '[') && !(b1 == b2 + 1 && line[c-1] == ']')
@@ -563,7 +576,7 @@ function! s:Unbalanced( matched )
     while 1
         let matched = tmp
         let tmp = substitute( tmp, '(\(\s*\))',   ' \1 ', 'g')
-        if &ft == 'clojure'
+        if &ft =~ '.*clojure.*'
             let tmp = substitute( tmp, '\[\(\s*\)\]', ' \1 ', 'g')
             let tmp = substitute( tmp, '{\(\s*\)}',   ' \1 ', 'g')
         endif
@@ -571,7 +584,7 @@ function! s:Unbalanced( matched )
         if tmp == matched
             " All paired chars eliminated
             let tmp = substitute( tmp, ')\(\s*\)(',   ' \1 ', 'g')
-            if &ft == 'clojure'
+            if &ft =~ '.*clojure.*'
                 let tmp = substitute( tmp, '\]\(\s*\)\[', ' \1 ', 'g')
                 let tmp = substitute( tmp, '}\(\s*\){',   ' \1 ', 'g')
             endif
@@ -619,6 +632,42 @@ function! PareditFindClosing( open, close, select )
         normal! l
     else
         call searchpair( open, '', close, 'W', s:skip_sc )
+    endif
+endfunction
+
+" Returns the nearest opening character to the cursor
+" Used for smart jumping in Clojure
+function! PareditSmartJumpOpening( select )
+    let [paren_line, paren_col] = searchpairpos('(', '', ')', 'bWn', s:skip_sc)
+    let [bracket_line, bracket_col] = searchpairpos('\[', '', '\]', 'bWn', s:skip_sc)
+    let [brace_line, brace_col] = searchpairpos('{', '', '}', 'bWn', s:skip_sc)
+    let paren_score = paren_line * 10000 + paren_col
+    let bracket_score = bracket_line * 10000 + bracket_col
+    let brace_score = brace_line * 10000 + brace_col
+    if (brace_score > paren_score || paren_score == 0) && (brace_score > bracket_score || bracket_score == 0) && brace_score != 0
+	call PareditFindOpening('{','}', a:select)
+    elseif (bracket_score > paren_score || paren_score == 0) && bracket_score != 0
+	call PareditFindOpening('[',']', a:select)
+    else
+	call PareditFindOpening('(',')', a:select)
+    endif
+endfunction
+
+" Returns the nearest opening character to the cursor
+" Used for smart jumping in Clojure
+function! PareditSmartJumpClosing( select )
+    let [paren_line, paren_col] = searchpairpos('(', '', ')', 'Wn', s:skip_sc)
+    let [bracket_line, bracket_col] = searchpairpos('\[', '', '\]', 'Wn', s:skip_sc)
+    let [brace_line, brace_col] = searchpairpos('{', '', '}', 'Wn', s:skip_sc)
+    let paren_score = paren_line * 10000 + paren_col
+    let bracket_score = bracket_line * 10000 + bracket_col
+    let brace_score = brace_line * 10000 + brace_col
+    if (brace_score < paren_score || paren_score == 0) && (brace_score < bracket_score || bracket_score == 0) && brace_score != 0
+	call PareditFindClosing('{','}', a:select)
+    elseif (bracket_score < paren_score || paren_score == 0) && bracket_score != 0
+	call PareditFindClosing('[',']', a:select)
+    else
+	call PareditFindClosing('(',')', a:select)
     endif
 endfunction
 
@@ -698,7 +747,7 @@ function! s:ReGatherUp()
             normal! ddk
         endwhile
         normal! Jl
-    elseif g:paredit_electric_return && getline('.') =~ '^\s*\(\]\|}\)' && &ft == 'clojure' 
+    elseif g:paredit_electric_return && getline('.') =~ '^\s*\(\]\|}\)' && &ft =~ '.*clojure.*' 
         " Re-gather electric returns in the current line for ']' and '}'
         normal! k
         while getline( line('.') ) =~ '^\s*$'
@@ -752,7 +801,7 @@ function! PareditInsertClosing( open, close )
             call feedkeys( "\<Right>", 'n' )
             return
         endif
-        if len(nextline) > 0 && nextline[0] =~ '\]\|}' && &ft == 'clojure' 
+        if len(nextline) > 0 && nextline[0] =~ '\]\|}' && &ft =~ '.*clojure.*' 
             " Re-gather electric returns in the line of the closing ']' or '}'
             call setline( line('.'), substitute( line, '\s*$', '', 'g' ) )
             normal! Jxl
@@ -1369,7 +1418,7 @@ function! s:FindClosing()
     endif
     call setpos( '.', [0, l, c, 0] )
 
-    if &ft == 'clojure'
+    if &ft =~ '.*clojure.*'
         call PareditFindClosing( '[', ']', 0 )
         let lp = line( '.' )
         let cp = col( '.' )
