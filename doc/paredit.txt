@@ -372,6 +372,9 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
+|g:paredit_smartjump|        If nonzero, '(' and ')' also target square
+                             brackets and curly braces when editing Clojure.
+
 |g:paredit_leader|           Custom <Leader> setting for Paredit.
 
 |g:paredit_matchlines|       Number of lines to look backward and forward
@@ -397,6 +400,14 @@ to send the command line to the swank server for evaluation.
 
 Please find a video demonstration of the electric return feature here:
 http://img8.imageshack.us/img8/9479/openparen.gif
+
+                                                          *g:paredit_smartjump*
+If nonzero, this option changes the behavior of '(' and ')' in normal and
+visual modes when editing Clojure. Rather than jumping to nearest open or close
+parenthesis, instead the cursor will jump to the nearest '(', '[', or '{' if
+you press '(', and it will jump to the nearest ')', ']', or '}' if you press
+')'. This option makes it much easier to navigate nested Clojure data
+structures. It does nothing if the filetype is not clojure.
 
                                                              *g:paredit_leader*
 This option allows a custom <Leader> setting for the Paredit keybindings.
