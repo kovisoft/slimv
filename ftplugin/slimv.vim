@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  12 Oct 2012
+" Last Change:  18 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2156,7 +2156,13 @@ function! SlimvArglist( ... )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
         if l0 > 0
             " Found opening paren, let's find out the function name
-            let arg = matchstr( getline(l0), '\<\k*\>', c0 )
+            let arg = ''
+            while arg == '' && l0 <= l
+                let funcline = substitute( getline(l0), ';.*$', '', 'g' )
+                let arg = matchstr( funcline, '\<\k*\>', c0 )
+                let l0 = l0 + 1
+                let c0 = 0
+            endwhile
             if arg != ''
                 " Ask function argument list from SWANK
                 call SlimvFindPackage()
@@ -2169,7 +2175,8 @@ function! SlimvArglist( ... )
                     set noshowmode
                     let msg = substitute( msg, "\n", "", "g" )
                     redraw
-                    if match( msg, arg ) != 1
+                    " Use \V ('very nomagic') for exact string match instead of regex 
+                    if match( msg, "\\V" . arg ) != 1
                         " Function name is not received from REPL
                         call SlimvShortEcho( "(" . arg . ' ' . msg[1:] )
                     else
