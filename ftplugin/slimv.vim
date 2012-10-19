@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  18 Oct 2012
+" Last Change:  19 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1408,7 +1408,7 @@ endfunction
 
 " Return Lisp source code indentation at the given line
 function! SlimvIndent( lnum )
-    if a:lnum <= 1
+    if &autoindent == 0 || a:lnum <= 1
         " Start of the file
         return 0
     endif
