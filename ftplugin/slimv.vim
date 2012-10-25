@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  19 Oct 2012
+" Last Change:  25 Oct 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -346,7 +346,9 @@ endfunction
 " after the last character of the buffer when in insert mode
 function s:EndOfBuffer()
     normal! G$
-    call cursor( line('$'), 99999 )
+    if &virtualedit != 'all'
+        call cursor( line('$'), 99999 )
+    endif
 endfunction
 
 " Position the cursor at the end of the REPL buffer
@@ -1867,7 +1869,9 @@ function! SlimvHandleEnterRepl()
         endif
     else
         " Send current command line for evaluation
-        call cursor( 0, 99999 )
+        if &virtualedit != 'all'
+            call cursor( 0, 99999 )
+        endif
         call SlimvSendCommand(0)
     endif
     return ''
