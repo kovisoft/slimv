@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.9
-# Last Change:  25 Sep 2012
+# Last Change:  02 Nov 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -14,7 +14,6 @@
 ############################################################################### 
 
 
-import sys
 import socket
 import time
 import select
@@ -296,7 +295,7 @@ def swank_send(text):
     try:
         sock.send(t)
     except socket.error:
-        sys.stdout.write( 'Socket error when sending to SWANK server.\n' )
+        vim.command("let s:swank_result='Socket error when sending to SWANK server.\n'")
         swank_disconnect()
 
 def swank_recv_len(timeout):
@@ -311,7 +310,7 @@ def swank_recv_len(timeout):
         try:
             data = sock.recv(l)
         except socket.error:
-            sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+            vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
             swank_disconnect()
             return rec
         while data and len(rec) < lenbytes:
@@ -321,7 +320,7 @@ def swank_recv_len(timeout):
                 try:
                     data = sock.recv(l)
                 except socket.error:
-                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
                     swank_disconnect()
                     return rec
     return rec
@@ -348,11 +347,11 @@ def swank_recv(msglen, timeout):
                 try:
                     data = sock.recv(needed)
                 except socket.error:
-                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
                     swank_disconnect()
                     return rec
                 if len(data) == 0:
-                    sys.stdout.write( 'Socket error when receiving from SWANK server.\n' )
+                    vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
                     swank_disconnect()
                     return rec
                 rec = rec + data
@@ -1146,7 +1145,7 @@ def swank_disconnect():
     finally:
         sock = None
         vim.command('let s:swank_connected = 0')
-        sys.stdout.write( 'Connection to SWANK server is closed.\n' )
+        vim.command("let s:swank_result='Connection to SWANK server is closed.\n'")
 
 def swank_input(formvar):
     global empty_last_line
@@ -1217,11 +1216,12 @@ def swank_response(name):
         if not a.pending and (name == '' or name == a.name):
             vc = ":let s:swank_action='" + a.name + "'"
             vim.command(vc)
-            sys.stdout.write(a.result)
+            vim.command("let s:swank_result='%s'" % a.result.replace("'", "''"))
             actions.pop(a.id)
             actions_pending()
             return
     vc = ":let s:swank_action=''"
+    vc = ":let s:swank_result=''"
     vim.command(vc)
     actions_pending()
 

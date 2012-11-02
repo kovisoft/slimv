@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  25 Oct 2012
+" Last Change:  02 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -450,15 +450,12 @@ function! SlimvSwankResponse()
     let s:refresh_disabled = 1
     silent execute 'python swank_output(1)'
     let s:refresh_disabled = 0
-    let msg = ''
-    redir => msg
+    let s:swank_action = ''
+    let s:swank_result = ''
     silent execute 'python swank_response("")'
-    redir END
 
-    if msg != ''
-        if s:swank_action == ':describe-symbol'
-            echo substitute(msg,'^\n*','','')
-        endif
+    if s:swank_action == ':describe-symbol' && s:swank_result != ''
+        echo substitute(s:swank_result,'^\n*','','')
     endif
     if s:swank_actions_pending
         let s:last_update = -1
@@ -486,8 +483,8 @@ endfunction
 function! SlimvCommandGetResponse( name, cmd, timeout )
     let s:refresh_disabled = 1
     call SlimvCommand( a:cmd )
-    let msg = ''
     let s:swank_action = ''
+    let s:swank_result = ''
     let starttime = localtime()
     let cmd_timeout = a:timeout
     if cmd_timeout == 0
@@ -495,12 +492,10 @@ function! SlimvCommandGetResponse( name, cmd, timeout )
     endif
     while s:swank_action == '' && localtime()-starttime < cmd_timeout
         python swank_output( 0 )
-        redir => msg
         silent execute 'python swank_response("' . a:name . '")'
-        redir END
     endwhile
     let s:refresh_disabled = 0
-    return msg
+    return s:swank_result
 endfunction
 
 " Reload the contents of the REPL buffer from the output file if changed
