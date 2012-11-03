@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  02 Nov 2012
+" Last Change:  03 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -515,6 +515,13 @@ function! SlimvRefreshReplBuffer()
 
     if s:swank_connected
         call SlimvSwankResponse()
+    endif
+
+    if exists("s:input_prompt") && s:input_prompt != ''
+        let answer = input( s:input_prompt )
+        unlet s:input_prompt
+        echo ""
+        call SlimvCommand( 'python swank_return("' . answer . '")' )
     endif
 endfunction
 

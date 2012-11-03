@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.9
-# Last Change:  02 Nov 2012
+# Last Change:  03 Nov 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -678,6 +678,11 @@ def swank_listen():
                     # REPL requests entering a string
                     read_string = r[1:3]
 
+                elif message == ':read-from-minibuffer':
+                    # REPL requests entering a string in the command line
+                    read_string = r[1:3]
+                    vim.command("let s:input_prompt='%s'" % unquote(r[3]).replace("'", "''"))
+
                 elif message == ':indentation-update':
                     for el in r[1]:
                         indent_info[ unquote(el[0]) ] = el[1]
@@ -977,7 +982,13 @@ def swank_undefine_function(fn):
 
 def swank_return_string(s):
     global read_string
-    swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + s + ')')
+    swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' "' + s + '")')
+    read_string = None
+
+def swank_return(s):
+    global read_string
+    if s != '':
+        swank_send('(:emacs-return ' + read_string[0] + ' ' + read_string[1] + ' "' + s + '")')
     read_string = None
 
 def swank_inspect(symbol):
@@ -1154,7 +1165,7 @@ def swank_input(formvar):
     form = vim.eval(formvar)
     if read_string:
         # We are in :read-string mode, pass string entered to REPL
-        swank_return_string('"' + form + '"')
+        swank_return_string(form)
     elif form[0] == '[':
         if form[1] == '-':
             swank_inspector_pop()

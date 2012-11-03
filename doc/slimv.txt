@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 18 Aug 2012
+*slimv.txt*                    Slimv                 Last Change: 03 Nov 2012
 
 Slimv                                                                  *slimv*
-                               Version 0.9.8
+                               Version 0.9.9
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1008,6 +1008,7 @@ currently implemented in the Slimv SWANK client.
 
   :emacs-interrupt
   :emacs-pong
+  :emacs-return
   :emacs-return-string
   :indentation-update
   swank:compile-file-for-emacs
