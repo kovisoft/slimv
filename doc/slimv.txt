@@ -709,7 +709,7 @@ sequence, then you may want to fine tune these Vim options:
     <C-C>   <C-C>    Interrupt Lisp Process
     ,<Up>   ,rp      Previous Input
     ,<Down> ,rn      Next Input
-    ,-      ,rc      Clear REPL
+    ,-      ,-       Clear REPL
 
 Note:
 Some mappings accept an optional "x prefix (where x is a register name)
