@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.9
-# Last Change:  03 Nov 2012
+# Last Change:  06 Nov 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -42,7 +42,8 @@ package         = 'COMMON-LISP-USER' # Current package
 actions         = dict()        # Swank actions (like ':write-string'), by message id
 indent_info     = dict()        # Data of :indentation-update
 frame_locals    = dict()        # Map frame variable names to their index
-inspect_content = []            # Partial content of the last Inspect command
+inspect_lines   = 0             # Number of lines in the Inspector (excluding help text)
+inspect_newline = True          # Start a new line in the Inspector (for multi-part objects)
 inspect_package = ''            # Package used for the current Inspector
 
 
@@ -361,56 +362,49 @@ def swank_parse_inspect_content(pcont):
     """
     Parse the swank inspector content
     """
-    global inspect_content
+    global inspect_lines
+    global inspect_newline
 
-    vim.command('let oldpos=winsaveview()')
+    if type(pcont[0]) != list:
+        return
     buf = vim.current.buffer
-    # First 2 lines are filled in swank_parse_inspect()
-    buf[2:] = []
-    if type(pcont[0]) == list:
-        inspect_content = inspect_content + pcont[0]  # Append to the previous content
+    help_lines = int( vim.eval('exists("b:help_shown") ? len(b:help) : 1') )
+    pos = help_lines + inspect_lines
+    buf[pos:] = []
     istate = pcont[1]
     start  = pcont[2]
     end    = pcont[3]
     lst = []
-    linestart = 0
-    for el in inspect_content:
+    for el in pcont[0]:
         logprint(str(el))
+        newline = False
         if type(el) == list:
             if el[0] == ':action':
-                item = '{<' + unquote(el[2]) + '>'
-                tail = '<>}'
+                text = '{<' + unquote(el[2]) + '>' + unquote(el[1]) + '<>}'
             else:
-                item = '{[' + unquote(el[2]) + ']'
-                tail = '[]}'
-            lst.insert(len(lst), item)
-            linestart = -1
-            text = unquote(el[1])
-            lst.append(text + tail)
+                text = '{[' + unquote(el[2]) + ']' + unquote(el[1]) + '[]}'
+            lst.append(text)
         else:
             text = unquote(el)
             lst.append(text)
             if text == "\n":
-                linestart = len(lst)
+                newline = True
+    lines = "".join(lst).split("\n")
+    if inspect_newline or pos > len(buf):
+        buf.append(lines)
+    else:
+        buf[pos-1] = buf[pos-1] + lines[0]
+        buf.append(lines[1:])
+    inspect_lines = len(buf) - help_lines
+    inspect_newline = newline
     if int(istate) > int(end):
         # Swank returns end+1000 if there are more entries to request
-        if linestart >= 0 and linestart < len(lst) and (len(lst[linestart]) == 0 or lst[linestart][0] != '['):
-            lst[linestart:] = "[--more--]"
-        else:
-            lst.append("\n[--more--]")
-        lst.append("\n[--all---]")
-    buf = vim.current.buffer
-    buf.append([''])
-    buf.append("".join(lst).split("\n"))
+        buf.append(['', "[--more--]", "[--all---]"])
     inspect_path = vim.eval('s:inspect_path')
     if len(inspect_path) > 1:
-        ret = '[<<] Return to ' + ' -> '.join(inspect_path[:-1])
+        buf.append(['', '[<<] Return to ' + ' -> '.join(inspect_path[:-1])])
     else:
-        ret = '[<<] Exit Inspector'
-    buf.append(['', ret])
-    vim.command('normal! 3G0')
-    vim.command('call SlimvHelp(2)')
-    vim.command('call winrestview(oldpos)')
+        buf.append(['', '[<<] Exit Inspector'])
     if int(istate) > int(end):
         # There are more entries to request
         # Save current range for the next request
@@ -425,13 +419,19 @@ def swank_parse_inspect(struct):
     """
     Parse the swank inspector output
     """
-    global inspect_content
+    global inspect_lines
+    global inspect_newline
 
     vim.command('call SlimvOpenInspectBuffer()')
     buf = vim.current.buffer
-    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------']
+    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
+    vim.command('let oldpos=winsaveview()')
+    vim.command('normal! 3G0')
+    vim.command('call SlimvHelp(2)')
+    vim.command('call winrestview(oldpos)')
     pcont = parse_plist(struct, ':content')
-    inspect_content = []
+    inspect_lines = 3
+    inspect_newline = True
     swank_parse_inspect_content(pcont)
 
 def swank_parse_debug(struct):
