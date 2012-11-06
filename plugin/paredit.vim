@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.9
-" Last Change:  01 Nov 2012
+" Last Change:  05 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -765,16 +765,16 @@ endfunction
 
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
+    let line = getline( '.' )
+    let pos = col( '.' ) - 1
     if !g:paredit_mode || s:InsideComment() || s:InsideString() || !s:IsBalanced()
-        call setline( line('.'), getline('.') . a:close )
+        call setline( line('.'), line[0 : pos-1] . a:close . line[pos : -1] )
         normal! l
         return
     endif
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
     if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
         " About to enter a \) or \]
-        call setline( line('.'), getline('.') . a:close )
+        call setline( line('.'), line[0 : pos-1] . a:close . line[pos : -1] )
         normal! l
         return
     elseif line[pos] == a:close
