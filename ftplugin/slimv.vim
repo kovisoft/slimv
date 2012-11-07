@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  03 Nov 2012
+" Last Change:  07 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -807,7 +807,7 @@ function SlimvOpenInspectBuffer()
     noremap  <buffer> <silent>        <F1>   :call SlimvToggleHelp()<CR>
     noremap  <buffer> <silent>        <CR>   :call SlimvHandleEnterInspect()<CR>
     noremap  <buffer> <silent> <Backspace>   :call SlimvSendSilent(['[-1]'])<CR>
-    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect()<CR>'
+    execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvQuitInspect(1)<CR>'
 
     if version < 703
         " conceal mechanism is defined since Vim 7.3
@@ -886,12 +886,17 @@ function SlimvEndUpdate()
 endfunction
 
 " Quit Inspector
-function SlimvQuitInspect()
+function SlimvQuitInspect( force )
     " Clear the contents of the Inspect buffer
+    if exists( 'b:inspect_pos' )
+        unlet b:inspect_pos
+    endif
     setlocal noreadonly
     silent! %d
     call SlimvEndUpdate()
-    call SlimvCommand( 'python swank_quit_inspector()' )
+    if a:force
+        call SlimvCommand( 'python swank_quit_inspector()' )
+    endif
     b #
 endfunction
 
@@ -1934,6 +1939,15 @@ function! SlimvHandleEnterSldb()
     execute "normal! \<CR>"
 endfunction
 
+" Restore Inspector cursor position if the referenced title has already been visited
+function SlimvSetInspectPos( title )
+    if exists( 'b:inspect_pos' ) && has_key( b:inspect_pos, a:title )
+        call winrestview( b:inspect_pos[a:title] )
+    else
+        normal! gg0
+    endif
+endfunction
+
 " Handle normal mode 'Enter' keypress in the Inspector buffer
 function! SlimvHandleEnterInspect()
     let line = getline('.')
@@ -1964,6 +1978,14 @@ function! SlimvHandleEnterInspect()
     if l == line( '.' )
         " Keep the relevant part of the line
         let line = strpart( line, c )
+    endif
+
+    if exists( 'b:inspect_title' ) && b:inspect_title != ''
+        " Save cursor position in case we'll return to this page later on
+        if !exists( 'b:inspect_pos' )
+            let b:inspect_pos = {}
+        endif
+	let b:inspect_pos[b:inspect_title] = winsaveview()
     endif
 
     if line[0] == '['

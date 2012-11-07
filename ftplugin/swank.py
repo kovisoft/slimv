@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.9
-# Last Change:  06 Nov 2012
+# Last Change:  07 Nov 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -424,15 +424,16 @@ def swank_parse_inspect(struct):
 
     vim.command('call SlimvOpenInspectBuffer()')
     buf = vim.current.buffer
-    buf[:] = ['Inspecting ' + parse_plist(struct, ':title'), '--------------------', '']
-    vim.command('let oldpos=winsaveview()')
+    title = parse_plist(struct, ':title')
+    vim.command('let b:inspect_title="' + title + '"')
+    buf[:] = ['Inspecting ' + title, '--------------------', '']
     vim.command('normal! 3G0')
     vim.command('call SlimvHelp(2)')
-    vim.command('call winrestview(oldpos)')
     pcont = parse_plist(struct, ':content')
     inspect_lines = 3
     inspect_newline = True
     swank_parse_inspect_content(pcont)
+    vim.command('call SlimvSetInspectPos("' + title + '")')
 
 def swank_parse_debug(struct):
     """
@@ -722,7 +723,7 @@ def swank_listen():
                                 pass
                             elif element == 'nil' and action and action.name == ':inspector-pop':
                                 # Quit inspector
-                                vim.command('b #')
+                                vim.command('call SlimvQuitInspect(0)')
                             elif element != 'nil' and action and action.name in to_nodisp:
                                 # Do not display output, just store it in actions
                                 action.result = unquote(params)
