@@ -2031,6 +2031,16 @@ function! SlimvHandleEnterInspect()
             if item != ''
                 " Add item name to the object path
                 let entry = matchstr(line, '\[\d\+\]\s*\zs.\{-}\ze\s*\[\]}')
+                if entry == ''
+                    let entry = matchstr(line, '\[\d\+\]\s*\zs.*')
+                endif
+                if entry == ''
+                    let entry = 'Unknown object'
+                endif
+                if len( entry ) > 40
+                    " Crop if too long
+                    let entry = strpart( entry, 0, 37 ) . '...'
+                endif
                 let s:inspect_path = s:inspect_path + [entry]
             endif
         endif

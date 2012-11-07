@@ -1007,7 +1007,7 @@ def swank_inspector_nth_action(n):
     swank_rex(':inspector-call-nth-action', cmd, 'nil', 't', str(n))
 
 def swank_inspector_pop():
-    # Remove the last two entries from the inspect path
+    # Remove the last entry from the inspect path
     vim.command('let s:inspect_path = s:inspect_path[:-2]')
     swank_rex(':inspector-pop', '(swank:inspector-pop)', 'nil', 't')
 
