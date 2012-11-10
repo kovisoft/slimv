@@ -1,7 +1,7 @@
 " slimv-syntax-scheme.vim:
 "               Scheme syntax plugin for Slimv
-" Version:      0.9.6
-" Last Change:  24 Mar 2012
+" Version:      0.9.9
+" Last Change:  10 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -22,7 +22,7 @@ syn region  schemeMultilineComment  start=/#|/ end=/|#/ contains=schemeMultiline
 syn keyword schemeExtSyntax     ->environment ->namestring
 syn match   schemeExtSyntax     "#![-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
 syn match   schemeAtomMark      "'"
-syn match   schemeAtom          "'[^ \t()]\+" contains=schemeAtomMark
+syn match   schemeAtom          "'[^ \t()\[\]{}]\+" contains=schemeAtomMark
 syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeAtom,schemeDelimiter
 
 hi def link schemeAtomMark      Delimiter
@@ -39,6 +39,28 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region schemeParen7 contained matchgroup=hlLevel7 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen8
     syn region schemeParen8 contained matchgroup=hlLevel8 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen9
     syn region schemeParen9 contained matchgroup=hlLevel9 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen0
+
+    syn region schemeParen0           matchgroup=hlLevel0 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen1
+    syn region schemeParen1 contained matchgroup=hlLevel1 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen2
+    syn region schemeParen2 contained matchgroup=hlLevel2 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen3
+    syn region schemeParen3 contained matchgroup=hlLevel3 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen4
+    syn region schemeParen4 contained matchgroup=hlLevel4 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen5
+    syn region schemeParen5 contained matchgroup=hlLevel5 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen6
+    syn region schemeParen6 contained matchgroup=hlLevel6 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen7
+    syn region schemeParen7 contained matchgroup=hlLevel7 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen8
+    syn region schemeParen8 contained matchgroup=hlLevel8 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen9
+    syn region schemeParen9 contained matchgroup=hlLevel9 start="`\=\[" end="\]" skip="|.\{-}|" contains=@schemeListCluster,schemeParen0
+
+    syn region schemeParen0           matchgroup=hlLevel0 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen1
+    syn region schemeParen1 contained matchgroup=hlLevel1 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen2
+    syn region schemeParen2 contained matchgroup=hlLevel2 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen3
+    syn region schemeParen3 contained matchgroup=hlLevel3 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen4
+    syn region schemeParen4 contained matchgroup=hlLevel4 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen5
+    syn region schemeParen5 contained matchgroup=hlLevel5 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen6
+    syn region schemeParen6 contained matchgroup=hlLevel6 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen7
+    syn region schemeParen7 contained matchgroup=hlLevel7 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen8
+    syn region schemeParen8 contained matchgroup=hlLevel8 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen9
+    syn region schemeParen9 contained matchgroup=hlLevel9 start="`\={" end="}" skip="|.\{-}|" contains=@schemeListCluster,schemeParen0
 
     if &bg == "dark"
         hi def hlLevel0 ctermfg=red         guifg=red1
