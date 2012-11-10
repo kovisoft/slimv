@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.9
-" Last Change:  07 Nov 2012
+" Last Change:  10 Nov 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -671,7 +671,7 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region lispParen8 contained matchgroup=hlLevel8 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen9
     syn region lispParen9 contained matchgroup=hlLevel9 start="`\=("  skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen0
 
- if SlimvGetFiletype() =~ '.*clojure.*'
+ if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
     syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"              contains=@replListCluster,lispParen1,replPrompt
     syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen2
     syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" skip="|.\{-}|" end="\]" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=@replListCluster,lispParen3
@@ -985,7 +985,7 @@ endfunction
 
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
-    if SlimvGetFiletype() =~ '.*clojure.*'
+    if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
@@ -1335,11 +1335,11 @@ function! s:CloseForm( lines )
             " We are outside of strings and comments, now we shall count parens
             if form[i] == '('
                 let end = ')' . end
-            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*clojure.*'
+            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
                 let end = ']' . end
-            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*clojure.*'
+            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
                 let end = '}' . end
-            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*clojure.*')
+            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*')
                 if len( end ) == 0 || end[0] != form[i]
                     " Oops, too many closing parens or invalid closing paren
                     return 'ERROR'
@@ -1491,7 +1491,7 @@ function! SlimvIndent( lnum )
     normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
-        if SlimvGetFiletype() =~ '.*clojure.*'
+        if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
             " Is this a clojure form with [] binding list?
             call winrestview( oldpos )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
