@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 06 Jul 2012
+*paredit.txt*                   Paredit              Last Change: 20 Nov 2012
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.8
+                               Version 0.9.9
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -22,7 +22,7 @@ added or deleted, they are entered or removed in pairs.
 The function takes care of strings and comments, so no parenthesis and square
 bracket balancing is performed inside a string or comment.
 Please note that [] and {} pairs are not balanced for Lisp filetypes, only
-for Clojure.
+for Clojure and Scheme.
 
 The idea is taken from the paredit mode of Emacs, but not all paredit.el
 editing functions are implemented or behave exactly the same way as they do
@@ -372,8 +372,8 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
-|g:paredit_smartjump|        If nonzero, '(' and ')' also target square
-                             brackets and curly braces when editing Clojure.
+|g:paredit_smartjump|        If nonzero, '(' and ')' also target square brackets
+                             and curly braces when editing Clojure or Scheme.
 
 |g:paredit_leader|           Custom <Leader> setting for Paredit.
 
@@ -402,12 +402,12 @@ Please find a video demonstration of the electric return feature here:
 http://img8.imageshack.us/img8/9479/openparen.gif
 
                                                           *g:paredit_smartjump*
-If nonzero, this option changes the behavior of '(' and ')' in normal and
-visual modes when editing Clojure. Rather than jumping to nearest open or close
+If nonzero, this option changes the behavior of '(' and ')' in normal and visual
+modes when editing Clojure or Scheme. Rather than jumping to nearest open or close
 parenthesis, instead the cursor will jump to the nearest '(', '[', or '{' if
 you press '(', and it will jump to the nearest ')', ']', or '}' if you press
 ')'. This option makes it much easier to navigate nested Clojure data
-structures. It does nothing if the filetype is not clojure.
+structures. It does nothing if the filetype is not clojure or Scheme.
 
                                                              *g:paredit_leader*
 This option allows a custom <Leader> setting for the Paredit keybindings.

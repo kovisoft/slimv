@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 03 Nov 2012
+*slimv.txt*                    Slimv                 Last Change: 20 Nov 2012
 
 Slimv                                                                  *slimv*
                                Version 0.9.9
@@ -1434,6 +1434,27 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.9  - Added Paredit functions to Slimv menu (thanks to Conrad Schuler).
+       - Inspector: use the same package when pressing [--more--].
+       - Inspector: speeding up multi-part object processing.
+       - Inspector: save/restore cursor position for previously visited pages.
+       - <Leader>rc was doubly mapped, use <Leader>- for REPL Clear.
+       - Autodetect ritz-swank.
+       - Added Break-on-Exception function for ritz-swank.
+       - Added minibuffer operations, this enables [set value] in Inspector.
+       - Added smartjumping for Clojure (thanks to dgrnbrg on bitbucket.org).
+       - Disable indenting on "set noautoindent".
+       - Pass python output to Vim script in variable instead of redirecting
+         stdout (hopefully solves 64-bit MacVim problems).
+       - Handle [] and {} delimiters in Scheme like in Clojure.
+       - Paredit: ignore (, [, or { when preceded by \.
+       - Bugfix: arglist on <Space> after pressing 'I' in visual block mode.
+       - Bugfix: indentation after multi-line subform.
+       - Bugfix: problems with finding function name for arglist.
+       - Bugfix: corruption when pasting large text into console Vim.
+       - Bugfix: cursor positioning in REPL buffer when virtualedit=all.
+       - Bugfix: multi-line entry name parsing in Inspector.
+
 0.9.8  - Added autodetection for 'ccl'.
        - Delete empty lines when re-gathering Electric Returns.
        - Inspector: put multiple items in one line (like in Slime).
@@ -1967,8 +1988,8 @@ Also thanks to Vlad Hanciuta, Marcin Fatyga, Dmitry Petukhov,
 Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
-Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae
-for additional notes and contributions.
+Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
+Conrad Schuler for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)

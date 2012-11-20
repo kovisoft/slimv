@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 slimv.vim
 --------------------------------------------------------------------------------
+
 Superior Lisp Interaction Mode for Vim ("SLIME for Vim")
 
 Vim script
@@ -11,6 +12,7 @@ Tamas Kovacs
 --------------------------------------------------------------------------------
 Description
 --------------------------------------------------------------------------------
+
 Slimv is a SWANK client for Vim, similarly to SLIME for Emacs. SWANK is a TCP server for Emacs, which runs a Common Lisp, Clojure or Scheme REPL and provides a socket interface for evaluating, compiling, debugging, profiling lisp code. The SWANK server is embedded in Slimv, but you can also use your own SWANK installation.
 
 Slimv opens the lisp REPL (Read-Eval-Print Loop) inside a Vim buffer. Lisp commands may be entered and executed in the REPL buffer, just as in a regular REPL.
@@ -21,6 +23,9 @@ Slimv comes with Paredit Mode, which is similar to the functionality of paredit.
 
 Please visit the Slimv Tutorial for a more complete introduction:
 http://kovisoft.bitbucket.org/tutorial.html
+
+Please find the most recent development version in the repository:
+https://bitbucket.org/kovisoft/slimv
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 
@@ -45,6 +50,7 @@ Debug commands:
     *  Untrace All
     *  Disassemble
     *  Set Breakpoint
+    *  Break on Exception
     *  Inspect
     *  Abort
     *  Quit to Toplevel
@@ -131,6 +137,8 @@ See the included documentation for more complete installation and customization 
 --------------------------------------------------------------------------------
 Script versions
 --------------------------------------------------------------------------------
+
+0.9.9: Added Paredit functions to Slimv menu (thanks to Conrad Schuler). Inspector: Use the same package when pressing [--more--], speeding up multi-part object processing, save/restore cursor position for previously visited pages. ,rc was doubly mapped, use ,- for REPL Clear. Autodetect ritz-swank. Added Break-on-Exception function for ritz-swank. Added minibuffer operations, this enables [set value] in Inspector. Added smartjumping for Clojure (thanks to dgrnbrg on bitbucket.org). Disable indenting on "set noautoindent". Pass python output to Vim script in variable instead of redirecting stdout (hopefully solves 64-bit MacVim problems). Handle [] and {} delimiters in Scheme like in Clojure. Paredit: ignore (, [, or { when preceded by \. Bugfixes: Arglist on Space after pressing 'I' in visual block mode. Indentation after multi-line subform. Problems with finding function name for arglist. Corruption when pasting large text into console Vim. Cursor positioning in REPL buffer when virtualedit=all. Multi-line entry name parsing in Inspector.
 
 0.9.8: Added autodetection for 'ccl'. Delete empty lines when re-gathering Electric Returns. Inspector: put multiple items in one line (like in Slime), highlight selectable parts and actions, hide item id-s, display "path" of inspected object. Don't extend s-expression with prefix when macroexpanding. Don't evaluate or compile the REPL buffer. Added device to the path when loading pretty printer patches for SBCL (thanks to Andrew Lyon). Added option g:slimv_repl_simple_eval and Electric Return for REPL buffer. Print arglist when pressing Space after closing parens or double quotes, also when pressing Enter. Added "Clear REPL" entry to the REPL menu (mapped to <Leader>-). Paredit: special handling of cw, cb, ciw, caw supporting repeat ('.'). Do not describe empty symbol. Prefer selecting symbol to the left when cursor is on whitespace. Added "." character to iskeyword for Lisp. Removed "." when selecting symbol for completion for Clojure. Increased fuzzy completion limit. Bugfixes: Find package/namespace when current form is in a fold. PareditToggle ckecks if buffer was registered for Paredit. Electric Return re-gathering at end of line with no virtualedit. Extra character at the end of selection using 'v('. Garbage upon pressing ')' or Enter in completion popup. Paredit 'x' at end of line when 'whichwrap' includes h,l. Arglist sometimes not displayed. Paredit Wrap when line ends in a multibyte character (thanks to Sung Pae).
 
