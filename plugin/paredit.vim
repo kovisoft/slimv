@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  05 Dec 2012
+" Last Change:  08 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -281,7 +281,7 @@ function! PareditOpfunc( func, type, visualmode )
         endif
 
         if matched == ''
-            if a:type == 'V'
+            if a:func == 'c' && (a:type == 'V' || a:type == 'char')
                 silent exe "normal! gvc"
             else
                 silent exe "normal! gvd"
@@ -289,8 +289,15 @@ function! PareditOpfunc( func, type, visualmode )
         else
             silent exe "normal! gvc" . matched
             silent exe "normal! l"
-            if a:func == 'c'
-                silent exe "normal! " . string(len(endingwhitespace)) . "h"
+            let offs = len(matched)
+            if matched[0] =~ b:any_closing_char
+                let offs = offs + 1
+            endif
+            if a:func == 'd'
+                let offs = offs - 1
+            endif
+            if offs > 0
+                silent exe "normal! " . string(offs) . "h"
             endif
         endif
     endif
@@ -322,9 +329,13 @@ endfunction
 
 " General change operator handling
 function! PareditChange( type, ... )
+    let startcol = col('.')
     let ve_save = &virtualedit
     set virtualedit=all
     call PareditOpfunc( 'c', a:type, a:0 )
+    if startcol > 1
+        normal! l
+    endif
     startinsert
     let &virtualedit = ve_save
 endfunction
