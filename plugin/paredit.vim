@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  08 Dec 2012
+" Last Change:  09 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -254,7 +254,7 @@ function! PareditOpfunc( func, type, visualmode )
         silent exe "normal! `[v`]"
     endif
 
-    if !g:paredit_mode || a:visualmode && a:type == 'block' || a:type == "\<C-V>"
+    if !g:paredit_mode || (a:visualmode && (a:type == 'block' || a:type == "\<C-V>"))
         " Block mode is too difficult to handle at the moment
         silent exe "normal! d"
         let putreg = getreg( '"' )
@@ -264,6 +264,10 @@ function! PareditOpfunc( func, type, visualmode )
         if a:func == 'd'
             " Register "0 is corrupted by the above 'y' command
             call setreg( '0', save_0 ) 
+        endif
+        if a:visualmode && &selection == 'inclusive' && len(getline("'>")) < col("'>") && len(putreg) > 0
+            " Remove extra space added at the end of line when selection=inclusive
+            let putreg = putreg[:-2]
         endif
 
         " Find and keep unbalanced matched characters in the region
