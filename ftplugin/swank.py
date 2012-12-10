@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.9
-# Last Change:  07 Nov 2012
+# Version:      0.9.10
+# Last Change:  10 Dec 2012
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -367,6 +367,7 @@ def swank_parse_inspect_content(pcont):
 
     if type(pcont[0]) != list:
         return
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     help_lines = int( vim.eval('exists("b:help_shown") ? len(b:help) : 1') )
     pos = help_lines + inspect_lines
@@ -414,6 +415,7 @@ def swank_parse_inspect_content(pcont):
     else:
         # No ore entries left
         vim.command("let b:inspect_more=0")
+    vim.command('call SlimvEndUpdate()')
 
 def swank_parse_inspect(struct):
     """
@@ -423,6 +425,7 @@ def swank_parse_inspect(struct):
     global inspect_newline
 
     vim.command('call SlimvOpenInspectBuffer()')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     title = parse_plist(struct, ':title')
     vim.command('let b:inspect_title="' + title + '"')
@@ -440,6 +443,7 @@ def swank_parse_debug(struct):
     Parse the SLDB output
     """
     vim.command('call SlimvOpenSldbBuffer()')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     [thread, level, condition, restarts, frames, conts] = struct[1:7]
     buf[:] = [l for l in (unquote(condition[0]) + "\n" + unquote(condition[1])).splitlines()]
@@ -521,6 +525,7 @@ def swank_parse_compile(struct):
 
 def swank_parse_list_threads(tl):
     vim.command('call SlimvOpenThreadsBuffer()')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     buf[:] = ['Threads in pid '+pid, '--------------------']
     vim.command('call SlimvHelp(2)')
@@ -545,6 +550,7 @@ def swank_parse_frame_call(struct, action):
     Parse frame call output
     """
     vim.command('call SlimvGotoFrame(' + action.data + ')')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -561,6 +567,7 @@ def swank_parse_frame_source(struct, action):
     'Well, let's say a missing feature: source locations are currently not available for code loaded as source.'
     """
     vim.command('call SlimvGotoFrame(' + action.data + ')')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
@@ -594,6 +601,7 @@ def swank_parse_locals(struct, action):
     """
     frame_num = action.data
     vim.command('call SlimvGotoFrame(' + frame_num + ')')
+    vim.command('setlocal modifiable')
     buf = vim.current.buffer
     win = vim.current.window
     line = win.cursor[0]
