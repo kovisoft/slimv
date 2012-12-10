@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  09 Dec 2012
+" Last Change:  10 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -337,7 +337,19 @@ function! PareditChange( type, ... )
     let ve_save = &virtualedit
     set virtualedit=all
     call PareditOpfunc( 'c', a:type, a:0 )
-    if startcol > 1
+    if len(getline('.')) == 0
+        let l = line('.')
+        let expr = &indentexpr
+        if expr == ''
+            " No special 'indentexpr', call default lisp indent
+            let expr = 'lispindent(l)'
+        else
+            " Replace (v:lnum) in 'indentexpr' with (l)
+            let expr = substitute( expr, '(.*)', '(l)', 'g' )
+        endif
+        execute "call setline( l, repeat( ' ', " . expr . " ) )"
+        normal! $l
+    elseif startcol > 1
         normal! l
     endif
     startinsert
