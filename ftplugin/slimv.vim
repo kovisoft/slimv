@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.9
-" Last Change:  10 Nov 2012
+" Version:      0.9.10
+" Last Change:  10 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -637,7 +637,7 @@ function! SlimvOpenBuffer( name )
     endif
     setlocal buftype=nofile
     setlocal noswapfile
-    setlocal noreadonly
+    setlocal modifiable
 endfunction
 
 " Go to the end of the screen line
@@ -881,7 +881,7 @@ endfunction
 
 " End updating an otherwise readonly buffer
 function SlimvEndUpdate()
-    setlocal readonly
+    setlocal nomodifiable
     setlocal nomodified
 endfunction
 
@@ -891,7 +891,7 @@ function SlimvQuitInspect( force )
     if exists( 'b:inspect_pos' )
         unlet b:inspect_pos
     endif
-    setlocal noreadonly
+    setlocal modifiable
     silent! %d
     call SlimvEndUpdate()
     if a:force
@@ -903,7 +903,7 @@ endfunction
 " Quit Threads
 function SlimvQuitThreads()
     " Clear the contents of the Threads buffer
-    setlocal noreadonly
+    setlocal modifiable
     silent! %d
     call SlimvEndUpdate()
     b #
@@ -912,7 +912,7 @@ endfunction
 " Quit Sldb
 function SlimvQuitSldb()
     " Clear the contents of the Sldb buffer
-    setlocal noreadonly
+    setlocal modifiable
     silent! %d
     call SlimvEndUpdate()
     b #
@@ -942,7 +942,7 @@ endfunction
 
 " Write help text to current buffer at given line
 function SlimvHelp( line )
-    setlocal noreadonly
+    setlocal modifiable
     if exists( 'b:help_shown' )
         let help = b:help
     else
@@ -950,7 +950,6 @@ function SlimvHelp( line )
     endif
     let b:help_line = a:line
     call append( b:help_line, help )
-    call SlimvEndUpdate()
 endfunction
 
 " Toggle help
@@ -962,9 +961,10 @@ function SlimvToggleHelp()
         let lines = 1
         let b:help_shown = 1
     endif
-    setlocal noreadonly
+    setlocal modifiable
     execute ":" . (b:help_line+1) . "," . (b:help_line+lines) . "d"
     call SlimvHelp( b:help_line )
+    call SlimvEndUpdate()
 endfunction
 
 " Open SLDB buffer and place cursor on the given frame
@@ -1826,9 +1826,9 @@ endfunction
 
 " Make a fold at the cursor point in the current buffer
 function SlimvMakeFold()
-    setlocal noreadonly
+    setlocal modifiable
     normal! o    }}}kA {{{0
-    setlocal readonly
+    setlocal nomodifiable
 endfunction
 
 " Handle insert mode 'Enter' keypress in the REPL buffer
