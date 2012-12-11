@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  10 Dec 2012
+" Last Change:  11 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2966,12 +2966,31 @@ function! SlimvComplete( base )
         return []
     endif
     if s:swank_connected
+        " Save current buffer and window in case a swank command causes a buffer change
+        let buf = bufnr( "%" )
+        if winnr('$') < 2
+            let win = -1
+        else
+            let win = winnr()
+        endif
+
         call SlimvFindPackage()
         if g:slimv_simple_compl
             let msg = SlimvCommandGetResponse( ':simple-completions', 'python swank_completions("' . a:base . '")', 0 )
         else
             let msg = SlimvCommandGetResponse( ':fuzzy-completions', 'python swank_fuzzy_completions("' . a:base . '")', 0 )
         endif
+
+        " Restore window and buffer, because it is not allowed to change buffer here
+        if win >= 0 && winnr() != win
+            execute win . "wincmd w"
+            let msg = ''
+        endif
+        if bufnr( "%" ) != buf
+            execute "buf " . buf
+            let msg = ''
+        endif
+
         if msg != ''
             " We have a completion list from SWANK
             let res = split( msg, '\n' )
