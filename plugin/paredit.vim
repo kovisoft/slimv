@@ -81,11 +81,9 @@ let s:yank_pos           = []
 " Buffer specific initialization
 function! PareditInitBuffer()
     let b:paredit_init = 1
-    " Make sure to include special characters in 'iskeyword'
     " in case they are accidentally removed
     " Also define regular expressions to identify special characters used by paredit
     if &ft =~ '.*\(clojure\|scheme\).*'
-        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
         let b:any_matched_char   = '(\|)\|\[\|\]\|{\|}\|\"'
         let b:any_matched_pair   = '()\|\[\]\|{}\|\"\"'
         let b:any_opening_char   = '(\|\[\|{'
@@ -94,7 +92,6 @@ function! PareditInitBuffer()
         let b:any_wsopen_char    = '\s\|(\|\[\|{'
         let b:any_wsclose_char   = '\s\|)\|\]\|}'
     else
-        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,{,},[,]
         let b:any_matched_char   = '(\|)\|\"'
         let b:any_matched_pair   = '()\|\"\"'
         let b:any_opening_char   = '('
@@ -231,6 +228,17 @@ function! PareditInitBuffer()
             silent! iunmap <buffer> <CR>
         endif
     endif
+endfunction
+
+" Include all prefix and special characters in 'iskeyword'
+function! s:SetKeyword()
+    let old_value = &iskeyword
+    if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
+    else
+        setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
+    endif
+    return old_value
 endfunction
 
 " General Paredit operator function
@@ -1591,6 +1599,7 @@ endfunction
 " If standing on a paren then wrap the whole s-expression
 " Stand on the opening paren (if not wrapping in "")
 function! PareditWrap( open, close )
+    let isk_save = s:SetKeyword()
     if a:open != '"' && getline('.')[col('.') - 1] =~ b:any_openclose_char
         execute "normal! " . "v%\<Esc>"
     else
@@ -1600,6 +1609,7 @@ function! PareditWrap( open, close )
     if a:open != '"'
         normal! %
     endif
+    let &iskeyword = isk_save
 endfunction
 
 " Splice current list into the containing list
@@ -1629,6 +1639,7 @@ endfunction
 
 " Raise: replace containing form with the current symbol or sub-form
 function! PareditRaise()
+    let isk_save = s:SetKeyword()
     if getline('.')[col('.')-1] =~ b:any_openclose_char
         " Raise sub-form and re-indent
         normal! y%d%dab
@@ -1638,6 +1649,7 @@ function! PareditRaise()
         normal! yiwdab
         normal! "0Pb
     endif
+    let &iskeyword = isk_save
 endfunction
 
 " =====================================================================
