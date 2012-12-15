@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 20 Nov 2012
+*paredit.txt*                   Paredit              Last Change: 15 Dec 2012
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.9
+                               Version 0.9.10
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -95,9 +95,9 @@ but it is possible to switch it off by putting the following statement in the
     let g:paredit_mode = 0
 
 You can enable paredit mode for other file types as well. Here is how to set
-it for Arc files (meant to be added to your .vimrc file):
+it for Arc files in your .vimrc (assuming you have a filetype 'arc' defined):
 
-    au BufNewFile,BufRead *.arc call PareditInitBuffer()
+    au FileType arc call PareditInitBuffer()
 
 Paredit is part of Slimv, but it is also distributed separately as a standalone
 plugin. If you indend to use the SWANK client and/or Slimv's indentation and
