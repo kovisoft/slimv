@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  10 Dec 2012
+" Last Change:  15 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -711,7 +711,6 @@ endfunction
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_name )
     call b:SlimvInitRepl()
-    call PareditInitBuffer()
     if g:slimv_repl_syntax
         call SlimvSetSyntaxRepl()
     else
