@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  16 Dec 2012
+" Last Change:  27 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -292,7 +292,7 @@ function! PareditOpfunc( func, type, visualmode )
         endif
 
         if matched == ''
-            if a:func == 'c' && (a:type == 'V' || a:type == 'char')
+            if a:func == 'c' && (a:type == 'v' || a:type == 'V' || a:type == 'char')
                 silent exe "normal! gvc"
             else
                 silent exe "normal! gvd"
