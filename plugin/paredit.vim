@@ -1362,11 +1362,13 @@ function! PareditMoveLeft()
     endif
     let line = getline( '.' )
     let c =  col( '.' ) - 1
-    if closing && line[c+1] !~ b:any_wsclose_char
+    if closing && c+1 < len(line) && line[c+1] !~ b:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
     endif
+    let line = getline( '.' )
+    let c =  col( '.' ) - 1
     if !closing && c > 0 && line[c-len] !~ b:any_wsopen_char
         " Insert a space before if needed
         if len > 1
@@ -1377,7 +1379,6 @@ function! PareditMoveLeft()
             normal! l
         endif
     endif
-    return
 endfunction
 
 " Move delimiter one atom or s-expression to the right
@@ -1427,7 +1428,9 @@ function! PareditMoveRight()
             normal! l
         endif
     endif
-    if !opening && line[c+1] !~ b:any_wsclose_char
+    let line = getline( '.' )
+    let c =  col( '.' ) - 1
+    if !opening && c+1 < len(line) && line[c+1] !~ b:any_wsclose_char
         " Insert a space after if needed
         execute "normal! a "
         normal! h
