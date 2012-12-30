@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  27 Dec 2012
+" Last Change:  30 Dec 2012
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -136,6 +136,7 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> dd           :<C-U>call PareditDeleteLines()<CR>
         nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
         nnoremap <buffer> <silent> cw           :<C-U>call PareditChangeSpec('cw',1)<CR>
+        nnoremap <buffer> <silent> cW           :set opfunc=PareditChange<CR>g@E
         nnoremap <buffer> <silent> cb           :<C-U>call PareditChangeSpec('cb',0)<CR>
         nnoremap <buffer> <silent> ciw          :<C-U>call PareditChangeSpec('ciw',1)<CR>
         nnoremap <buffer> <silent> caw          :<C-U>call PareditChangeSpec('caw',1)<CR>
@@ -214,6 +215,7 @@ function! PareditInitBuffer()
         silent! unmap  <buffer> dd
         silent! unmap  <buffer> cc
         silent! unmap  <buffer> cw
+        silent! unmap  <buffer> cW
         silent! unmap  <buffer> cb
         silent! unmap  <buffer> ciw
         silent! unmap  <buffer> caw
@@ -278,7 +280,6 @@ function! PareditOpfunc( func, type, visualmode )
         endif
 
         " Find and keep unbalanced matched characters in the region
-        let endingwhitespace = matchstr(putreg, "\\s*$")
         let instring = s:InsideString( line("'<"), col("'<") )
         if col("'>") > 1 && !s:InsideString( line("'<"), col("'<") - 1 )
             " We are at the beginning of the string
@@ -287,9 +288,6 @@ function! PareditOpfunc( func, type, visualmode )
         let matched = s:GetMatchedChars( putreg, instring, s:InsideComment( line("'<"), col("'<") ) )
         let matched = s:Unbalanced( matched )
         let matched = substitute( matched, '\s', '', 'g' )
-        if a:func == 'c'
-            let matched = matched . endingwhitespace
-        endif
 
         if matched == ''
             if a:func == 'c' && (a:type == 'v' || a:type == 'V' || a:type == 'char')
