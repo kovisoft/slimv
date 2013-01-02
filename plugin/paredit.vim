@@ -235,7 +235,7 @@ endfunction
 " Include all prefix and special characters in 'iskeyword'
 function! s:SetKeyword()
     let old_value = &iskeyword
-    if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+    if &ft =~ '.*\(clojure\|scheme\).*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
