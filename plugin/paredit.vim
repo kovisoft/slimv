@@ -304,6 +304,9 @@ function! PareditOpfunc( func, type, visualmode )
             endif
             if a:func == 'd'
                 let offs = offs - 1
+            elseif instring && matched == '"'
+                " Keep cursor inside the double quotes
+                let offs = offs + 1
             endif
             if offs > 0
                 silent exe "normal! " . string(offs) . "h"
