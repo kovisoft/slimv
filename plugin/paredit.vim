@@ -67,7 +67,7 @@ endif
 let s:skip_sc = '(synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial" || getline(line("."))[col(".")-2] == "\\")'
 
 " Valid macro prefix characters
-let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,'
+let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,\|\^'
 
 " Repeat count for some remapped edit functions (like 'd')
 let s:repeat             = 0
