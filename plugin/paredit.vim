@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  30 Dec 2012
+" Last Change:  02 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -274,7 +274,7 @@ function! PareditOpfunc( func, type, visualmode )
         if a:func == 'd'
             " Register "0 is corrupted by the above 'y' command
             call setreg( '0', save_0 ) 
-        elseif a:visualmode && len(getline("'>")) < col("'>") && len(putreg) > 0
+        elseif a:visualmode && &selection == "inclusive" && len(getline("'>")) < col("'>") && len(putreg) > 0
             " Remove extra space added at the end of line when selection=inclusive, all, or onemore
             let putreg = putreg[:-2]
         endif
