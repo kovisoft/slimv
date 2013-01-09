@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  15 Dec 2012
+" Last Change:  09 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -733,7 +733,7 @@ function! SlimvOpenReplBuffer()
         inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
         inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     else
-        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        inoremap <buffer> <silent>        <CR>     <C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter(save_ve)<CR>
         inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
         inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
     endif
@@ -1684,7 +1684,9 @@ function! SlimvSendCommand( close )
             else
                 " Expression is not finished yet, indent properly and wait for completion
                 " Indentation works only if lisp indentation is switched on
-                call SlimvArglist()
+                let save_ve = &virtualedit
+                set virtualedit=all
+                call SlimvArglist( save_ve )
                 let l = line('.') + 1
                 call append( '.', '' )
                 call setline( l, repeat( ' ', SlimvIndent(l) ) )
@@ -1736,7 +1738,7 @@ function! SlimvHandleEnter()
 endfunction
 
 " Display arglist after pressing Enter
-function! SlimvArglistOnEnter()
+function! SlimvArglistOnEnter( set_ve )
     if s:arglist_line > 0
         let l = line('.')
         if getline(l) == ''
@@ -1744,12 +1746,13 @@ function! SlimvArglistOnEnter()
             call setline( l, repeat( ' ', SlimvIndent(l) ) )
             normal! $
         endif
-        call SlimvArglist( s:arglist_line, s:arglist_col )
+        call SlimvArglist( a:set_ve, s:arglist_line, s:arglist_col )
     endif
     let s:arglist_line = 0
     let s:arglist_col = 0
 
     " This function is called from <C-R>= mappings, must return empty string
+    let &virtualedit = a:set_ve
     return ''
 endfunction
 
@@ -2172,8 +2175,11 @@ function! SlimvDebugThread()
 endfunction
 
 " Display function argument list
-" Optional argument is the number of characters typed after the keyword
-function! SlimvArglist( ... )
+" First argument is the original 'virtualedit' value to restore at the end.
+" When the function is called from a mapping, 'virtualedit' shall be set
+" in the mapping, before any function is called.
+" Optional arguments are the line and column where the function name ends.
+function! SlimvArglist( set_ve, ... )
     if a:0
         " Symbol position supplied
         let l = a:1
@@ -2186,8 +2192,6 @@ function! SlimvArglist( ... )
     let line = getline(l)
     call s:SetKeyword()
     if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
-        let save_ve = &virtualedit
-        set virtualedit=all
         " Display only if entering the first space after a keyword
         let matchb = max( [l-200, 1] )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
@@ -2222,10 +2226,10 @@ function! SlimvArglist( ... )
                 endif
             endif
         endif
-        let &virtualedit=save_ve
     endif
 
     " This function is also called from <C-R>= mappings, must return empty string
+    let &virtualedit = a:set_ve
     return ''
 endfunction
 
@@ -3094,8 +3098,8 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist(line('.'),col('.')-1)<CR>
-    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    inoremap <silent> <buffer> <Space>    <Space><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-R>=SlimvArglist(save_ve, line('.'),col('.')-1)<CR>
+    inoremap <silent> <buffer> <CR>       <C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter(save_ve)<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
