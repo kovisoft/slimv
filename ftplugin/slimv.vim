@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  15 Dec 2012
+" Last Change:  11 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1737,7 +1737,12 @@ endfunction
 
 " Display arglist after pressing Enter
 function! SlimvArglistOnEnter()
+    let retval = ""
     if s:arglist_line > 0
+        if col('.') > len(getline('.'))
+            " Stay at the end of line
+            let retval = "\<End>"
+        endif
         let l = line('.')
         if getline(l) == ''
             " Add spaces to make the correct indentation
@@ -1749,8 +1754,8 @@ function! SlimvArglistOnEnter()
     let s:arglist_line = 0
     let s:arglist_col = 0
 
-    " This function is called from <C-R>= mappings, must return empty string
-    return ''
+    " This function is called from <C-R>= mappings, return additional keypress
+    return retval
 endfunction
 
 " Handle insert mode 'Tab' keypress by doing completion or indentation
@@ -2174,20 +2179,31 @@ endfunction
 " Display function argument list
 " Optional argument is the number of characters typed after the keyword
 function! SlimvArglist( ... )
+    let retval = ''
+    let save_ve = &virtualedit
+    set virtualedit=all
     if a:0
         " Symbol position supplied
         let l = a:1
         let c = a:2 - 1
+        let line = getline(l)
     else
         " Check symbol at cursor position
         let l = line('.')
+        let line = getline(l)
         let c = col('.') - 1
+        if c >= len(line)
+            " Stay at the end of line
+            let c = len(line) - 1
+            let retval = "\<End>"
+        endif
+        if line[c-1] == ' '
+            " Is this the space we have just inserted in a mapping?
+            let c = c - 1
+        endif
     endif
-    let line = getline(l)
     call s:SetKeyword()
     if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
-        let save_ve = &virtualedit
-        set virtualedit=all
         " Display only if entering the first space after a keyword
         let matchb = max( [l-200, 1] )
         let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
@@ -2222,11 +2238,11 @@ function! SlimvArglist( ... )
                 endif
             endif
         endif
-        let &virtualedit=save_ve
     endif
 
-    " This function is also called from <C-R>= mappings, must return empty string
-    return ''
+    " This function is also called from <C-R>= mappings, return additional keypress
+    let &virtualedit=save_ve
+    return retval
 endfunction
 
 " Start and connect swank server
@@ -3094,7 +3110,7 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist(line('.'),col('.')-1)<CR>
+    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
     inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
