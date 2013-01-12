@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.9.9
-" Last Change:  03 Oct 2012
+" Version:      0.9.10
+" Last Change:  12 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,7 +10,7 @@
 " =====================================================================
 "
 "  Load Once:
-if exists("b:did_ftplugin") || exists("g:slimv_disable_clojure")
+if exists("b:slimv_did_ftplugin") || exists("g:slimv_disable_clojure")
     finish
 endif
 
@@ -187,7 +187,7 @@ endfunction
 " Source Slimv general part
 runtime ftplugin/**/slimv.vim
 
-endif "!exists( 'g:slimv_lisp_loaded' )
+endif "!exists( 'g:slimv_clojure_loaded' )
 " ---------- End of part loaded once ----------
 
 runtime ftplugin/**/lisp.vim
@@ -195,6 +195,6 @@ runtime ftplugin/**/lisp.vim
 " Must be called for each lisp buffer
 call SlimvInitBuffer()
 
-" Don't load another plugin for this buffer
-let b:did_ftplugin = 1
+" Don't initiate Slimv again for this buffer
+let b:slimv_did_ftplugin = 1
 
