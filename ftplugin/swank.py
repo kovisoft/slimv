@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.10
-# Last Change:  10 Dec 2012
+# Last Change:  13 Jan 2013
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -959,6 +959,10 @@ def swank_frame_source_loc(frame):
 def swank_frame_locals(frame):
     cmd = '(swank:frame-locals-and-catch-tags ' + frame + ')'
     swank_rex(':frame-locals-and-catch-tags', cmd, 'nil', current_thread, frame)
+
+def swank_restart_frame(frame):
+    cmd = '(swank-backend:restart-frame ' + frame + ')'
+    swank_rex(':restart-frame', cmd, 'nil', current_thread, frame)
 
 def swank_set_package(pkg):
     cmd = '(swank:set-package "' + pkg + '")'

@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Nov 2012
+*slimv.txt*                    Slimv                 Last Change: 13 Jan 2013
 
 Slimv                                                                  *slimv*
-                               Version 0.9.9
+                               Version 0.9.10
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1054,6 +1054,7 @@ currently implemented in the Slimv SWANK client.
   swank:untrace-all
   swank:xref
   swank-backend:frame-call
+  swank-backend:restart-frame
 
 
 ===============================================================================
@@ -1944,7 +1945,6 @@ ISSUES, LIMITATIONS, KNOWN BUGS                                  *slimv-issues*
 TODO                                                               *slimv-todo*
 
 - Add missing SLIME functions to the SWANK client.
-- Continue separating other buffers (e.g. Threads) from the REPL buffer.
 - Allow connecting remote SWANK server (outside of localhost) via SSH.
 - Allow multiple REPL buffers in the same Vim session.
 - Allow multiple inferior lisps (e.g. one REPL to CLISP, another one to SBCL).
@@ -1989,7 +1989,7 @@ Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
 Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
-Conrad Schuler for additional notes and contributions.
+Conrad Schuler, Tim Pope for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)

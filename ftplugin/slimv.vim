@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  11 Jan 2013
+" Last Change:  13 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -850,10 +850,12 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'a      :call SlimvDebugAbort()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvDebugQuit()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'n      :call SlimvDebugContinue()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'N      :call SlimvDebugRestartFrame()<CR>'
     elseif g:slimv_keybindings == 2
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugAbort()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugQuit()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugContinue()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dr     :call SlimvDebugRestartFrame()<CR>'
     endif
 
     " Set folding parameters
@@ -2127,6 +2129,15 @@ function! SlimvDebugContinue()
     call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue" )
 endfunction
 
+" Restart execution of the frame with the same arguments
+function! SlimvDebugRestartFrame()
+    let frame = s:DebugFrame()
+    if frame != ''
+        call SlimvCommand( 'python swank_restart_frame("' . frame . '")' )
+        call SlimvRefreshReplBuffer()
+    endif
+endfunction
+
 " List current Lisp threads
 function! SlimvListThreads()
     if SlimvConnectSwank()
@@ -3175,6 +3186,7 @@ call s:MenuMap( 'Slim&v.De&bugging.-SldbSep-',                  '',             
 call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'a',  g:slimv_leader.'da',  ':call SlimvDebugAbort()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugQuit()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugContinue()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Restart-Frame',             g:slimv_leader.'N',  g:slimv_leader.'dr',  ':call SlimvDebugRestartFrame()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.-ThreadSep-',                '',                  '',                   ':' )
 call s:MenuMap( 'Slim&v.De&bugging.List-T&hreads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Kill-Thread\.\.\.',         g:slimv_leader.'K',  g:slimv_leader.'dk',  ':call SlimvKillThread()<CR>' )
