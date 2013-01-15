@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  13 Jan 2013
+" Last Change:  15 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -556,7 +556,9 @@ endfunction
 function! SlimvRefreshModeOff()
     execute "au! CursorHold"
     execute "au! CursorHoldI"
-    unlet b:au_curhold_set
+    if exists( 'b:au_curhold_set' )
+        unlet b:au_curhold_set
+    endif
 endfunction
 
 " Called when entering REPL buffer
