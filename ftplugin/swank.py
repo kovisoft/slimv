@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.10
-# Last Change:  13 Jan 2013
+# Last Change:  15 Jan 2013
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -702,7 +702,10 @@ def swank_listen():
 
                 elif message == ':return':
                     read_string = None
-                    result = r[1][0].lower()
+                    if len(r) > 1:
+                        result = r[1][0].lower()
+                    else:
+                        result = ""
                     if type(r_id) == str and r_id in actions:
                         action = actions[r_id]
                         action.pending = False
