@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  15 Jan 2013
+" Last Change:  21 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -368,6 +368,18 @@ function! SlimvMarkBufferEnd()
     let b:repl_prompt_line = line( '$' )
     let b:repl_prompt_col = len( getline('$') ) + 1
     let b:repl_prompt = getline( b:repl_prompt_line )
+endfunction
+
+" Get REPL prompt line. Fix stored prompt position when corrupted
+" (e.g. some lines were deleted from the REPL buffer)
+function! s:GetPromptLine()
+    if b:repl_prompt_line > line( '$' )
+        " Stored prompt line is corrupt
+        let b:repl_prompt_line = line( '$' )
+        let b:repl_prompt_col = len( getline('$') ) + 1
+        let b:repl_prompt = getline( b:repl_prompt_line )
+    endif
+    return b:repl_prompt_line
 endfunction
 
 " Save caller buffer identification
@@ -1262,7 +1274,7 @@ endfunction
 " Set command line after the prompt
 function! SlimvSetCommandLine( cmd )
     let line = getline( "." )
-    if line( "." ) == b:repl_prompt_line
+    if line( "." ) == s:GetPromptLine()
         " The prompt is in the line marked by b:repl_prompt_line
         let promptlen = len( b:repl_prompt )
     else
@@ -1645,7 +1657,7 @@ endfunction
 " Arguments: close = add missing closing parens
 function! SlimvSendCommand( close )
     call SlimvRefreshModeOn()
-    let lastline = b:repl_prompt_line
+    let lastline = s:GetPromptLine()
     let lastcol  = b:repl_prompt_col
     if lastline > 0
         if line( "." ) >= lastline
@@ -1784,7 +1796,7 @@ endfunction
 
 " Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
-    if line( "." ) == b:repl_prompt_line && col( "." ) <= b:repl_prompt_col
+    if line( "." ) == s:GetPromptLine() && col( "." ) <= b:repl_prompt_col
         " No BS allowed before the previous EOF mark
         return ""
     else
@@ -1812,7 +1824,7 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
-    if line( "." ) >= b:repl_prompt_line
+    if line( "." ) >= s:GetPromptLine()
         if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos == len( g:slimv_cmdhistory )
             call SlimvMarkBufferEnd()
             startinsert!
@@ -1825,7 +1837,7 @@ endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
-    if line( "." ) >= b:repl_prompt_line
+    if line( "." ) >= s:GetPromptLine()
         call s:NextCommand()
     else
         normal! gj
@@ -1843,7 +1855,7 @@ endfunction
 function! SlimvHandleEnterRepl()
     " Trim the prompt from the beginning of the command line
     " The user might have overwritten some parts of the prompt
-    let lastline = b:repl_prompt_line
+    let lastline = s:GetPromptLine()
     let lastcol  = b:repl_prompt_col
     let cmdline = getline( lastline )
     let c = 0
@@ -2074,7 +2086,7 @@ endfunction
 " Go to command line and recall previous command from command history
 function! SlimvPreviousCommand()
     call SlimvEndOfReplBuffer()
-    if line( "." ) >= b:repl_prompt_line
+    if line( "." ) >= s:GetPromptLine()
         call s:PreviousCommand()
     endif
 endfunction
@@ -2082,7 +2094,7 @@ endfunction
 " Go to command line and recall next command from command history
 function! SlimvNextCommand()
     call SlimvEndOfReplBuffer()
-    if line( "." ) >= b:repl_prompt_line
+    if line( "." ) >= s:GetPromptLine()
         call s:NextCommand()
     endif
 endfunction
