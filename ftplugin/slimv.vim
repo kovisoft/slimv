@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.10
-" Last Change:  21 Jan 2013
+" Last Change:  28 Jan 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3158,6 +3158,8 @@ endfunction
 " Edit commands
 call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     g:slimv_leader.')',  g:slimv_leader.'tc',  ':<C-U>call SlimvCloseForm()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',                  '',                   '<Ins><C-X><C-O>' )
+
+if exists( 'g:paredit_loaded' )
 call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 g:slimv_leader.'(',  g:slimv_leader.'(t',  ':<C-U>call PareditToggle()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.-PareditSep-',                    '',                  '',                   ':' )
 
@@ -3177,7 +3179,8 @@ call s:MenuMap( 'Slim&v.Edi&t.Paredit-&Join<Tab>'              .g:slimv_leader.'
 call s:MenuMap( 'Slim&v.Edi&t.Paredit-Ra&ise<Tab>'             .g:slimv_leader.'I',  '',  '',              ':<C-U>call PareditRaise()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Left<Tab>'          .g:slimv_leader.'<',  '',  '',              ':<C-U>call PareditMoveLeft()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.Paredit-Move&Right<Tab>'         .g:slimv_leader.'>',  '',  '',              ':<C-U>call PareditMoveRight()<CR>' )
-endif
+endif "g:paredit_shortmaps
+endif "g:paredit_loaded
 
 " Evaluation commands
 call s:MenuMap( 'Slim&v.&Evaluation.Eval-&Defun',               g:slimv_leader.'d',  g:slimv_leader.'ed',  ':<C-U>call SlimvEvalDefun()<CR>' )
