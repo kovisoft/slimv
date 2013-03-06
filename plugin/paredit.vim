@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  02 Jan 2013
+" Last Change:  06 Mar 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -479,6 +479,12 @@ function! s:InsideComment( ... )
         let line = substitute( line, '\\"', '', 'g' )
         let line = substitute( line, '"[^"]*"', '', 'g' )
         return match( line, ';' ) >= 0
+    endif
+    if s:SynIDMatch( 'clojureComment', l, c, 1 )
+        if strpart( getline(l), c-1, 2 ) == '#_' || strpart( getline(l), c-2, 2 ) == '#_'
+            " This is a commented out clojure form of type #_(...), treat it as regular form
+            return 0
+        endif
     endif
     return s:SynIDMatch( '[Cc]omment', l, c, 1 )
 endfunction
