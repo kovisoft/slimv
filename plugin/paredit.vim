@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.10
-" Last Change:  06 Mar 2013
+" Last Change:  12 Mar 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -501,7 +501,8 @@ function! s:InsideString( ... )
         let quotes = substitute( line, '[^"]', '', 'g' )
         return len(quotes) % 2
     endif
-    return s:SynIDMatch( '[Ss]tring', l, c, 0 )
+    " VimClojure and vim-clojure-static define special syntax for regexps
+    return s:SynIDMatch( '[Ss]tring\|clojureRegexp\|clojurePattern', l, c, 0 )
 endfunction
 
 " Is this a Slimv or VimClojure REPL buffer?
