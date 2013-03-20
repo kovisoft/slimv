@@ -15,7 +15,7 @@ if exists("b:current_syntax") || exists("g:slimv_disable_clojure")
 endif
 
 " Clojure keywords not defined by lisp.vim
-syn keyword lispFunc def defmulti defn defonce defprotocol doall dorun doseq dosync doto
+syn keyword lispFunc def defmulti defn defn- defonce defprotocol doall dorun doseq dosync doto
 syn keyword lispFunc filter fn for future in-ns letfn ns range str take try
 
 runtime syntax/**/lisp.vim
