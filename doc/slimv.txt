@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 13 Jan 2013
+*slimv.txt*                    Slimv                 Last Change: 02 Apr 2013
 
 Slimv                                                                  *slimv*
                                Version 0.9.10
@@ -1206,10 +1206,11 @@ Slimv does not want to copy these functionalities, if they exist and work well.
 1. Syntax highlighting
 
 The syntax highlighting is done via the default lisp.vim syntax plugin.
-For Clojure files one has two options:
+For Clojure files one has the following options:
 a. use the Lisp filetype also for Clojure files (that approach is used by Slimv
    for the REPL buffer if no other filetype is set)
 b. install a Clojure Vim syntax plugin, like VimClojure.
+c. newest Vim versions contain a specific Clojure syntax script.
 
 
 2. Indentation
@@ -1434,6 +1435,33 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.9.10 - Replaced 'readonly' flag with 'nomodifiable' for SLDB, Inspect,
+         Threads buffers.
+       - Restore window and buffer if SLDB is activated during completion.
+       - Allow using Slimv and VimClojure (or other clojure filetype plugin)
+         together.
+       - Added Restart-Frame command (thanks to Philipp Marek).
+       - Added defn- to clojure keywords (thanks to David Soria Parra).
+       - Paredit initialization on filetype instead of filename extension.
+       - Do not permanently set 'iskeyword' in paredit.vim.
+       - Paredit: added '^' macro prefix.
+       - Paredit: treat #_(...) type of clojure comments as regular forms.
+       - Paredit: handle VimClojure's #"" regexp syntax definition.
+       - It is now possible to remove plugin/paredit.vim.
+       - Bugfix: fixed missing variable error message.
+       - Bugfix: REPL prompt position corruption problems.
+       - Bugfix: cursor positioning problems when displaying arglist.
+       - Bugfix: paredit 'cc', 'Vc' did not delete line.
+       - Bugfix: paredit 'd', 'c', 'vc', 'cW' cursor positioning problems.
+       - Bugfix: paredit 'C' extra whitespace and trailing ".
+       - Bugfix: reset indent after paredit 'cc'.
+       - Bugfix: paredit 'dd', ',>' EOL problem.
+       - Bugfix: paredit indentation when 'indentexpr' takes no argument
+         (thanks to Tim Pope).
+       - Bugfix: keep cursor inside "" when deleting over trailing " via
+         paredit 'cW', 'C', etc.
+       - Bugfix: use &ft instead of SlimvGetFiletype() in paredit.vim.
 
 0.9.9  - Added Paredit functions to Slimv menu (thanks to Conrad Schuler).
        - Inspector: use the same package when pressing [--more--].
@@ -1989,7 +2017,8 @@ Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
 Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
-Conrad Schuler, Tim Pope for additional notes and contributions.
+Conrad Schuler, Tim Pope, David Soria Parra for additional notes and
+contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)

@@ -55,6 +55,7 @@ Debug commands:
     *  Abort
     *  Quit to Toplevel
     *  Continue
+    *  Restart Frame
     *  List Threads
     *  Kill Thread
     *  Debug Thread
@@ -112,7 +113,9 @@ Slimv works on Windows, Linux and Mac OS X (via Terminal.app), Cygwin is support
     *  Python (must be the same Python version that was Vim compiled against)
     *  Lisp (any Common Lisp with SLIME support) or Clojure or MIT Scheme (Linux only)
 
-Vim's Python version can be identified with the :ver command, look for the -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string.
+Vim's Python version can be identified with the :ver command, look for the -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string (if you have it). Another way of determining Vim's Python version:
+
+:python import sys; print(sys.version)
 
 Slimv tries to autodetect your Lisp/Clojure/Slime installation directories. If it fails to determine the correct directories, then you need to enter the command to start the SWANK server into your vimrc file.
 
@@ -128,9 +131,6 @@ Mac OS X example:
 For Clojure use the g:slimv_swank_clojure option, e.g.:
     let g:slimv_swank_clojure = '! xterm -e lein swank &' 
 
-
-Important notice to pre-0.9.0 users:
-If you want the old functionality that did not use the SWANK client, please fetch Slimv version 0.8.6 and set g:slimv_swank to 0 in your vimrc file.
 
 See the included documentation for more complete installation and customization instructions.
 
