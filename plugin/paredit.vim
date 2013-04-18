@@ -1617,7 +1617,7 @@ function! PareditWrap( open, close )
     if a:open != '"' && current_char =~ b:any_openclose_char
         execute "normal! " . "v%\<Esc>"
     else
-        let inside_comment = s:InsideComment(line, column - 1)
+        let inside_comment = s:InsideComment(line, column)
 
         if current_char == '"' && !inside_comment
             let escaped_quote = line_content[column - 2] == "\\"
@@ -1635,7 +1635,7 @@ function! PareditWrap( open, close )
                             let is_starting_quote = 0
                         endif
                     endif
-                elseif s:InsideString(line, column - 2)
+                elseif s:InsideString(line, column - 1)
                     if line_content[column - 2] != '"'
                         let is_starting_quote = 0
                     elseif line_content[column - 3] == "\\"
