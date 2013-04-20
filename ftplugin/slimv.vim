@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.10
-" Last Change:  28 Jan 2013
+" Version:      0.9.11
+" Last Change:  20 Apr 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1591,6 +1591,8 @@ function! SlimvIndent( lnum )
         " Found opening paren in the previous line
         let line = getline(l)
         let form = strpart( line, c )
+        " Determine the length of the function part up to the 1st argument
+        let funclen = matchend( form, '\s*\S*\s*' ) + 1
         " Contract strings, remove comments
         let form = substitute( form, '".\{-}[^\\]"', '""', 'g' )
         let form = substitute( form, ';.*$', '', 'g' )
@@ -1638,6 +1640,15 @@ function! SlimvIndent( lnum )
             if s:indent != '' && s:indent == args_here
                 " The next one is an &body argument, so indent by 2 spaces from the opening '('
                 return c + 1
+            endif
+            let llen = len( line )
+            if synIDattr( synID( l, llen, 0), 'name' ) =~ '[Ss]tring' && line[llen-1] != '"'
+                " Parent line ends with a multi-line string
+                " lispindent() fails to handle it correctly
+                if s:indent == '' && args_here > 0
+                    " No &body argument, ignore lispindent() and indent to the 1st argument
+                    return c + funclen - 1
+                endif
             endif
         endif
     endif
