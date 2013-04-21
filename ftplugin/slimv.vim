@@ -744,12 +744,12 @@ function! SlimvOpenReplBuffer()
 
     if g:slimv_repl_simple_eval
         inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
-        inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
-        inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>"   : SlimvHandleUp()<CR>
+        inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : SlimvHandleDown()<CR>
     else
         inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
-        inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>" : "\<lt>C-O>:call SlimvHandleUp()\<lt>CR>"<CR>
-        inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : "\<lt>C-O>:call SlimvHandleDown()\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>"   : SlimvHandleUp()<CR>
+        inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : SlimvHandleDown()<CR>
     endif
 
     if exists( 'g:paredit_loaded' )
@@ -1283,9 +1283,22 @@ function! SlimvSetCommandLine( cmd )
     if len( line ) > promptlen
         let line = strpart( line, 0, promptlen )
     endif
-    let line = line . a:cmd
+
+    if s:GetPromptLine() < line( '$' )
+        " Delete extra lines after the prompt
+        let c = col( '.' )
+        execute (s:GetPromptLine()+1) . ',' . (line('$')) . 'd_'
+        call cursor( line('.'), c )
+    endif
+
+    let lines = split( a:cmd, '\n' )
+    if len(lines) > 0
+        let line = line . lines[0]
+    endif
     call setline( ".", line )
-    call SlimvEndOfReplBuffer()
+    if len(lines) > 1
+        call append( s:GetPromptLine(), lines[1:] )
+    endif
     set nomodified
 endfunction
 
@@ -1295,24 +1308,41 @@ function! SlimvAddHistory( cmd )
         let g:slimv_cmdhistory = []
     endif
     let i = 0
-    while i < len( a:cmd )
-        " Trim trailing whitespaces from the command
-        let command = substitute( a:cmd[i], "\\(.*[^ ]\\)\\s*", "\\1", "g" )
-        if len( a:cmd ) > 1 || len( g:slimv_cmdhistory ) == 0 || command != g:slimv_cmdhistory[-1]
-            " Add command only if differs from the last one
-            call add( g:slimv_cmdhistory, command )
-        endif
-        let i = i + 1
-    endwhile
+    let form = join( a:cmd, "\n" )
+    " Trim leading and trailing whitespaces from the command
+    let form = substitute( form, '^\s*\(.*[^ ]\)\s*', '\1', 'g' )
+    if len( form ) > 1 || len( g:slimv_cmdhistory ) == 0 || form != g:slimv_cmdhistory[-1]
+        " Add command only if differs from the last one
+        call add( g:slimv_cmdhistory, form )
+    endif
     let g:slimv_cmdhistorypos = len( g:slimv_cmdhistory )
 endfunction
 
 " Recall command from the command history at the marked position
-function! SlimvRecallHistory()
-    if g:slimv_cmdhistorypos >= 0 && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
-        call SlimvSetCommandLine( g:slimv_cmdhistory[g:slimv_cmdhistorypos] )
-    else
+function! SlimvRecallHistory( direction )
+    let searchtext = ''
+    let l = line( '.' )
+    let c = col( '.' )
+    let set_cursor_pos = 0
+    if line( '.' ) == s:GetPromptLine() && c > b:repl_prompt_col
+        " Search for lines beginning with the text up to the cursor position
+        let searchtext = strpart( getline('.'), b:repl_prompt_col-1, c-b:repl_prompt_col )
+        let searchtext = substitute( searchtext, '^\s*\(.*[^ ]\)', '\1', 'g' )
+    endif
+    let historypos = g:slimv_cmdhistorypos
+    let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + a:direction
+    while g:slimv_cmdhistorypos >= 0 && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
+        let cmd = g:slimv_cmdhistory[g:slimv_cmdhistorypos]
+        if len(cmd) >= len(searchtext) && strpart(cmd, 0, len(searchtext)) == searchtext
+            call SlimvSetCommandLine( g:slimv_cmdhistory[g:slimv_cmdhistorypos] )
+            return
+        endif
+        let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + a:direction
+    endwhile
+    if searchtext == ''
         call SlimvSetCommandLine( "" )
+    else
+        let g:slimv_cmdhistorypos = historypos
     endif
 endfunction
 
@@ -1818,16 +1848,14 @@ endfunction
 " Recall previous command from command history
 function! s:PreviousCommand()
     if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos > 0
-        let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos - 1
-        call SlimvRecallHistory()
+        call SlimvRecallHistory( -1 )
     endif
 endfunction
 
 " Recall next command from command history
 function! s:NextCommand()
     if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos < len( g:slimv_cmdhistory )
-        let g:slimv_cmdhistorypos = g:slimv_cmdhistorypos + 1
-        call SlimvRecallHistory()
+        call SlimvRecallHistory( 1 )
     else
         call SlimvSetCommandLine( "" )
     endif
@@ -1835,24 +1863,28 @@ endfunction
 
 " Handle insert mode 'Up' keypress in the REPL buffer
 function! SlimvHandleUp()
+    let save_ve = &virtualedit
+    set virtualedit=onemore
     if line( "." ) >= s:GetPromptLine()
-        if exists( 'g:slimv_cmdhistory' ) && g:slimv_cmdhistorypos == len( g:slimv_cmdhistory )
-            call SlimvMarkBufferEnd()
-            startinsert!
-        endif
         call s:PreviousCommand()
     else
         normal! gk
     endif
+    let &virtualedit=save_ve
+    return ''
 endfunction
 
 " Handle insert mode 'Down' keypress in the REPL buffer
 function! SlimvHandleDown()
+    let save_ve = &virtualedit
+    set virtualedit=onemore
     if line( "." ) >= s:GetPromptLine()
         call s:NextCommand()
     else
         normal! gj
     endif
+    let &virtualedit=save_ve
+    return ''
 endfunction
 
 " Make a fold at the cursor point in the current buffer
@@ -2096,18 +2128,24 @@ endfunction
 
 " Go to command line and recall previous command from command history
 function! SlimvPreviousCommand()
+    let save_ve = &virtualedit
+    set virtualedit=onemore
     call SlimvEndOfReplBuffer()
     if line( "." ) >= s:GetPromptLine()
         call s:PreviousCommand()
     endif
+    let &virtualedit=save_ve
 endfunction
 
 " Go to command line and recall next command from command history
 function! SlimvNextCommand()
+    let save_ve = &virtualedit
+    set virtualedit=onemore
     call SlimvEndOfReplBuffer()
     if line( "." ) >= s:GetPromptLine()
         call s:NextCommand()
     endif
+    let &virtualedit=save_ve
 endfunction
 
 " Handle interrupt (Ctrl-C) keypress in the REPL buffer
