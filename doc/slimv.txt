@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Apr 2013
+*slimv.txt*                    Slimv                 Last Change: 21 Apr 2013
 
 Slimv                                                                  *slimv*
-                               Version 0.9.10
+                               Version 0.9.11
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -1082,7 +1082,15 @@ changes made to the form are restored at that location, but the changed form
 will be evaluated at the end of the REPL buffer.
 
 Another difference is the command line history, which can be activated by
-pressing <Up> or <Down> in the command line (also only in Insert mode).
+pressing <Up> or <Down> in the command line (only in Insert mode).
+When pressing <Up> or <Down> at an empty command prompt then each forms
+previously entered may be recalled from the history. If however some text
+is typed in the command line before pressing <Up> or <Down> then only forms
+beginning with the given searchtext are recalled from the history.
+In other words: text between the prompt and the cursor position is searched
+in command history. Leading whitespaces are ignored both in the searchtext
+and in the matching forms.
+
 Outside of the command line the <Up> and <Down> keys move the cursor,
 as usual.
 
@@ -1435,6 +1443,9 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.9.11 - Entering some text in REPL command history, then pressing <Up>/<Down>
+         searches for matching lines only.
 
 0.9.10 - Replaced 'readonly' flag with 'nomodifiable' for SLDB, Inspect,
          Threads buffers.
