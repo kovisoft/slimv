@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  20 Apr 2013
+" Last Change:  28 Apr 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -295,8 +295,9 @@ let s:refresh_disabled = 0                                " Set this variable te
 let s:sldb_level = -1                                     " Are we in the SWANK debugger? -1 == no, else SLDB level
 let s:break_on_exception = 0                              " Enable debugger break on exceptions (for ritz-swank)
 let s:compiled_file = ''                                  " Name of the compiled file
+let s:win_id = 0                                          " Counter for generating unique window id
 let s:current_buf = -1                                    " Swank action was requested from this buffer
-let s:current_win = -1                                    " Swank action was requested from this window
+let s:current_win = 0                                     " Swank action was requested from this window
 let s:arglist_line = 0                                    " Arglist was requested in this line ...
 let s:arglist_col = 0                                     " ... and column
 let s:inspect_path = []                                   " Inspection path of the current object
@@ -382,33 +383,40 @@ function! s:GetPromptLine()
     return b:repl_prompt_line
 endfunction
 
+" Generate unique window id for the current window
+function s:MakeWindowId()
+    if g:slimv_repl_split && !exists('w:id')
+        let s:win_id = s:win_id + 1
+        let w:id = s:win_id
+    endif
+endfunction
+
+" Find and switch to window with the specified window id
+function s:SwitchToWindow( id )
+    for winnr in range( 1, winnr('$') )
+        if getwinvar( winnr, 'id' ) is a:id
+            execute winnr . "wincmd w"
+        endif
+    endfor
+endfunction
+
 " Save caller buffer identification
 function! SlimvBeginUpdate()
     let s:current_buf = bufnr( "%" )
-    if winnr('$') < 2
-        " No windows yet
-        let s:current_win = -1
-    else
-        let s:current_win = winnr()
-    endif
+    let s:current_win = getwinvar( winnr(), 'id' )
 endfunction
 
 " Switch to the buffer/window that was active before a swank action
 function! SlimvRestoreFocus()
     let buf = bufnr( "%" )
-    let win = bufwinnr( "%" )
-    if buf != s:current_buf && win != -1
-        " Switch to the caller buffer/window
-        if g:slimv_repl_split
-            if s:current_win == -1
-                let s:current_win = winnr('#')
-            endif
-            if s:current_win > 0 && s:current_win != win
-                execute s:current_win . "wincmd w"
-            endif
-        else
-            execute "buf " . s:current_buf
-        endif
+    let win = getwinvar( winnr(), 'id' )
+    if winnr('$') > 1 && s:current_win != '' && s:current_win != win
+        " Switch to the caller window
+        call s:SwitchToWindow( s:current_win )
+    endif
+    if buf != s:current_buf
+        " Switch to the caller buffer
+        execute "buf " . s:current_buf
     endif
 endfunction
 
@@ -444,16 +452,11 @@ function! SlimvEndUpdateRepl()
     let repl_win = bufwinnr( repl_buf )
     if repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
         " Switch back to the caller buffer/window
-        if g:slimv_repl_split
-            if s:current_win == -1
-                let s:current_win = winnr('#')
-            endif
-            if s:current_win > 0 && s:current_win != repl_win
-                execute s:current_win . "wincmd w"
-            endif
-        else
-            execute "buf " . s:current_buf
+        let repl_winid = getwinvar( repl_win, 'id' )
+        if winnr('$') > 1 && s:current_win != '' && s:current_win != repl_winid
+            call s:SwitchToWindow( s:current_win )
         endif
+        execute "buf " . s:current_buf
     endif
 endfunction
 
@@ -522,8 +525,6 @@ function! SlimvRefreshReplBuffer()
         " REPL buffer not loaded
         return
     endif
-    let repl_win = bufwinnr( repl_buf )
-    let this_win = winnr()
 
     if s:swank_connected
         call SlimvSwankResponse()
@@ -601,14 +602,30 @@ endfunction
 
 " View the given file in a top/bottom/left/right split window
 function! s:SplitView( filename )
-    if winnr('$') >= 2
-        " We have already at least two windows
-        if bufnr("%") == s:current_buf && winnr() == s:current_win
+    " Check if we have at least two windows used by slimv (have a window id assigned)
+    let winnr1 = 0
+    let winnr2 = 0
+    for winnr in range( 1, winnr('$') )
+        if getwinvar( winnr, 'id' ) != ''
+            let winnr2 = winnr1
+            let winnr1 = winnr
+        endif
+    endfor
+    if winnr1 > 0 && winnr2 > 0
+        " We have already at least two windows used by slimv
+        let winid = getwinvar( winnr(), 'id' )
+        if bufnr("%") == s:current_buf && winid == s:current_win
             " Keep the current window on screen, use the other window for the new buffer
-            execute "wincmd p"
+            if winnr1 != winnr()
+                execute winnr1 . "wincmd w"
+            else
+                execute winnr2 . "wincmd w"
+            endif
         endif
         execute "silent view! " . a:filename
     else
+        " Generate unique window id for the old window if not yet done
+        call s:MakeWindowId()
         " No windows yet, need to split
         if g:slimv_repl_split == 1
             execute "silent topleft sview! " . a:filename
@@ -621,6 +638,8 @@ function! s:SplitView( filename )
         else
             execute "silent view! " . a:filename
         endif
+        " Generate unique window id for the new window as well
+        call s:MakeWindowId()
     endif
     stopinsert
 endfunction
@@ -1987,12 +2006,14 @@ function! SlimvHandleEnterSldb()
                     " Not implemented for CLISP or other lisp dialects
                     silent execute 'python swank_frame_call("' . item . '")'
                 endif
+                call SlimvRefreshReplBuffer()
                 return
             endif
             if search( '^Restarts:', 'bnW' ) > 0
                 " Apply item-th restart
                 call SlimvQuitSldb()
                 silent execute 'python swank_invoke_restart("' . s:sldb_level . '", "' . item . '")'
+                call SlimvRefreshReplBuffer()
                 return
             endif
         endif
@@ -3058,7 +3079,7 @@ function! SlimvComplete( base )
         " Save current buffer and window in case a swank command causes a buffer change
         let buf = bufnr( "%" )
         if winnr('$') < 2
-            let win = -1
+            let win = 0
         else
             let win = winnr()
         endif
@@ -3071,7 +3092,7 @@ function! SlimvComplete( base )
         endif
 
         " Restore window and buffer, because it is not allowed to change buffer here
-        if win >= 0 && winnr() != win
+        if win > 0 && winnr() != win
             execute win . "wincmd w"
             let msg = ''
         endif
@@ -3202,6 +3223,7 @@ function! SlimvInitBuffer()
     endif
     " This is needed for safe switching of modified buffers
     set hidden
+    call s:MakeWindowId()
 endfunction
 
 " Edit commands
