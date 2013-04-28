@@ -1,7 +1,7 @@
 " slimv-syntax-clojure.vim:
 "               Clojure syntax plugin for Slimv
-" Version:      0.9.5
-" Last Change:  21 Feb 2012
+" Version:      0.9.11
+" Last Change:  28 Apr 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -18,6 +18,9 @@ endif
 syn keyword lispFunc def defmulti defn defn- defonce defprotocol doall dorun doseq dosync doto
 syn keyword lispFunc filter fn for future in-ns letfn ns range str take try
 
+" Try to load built-in or third party syntax files
+" First clojure then lisp (if clojure not found) 
+runtime syntax/**/clojure.vim
 runtime syntax/**/lisp.vim
 
 " Add [] and {} to the lisp_rainbow handling
