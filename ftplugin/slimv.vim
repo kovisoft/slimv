@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  28 Apr 2013
+" Last Change:  02 May 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -414,7 +414,7 @@ function! SlimvRestoreFocus()
         " Switch to the caller window
         call s:SwitchToWindow( s:current_win )
     endif
-    if buf != s:current_buf
+    if s:current_buf >= 0 && buf != s:current_buf
         " Switch to the caller buffer
         execute "buf " . s:current_buf
     endif
@@ -450,7 +450,7 @@ function! SlimvEndUpdateRepl()
     call SlimvMarkBufferEnd()
     let repl_buf = bufnr( g:slimv_repl_name )
     let repl_win = bufwinnr( repl_buf )
-    if repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
+    if s:current_buf >= 0 && repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
         " Switch back to the caller buffer/window
         let repl_winid = getwinvar( repl_win, 'id' )
         if winnr('$') > 1 && s:current_win != '' && s:current_win != repl_winid
@@ -2821,6 +2821,7 @@ function! SlimvCompileDefun()
         call winrestview( oldpos ) 
         return
     endif
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:swank_form = SlimvGetSelection()
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
@@ -2841,6 +2842,7 @@ function! SlimvCompileLoadFile()
             write
         endif
     endif
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:compiled_file = ''
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
@@ -2869,6 +2871,7 @@ function! SlimvCompileFile()
             write
         endif
     endif
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
     endif
@@ -2892,6 +2895,7 @@ function! SlimvCompileRegion() range
         return
     endif
     let region = join( lines, "\n" )
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:swank_form = region
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
@@ -2902,6 +2906,7 @@ endfunction
 
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
+    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let symbol = SlimvSelectSymbol()
         if symbol == ''
