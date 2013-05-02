@@ -1650,8 +1650,11 @@ function! SlimvIndent( lnum )
         while form != f
             let f = form
             let form = substitute( form, '([^()]*)',     '0', 'g' )
+            let form = substitute( form, '([^()]*$',     '0', 'g' )
             let form = substitute( form, '\[[^\[\]]*\]', '0', 'g' )
+            let form = substitute( form, '\[[^\[\]]*$',  '0', 'g' )
             let form = substitute( form, '{[^{}]*}',     '0', 'g' )
+            let form = substitute( form, '{[^{}]*$',     '0', 'g' )
         endwhile
         " Find out the function name
         let func = matchstr( form, '\<\k*\>' )
