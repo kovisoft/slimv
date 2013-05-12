@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  02 May 2013
+" Last Change:  12 May 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -448,7 +448,7 @@ function! SlimvEndUpdateRepl()
 
     " Mark current prompt position
     call SlimvMarkBufferEnd()
-    let repl_buf = bufnr( g:slimv_repl_name )
+    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
     let repl_win = bufwinnr( repl_buf )
     if s:current_buf >= 0 && repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
         " Switch back to the caller buffer/window
@@ -520,7 +520,7 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
-    let repl_buf = bufnr( g:slimv_repl_name )
+    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
     if repl_buf == -1
         " REPL buffer not loaded
         return
@@ -646,7 +646,7 @@ endfunction
 
 " Open a buffer with the given name if not yet open, and switch to it
 function! SlimvOpenBuffer( name )
-    let buf = bufnr( a:name )
+    let buf = bufnr( '\<' . a:name . '\>' )
     if buf == -1
         " Create a new buffer
         call s:SplitView( a:name )
@@ -2353,7 +2353,7 @@ function! SlimvConnectServer()
     endif 
     call SlimvBeginUpdate()
     if SlimvConnectSwank()
-        let repl_buf = bufnr( g:slimv_repl_name )
+        let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
         let repl_win = bufwinnr( repl_buf )
         if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
             call SlimvOpenReplBuffer()
@@ -2429,7 +2429,7 @@ function! SlimvEvalSelection( outreg, testform )
         " Append optional test form at the tail
         let lines = lines + [a:testform]
     endif
-    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+    if bufname( "%" ) == g:slimv_repl_name
         " If this is the REPL buffer then go to EOF
         call s:EndOfBuffer()
     endif
@@ -2488,7 +2488,7 @@ endfunction
 
 " Evaluate the whole buffer
 function! SlimvEvalBuffer()
-    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+    if bufname( "%" ) == g:slimv_repl_name
         call SlimvError( "Cannot evaluate the REPL buffer." )
         return
     endif
@@ -2505,8 +2505,8 @@ endfunction
 function! s:DebugFrame()
     if s:swank_connected && s:sldb_level >= 0
         " Check if we are in SLDB
-        let repl_buf = bufnr( g:slimv_sldb_name )
-        if repl_buf != -1 && repl_buf == bufnr( "%" )
+        let sldb_buf = bufnr( '\<' . g:slimv_sldb_name . '\>' )
+        if sldb_buf != -1 && sldb_buf == bufnr( "%" )
             let bcktrpos = search( '^Backtrace:', 'bcnw' )
             let framepos = line( '.' )
             if matchstr( getline('.'), s:frame_def ) == ''
@@ -2580,7 +2580,7 @@ function! SlimvMacroexpand()
             return
         endif
         let s:swank_form = SlimvGetSelection()
-        if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        if bufname( "%" ) == g:slimv_repl_name
             " If this is the REPL buffer then go to EOF
             call s:EndOfBuffer()
         endif
@@ -2596,7 +2596,7 @@ function! SlimvMacroexpandAll()
             return
         endif
         let s:swank_form = SlimvGetSelection()
-        if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+        if bufname( "%" ) == g:slimv_repl_name
             " If this is the REPL buffer then go to EOF
             call s:EndOfBuffer()
         endif
@@ -2833,7 +2833,7 @@ endfunction
 
 " Compile and load whole file
 function! SlimvCompileLoadFile()
-    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+    if bufname( "%" ) == g:slimv_repl_name
         call SlimvError( "Cannot compile the REPL buffer." )
         return
     endif
@@ -2862,7 +2862,7 @@ endfunction
 
 " Compile whole file
 function! SlimvCompileFile()
-    if bufnr( "%" ) == bufnr( g:slimv_repl_name )
+    if bufname( "%" ) == g:slimv_repl_name
         call SlimvError( "Cannot compile the REPL buffer." )
         return
     endif
