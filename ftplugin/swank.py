@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.10
-# Last Change:  15 Jan 2013
+# Last Change:  12 May 2013
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -998,7 +998,7 @@ def swank_undefine_function(fn):
 
 def swank_return_string(s):
     global read_string
-    swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' "' + s + '")')
+    swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + requote(s) + ')')
     read_string = None
 
 def swank_return(s):
