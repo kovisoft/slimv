@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  12 May 2013
+" Last Change:  21 May 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -782,13 +782,11 @@ function! SlimvOpenReplBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'/      :call SlimvSendCommand(1)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Up>   :call SlimvPreviousCommand()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'<Down> :call SlimvNextCommand()<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'-      :call SlimvClearReplBuffer()<CR>'
     elseif g:slimv_keybindings == 2
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rs     :call SlimvSendCommand(0)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'ro     :call SlimvSendCommand(1)<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rp     :call SlimvPreviousCommand()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'rn     :call SlimvNextCommand()<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'-      :call SlimvClearReplBuffer()<CR>'
     endif
 
     if g:slimv_repl_wrap
@@ -822,9 +820,22 @@ endfunction
 
 " Clear the contents of the REPL buffer, keeping the last prompt only
 function! SlimvClearReplBuffer()
+    let repl_buf = -1
+    if bufname( "%" ) != g:slimv_repl_name
+        let this_buf = bufnr( "%" )
+        let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+        let oldpos = winsaveview()
+    endif
+    if repl_buf >= 0
+        execute "buf " . repl_buf
+    endif
     if b:repl_prompt_line > 1
         execute "normal! gg0d" . (b:repl_prompt_line-1) . "GG$"
         let b:repl_prompt_line = 1
+    endif
+    if repl_buf >= 0
+        execute "buf " . this_buf
+        call winrestview( oldpos )
     endif
 endfunction
 
@@ -3323,6 +3334,7 @@ call s:MenuMap( 'Slim&v.&Documentation.Generate-&Tags',         g:slimv_leader.'
 call s:MenuMap( 'Slim&v.&Repl.&Connect-Server',                 g:slimv_leader.'c',  g:slimv_leader.'rc',  ':call SlimvConnectServer()<CR>' )
 call s:MenuMap( '',                                             g:slimv_leader.'g',  g:slimv_leader.'rp',  ':call SlimvSetPackage()<CR>' )
 call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         g:slimv_leader.'y',  g:slimv_leader.'ri',  ':call SlimvInterrupt()<CR>' )
+call s:MenuMap( 'Slim&v.&Repl.Clear-&REPL',                     g:slimv_leader.'-',  g:slimv_leader.'-',   ':call SlimvClearReplBuffer()<CR>' )
 
 
 " =====================================================================
