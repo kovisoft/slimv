@@ -690,7 +690,9 @@ function! PareditFindClosing( open, close, select )
         call searchpair( open, '', close, 'bW', s:skip_sc )
         normal! v
         call searchpair( open, '', close, 'W', s:skip_sc )
-        normal! l
+        if &selection != 'inclusive'
+            normal! l
+        endif
     else
         call searchpair( open, '', close, 'W', s:skip_sc )
     endif
