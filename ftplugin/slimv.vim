@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  21 May 2013
+" Last Change:  22 May 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -820,20 +820,21 @@ endfunction
 
 " Clear the contents of the REPL buffer, keeping the last prompt only
 function! SlimvClearReplBuffer()
-    let repl_buf = -1
-    if bufname( "%" ) != g:slimv_repl_name
-        let this_buf = bufnr( "%" )
-        let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
-        let oldpos = winsaveview()
+    let this_buf = bufnr( "%" )
+    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+    if repl_buf == -1
+        call SlimvError( "There is no REPL buffer." )
+        return
     endif
-    if repl_buf >= 0
+    if this_buf != repl_buf
+        let oldpos = winsaveview()
         execute "buf " . repl_buf
     endif
     if b:repl_prompt_line > 1
         execute "normal! gg0d" . (b:repl_prompt_line-1) . "GG$"
         let b:repl_prompt_line = 1
     endif
-    if repl_buf >= 0
+    if this_buf != repl_buf
         execute "buf " . this_buf
         call winrestview( oldpos )
     endif
