@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  22 May 2013
+" Last Change:  23 May 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -762,11 +762,19 @@ function! SlimvOpenReplBuffer()
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
 
     if g:slimv_repl_simple_eval
-        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
+        if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
+            inoremap <buffer> <silent>    <CR>     <C-R>=pumvisible() ? "\<lt>C-Y>"  : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
+        else
+            inoremap <buffer> <silent>    <CR>     <C-R>=pumvisible() ? "\<lt>CR>"   : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
+        endif
         inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>"   : SlimvHandleUp()<CR>
         inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : SlimvHandleDown()<CR>
     else
-        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>CR>" : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
+            inoremap <buffer> <silent>    <CR>     <C-R>=pumvisible() ? "\<lt>C-Y>"  : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        else
+            inoremap <buffer> <silent>    <CR>     <C-R>=pumvisible() ? "\<lt>CR>"   : SlimvHandleEnterRepl()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        endif
         inoremap <buffer> <silent>        <C-Up>   <C-R>=pumvisible() ? "\<lt>Up>"   : SlimvHandleUp()<CR>
         inoremap <buffer> <silent>        <C-Down> <C-R>=pumvisible() ? "\<lt>Down>" : SlimvHandleDown()<CR>
     endif
@@ -1819,7 +1827,7 @@ endfunction
 function! SlimvHandleEnter()
     let s:arglist_line = line('.')
     let s:arglist_col = col('.')
-    if g:paredit_mode && g:paredit_electric_return
+    if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
         return PareditEnter()
     else
         return "\<CR>"
@@ -1964,7 +1972,7 @@ function! SlimvHandleEnterRepl()
         " Command part before cursor is unbalanced, insert newline
         let s:arglist_line = line('.')
         let s:arglist_col = col('.')
-        if g:paredit_mode && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
+        if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
             " Apply electric return
             return PareditEnter()
         else
@@ -3226,7 +3234,11 @@ endfunction
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
     inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
-    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>CR>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
+        inoremap <silent> <buffer> <CR>   <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    else
+        inoremap <silent> <buffer> <CR>   <C-R>=pumvisible() ?  "\<lt>CR>"  : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    endif
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
