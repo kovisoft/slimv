@@ -1,7 +1,7 @@
 " slimv-syntax-clojure.vim:
 "               Clojure syntax plugin for Slimv
 " Version:      0.9.11
-" Last Change:  28 Apr 2013
+" Last Change:  10 Jun 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -28,26 +28,72 @@ syn match			 lispSymbol			  contained			   ![^()\[\]{}'`,"; \t]\+!
 syn match			 lispBarSymbol			  contained			   !|..\{-}|!
 syn match			 lispAtom			  "'[^ \t()\[\]{}]\+"		   contains=lispAtomMark
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
-    syn region lispParen0           matchgroup=hlLevel0 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen1 
-    syn region lispParen1 contained matchgroup=hlLevel1 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen2 
-    syn region lispParen2 contained matchgroup=hlLevel2 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen3 
-    syn region lispParen3 contained matchgroup=hlLevel3 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen4 
-    syn region lispParen4 contained matchgroup=hlLevel4 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen5 
-    syn region lispParen5 contained matchgroup=hlLevel5 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen6 
-    syn region lispParen6 contained matchgroup=hlLevel6 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen7 
-    syn region lispParen7 contained matchgroup=hlLevel7 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen8 
-    syn region lispParen8 contained matchgroup=hlLevel8 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen9 
-    syn region lispParen9 contained matchgroup=hlLevel9 start="`\=\[" end="\]" skip="|.\{-}|" contains=@lispListCluster,lispParen0
+    if &bg == "dark"
+        hi def hlLevel0 ctermfg=red         guifg=red1
+        hi def hlLevel1 ctermfg=yellow      guifg=orange1
+        hi def hlLevel2 ctermfg=green       guifg=yellow1
+        hi def hlLevel3 ctermfg=cyan        guifg=greenyellow
+        hi def hlLevel4 ctermfg=magenta     guifg=green1
+        hi def hlLevel5 ctermfg=red         guifg=springgreen1
+        hi def hlLevel6 ctermfg=yellow      guifg=cyan1
+        hi def hlLevel7 ctermfg=green       guifg=slateblue1
+        hi def hlLevel8 ctermfg=cyan        guifg=magenta1
+        hi def hlLevel9 ctermfg=magenta     guifg=purple1
+    else
+        hi def hlLevel0 ctermfg=red         guifg=red3
+        hi def hlLevel1 ctermfg=darkyellow  guifg=orangered3
+        hi def hlLevel2 ctermfg=darkgreen   guifg=orange2
+        hi def hlLevel3 ctermfg=blue        guifg=yellow3
+        hi def hlLevel4 ctermfg=darkmagenta guifg=olivedrab4
+        hi def hlLevel5 ctermfg=red         guifg=green4
+        hi def hlLevel6 ctermfg=darkyellow  guifg=paleturquoise3
+        hi def hlLevel7 ctermfg=darkgreen   guifg=deepskyblue4
+        hi def hlLevel8 ctermfg=blue        guifg=darkslateblue
+        hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
+    endif
 
-    syn region lispParen0           matchgroup=hlLevel0 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen1 
-    syn region lispParen1 contained matchgroup=hlLevel1 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen2 
-    syn region lispParen2 contained matchgroup=hlLevel2 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen3 
-    syn region lispParen3 contained matchgroup=hlLevel3 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen4 
-    syn region lispParen4 contained matchgroup=hlLevel4 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen5 
-    syn region lispParen5 contained matchgroup=hlLevel5 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen6 
-    syn region lispParen6 contained matchgroup=hlLevel6 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen7 
-    syn region lispParen7 contained matchgroup=hlLevel7 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen8 
-    syn region lispParen8 contained matchgroup=hlLevel8 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen9 
-    syn region lispParen9 contained matchgroup=hlLevel9 start="`\={"  end="}"  skip="|.\{-}|" contains=@lispListCluster,lispParen0
+    silent! syn clear lispParen0
+    silent! syn clear lispParen1
+    silent! syn clear lispParen2
+    silent! syn clear lispParen3
+    silent! syn clear lispParen4
+    silent! syn clear lispParen5
+    silent! syn clear lispParen6
+    silent! syn clear lispParen7
+    silent! syn clear lispParen8
+    silent! syn clear lispParen9
+
+    syn region clojureSexp   matchgroup=hlLevel9 start="("  matchgroup=hlLevel9 end=")"  contains=TOP,@Spell
+    syn region clojureParen0 matchgroup=hlLevel8 start="`\=(" end=")" contains=TOP,clojureParen0,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen1 matchgroup=hlLevel7 start="`\=(" end=")" contains=TOP,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen2 matchgroup=hlLevel6 start="`\=(" end=")" contains=TOP,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen3 matchgroup=hlLevel5 start="`\=(" end=")" contains=TOP,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen4 matchgroup=hlLevel4 start="`\=(" end=")" contains=TOP,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen5 matchgroup=hlLevel3 start="`\=(" end=")" contains=TOP,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen6 matchgroup=hlLevel2 start="`\=(" end=")" contains=TOP,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen7 matchgroup=hlLevel1 start="`\=(" end=")" contains=TOP,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen8 matchgroup=hlLevel0 start="`\=(" end=")" contains=TOP,clojureParen8,NoInParens
+
+    syn region clojureVector matchgroup=hlLevel9 start="\[" matchgroup=hlLevel9 end="\]" contains=TOP,@Spell
+    syn region clojureParen0 matchgroup=hlLevel8 start="`\=\[" end="\]" contains=TOP,clojureParen0,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen1 matchgroup=hlLevel7 start="`\=\[" end="\]" contains=TOP,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen2 matchgroup=hlLevel6 start="`\=\[" end="\]" contains=TOP,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen3 matchgroup=hlLevel5 start="`\=\[" end="\]" contains=TOP,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen4 matchgroup=hlLevel4 start="`\=\[" end="\]" contains=TOP,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen5 matchgroup=hlLevel3 start="`\=\[" end="\]" contains=TOP,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen6 matchgroup=hlLevel2 start="`\=\[" end="\]" contains=TOP,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen7 matchgroup=hlLevel1 start="`\=\[" end="\]" contains=TOP,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen8 matchgroup=hlLevel0 start="`\=\[" end="\]" contains=TOP,clojureParen8,NoInParens
+
+    syn region clojureMap    matchgroup=hlLevel9 start="{"  matchgroup=hlLevel9 end="}"  contains=TOP,@Spell
+    syn region clojureParen0 matchgroup=hlLevel8 start="`\={" end="}" contains=TOP,clojureParen0,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen1 matchgroup=hlLevel7 start="`\={" end="}" contains=TOP,clojureParen1,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen2 matchgroup=hlLevel6 start="`\={" end="}" contains=TOP,clojureParen2,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen3 matchgroup=hlLevel5 start="`\={" end="}" contains=TOP,clojureParen3,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen4 matchgroup=hlLevel4 start="`\={" end="}" contains=TOP,clojureParen4,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen5 matchgroup=hlLevel3 start="`\={" end="}" contains=TOP,clojureParen5,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen6 matchgroup=hlLevel2 start="`\={" end="}" contains=TOP,clojureParen6,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen7 matchgroup=hlLevel1 start="`\={" end="}" contains=TOP,clojureParen7,clojureParen8,NoInParens
+    syn region clojureParen8 matchgroup=hlLevel0 start="`\={" end="}" contains=TOP,clojureParen8,NoInParens
 endif
 
