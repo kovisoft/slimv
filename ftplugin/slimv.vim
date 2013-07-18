@@ -402,6 +402,7 @@ endfunction
 
 " Save caller buffer identification
 function! SlimvBeginUpdate()
+    call s:MakeWindowId()
     let s:current_buf = bufnr( "%" )
     let s:current_win = getwinvar( winnr(), 'id' )
 endfunction
