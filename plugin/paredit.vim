@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.11
-" Last Change:  23 May 2013
+" Last Change:  20 Jul 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1006,7 +1006,7 @@ endfunction
 
 " Initialize yank position list
 function! s:InitYankPos()
-    let @" = ''
+    call setreg( &clipboard == 'unnamed' ? '*' : '"', '' ) 
     let s:yank_pos = []
 endfunction
 
@@ -1030,7 +1030,7 @@ endfunction
 function! s:EraseFwd( count, startcol )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    let reg = @"
+    let reg = getreg( &clipboard == 'unnamed' ? '*' : '"' )
     let ve_save = &virtualedit
     set virtualedit=all
     let c = a:count
@@ -1075,14 +1075,14 @@ function! s:EraseFwd( count, startcol )
     endwhile
     let &virtualedit = ve_save
     call setline( '.', line )
-    let @" = reg
+    call setreg( &clipboard == 'unnamed' ? '*' : '"', reg ) 
 endfunction
 
 " Backward erasing a character in normal mode, do not check if current form balanced
 function! s:EraseBck( count )
     let line = getline( '.' )
     let pos = col( '.' ) - 1
-    let reg = @"
+    let reg = getreg( &clipboard == 'unnamed' ? '*' : '"' )
     let c = a:count
     while c > 0 && pos > 0
         if pos > 1 && line[pos-2] == '\' && line[pos-1] =~ b:any_matched_char && (pos < 3 || line[pos-3] != '\')
@@ -1113,7 +1113,7 @@ function! s:EraseBck( count )
         let c = c - 1
     endwhile
     call setline( '.', line )
-    let @" = reg
+    call setreg( &clipboard == 'unnamed' ? '*' : '"', reg ) 
 endfunction
 
 " Forward erasing a character in normal mode
