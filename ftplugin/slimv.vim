@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  18 Jul 2013
+" Last Change:  09 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -770,8 +770,10 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
 
 else
 
+  if SlimvGetFiletype() !~ '.*clojure.*'
     syn region lispList             matchgroup=Delimiter start="("    skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>" contains=@replListCluster
     syn region lispBQList           matchgroup=PreProc   start="`("   skip="|.\{-}|" end=")"  matchgroup=replPrompt end="^\S\+>" contains=@replListCluster
+  endif
 
 endif
 
