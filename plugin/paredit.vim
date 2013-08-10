@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.11
-" Last Change:  20 Jul 2013
+" Last Change:  10 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -912,19 +912,19 @@ endfunction
 
 " Handle <Enter> keypress, insert electric return if applicable
 function! PareditEnter()
-    let line = getline( '.' )
-    let pos = col( '.' ) - 1
-    if g:paredit_electric_return && pos > 0 && line[pos] =~ b:any_closing_char && !s:InsideString() && s:IsBalanced()
-        " Electric Return
-        if pumvisible()
-            " Pressing <CR> in a pop up selects entry.
-            return "\<C-Y>"
-        else
-            return "\<CR>\<CR>\<Up>"
-        endif
+    if pumvisible()
+        " Pressing <CR> in a pop up selects entry.
+        return "\<C-Y>"
     else
-        " Regular Return
-        return "\<CR>"
+        let line = getline( '.' )
+        let pos = col( '.' ) - 1
+        if g:paredit_electric_return && pos > 0 && line[pos] =~ b:any_closing_char && !s:InsideString() && s:IsBalanced()
+            " Electric Return
+            return "\<CR>\<CR>\<Up>"
+        else
+            " Regular Return
+            return "\<CR>"
+        endif
     endif
 endfunction
 

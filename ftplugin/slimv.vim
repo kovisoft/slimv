@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  09 Aug 2013
+" Last Change:  10 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1869,10 +1869,17 @@ endfunction
 function! SlimvHandleEnter()
     let s:arglist_line = line('.')
     let s:arglist_col = col('.')
-    if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
-        return PareditEnter()
+    if pumvisible()
+        " Pressing <CR> in a pop up selects entry.
+        return "\<C-Y>"
     else
-        return "\<CR>"
+        if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return
+            " Apply electric return
+            return PareditEnter()
+        else
+            " No electric return handling, just enter a newline
+            return "\<CR>"
+        endif
     endif
 endfunction
 
@@ -2014,12 +2021,17 @@ function! SlimvHandleEnterRepl()
         " Command part before cursor is unbalanced, insert newline
         let s:arglist_line = line('.')
         let s:arglist_col = col('.')
-        if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
-            " Apply electric return
-            return PareditEnter()
+        if pumvisible()
+            " Pressing <CR> in a pop up selects entry.
+            return "\<C-Y>"
         else
-            " No electric return handling, just enter a newline
-            return "\<CR>"
+            if exists( 'g:paredit_mode' ) && g:paredit_mode && g:paredit_electric_return && lastline > 0 && line( "." ) >= lastline
+                " Apply electric return
+                return PareditEnter()
+            else
+                " No electric return handling, just enter a newline
+                return "\<CR>"
+            endif
         endif
     else
         " Send current command line for evaluation
