@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.11
-" Last Change:  10 Aug 2013
+" Last Change:  13 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -64,7 +64,7 @@ endif
 " =====================================================================
 
 " Skip matches inside string or comment or after '\'
-let s:skip_sc = '(synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial" || getline(line("."))[col(".")-2] == "\\")'
+let s:skip_sc = '(synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial\\|clojureRegexp\\|clojurePattern" || getline(line("."))[col(".")-2] == "\\")'
 
 " Valid macro prefix characters
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,\|\^'
