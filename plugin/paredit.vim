@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.11
-" Last Change:  13 Aug 2013
+" Last Change:  19 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -121,11 +121,11 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> [[           :<C-U>call PareditFindDefunBck()<CR>
         nnoremap <buffer> <silent> ]]           :<C-U>call PareditFindDefunFwd()<CR>
 
-        call RepeatableNNoRemap('x', ':<C-U>call PareditEraseFwd()<CR>')
+        call RepeatableNNoRemap('x', ':<C-U>call PareditEraseFwd()')
         nnoremap <buffer> <silent> <Del>        :<C-U>call PareditEraseFwd()<CR>
-        call RepeatableNNoRemap('X', ':<C-U>call PareditEraseBck()<CR>')
+        call RepeatableNNoRemap('X', ':<C-U>call PareditEraseBck()')
         nnoremap <buffer> <silent> s            :<C-U>call PareditEraseFwd()<CR>i
-        call RepeatableNNoRemap('D', 'v$:<C-U>call PareditDelete(visualmode(),1)<CR>')
+        call RepeatableNNoRemap('D', 'v$:<C-U>call PareditDelete(visualmode(),1)')
         nnoremap <buffer> <silent> C            v$:<C-U>call PareditChange(visualmode(),1)<CR>
         nnoremap <buffer> <silent> d            :<C-U>call PareditSetDelete(v:count)<CR>g@
         vnoremap <buffer> <silent> d            :<C-U>call PareditDelete(visualmode(),1)<CR>
@@ -133,43 +133,43 @@ function! PareditInitBuffer()
         vnoremap <buffer> <silent> <Del>        :<C-U>call PareditDelete(visualmode(),1)<CR>
         nnoremap <buffer> <silent> c            :set opfunc=PareditChange<CR>g@
         vnoremap <buffer> <silent> c            :<C-U>call PareditChange(visualmode(),1)<CR>
-        call RepeatableNNoRemap('dd', ':<C-U>call PareditDeleteLines()<CR>')
+        call RepeatableNNoRemap('dd', ':<C-U>call PareditDeleteLines()')
         nnoremap <buffer> <silent> cc           :<C-U>call PareditChangeLines()<CR>
         nnoremap <buffer> <silent> cw           :<C-U>call PareditChangeSpec('cw',1)<CR>
         nnoremap <buffer> <silent> cW           :set opfunc=PareditChange<CR>g@E
         nnoremap <buffer> <silent> cb           :<C-U>call PareditChangeSpec('cb',0)<CR>
         nnoremap <buffer> <silent> ciw          :<C-U>call PareditChangeSpec('ciw',1)<CR>
         nnoremap <buffer> <silent> caw          :<C-U>call PareditChangeSpec('caw',1)<CR>
-        call RepeatableNNoRemap('p', ':<C-U>call PareditPut("p")<CR>')
-        call RepeatableNNoRemap('P', ':<C-U>call PareditPut("P")<CR>')
-        call RepeatableNNoRemap(g:paredit_leader . 'w(', ':<C-U>call PareditWrap("(",")")<CR>')
+        call RepeatableNNoRemap('p', ':<C-U>call PareditPut("p")')
+        call RepeatableNNoRemap('P', ':<C-U>call PareditPut("P")')
+        call RepeatableNNoRemap(g:paredit_leader . 'w(', ':<C-U>call PareditWrap("(",")")')
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w(  :<C-U>call PareditWrapSelection("(",")")<CR>'
-        call RepeatableNNoRemap(g:paredit_leader . 'w"', ':<C-U>call PareditWrap('."'".'"'."','".'"'."')<CR>")
+        call RepeatableNNoRemap(g:paredit_leader . 'w"', ':<C-U>call PareditWrap('."'".'"'."','".'"'."')")
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrapSelection('."'".'"'."','".'"'."')<CR>"
         " Spliec s-expression killing backward/forward
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(,S'
         execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%,S'
-        call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()<CR>')
+        call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()')
         if &ft =~ '.*\(clojure\|scheme\).*'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
             inoremap <buffer> <silent> ]            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('[',']')<CR><C-O>:let &ve=save_ve<CR>
             inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
             inoremap <buffer> <silent> }            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('{','}')<CR><C-O>:let &ve=save_ve<CR>
-            call RepeatableNNoRemap(g:paredit_leader . 'w[', ':<C-U>call PareditWrap("[","]")<CR>')
+            call RepeatableNNoRemap(g:paredit_leader . 'w[', ':<C-U>call PareditWrap("[","]")')
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
-            call RepeatableNNoRemap(g:paredit_leader . 'w{', ':<C-U>call PareditWrap("{","}")<CR>')
+            call RepeatableNNoRemap(g:paredit_leader . 'w{', ':<C-U>call PareditWrap("{","}")')
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w{  :<C-U>call PareditWrapSelection("{","}")<CR>'
         endif
 
         if g:paredit_shortmaps
             " Shorter keymaps: old functionality of KEY is remapped to <Leader>KEY
-            call RepeatableNNoRemap('<', ':<C-U>call PareditMoveLeft()<CR>') 
-            call RepeatableNNoRemap('>', ':<C-U>call PareditMoveRight()<CR>') 
-            call RepeatableNNoRemap('O', ':<C-U>call PareditSplit()<CR>') 
-            call RepeatableNNoRemap('J', ':<C-U>call PareditJoin()<CR>') 
-            call RepeatableNNoRemap('W', ':<C-U>call PareditWrap("(",")")<CR>') 
+            call RepeatableNNoRemap('<', ':<C-U>call PareditMoveLeft()') 
+            call RepeatableNNoRemap('>', ':<C-U>call PareditMoveRight()') 
+            call RepeatableNNoRemap('O', ':<C-U>call PareditSplit()') 
+            call RepeatableNNoRemap('J', ':<C-U>call PareditJoin()') 
+            call RepeatableNNoRemap('W', ':<C-U>call PareditWrap("(",")")') 
             vnoremap <buffer> <silent> W            :<C-U>call PareditWrapSelection('(',')')<CR>
-            call RepeatableNNoRemap('S', ':<C-U>call PareditSplice()<CR>') 
+            call RepeatableNNoRemap('S', ':<C-U>call PareditSplice()') 
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'<  :<C-U>normal! <<CR>'
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'>  :<C-U>normal! ><CR>'
             execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'O  :<C-U>normal! O<CR>'
@@ -180,13 +180,13 @@ function! PareditInitBuffer()
         else
             " Longer keymaps with <Leader> prefix
             nnoremap <buffer> <silent> S            V:<C-U>call PareditChange(visualmode(),1)<CR>
-            call RepeatableNNoRemap(g:paredit_leader . '<', ':<C-U>call PareditMoveLeft()<CR>') 
-            call RepeatableNNoRemap(g:paredit_leader . '>', ':<C-U>call PareditMoveRight()<CR>') 
-            call RepeatableNNoRemap(g:paredit_leader . 'O', ':<C-U>call PareditSplit()<CR>') 
-            call RepeatableNNoRemap(g:paredit_leader . 'J', ':<C-U>call PareditJoin()<CR>') 
-            call RepeatableNNoRemap(g:paredit_leader . 'W', ':<C-U>call PareditWrap("(",")")<CR>') 
+            call RepeatableNNoRemap(g:paredit_leader . '<', ':<C-U>call PareditMoveLeft()') 
+            call RepeatableNNoRemap(g:paredit_leader . '>', ':<C-U>call PareditMoveRight()') 
+            call RepeatableNNoRemap(g:paredit_leader . 'O', ':<C-U>call PareditSplit()') 
+            call RepeatableNNoRemap(g:paredit_leader . 'J', ':<C-U>call PareditJoin()') 
+            call RepeatableNNoRemap(g:paredit_leader . 'W', ':<C-U>call PareditWrap("(",")")') 
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'W  :<C-U>call PareditWrapSelection("(",")")<CR>'
-            call RepeatableNNoRemap(g:paredit_leader . 'S', ':<C-U>call PareditSplice()<CR>') 
+            call RepeatableNNoRemap(g:paredit_leader . 'S', ':<C-U>call PareditSplice()') 
         endif
 
         if g:paredit_electric_return && mapcheck( "<CR>", "i" ) == ""
@@ -237,7 +237,7 @@ function! RepeatableMap(map_type, keys, command)
   let escaped_keys = substitute(a:keys, '["<]', '\\\0', "g")
   execute a:map_type . ' <silent> <buffer> ' .
         \ a:keys . ' ' . a:command .
-        \ ':silent! call repeat#set("' . escaped_keys . '")<CR>'
+        \ '\|silent! call repeat#set("' . escaped_keys . '")<CR>'
 endfunction
 
 function! RepeatableNMap(keys, command)
