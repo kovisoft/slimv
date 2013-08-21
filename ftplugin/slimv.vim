@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.11
-" Last Change:  10 Aug 2013
+" Last Change:  21 Aug 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1778,6 +1778,16 @@ function! SlimvIndent( lnum )
     return li
 endfunction 
 
+" Convert indent value to spaces or a mix of tabs and spaces
+" depending on the value of 'expandtab'
+function! s:MakeIndent( indent )
+    if &expandtab
+        return repeat( ' ', a:indent )
+    else
+        return repeat( "\<Tab>", a:indent / &tabstop ) . repeat( ' ', a:indent % &tabstop )
+    endif
+endfunction
+
 " Send command line to REPL buffer
 " Arguments: close = add missing closing parens
 function! SlimvSendCommand( close )
@@ -1828,7 +1838,7 @@ function! SlimvSendCommand( close )
                 call SlimvArglist()
                 let l = line('.') + 1
                 call append( '.', '' )
-                call setline( l, repeat( ' ', SlimvIndent(l) ) )
+                call setline( l, s:MakeIndent( SlimvIndent(l) ) )
                 normal! j$
             endif
         endif
@@ -1894,7 +1904,7 @@ function! SlimvArglistOnEnter()
         let l = line('.')
         if getline(l) == ''
             " Add spaces to make the correct indentation
-            call setline( l, repeat( ' ', SlimvIndent(l) ) )
+            call setline( l, s:MakeIndent( SlimvIndent(l) ) )
             normal! $
         endif
         call SlimvArglist( s:arglist_line, s:arglist_col )
@@ -1917,10 +1927,11 @@ function! SlimvHandleTab()
         " At the end of a keyword, bring up completions
         return "\<C-X>\<C-O>"
     endif
-    let indent = SlimvIndent(line('.')) + 1
-    if c < indent && getline('.') !~ '\S\+'
+    let indent = SlimvIndent(line('.'))
+    if c-1 < indent && getline('.') !~ '\S\+'
         " We are left from the autoindent position, do an autoindent
-        return repeat(" ", indent-c)
+        call setline( line('.'), s:MakeIndent( indent ) )
+        return "\<End>"
     endif
     " No keyword to complete, no need for autoindent, just enter a <Tab>
     return "\<Tab>"
