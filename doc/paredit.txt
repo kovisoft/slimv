@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 15 Dec 2012
+*paredit.txt*                   Paredit              Last Change: 23 Aug 2013
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.10
+                               Version 0.9.11
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -370,6 +370,12 @@ available even when paredit mode is switched off.
 ===============================================================================
 PAREDIT OPTIONS                                               *paredit-options*
 
+|g:paredit_disable_clojure|  If defined, paredit is disabled for clojure files.
+
+|g:paredit_disable_lisp|     If defined, paredit is disabled for lisp files.
+
+|g:paredit_disable_scheme|   If defined, paredit is disabled for scheme files.
+
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
 |g:paredit_smartjump|        If nonzero, '(' and ')' also target square brackets
@@ -385,6 +391,13 @@ PAREDIT OPTIONS                                               *paredit-options*
 |g:paredit_shortmaps|        If nonzero, paredit is remapping some one-letter
                              Vim commands that are not frequently used.
 
+
+                                                    *g:paredit_disable_clojure*
+                                                       *g:paredit_disable_lisp*
+                                                     *g:paredit_disable_scheme*
+If defined then paredit is disabled for the given file type. Useful to use
+a different plugin for a specific file type, but keep using paredit for the
+others.
 
                                                     *g:paredit_electric_return*
 If nonzero then "electric return" feature is enabled. This means that when an
