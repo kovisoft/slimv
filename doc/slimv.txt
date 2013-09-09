@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 21 Apr 2013
+*slimv.txt*                    Slimv                 Last Change: 09 Sep 2013
 
 Slimv                                                                  *slimv*
                                Version 0.9.11
@@ -1446,6 +1446,35 @@ CHANGE LOG                                                    *slimv-changelog*
 
 0.9.11 - Entering some text in REPL command history, then pressing <Up>/<Down>
          searches for matching lines only.
+       - Changed lisp syntax for #\( and #\) to "string".
+       - Handle three or more windows layout: assign an id to each slimv
+         window, reuse slimv windows.
+       - Support for built-in or third party clojure syntax file.
+       - Indent with tabs when 'noexpandtab' set after file is loaded.
+       - Added options g:paredit_disable_clojure, g:paredit_disable_lisp,
+         g:paredit_disable_scheme.
+       - Added repeat.vim support to many Paredit modification actions
+         (by Logan Campbell).
+       - Returning cursor to start position after Paredit " wrap
+         (by Logan Campbell).
+       - Paredit: do not insert newline if item is selected in completion
+         popup menu by pressing <CR>.
+       - Paredit: delete into the "*" register when option clipboard=unnamed.
+       - Paredit: handle #"" regexp syntax definition also when searching
+         for paren matches.
+       - Defined <Leader>- mapping (Clear-REPL) for all source buffers.
+       - Escape double quotes in text input into (read) in the REPL buffer.
+       - Bugfix: indentation after multi-line string.
+       - Bugfix: Paredit Wrap accomodates strings (thanks to Colin Jones).
+       - Bugfix: fixed error messages when compiling or describing before
+         connected to swank server.
+       - Bugfix: fixed some indentation issues with multi-line arguments
+         involved.
+       - Bugfix: fixing buffer confusion when filename contains 'repl'.
+       - Bugfix: don't move cursor for Paredit v) when selection mode is
+         inclusive (by John Szakmeister).
+       - Bugfix: syntax highlighting in clojure REPL for forms containing
+         ">" in the function name.
 
 0.9.10 - Replaced 'readonly' flag with 'nomodifiable' for SLDB, Inspect,
          Threads buffers.
@@ -2028,8 +2057,8 @@ Daniel Solano Gómez, Brian Kropf, Len Weincier, Andreas Salwasser,
 Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
 Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
-Conrad Schuler, Tim Pope, David Soria Parra for additional notes and
-contributions.
+Conrad Schuler, Tim Pope, David Soria Parra, Colin Jones, Logan Campbell,
+John Szakmeister for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
