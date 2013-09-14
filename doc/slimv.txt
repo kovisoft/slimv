@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 09 Sep 2013
+*slimv.txt*                    Slimv                 Last Change: 14 Sep 2013
 
 Slimv                                                                  *slimv*
-                               Version 0.9.11
+                               Version 0.9.12
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -733,6 +733,32 @@ Sample workflow:
     4. send fixed code to the swank server the usual way
     5. "a,r recalls the test form from register 'a' and evaluates it
     7. repeat steps 3.-5.
+
+It is possible to create a custom mapping that appends a test form after the
+selected s-expression so that they are evaluated together in one step.
+This can be useful for quick testing. In order to evaluate the current form
+together with a test form use function SlimvEvalTestExp(), to evaluate and test
+the current toplevel form use function SlimvEvalTestDefun().
+Create a custom mapping by passing your test form to any of these functions.
+
+Example:
+
+noremap ,f  :<C-U>call SlimvEvalTestDefun("(my-test-form)")<CR>
+
+With the above custom mapping pressing ,f makes the current toplevel form
+evaluated followed by (my-test-form).
+
+Instead of appending a test form, it is also possible to wrap the current form
+in a test form. Use the special symbol %1 to define the location where the
+test form shall contain the s-expression to be tested.
+
+Example:
+
+noremap ,wp :<C-U>call SlimvEvalTestExp("(ps:ps %1)")<CR>
+
+The above definition creates a custom mapping to see parenscript output of
+the selected form. Pressing ,wp wraps the current s-expression in a
+(ps:ps ...) test form and sends it to the swank server for evaluation.
 
 
 Also see |slimv-repl| for additional keybindings valid only in the REPL buffer.
