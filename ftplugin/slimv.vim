@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.11
-" Last Change:  21 Aug 2013
+" Version:      0.9.12
+" Last Change:  14 Sep 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2502,7 +2502,8 @@ function! SlimvEvalRegion() range
 endfunction
 
 " Eval contents of the 's' register, optionally store it in another register
-" Also optionally add a test form for quick testing (not stored in 'outreg')
+" Also optionally append a test form for quick testing (not stored in 'outreg')
+" If the test form contains '%1' then it 'wraps' the selection around the '%1'
 function! SlimvEvalSelection( outreg, testform )
     let sel = SlimvGetSelection()
     if a:outreg != '"'
@@ -2511,8 +2512,22 @@ function! SlimvEvalSelection( outreg, testform )
     endif
     let lines = [sel]
     if a:testform != ''
-        " Append optional test form at the tail
-        let lines = lines + [a:testform]
+        if match( a:testform, '%1' ) >= 0
+            " We need to wrap the selection in the testform
+            if match( sel, "\n" ) < 0
+                " The selection is a single line, keep the wrapped form in one line
+                let sel = substitute( a:testform, '%1', sel, 'g' )
+                let lines = [sel]
+            else
+                " The selection is multiple lines, wrap it by adding new lines
+                let lines = [strpart( a:testform, 0, match( a:testform, '%1' ) ),
+                \            sel,
+                \            strpart( a:testform, matchend( a:testform, '%1' ) )]
+            endif
+        else
+            " Append optional test form at the tail
+            let lines = lines + [a:testform]
+        endif
     endif
     if bufname( "%" ) == g:slimv_repl_name
         " If this is the REPL buffer then go to EOF
