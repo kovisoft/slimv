@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  16 Sep 2013
+" Last Change:  21 Sep 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3314,6 +3314,7 @@ function! SlimvInitBuffer()
     endif
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
     inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
+    inoremap <silent> <buffer> <S-Tab>    <C-R>=pumvisible() ? "\<lt>C-P>" : "\<lt>S-Tab>"<CR>
 
     " Setup balloonexp to display symbol description
     if g:slimv_balloon && has( 'balloon_eval' )
