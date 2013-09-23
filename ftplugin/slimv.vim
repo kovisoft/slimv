@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  21 Sep 2013
+" Last Change:  23 Sep 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -449,7 +449,7 @@ function! SlimvEndUpdateRepl()
 
     " Mark current prompt position
     call SlimvMarkBufferEnd()
-    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
     let repl_win = bufwinnr( repl_buf )
     if s:current_buf >= 0 && repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
         " Switch back to the caller buffer/window
@@ -521,7 +521,7 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
-    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
     if repl_buf == -1
         " REPL buffer not loaded
         return
@@ -647,7 +647,7 @@ endfunction
 
 " Open a buffer with the given name if not yet open, and switch to it
 function! SlimvOpenBuffer( name )
-    let buf = bufnr( '\<' . a:name . '\>' )
+    let buf = bufnr( '^' . a:name . '$' )
     if buf == -1
         " Create a new buffer
         call s:SplitView( a:name )
@@ -863,7 +863,7 @@ endfunction
 " Clear the contents of the REPL buffer, keeping the last prompt only
 function! SlimvClearReplBuffer()
     let this_buf = bufnr( "%" )
-    let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
     if repl_buf == -1
         call SlimvError( "There is no REPL buffer." )
         return
@@ -2430,7 +2430,7 @@ function! SlimvConnectServer()
     endif 
     call SlimvBeginUpdate()
     if SlimvConnectSwank()
-        let repl_buf = bufnr( '\<' . g:slimv_repl_name . '\>' )
+        let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
         let repl_win = bufwinnr( repl_buf )
         if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
             call SlimvOpenReplBuffer()
@@ -2597,7 +2597,7 @@ endfunction
 function! s:DebugFrame()
     if s:swank_connected && s:sldb_level >= 0
         " Check if we are in SLDB
-        let sldb_buf = bufnr( '\<' . g:slimv_sldb_name . '\>' )
+        let sldb_buf = bufnr( '^' . g:slimv_sldb_name . '$' )
         if sldb_buf != -1 && sldb_buf == bufnr( "%" )
             let bcktrpos = search( '^Backtrace:', 'bcnw' )
             let framepos = line( '.' )
