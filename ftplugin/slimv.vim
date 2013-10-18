@@ -556,7 +556,7 @@ function! SlimvTimer()
         endif
     else
         " Put an incomplete 'f' command and an Esc into the typeahead buffer
-        call feedkeys("f\e")
+        call feedkeys("f\e", 'n')
     endif
 endfunction
 
