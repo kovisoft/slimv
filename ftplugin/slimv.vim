@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  07 Oct 2013
+" Last Change:  09 Nov 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2758,8 +2758,9 @@ endfunction
 
 " Disassemble the selected function
 function! SlimvDisassemble()
+    let symbol = SlimvSelectSymbol()
     if SlimvConnectSwank()
-        let s = input( 'Disassemble: ', SlimvSelectSymbol() )
+        let s = input( 'Disassemble: ', symbol )
         if s != ''
             call SlimvCommandUsePackage( 'python swank_disassemble("' . s . '")' )
         endif
