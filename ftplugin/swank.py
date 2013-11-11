@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.10
-# Last Change:  12 May 2013
+# Last Change:  11 Nov 2013
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -181,6 +181,13 @@ class swank_action:
         self.data = data
         self.result = ''
         self.pending = True
+
+def get_prompt():
+    global prompt
+    if prompt.rstrip()[-1] == '>':
+        return prompt + ' '
+    else:
+        return prompt + '> '
 
 def unquote(s):
     if len(s) < 2:
@@ -681,7 +688,7 @@ def swank_listen():
                             add_prompt = False
                             break
                     if add_prompt:
-                        retval = retval + new_line(retval) + prompt + '> '
+                        retval = retval + new_line(retval) + get_prompt()
 
                 elif message == ':read-string':
                     # REPL requests entering a string
@@ -723,6 +730,8 @@ def swank_listen():
                     if result == ':ok':
                         params = r[1][1]
                         logprint('params: ' + str(params))
+                        if params == []:
+                            params = 'nil'
                         if type(params) == str:
                             element = params.lower()
                             to_ignore = [':frame-call', ':quit-inspector', ':kill-thread', ':debug-thread']
@@ -746,7 +755,7 @@ def swank_listen():
                                         action.result = retval
                                 if element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
-                                    retval = retval + new_line(retval) + prompt + '> '
+                                    retval = retval + new_line(retval) + get_prompt()
 
                         elif type(params) == list and params:
                             element = ''
@@ -754,13 +763,13 @@ def swank_listen():
                                 element = params[0].lower()
                             if element == ':present':
                                 # No more output from REPL, write new prompt
-                                retval = retval + new_line(retval) + unquote(params[1][0][0]) + '\n' + prompt + '> '
+                                retval = retval + new_line(retval) + unquote(params[1][0][0]) + '\n' + get_prompt()
                             elif element == ':values':
                                 retval = retval + new_line(retval)
                                 if type(params[1]) == list: 
                                     retval = retval + unquote(params[1][0]) + '\n'
                                 else:
-                                    retval = retval + unquote(params[1]) + '\n' + prompt + '> '
+                                    retval = retval + unquote(params[1]) + '\n' + get_prompt()
                             elif element == ':suppress-output':
                                 pass
                             elif element == ':pid':
@@ -781,7 +790,7 @@ def swank_listen():
                                 vim.command('let s:lisp_version="' + imp[':version'] + '"')
                                 retval = retval + new_line(retval)
                                 retval = retval + imp[':type'] + ' ' + imp[':version'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
-                                retval = retval + '\n' + prompt + '> '
+                                retval = retval + '\n' + get_prompt()
                                 logprint(' Package:' + package + ' Prompt:' + prompt)
                             elif element == ':name':
                                 keys = make_keys(params)
@@ -790,7 +799,7 @@ def swank_listen():
                             elif element == ':title':
                                 swank_parse_inspect(params)
                             elif element == ':compilation-result':
-                                retval = retval + new_line(retval) + swank_parse_compile(params) + prompt + '> '
+                                retval = retval + new_line(retval) + swank_parse_compile(params) + get_prompt()
                             else:
                                 if action.name == ':simple-completions':
                                     if type(params[0]) == list and type(params[0][0]) == str and params[0][0] != 'nil':
@@ -804,16 +813,16 @@ def swank_listen():
                                     swank_parse_list_threads(r[1])
                                 elif action.name == ':xref':
                                     retval = retval + '\n' + swank_parse_xref(r[1][1])
-                                    retval = retval + new_line(retval) + prompt + '> '
+                                    retval = retval + new_line(retval) + get_prompt()
                                 elif action.name == ':set-package':
                                     package = unquote(params[0])
                                     prompt = unquote(params[1])
-                                    retval = retval + '\n' + prompt + '> '
+                                    retval = retval + '\n' + get_prompt()
                                 elif action.name == ':untrace-all':
                                     retval = retval + '\nUntracing:'
                                     for f in params:
                                         retval = retval + '\n' + '  ' + f
-                                    retval = retval + '\n' + prompt + '> '
+                                    retval = retval + '\n' + get_prompt()
                                 elif action.name == ':frame-call':
                                     swank_parse_frame_call(params, action)
                                 elif action.name == ':frame-source-location':
@@ -824,7 +833,7 @@ def swank_listen():
                                     retval = retval + '\n' + 'Profiled functions:\n'
                                     for f in params:
                                         retval = retval + '  ' + f + '\n'
-                                    retval = retval + prompt + '> '
+                                    retval = retval + get_prompt()
                                 elif action.name == ':inspector-range':
                                     swank_parse_inspect_content(params)
                                 if action:
@@ -834,9 +843,9 @@ def swank_listen():
                         debug_active = False
                         vim.command('let s:sldb_level=-1')
                         if len(r[1]) > 1:
-                            retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + prompt + '> '
+                            retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + get_prompt()
                         else:
-                            retval = retval + '; Evaluation aborted\n' + prompt + '> '
+                            retval = retval + '; Evaluation aborted\n' + get_prompt()
 
                 elif message == ':inspect':
                     swank_parse_inspect(r[1])
@@ -855,7 +864,7 @@ def swank_listen():
                 elif message == ':debug-return':
                     debug_active = False
                     vim.command('let s:sldb_level=-1')
-                    retval = retval + '; Quit to level ' + r[2] + '\n' + prompt + '> '
+                    retval = retval + '; Quit to level ' + r[2] + '\n' + get_prompt()
 
                 elif message == ':ping':
                     [thread, tag] = r[1:3]
