@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  09 Nov 2013
+" Last Change:  12 Nov 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -953,7 +953,7 @@ function SlimvOpenSldbBuffer()
     setlocal foldmethod=marker
     setlocal foldmarker={{{,}}}
     setlocal foldtext=substitute(getline(v:foldstart),'{{{','','')
-    setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,{,},[,],.
+    call s:SetKeyword()
     if g:slimv_sldb_wrap
         setlocal wrap
     endif
@@ -1108,6 +1108,11 @@ endfunction
 
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm( extended )
+    if SlimvGetFiletype() == 'r'
+        silent! normal va(
+        silent! normal "sY
+        return 1
+    endif
     " Search the opening '(' if we are standing on a special form prefix character
     let c = col( '.' ) - 1
     let firstchar = getline( '.' )[c]
@@ -1147,14 +1152,25 @@ endfunction
 function! SlimvFindDefunStart()
     let l = line( '.' )
     let matchb = max( [l-200, 1] )
-    while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb )
-    endwhile
+    if SlimvGetFiletype() == 'r'
+        while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb ) || searchpair( '{', '', '}', 'bW', s:skip_sc, matchb ) || searchpair( '\[', '', '\]', 'bW', s:skip_sc, matchb )
+        endwhile
+    else
+        while searchpair( '(', '', ')', 'bW', s:skip_sc, matchb )
+        endwhile
+    endif
 endfunction
 
 " Select top level form the cursor is inside and copy it to register 's'
 function! SlimvSelectDefun()
     call SlimvFindDefunStart()
-    return SlimvSelectForm( 1 )
+    if SlimvGetFiletype() == 'r'
+        " The cursor must be on the enclosing paren character
+        silent! normal v%"sY
+        return 1
+    else
+        return SlimvSelectForm( 1 )
+    endif
 endfunction
 
 " Return the contents of register 's'
@@ -2355,6 +2371,19 @@ function! SlimvDebugThread()
     endif
 endfunction
 
+function! SlimvRFunction()
+    " search backwards for the alphanums before a '('
+    let l = line('.')
+    let c = col('.') - 1
+    let line = (getline('.'))[0:c]
+    let list = matchlist(line, '\([a-zA-Z0-9_.]\+\)\s*(')
+    if !len(list)
+        return ""
+    endif
+    let valid = filter(reverse(list), 'v:val != ""')
+    return valid[0]
+endfunction
+
 " Display function argument list
 " Optional argument is the number of characters typed after the keyword
 function! SlimvArglist( ... )
@@ -2384,36 +2413,42 @@ function! SlimvArglist( ... )
     call s:SetKeyword()
     if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
         " Display only if entering the first space after a keyword
-        let matchb = max( [l-200, 1] )
-        let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
-        if l0 > 0
-            " Found opening paren, let's find out the function name
-            let arg = ''
-            while arg == '' && l0 <= l
-                let funcline = substitute( getline(l0), ';.*$', '', 'g' )
-                let arg = matchstr( funcline, '\<\k*\>', c0 )
-                let l0 = l0 + 1
-                let c0 = 0
-            endwhile
-            if arg != ''
-                " Ask function argument list from SWANK
-                call SlimvFindPackage()
-                let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
-                if msg != ''
-                    " Print argument list in status line with newlines removed.
-                    " Disable showmode until the next ESC to prevent
-                    " immeditate overwriting by the "-- INSERT --" text.
-                    let s:save_showmode = &showmode
-                    set noshowmode
-                    let msg = substitute( msg, "\n", "", "g" )
-                    redraw
-                    " Use \V ('very nomagic') for exact string match instead of regex 
-                    if match( msg, "\\V" . arg ) != 1
-                        " Function name is not received from REPL
-                        call SlimvShortEcho( "(" . arg . ' ' . msg[1:] )
-                    else
-                        call SlimvShortEcho( msg )
-                    endif
+        let arg = ''
+        if SlimvGetFiletype() == 'r'
+            let arg = SlimvRFunction()
+        else
+            let matchb = max( [l-200, 1] )
+            let [l0, c0] = searchpairpos( '(', '', ')', 'nbW', s:skip_sc, matchb )
+            if l0 > 0
+                " Found opening paren, let's find out the function name
+                while arg == '' && l0 <= l
+                    let funcline = substitute( getline(l0), ';.*$', '', 'g' )
+                    let arg = matchstr( funcline, '\<\k*\>', c0 )
+                    let l0 = l0 + 1
+                    let c0 = 0
+                endwhile
+            endif
+        endif
+
+        if arg != ''
+            " Ask function argument list from SWANK
+            call SlimvFindPackage()
+            let msg = SlimvCommandGetResponse( ':operator-arglist', 'python swank_op_arglist("' . arg . '")', 0 )
+            if msg != ''
+                " Print argument list in status line with newlines removed.
+                " Disable showmode until the next ESC to prevent
+                " immeditate overwriting by the "-- INSERT --" text.
+                let s:save_showmode = &showmode
+                set noshowmode
+                let msg = substitute( msg, "\n", "", "g" )
+                redraw
+                if SlimvGetFiletype() == 'r'
+                    call SlimvShortEcho( arg . '(' . msg . ')' )
+                elseif match( msg, "\\V" . arg ) != 1 " Use \V ('very nomagic') for exact string match instead of regex 
+                    " Function name is not received from REPL
+                    call SlimvShortEcho( "(" . arg . ' ' . msg[1:] )
+                else
+                    call SlimvShortEcho( msg )
                 endif
             endif
         endif
@@ -3134,7 +3169,7 @@ function! SlimvLookup( word )
             let symbol = []
         endif
     endwhile
-    if symbol != []
+    if symbol != [] && len(symbol) > 1
         " Symbol found, open HS page in browser
         if match( symbol[1], ':' ) < 0 && exists( g:slimv_hs_root )
             let page = g:slimv_hs_root . symbol[1]
@@ -3310,8 +3345,12 @@ endfunction
 " Initialize buffer by adding buffer specific mappings
 function! SlimvInitBuffer()
     " Map space to display function argument list in status line
-    inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
-    inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    if SlimvGetFiletype() == 'r'
+        inoremap <silent> <buffer> (          (<C-R>=SlimvArglist()<CR>
+    else
+        inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
+        inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+    endif
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     if !exists( 'b:au_insertleave_set' )
         let b:au_insertleave_set = 1
