@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  12 Nov 2013
+" Last Change:  15 Nov 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1185,6 +1185,8 @@ function! SlimvFindPackage()
         return
     endif
     let oldpos = winsaveview()
+    let save_ic = &ignorecase
+    set ignorecase
     if SlimvGetFiletype() =~ '.*clojure.*'
         let string = '\(in-ns\|ns\)'
     else
@@ -1214,6 +1216,7 @@ function! SlimvFindPackage()
             let s:swank_package = ''
         endif
     endif
+    let &ignorecase = save_ic
     call winrestview( oldpos )
 endfunction
 
