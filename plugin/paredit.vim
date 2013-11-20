@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.9.11
-" Last Change:  23 Aug 2013
+" Version:      0.9.12
+" Last Change:  20 Nov 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1165,7 +1165,10 @@ function! s:PrevElement( skip_whitespc )
         " Go to previous character
         if !moved
             let [l1, c1] = [line( '.' ), col( '.' )]
+            let save_ww = &whichwrap
+            set whichwrap=
             normal! h
+            let &whichwrap = save_ww
         endif
         let moved = 0
         let [l, c] = [line( '.' ), col( '.' )]
@@ -1240,7 +1243,10 @@ function! s:NextElement( skip_whitespc )
     while 1
         " Go to next character
         let [l1, c1] = [line( '.' ), col( '.' )]
+        let save_ww = &whichwrap
+        set whichwrap=
         normal! l
+        let &whichwrap = save_ww
         let [l, c] = [line( '.' ), col( '.' )]
 
         " Skip comments
