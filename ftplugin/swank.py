@@ -843,7 +843,7 @@ def swank_listen():
                         debug_active = False
                         vim.command('let s:sldb_level=-1')
                         if len(r[1]) > 1:
-                            retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]) + '\n' + get_prompt()
+                            retval = retval + '; Evaluation aborted on ' + unquote(r[1][1]).replace('\n', '\n;') + '\n' + get_prompt()
                         else:
                             retval = retval + '; Evaluation aborted\n' + get_prompt()
 
