@@ -32,7 +32,7 @@
     #+LISPWORKS (lispworks:environment-variable name)
     default))
 
-(swank:create-server :port (parse-integer (my-getenv "SWANK_PORT" 4005))
+(swank:create-server :port (parse-integer (my-getenv "SWANK_PORT" "4005"))
                      ;; if non-nil the connection won't be closed
                      ;; after connecting
                      :dont-close t)
