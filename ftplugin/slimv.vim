@@ -2105,7 +2105,7 @@ function! SlimvHandleEnterSldb()
                     " Not implemented for CLISP or scheme
                     silent execute 'python swank_frame_source_loc("' . item . '")'
                 endif
-                if SlimvGetFiletype() == 'lisp' && g:slimv_impl != 'clisp'
+                if SlimvGetFiletype() == 'lisp' && g:slimv_impl != 'clisp' && g:slimv_impl != 'allegro'
                     " Not implemented for CLISP or other lisp dialects
                     silent execute 'python swank_frame_call("' . item . '")'
                 endif
