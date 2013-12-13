@@ -18,7 +18,6 @@ let g:slimv_loaded = 1
 let g:slimv_windows = 0
 let g:slimv_cygwin  = 0
 let g:slimv_osx     = 0
-let g:slimv_iterm   = 0
 
 if has( 'win32' ) || has( 'win95' ) || has( 'win64' ) || has( 'win16' )
     let g:slimv_windows = 1
@@ -26,11 +25,6 @@ elseif has( 'win32unix' )
     let g:slimv_cygwin = 1
 elseif has( 'macunix' )
     let g:slimv_osx = 1
-    let result = system('osascript -e "exists application \"iterm\""')
-    if result[:-2] == 'true'
-        let g:slimv_iterm = 1
-        let g:slimv_path2as = globpath( &runtimepath, 'ftplugin/**/iterm.applescript')
-    endif
 endif
 
 
@@ -96,11 +90,13 @@ function! SlimvSwankCommand()
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
         elseif g:slimv_osx
-            if g:slimv_iterm
-                return '!' . g:slimv_path2as . ' ' . cmd
-            else
-                return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
-            endif
+            let result = system('osascript -e "exists application \"iterm\""')
+                if result[:-2] == 'true'
+                    let path2as = globpath( &runtimepath, 'ftplugin/**/iterm.applescript')
+                    return '!' . path2as . ' ' . cmd
+                else
+                    return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
+                endif 
         elseif $STY != ''
             " GNU screen under Linux
             return '! screen -X eval "title swank" "screen ' . cmd . '" "select swank"'
