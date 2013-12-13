@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  23 Nov 2013
+" Last Change:  13 Dec 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -901,11 +901,11 @@ function SlimvOpenInspectBuffer()
 
     if version < 703
         " conceal mechanism is defined since Vim 7.3
-        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\[]}"
-        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="<>}"
+        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\s*\[]}"
+        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="\s*<>}"
     else
-        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\[]}" concealends
-        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="<>}" concealends
+        syn region inspectItem   matchgroup=Ignore start="{\[\d\+\]\s*" end="\s*\[]}" concealends
+        syn region inspectAction matchgroup=Ignore start="{<\d\+>\s*"   end="\s*<>}" concealends
         setlocal conceallevel=3 concealcursor=nc
     endif
 
