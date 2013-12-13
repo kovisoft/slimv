@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.9.8
-" Last Change:  01 Jun 2012
+" Version:      0.9.12
+" Last Change:  13 Dec 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -36,35 +36,39 @@ let g:slimv_lisp_loaded = 1
 "     platform    - 'w' (Windows) or 'l' (Linux = non-Windows), '' for all
 "     search path - commma separated list, may contain wildcard characters
 let s:lisp_desc = [
-\ [ 'sbcl',        'sbcl',      '',  '' ],
-\ [ 'clisp',       'clisp',     '',  '' ],
-\ [ 'gcl',         'clisp',     '',  '' ],
-\ [ 'cmucl',       'cmu',       '',  '' ],
-\ [ 'ecl',         'ecl',       '',  '' ],
-\ [ 'acl',         'allegro',   '',  '' ],
-\ [ 'mlisp',       'allegro',   '',  '' ],
-\ [ 'mlisp8',      'allegro',   '',  '' ],
-\ [ 'alisp',       'allegro',   '',  '' ],
-\ [ 'alisp8',      'allegro',   '',  '' ],
-\ [ 'lwl',         'lispworks', '',  '' ],
-\ [ 'ccl',         'clozure',   '',  '' ],
-\ [ 'wx86cl',      'clozure',   'w', '' ],
-\ [ 'lx86cl',      'clozure',   'l', '' ],
-\ [ '*lisp.exe',   'clisp',     'w',
+\ [ 'sbcl',         'sbcl',      '',    '' ],
+\ [ 'clisp',        'clisp',     '',    '' ],
+\ [ 'gcl',          'clisp',     '',    '' ],
+\ [ 'cmucl',        'cmu',       '',    '' ],
+\ [ 'ecl',          'ecl',       '',    '' ],
+\ [ 'acl',          'allegro',   '',    '' ],
+\ [ 'mlisp',        'allegro',   '',    '' ],
+\ [ 'mlisp8',       'allegro',   '',    '' ],
+\ [ 'alisp',        'allegro',   '',    '' ],
+\ [ 'alisp8',       'allegro',   '',    '' ],
+\ [ 'lwl',          'lispworks', '',    '' ],
+\ [ 'ccl',          'clozure',   '',    '' ],
+\ [ 'wx86cl64',     'clozure',   'w64', '' ],
+\ [ 'wx86cl',       'clozure',   'w',   '' ],
+\ [ 'lx86cl',       'clozure',   'l',   '' ],
+\ [ '*lisp.exe',    'clisp',     'w',
 \   'c:/*lisp*,c:/*lisp*/*,c:/*lisp*/bin/*,c:/Program Files/*lisp*,c:/Program Files/*lisp*/*,c:/Program Files/*lisp*/bin/*' ],
-\ [ 'gcl.exe',     'clisp',     'w', 'c:/gcl*,c:/Program Files/gcl*' ],
-\ [ 'cmucl.exe',   'cmu',       'w', 'c:/cmucl*,c:/Program Files/cmucl*' ],
-\ [ '*lisp*.exe',  'allegro',   'w', 'c:/acl*,c:/Program Files/acl*,c:/Program Files/*lisp*/bin/acl*' ],
-\ [ 'ecl.exe',     'ecl',       'w', 'c:/ecl*,c:/Program Files/ecl*' ],
-\ [ 'wx86cl.exe',  'clozure',   'w', 'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*' ],
-\ [ 'sbcl.exe',    'sbcl',      'w', 'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*'] ]
+\ [ 'gcl.exe',      'clisp',     'w',   'c:/gcl*,c:/Program Files/gcl*' ],
+\ [ 'cmucl.exe',    'cmu',       'w',   'c:/cmucl*,c:/Program Files/cmucl*' ],
+\ [ '*lisp*.exe',   'allegro',   'w',   'c:/acl*,c:/Program Files/acl*,c:/Program Files/*lisp*/bin/acl*' ],
+\ [ 'ecl.exe',      'ecl',       'w',   'c:/ecl*,c:/Program Files/ecl*' ],
+\ [ 'wx86cl64.exe', 'clozure',   'w64', 'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*' ],
+\ [ 'wx86cl.exe',   'clozure',   'w',   'c:/ccl*,c:/Program Files/ccl*,c:/Program Files/*lisp*/bin/ccl*' ],
+\ [ 'sbcl.exe',     'sbcl',      'w',   'c:/sbcl*,c:/Program Files/sbcl*,c:/Program Files/*lisp*/bin/sbcl*'] ]
 
 " Try to autodetect Lisp executable
 " Returns list [Lisp executable, Lisp implementation]
 function! b:SlimvAutodetect( preferred )
     for lisp in s:lisp_desc
-        if     lisp[2] == 'w' && !g:slimv_windows
+        if     lisp[2] =~ 'w' && !g:slimv_windows
             " Valid only on Windows
+        elseif lisp[2] == 'w64' && $ProgramW6432 == ''
+            " Valid only on 64 bit Windows
         elseif lisp[2] == 'l' &&  g:slimv_windows
             " Valid only on Linux
         elseif a:preferred != '' && a:preferred != lisp[1]
