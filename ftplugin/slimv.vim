@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.12
-" Last Change:  13 Dec 2013
+" Last Change:  15 Dec 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -563,29 +563,27 @@ endfunction
 " Switch refresh mode on:
 " refresh REPL buffer on frequent Vim events
 function! SlimvRefreshModeOn()
-    if !exists( 'b:au_curhold_set' )
-        let b:au_curhold_set = 1
+    augroup SlimvCursorHold
+        au!
         execute "au CursorHold   * :call SlimvTimer()"
         execute "au CursorHoldI  * :call SlimvTimer()"
-    endif
+    augroup END
 endfunction
 
 " Switch refresh mode off
 function! SlimvRefreshModeOff()
-    execute "au! CursorHold"
-    execute "au! CursorHoldI"
-    if exists( 'b:au_curhold_set' )
-        unlet b:au_curhold_set
-    endif
+    augroup SlimvCursorHold
+        au!
+    augroup END
 endfunction
 
 " Called when entering REPL buffer
 function! SlimvReplEnter()
     call SlimvAddReplMenu()
-    if !exists( 'b:au_filechanged_set' )
-        let b:au_filechanged_set = 1
+    augroup SlimvReplChanged
+        au!
         execute "au FileChangedRO " . g:slimv_repl_name . " :call SlimvRefreshModeOff()"
-    endif
+    augroup END
     call SlimvRefreshModeOn()
 endfunction
 
@@ -852,14 +850,14 @@ function! SlimvOpenReplBuffer()
     hi SlimvNormal term=none cterm=none gui=none
     hi SlimvCursor term=reverse cterm=reverse gui=reverse
 
-    if !exists( 'b:au_bufenter_set' )
+    augroup SlimvReplAutoCmd
+        au!
         " Add autocommands specific to the REPL buffer
-        let b:au_bufenter_set = 1
         execute "au FileChangedShell " . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
         execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
         execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
         execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
-    endif
+    augroup END
 
     call SlimvRefreshReplBuffer()
 endfunction
@@ -3355,10 +3353,10 @@ function! SlimvInitBuffer()
         inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
     endif
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
-    if !exists( 'b:au_insertleave_set' )
-        let b:au_insertleave_set = 1
+    augroup SlimvInsertLeave
+        au!
         au InsertLeave * :let &showmode=s:save_showmode
-    endif
+    augroup END
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
     inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
     inoremap <silent> <buffer> <S-Tab>    <C-R>=pumvisible() ? "\<lt>C-P>" : "\<lt>S-Tab>"<CR>
