@@ -482,6 +482,9 @@ function! SlimvSwankResponse()
     if s:swank_actions_pending == 0 && s:last_update >= 0 && s:last_update < localtime() - 2
         " All SWANK output handled long ago, restore original update frequency
         let &updatetime = s:save_updatetime
+    else
+        " SWANK output still pending, keep higher update frequency
+        let &updatetime = g:slimv_updatetime
     endif
 endfunction
 
@@ -546,7 +549,8 @@ function! SlimvTimer()
         " Skip refreshing if the user started a command prefixed with a count
         return
     endif
-    call SlimvRefreshReplBuffer()
+    " We don't want autocommands trigger during the quick switch to/from the REPL buffer
+    noautocmd call SlimvRefreshReplBuffer()
     if mode() == 'i' || mode() == 'I' || mode() == 'r' || mode() == 'R'
         if bufname('%') != g:slimv_sldb_name && bufname('%') != g:slimv_inspect_name && bufname('%') != g:slimv_threads_name
             " Put '<Insert>' twice into the typeahead buffer, which should not do anything
