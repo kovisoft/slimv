@@ -90,7 +90,13 @@ function! SlimvSwankCommand()
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
         elseif g:slimv_osx
-            return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
+            let result = system('osascript -e "exists application \"iterm\""')
+                if result[:-2] == 'true'
+                    let path2as = globpath( &runtimepath, 'ftplugin/**/iterm.applescript')
+                    return '!' . path2as . ' ' . cmd
+                else
+                    return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
+                endif 
         elseif $STY != ''
             " GNU screen under Linux
             return '! screen -X eval "title swank" "screen ' . cmd . '" "select swank"'
