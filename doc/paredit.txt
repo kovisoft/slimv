@@ -290,7 +290,7 @@ Normal Mode:
                    When preceded by a <count> value then delete this many
                    lines.
 
-    <Leader>S      Same as 'dd' but go to insert mode at the end.
+    cc             Same as 'dd' but go to insert mode at the end.
 
     d{motion}      Delete text till {motion}. Keeps text balanced, so if the
                    surrounded text contains unpaired matched characters then
