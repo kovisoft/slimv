@@ -1,7 +1,7 @@
 " slimv-r.vim:
 "               R filetype plugin for Slimv
 " Version:      0.9.12
-" Last Change:  21 Nov 2013
+" Last Change:  18 Dec 2013
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
