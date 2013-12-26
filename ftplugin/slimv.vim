@@ -730,7 +730,7 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
         hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
     endif
 
- if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+ if SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
 
     syn region lispParen9 matchgroup=hlLevel9 start="`\=(" matchgroup=hlLevel9 end=")"  matchgroup=replPrompt end="^\S\+>" contains=TOP,@Spell
     syn region lispParen0 matchgroup=hlLevel8 start="`\=(" end=")" matchgroup=replPrompt end="^\S\+>"me=s-1,re=s-1 contains=TOP,lispParen0,lispParen1,lispParen2,lispParen3,lispParen4,lispParen5,lispParen6,lispParen7,lispParen8,NoInParens
@@ -1085,7 +1085,7 @@ endfunction
 
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
-    if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+    if SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
@@ -1484,11 +1484,11 @@ function! s:CloseForm( lines )
             " We are outside of strings and comments, now we shall count parens
             if form[i] == '('
                 let end = ')' . end
-            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
                 let end = ']' . end
-            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
                 let end = '}' . end
-            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*')
+            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*')
                 if len( end ) == 0 || end[0] != form[i]
                     " Oops, too many closing parens or invalid closing paren
                     return 'ERROR'
@@ -1640,7 +1640,7 @@ function! SlimvIndent( lnum )
     normal! 0
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
-        if SlimvGetFiletype() =~ '.*\(clojure\|scheme\).*'
+        if SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
             " Is this a clojure form with [] binding list?
             call winrestview( oldpos )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
