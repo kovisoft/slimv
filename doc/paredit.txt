@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 23 Aug 2013
+*paredit.txt*                   Paredit              Last Change: 29 Dec 2013
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.11
+                               Version 0.9.12
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv

@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Sep 2013
+*slimv.txt*                    Slimv                 Last Change: 29 Dec 2013
 
 Slimv                                                                  *slimv*
                                Version 0.9.12
@@ -70,6 +70,7 @@ To install the script:
        doc/paredit.txt
        doc/slimv.txt
        ftdetect/clojure.vim
+       ftplugin/iterm.applescript
        ftplugin/slimv.vim
        ftplugin/slimv-clhs.vim
        ftplugin/slimv-cljapi.vim
@@ -77,13 +78,16 @@ To install the script:
        ftplugin/swank.py
        ftplugin/clojure/slimv-clojure.vim
        ftplugin/lisp/slimv-lisp.vim
+       ftplugin/r/slimv-r.vim
        ftplugin/scheme/slimv-scheme.vim
        indent/clojure.vim
        indent/lisp.vim
+       indent/scheme.vim
        plugin/paredit.vim
        slime/*
        swank-clojure/*
        syntax/clojure/slimv-syntax-clojure.vim
+       syntax/lisp/slimv-syntax-lisp.vim
        syntax/scheme/slimv-syntax-scheme.vim
 
     You might already have an ftdetect/clojure.vim file if you already use
@@ -1470,6 +1474,36 @@ FAQ                                                                 *slimv-faq*
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
 
+0.9.12 - Added support for the R language via swank-R (by Philipp Marek).
+       - Test form for SlimvEvalTestExp() may wrap the selected s-expression.
+       - Added Shift+Tab mapping for cycling backwards in the completion
+         popup menu.
+       - User defined REPL buffer name may contain some special characters.
+       - Pass port number to the swank server in SWANK_PORT environent variable
+         on Linux (by Glen Gibb and Federico Churca-Torrusio).
+       - Autodetect wx86cl64.exe (Clozure CL) on 64 bit Windows.
+       - Added applescript support for starting swank through iTerm
+         (by Seth Price).
+       - Add Racket support for delimiter '[]' and '{}' (by Jimmy Lu).
+       - Bugfix: if the user started a normal mode command prefixed with a count,
+         then the count was cleared by the REPL refresh timer.
+       - Bugfix: CursorHold trigger ignore mappings to prevent collisions with
+         other plugins.
+       - Bugfix: preselect function name before starting swank server in the
+         Disassemble command.
+       - Bugfix: do not append '>' at the prompt if it already ends with it.
+       - Bugfix: package name not found when 'noignorecase' was set.
+       - Bugfix: Paredit ,< and ,> when 'whichwrap' contains 'h' and 'l'.
+       - Bugfix: keep multi-line SLDB abort messages commented all throughout
+         (by Federico Churca-Torrusio).
+       - Bugfix: prevent call to frame-call on AllegroCL (by Robert Kerr).
+       - Bugfix: tag lookup (Ctrl+]) added garbage to symbol name.
+       - Bugfix: parsing arrays (and other prefixed forms) returned from the
+         swank server.
+       - Bugfix: prevent accidental multiple registration of slimv autocommands.
+       - Bugfix: disable autocommands for the REPL update, make sure 'updatetime'
+         is not too low.
+
 0.9.11 - Entering some text in REPL command history, then pressing <Up>/<Down>
          searches for matching lines only.
        - Changed lisp syntax for #\( and #\) to "string".
@@ -2084,7 +2118,8 @@ Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Ömer Sinan Agacan, Tobias Pflug, Chris Cahoon, Mats Rauhala, Oleg Terenchuk,
 Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
 Conrad Schuler, Tim Pope, David Soria Parra, Colin Jones, Logan Campbell,
-John Szakmeister for additional notes and contributions.
+John Szakmeister, Glen Gibb, Federico Churca-Torrusio, Robert Kerr, Jimmy Lu,
+Seth Price for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
