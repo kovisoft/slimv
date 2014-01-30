@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.12
-" Last Change:  15 Dec 2013
+" Version:      0.9.13
+" Last Change:  30 Jan 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1509,18 +1509,18 @@ function SlimvLispindent( lnum )
     let li = lispindent( a:lnum )
     set nolisp
     let backline = max([a:lnum-g:slimv_indent_maxlines, 1])
-    let oldpos = winsaveview()
-    normal! 0
+    let oldpos = getpos( '.' )
+    call cursor( oldpos[1], 1 )
     " Find containing form
     let [lhead, chead] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if lhead == 0
         " No containing form, lispindent() is OK
-        call winrestview( oldpos )
+        call cursor( oldpos[1], oldpos[2] )
         return li
     endif
     " Find outer form
     let [lparent, cparent] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
-    call winrestview( oldpos )
+    call cursor( oldpos[1], oldpos[2] )
     if lparent == 0 || lhead != lparent
         " No outer form or starting above inner form, lispindent() is OK
         return li
@@ -1575,7 +1575,7 @@ function! SlimvIndent( lnum )
         " Hit the start of the file, use zero indent.
         return 0
     endif
-    let oldpos = winsaveview()
+    let oldpos = getpos( '.' )
     let linenum = a:lnum
 
     " Handle multi-line string
@@ -1602,7 +1602,6 @@ function! SlimvIndent( lnum )
             let [l, c] = searchpairpos( '"', '', '"', 'bnW', s:skip_q )
             if l > 0 && strpart(getline(l), 0, c-1) =~ '^\s*$'
                 " Nothing else before the string: indent to the opening "
-                call winrestview( oldpos )
                 return c - 1
             endif
             if l > 0
@@ -1611,7 +1610,7 @@ function! SlimvIndent( lnum )
                 let linenum = l + 1
             endif
         endif
-        call winrestview( oldpos )
+        call cursor( oldpos[1], oldpos[2] )
     endif
 
     " Handle special indentation style for flet, labels, etc.
@@ -1634,18 +1633,16 @@ function! SlimvIndent( lnum )
             endif
         endif
     endif
-    call winrestview( oldpos )
 
     " Find beginning of the innermost containing form
-    normal! 0
+    call cursor( oldpos[1], 1 )
     let [l, c] = searchpairpos( '(', '', ')', 'bW', s:skip_sc, backline )
     if l > 0
         if SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
             " Is this a clojure form with [] binding list?
-            call winrestview( oldpos )
+            call cursor( oldpos[1], oldpos[2] )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
             if lb >= l && (lb > l || cb > c)
-                call winrestview( oldpos )
                 return cb
             endif
         endif
@@ -1654,10 +1651,9 @@ function! SlimvIndent( lnum )
         if match( line, '\c^(\s*\('.s:spec_indent.'\)\>' ) >= 0
             " Search for the binding list and jump to its end
             if search( '(' ) > 0
-                exe 'normal! %'
+                call searchpair( '(', '', ')', '', s:skip_sc )
                 if line('.') == pnum
                     " We are indenting the first line after the end of the binding list
-                    call winrestview( oldpos )
                     return c + 1
                 endif
             endif
@@ -1671,7 +1667,6 @@ function! SlimvIndent( lnum )
                     if search( '(' ) > 0
                         if line('.') == l && col('.') == c
                             " This is the parameter list of a special form
-                            call winrestview( oldpos )
                             return c
                         endif
                     endif
@@ -1679,12 +1674,10 @@ function! SlimvIndent( lnum )
                 if SlimvGetFiletype() !~ '.*clojure.*'
                     if l2 == l && match( line2, '\c^(\s*\('.s:binding_form.'\)\>' ) >= 0
                         " Is this a lisp form with binding list?
-                        call winrestview( oldpos )
                         return c
                     endif
                     if match( line2, '\c^(\s*cond\>' ) >= 0 && match( line, '\c^(\s*t\>' ) >= 0
                         " Is this the 't' case for a 'cond' form?
-                        call winrestview( oldpos )
                         return c
                     endif
                     if match( line2, '\c^(\s*defpackage\>' ) >= 0
@@ -1698,7 +1691,6 @@ function! SlimvIndent( lnum )
                     let line3 = strpart( getline(l3), c3-1 )
                     if match( line3, '\c^(\s*\('.s:spec_indent.'\)\>' ) >= 0
                         " This is the first body-line of a binding
-                        call winrestview( oldpos )
                         return c + 1
                     endif
                     if match( line3, '\c^(\s*defsystem\>' ) >= 0
@@ -1718,7 +1710,7 @@ function! SlimvIndent( lnum )
     endif
 
     " Restore all cursor movements
-    call winrestview( oldpos )
+    call cursor( oldpos[1], oldpos[2] )
 
     " Check if the current form started in the previous nonblank line
     if l == parent
