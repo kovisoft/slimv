@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  18 Feb 2014
+" Last Change:  03 Mar 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1285,6 +1285,17 @@ function! SlimvConnectSwank()
         while s:swank_version == '' && localtime()-starttime < g:slimv_timeout
             call SlimvSwankResponse()
         endwhile
+
+        " Require some contribs
+        let contribs = 'swank-presentations swank-fancy-inspector swank-c-p-c swank-arglists'
+        if SlimvGetFiletype() == 'lisp'
+            let contribs = 'swank-asdf swank-package-fu ' . contribs
+        endif
+        if g:slimv_simple_compl == 0
+            let contribs = contribs . ' swank-fuzzy'
+        endif
+        execute "python swank_require('(" . contribs . ")')"
+        call SlimvSwankResponse()
         if s:swank_version >= '2011-12-04'
             python swank_require('swank-repl')
             call SlimvSwankResponse()
@@ -1293,10 +1304,6 @@ function! SlimvConnectSwank()
             call SlimvCommandGetResponse( ':create-repl', 'python swank_create_repl()', g:slimv_timeout )
         endif
         let s:swank_connected = 1
-        if g:slimv_simple_compl == 0
-            python swank_require('swank-fuzzy')
-            call SlimvSwankResponse()
-        endif
         redraw
         echon "\rConnected to SWANK server on port " . g:swank_port . "."
         if exists( "g:swank_block_size" ) && SlimvGetFiletype() == 'lisp'
