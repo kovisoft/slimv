@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 29 Dec 2013
+*slimv.txt*                    Slimv                 Last Change: 03 Mar 2014
 
 Slimv                                                                  *slimv*
-                               Version 0.9.12
+                               Version 0.9.13
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -324,17 +324,13 @@ for the swank:create-server function call in the SWANK startup procedure.
 This makes a permanent SWANK server that listens continuously. Otherwise
 each time the SWANK connection is lost, the SWANK server needs to be
 restarted again.
-Some SWANK features (like Xref) require the load of the contributed modules,
-so it is recommended to pass
-    :load-contribs t
-for the swank-loader:init function call in the SWANK strartup procedure.
 Example startup script:
 
 (load (merge-pathnames "swank-loader.lisp" *load-truename*))
 
 (swank-loader:init :delete nil
                    :reload nil
-                   :load-contribs t)
+                   :load-contribs nil)
 
 (swank:create-server :port 4005
                      :coding-system "iso-latin-1-unix"
@@ -1422,12 +1418,6 @@ FAQ                                                                 *slimv-faq*
          :set verbose=20
      It is also possible to save a log of the communication between Slimv and
      the swank server by setting g:swank_log=1 in the .vimrc.
-
-- Q: I get SLDB error messages related to some contributed modules of Slime, e.g.
-     "The loaded code expects an incompatible layout for class SB-PRETTY:PRETTY-STREAM."
-- A: Some contribs are known to be incompatible with some other Lisp
-     packages. Try to disable contribs in slime/start-swank.lisp by setting
-     :load-contribs to 'nil'.
 
 - Q: Why is SLIME functionality XYZ missing from Slimv?
 - A: Not all SLIME functions are implemented in the SWANK client, however
