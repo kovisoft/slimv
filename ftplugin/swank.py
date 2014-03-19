@@ -1266,7 +1266,7 @@ def append_repl(text, varname_given):
             vim.command("call setbufvar(%d, 'repl_prompt_line', %d)" % (repl_buf, len(buf) - prompt_offset))
 
         # Move cursor at the end of REPL buffer in case it was originally after the prompt
-        vim.command('call SlimvReplSetCursorPos()')
+        vim.command('call SlimvReplSetCursorPos(0)')
 
 def swank_output(echo):
     global sock
