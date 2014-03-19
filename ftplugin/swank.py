@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.12
-# Last Change:  14 Dec 2013
+# Version:      0.9.13
+# Last Change:  19 Mar 2014
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -259,7 +259,7 @@ def parse_filepos(fname, loc):
 
 def format_filename(fname):
     fname = vim.eval('fnamemodify(' + fname + ', ":~:.")')
-    if fname.find(' '):
+    if fname.find(' ') >= 0:
         fname = '"' + fname + '"'
     return fname
 
@@ -435,6 +435,7 @@ def swank_parse_inspect(struct):
     global inspect_lines
     global inspect_newline
 
+    vim.command('call SlimvBeginUpdate()')
     vim.command('call SlimvOpenInspectBuffer()')
     vim.command('setlocal modifiable')
     buf = vim.current.buffer
@@ -453,6 +454,7 @@ def swank_parse_debug(struct):
     """
     Parse the SLDB output
     """
+    vim.command('call SlimvBeginUpdate()')
     vim.command('call SlimvOpenSldbBuffer()')
     vim.command('setlocal modifiable')
     buf = vim.current.buffer
@@ -535,6 +537,7 @@ def swank_parse_compile(struct):
     return buf
 
 def swank_parse_list_threads(tl):
+    vim.command('call SlimvBeginUpdate()')
     vim.command('call SlimvOpenThreadsBuffer()')
     vim.command('setlocal modifiable')
     buf = vim.current.buffer
@@ -688,7 +691,7 @@ def swank_listen():
                     retval = retval + unquote(r[1])
                     add_prompt = True
                     for k,a in actions.items():
-                        if a.pending and a.name.find('eval'):
+                        if a.pending and a.name.find('eval') >= 0:
                             add_prompt = False
                             break
                     if add_prompt:
@@ -757,6 +760,7 @@ def swank_listen():
                                     retval = retval + unquote(params)
                                     if action:
                                         action.result = retval
+                                vim.command("let s:swank_ok_result='%s'" % retval.replace("'", "''"))
                                 if element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
                                     retval = retval + new_line(retval) + get_prompt()
@@ -1215,6 +1219,55 @@ def actions_pending():
     vim.command(vc)
     return count
 
+def append_repl(text, varname_given):
+    """
+    Append text at the end of the REPL buffer
+    Does not bring REPL buffer into focus if loaded but not displayed in any window
+    """
+    repl_buf = int(vim.eval("s:repl_buf"))
+    if repl_buf < 0 or int(vim.eval("buflisted(%d) && bufloaded(%d)" % (repl_buf, repl_buf))) == 0:
+        # No REPL buffer exists
+        vim.command('call SlimvBeginUpdate()')
+        vim.command('call SlimvOpenReplBuffer()')
+        vim.command('call SlimvRestoreFocus(0)')
+        repl_buf = int(vim.eval("s:repl_buf"))
+    for buf in vim.buffers:
+        if buf.number == repl_buf:
+            break
+    if repl_buf > 0 and buf.number == repl_buf:
+        if varname_given:
+            lines = vim.eval(text).split("\n")
+        else:
+            lines = text.split("\n")
+        if lines[0] != '':
+            # Concatenate first line to the last line of the buffer
+            nlines = len(buf)
+            buf[nlines-1] = buf[nlines-1] + lines[0]
+        if len(lines) > 1:
+            # Append all subsequent lines
+            buf.append(lines[1:])
+
+        # Keep only the last g:slimv_repl_max_len lines
+        repl_max_len = int(vim.eval("g:slimv_repl_max_len"))
+        repl_prompt_line = int(vim.eval("getbufvar(%d, 'repl_prompt_line')" % repl_buf))
+        lastline = len(buf)
+        prompt_offset = lastline - repl_prompt_line
+        if repl_max_len > 0 and lastline > repl_max_len:
+            form = "\n".join(buf[0:(lastline-repl_max_len)])
+            ending = vim.eval("substitute(s:CloseForm('%s'), '\\n', '', 'g')" % form.replace("'", "''"))
+            # Delete extra lines
+            buf[0:(lastline - repl_max_len)] = []
+            if ending.find(')') >= 0 or ending.find(']') >= 0 or ending.find(']') >= 0:
+                # Reverse the ending and replace matched characters with their pairs
+                start = ending[::-1]
+                start = start.replace(')', '(').replace(']', '[').replace('}', '{').replace("\n", '')
+                # Re-balance the beginning of the buffer
+                buf[0:0] = [start + " .... ; output shortened"]
+            vim.command("call setbufvar(%d, 'repl_prompt_line', %d)" % (repl_buf, len(buf) - prompt_offset))
+
+        # Move cursor at the end of REPL buffer in case it was originally after the prompt
+        vim.command('call SlimvReplSetCursorPos()')
+
 def swank_output(echo):
     global sock
     global debug_active
@@ -1233,17 +1286,7 @@ def swank_output(echo):
         count = count + 1
     if echo and result != '':
         # Append SWANK output to REPL buffer
-        vim.command('call SlimvOpenReplBuffer()')
-        buf = vim.current.buffer
-        lines = result.split("\n")
-        if lines[0] != '':
-            # Concatenate first line to the last line of the buffer
-            nlines = len(buf)
-            buf[nlines-1] = buf[nlines-1] + lines[0]
-        if len(lines) > 1:
-            # Append all subsequent lines
-            buf.append(lines[1:])
-        vim.command('call SlimvEndUpdateRepl()')
+        append_repl(result, 0)
     if debug_activated and debug_active:
         # Debugger was activated in this run
         vim.command('call SlimvOpenSldbBuffer()')
