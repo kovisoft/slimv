@@ -361,8 +361,8 @@ endfunction
 
 " Position the cursor at the end of the REPL buffer
 " Optionally mark this position in Vim mark 's'
-function! SlimvEndOfReplBuffer()
-    if line( '.' ) >= b:repl_prompt_line - 1
+function! SlimvEndOfReplBuffer( force )
+    if line( '.' ) >= b:repl_prompt_line - 1 || a:force
         " Go to the end of file only if the user did not move up from here
         call s:EndOfBuffer()
     endif
@@ -370,10 +370,10 @@ endfunction
 
 " Remember the end of the REPL buffer: user may enter commands here
 " Also remember the prompt, because the user may overwrite it
-function! SlimvMarkBufferEnd()
+function! SlimvMarkBufferEnd( force )
     if exists( 'b:slimv_repl_buffer' )
         setlocal nomodified
-        call SlimvEndOfReplBuffer()
+        call SlimvEndOfReplBuffer( a:force )
         let b:repl_prompt_line = line( '$' )
         let b:repl_prompt_col = len( getline('$') ) + 1
         let b:repl_prompt = getline( b:repl_prompt_line )
@@ -456,7 +456,11 @@ function! SlimvSwankResponse()
     elseif s:swank_ok_result != ''
         " Display the :ok result also in status bar in case the REPL buffer is not shown
         let s:swank_ok_result = substitute(s:swank_ok_result,"\<LF>",'','g')
-        call SlimvShortEcho( '=> ' . s:swank_ok_result )
+        if s:swank_ok_result == ''
+            call SlimvShortEcho( '=> OK' )
+        else
+            call SlimvShortEcho( '=> ' . s:swank_ok_result )
+        endif
     endif
     if s:swank_actions_pending
         let s:last_update = -1
@@ -592,12 +596,12 @@ function! SlimvReplLeave()
 endfunction
 
 " Refresh cursor position in the REPL buffer after new lines appended
-function! SlimvReplSetCursorPos()
+function! SlimvReplSetCursorPos( force )
     " We do not want these autocommands to fire, the buffer switch will be temporary
     let save_ei = &eventignore
     set eventignore=BufEnter,BufLeave,BufWinEnter
     let win = winnr()
-    windo call SlimvMarkBufferEnd()
+    windo call SlimvMarkBufferEnd( a:force )
     execute win . "wincmd w"
     let &eventignore = save_ei
 endfunction
@@ -864,7 +868,8 @@ function! SlimvOpenReplBuffer()
         execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
         execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
         execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
-        execute "au BufWinEnter "      . g:slimv_repl_name . " :let b:repl_prompt_line=1 \| call SlimvMarkBufferEnd()"
+        execute "au BufWinEnter "      . g:slimv_repl_name . " :call SlimvMarkBufferEnd(1)"
+        execute "au TabEnter *"        . " :call SlimvReplSetCursorPos(1)"
     augroup END
 
     call SlimvRefreshReplBuffer()
@@ -2249,7 +2254,7 @@ endfunction
 function! SlimvPreviousCommand()
     let save_ve = &virtualedit
     set virtualedit=onemore
-    call SlimvEndOfReplBuffer()
+    call SlimvEndOfReplBuffer(0)
     if line( "." ) >= s:GetPromptLine()
         call s:PreviousCommand()
     endif
@@ -2260,7 +2265,7 @@ endfunction
 function! SlimvNextCommand()
     let save_ve = &virtualedit
     set virtualedit=onemore
-    call SlimvEndOfReplBuffer()
+    call SlimvEndOfReplBuffer(0)
     if line( "." ) >= s:GetPromptLine()
         call s:NextCommand()
     endif
