@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  03 Mar 2014
+" Last Change:  19 Mar 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -302,6 +302,7 @@ let s:sldb_level = -1                                     " Are we in the SWANK 
 let s:break_on_exception = 0                              " Enable debugger break on exceptions (for ritz-swank)
 let s:compiled_file = ''                                  " Name of the compiled file
 let s:win_id = 0                                          " Counter for generating unique window id
+let s:repl_buf = -1                                       " Buffer number for the REPL buffer
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = 0                                     " Swank action was requested from this window
 let s:arglist_line = 0                                    " Arglist was requested in this line ...
@@ -370,11 +371,13 @@ endfunction
 " Remember the end of the REPL buffer: user may enter commands here
 " Also remember the prompt, because the user may overwrite it
 function! SlimvMarkBufferEnd()
-    setlocal nomodified
-    call SlimvEndOfReplBuffer()
-    let b:repl_prompt_line = line( '$' )
-    let b:repl_prompt_col = len( getline('$') ) + 1
-    let b:repl_prompt = getline( b:repl_prompt_line )
+    if exists( 'b:slimv_repl_buffer' )
+        setlocal nomodified
+        call SlimvEndOfReplBuffer()
+        let b:repl_prompt_line = line( '$' )
+        let b:repl_prompt_col = len( getline('$') ) + 1
+        let b:repl_prompt = getline( b:repl_prompt_line )
+    endif
 endfunction
 
 " Get REPL prompt line. Fix stored prompt position when corrupted
@@ -414,61 +417,33 @@ function! SlimvBeginUpdate()
 endfunction
 
 " Switch to the buffer/window that was active before a swank action
-function! SlimvRestoreFocus()
+function! SlimvRestoreFocus( hide_current_buf )
+    if exists("b:previous_buf")
+        let new_buf = b:previous_buf
+        let new_win = b:previous_win
+    else
+        let new_buf = s:current_buf
+        let new_win = s:current_win
+    endif
     let buf = bufnr( "%" )
     let win = getwinvar( winnr(), 'id' )
-    if winnr('$') > 1 && s:current_win != '' && s:current_win != win
+    if a:hide_current_buf
+        set nobuflisted
+        b #
+    endif
+    if winnr('$') > 1 && new_win != '' && new_win != win
         " Switch to the caller window
-        call s:SwitchToWindow( s:current_win )
+        call s:SwitchToWindow( new_win )
     endif
-    if s:current_buf >= 0 && buf != s:current_buf
+    if new_buf >= 0 && buf != new_buf
         " Switch to the caller buffer
-        execute "buf " . s:current_buf
-    endif
-endfunction
-
-" Stop updating the REPL buffer and switch back to caller
-function! SlimvEndUpdateRepl()
-    " Keep only the last g:slimv_repl_max_len lines
-    let lastline = line('$')
-    let prompt_offset = lastline - b:repl_prompt_line
-    if g:slimv_repl_max_len > 0 && lastline > g:slimv_repl_max_len
-        let start = ''
-        let ending = s:CloseForm( getline( 1, lastline - g:slimv_repl_max_len ) )
-        if match( ending, ')\|\]\|}\|"' ) >= 0
-            " Reverse the ending and replace matched characters with their pairs
-            let start = join( reverse( split( ending, '.\zs' ) ), '' )
-            let start = substitute( start, ')', '(', 'g' )
-            let start = substitute( start, ']', '[', 'g' )
-            let start = substitute( start, '}', '{', 'g' )
-        endif
-
-        " Delete extra lines
-        execute "python vim.current.buffer[0:" . (lastline - g:slimv_repl_max_len) . "] = []"
-
-        " Re-balance the beginning of the buffer
-        if start != ''
-            call append( 0, start . " .... ; output shortened" )
-        endif
-        let b:repl_prompt_line = line( '$' ) - prompt_offset
-    endif
-
-    " Mark current prompt position
-    call SlimvMarkBufferEnd()
-    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
-    let repl_win = bufwinnr( repl_buf )
-    if s:current_buf >= 0 && repl_buf != s:current_buf && repl_win != -1 && s:sldb_level < 0
-        " Switch back to the caller buffer/window
-        let repl_winid = getwinvar( repl_win, 'id' )
-        if winnr('$') > 1 && s:current_win != '' && s:current_win != repl_winid
-            call s:SwitchToWindow( s:current_win )
-        endif
-        execute "buf " . s:current_buf
+        execute "buf " . new_buf
     endif
 endfunction
 
 " Handle response coming from the SWANK listener
 function! SlimvSwankResponse()
+    let s:swank_ok_result = ''
     let s:refresh_disabled = 1
     silent execute 'python swank_output(1)'
     let s:refresh_disabled = 0
@@ -478,6 +453,10 @@ function! SlimvSwankResponse()
 
     if s:swank_action == ':describe-symbol' && s:swank_result != ''
         echo substitute(s:swank_result,'^\n*','','')
+    elseif s:swank_ok_result != ''
+        " Display the :ok result also in status bar in case the REPL buffer is not shown
+        let s:swank_ok_result = substitute(s:swank_ok_result,"\<LF>",'','g')
+        call SlimvShortEcho( '=> ' . s:swank_ok_result )
     endif
     if s:swank_actions_pending
         let s:last_update = -1
@@ -530,8 +509,7 @@ function! SlimvRefreshReplBuffer()
         return
     endif
 
-    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
-    if repl_buf == -1
+    if s:repl_buf == -1
         " REPL buffer not loaded
         return
     endif
@@ -613,6 +591,17 @@ function! SlimvReplLeave()
     endif
 endfunction
 
+" Refresh cursor position in the REPL buffer after new lines appended
+function! SlimvReplSetCursorPos()
+    " We do not want these autocommands to fire, the buffer switch will be temporary
+    let save_ei = &eventignore
+    set eventignore=BufEnter,BufLeave,BufWinEnter
+    let win = winnr()
+    windo call SlimvMarkBufferEnd()
+    execute win . "wincmd w"
+    let &eventignore = save_ei
+endfunction
+
 " View the given file in a top/bottom/left/right split window
 function! s:SplitView( filename )
     " Check if we have at least two windows used by slimv (have a window id assigned)
@@ -680,6 +669,11 @@ function! SlimvOpenBuffer( name )
             execute "buffer " . buf
             stopinsert
         endif
+    endif
+    if s:current_buf != bufnr( "%" )
+        " Keep track of the previous buffer and window
+        let b:previous_buf = s:current_buf
+        let b:previous_win = s:current_win
     endif
     setlocal buftype=nofile
     setlocal noswapfile
@@ -797,6 +791,9 @@ endfunction
 " Open a new REPL buffer
 function! SlimvOpenReplBuffer()
     call SlimvOpenBuffer( g:slimv_repl_name )
+    setlocal noreadonly
+    let s:repl_buf = bufnr( "%" )
+    let b:slimv_repl_buffer = 1
     call b:SlimvInitRepl()
     if g:slimv_repl_syntax
         call SlimvSetSyntaxRepl()
@@ -812,11 +809,11 @@ function! SlimvOpenReplBuffer()
     endif
 
     " Add keybindings valid only for the REPL buffer
-    inoremap <buffer> <silent>        <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR>
+    inoremap <buffer> <silent>        <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR><End>
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
 
     if g:slimv_repl_simple_eval
-        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>C-Y>"  : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>"<CR>
+        inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>C-Y>"  : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>\<lt>End>"<CR>
         inoremap <buffer> <silent>        <Up>     <C-R>=pumvisible() ? "\<lt>Up>"   : SlimvHandleUp()<CR>
         inoremap <buffer> <silent>        <Down>   <C-R>=pumvisible() ? "\<lt>Down>" : SlimvHandleDown()<CR>
     else
@@ -867,6 +864,7 @@ function! SlimvOpenReplBuffer()
         execute "au FocusGained "      . g:slimv_repl_name . " :call SlimvRefreshReplBuffer()"
         execute "au BufEnter "         . g:slimv_repl_name . " :call SlimvReplEnter()"
         execute "au BufLeave "         . g:slimv_repl_name . " :call SlimvReplLeave()"
+        execute "au BufWinEnter "      . g:slimv_repl_name . " :let b:repl_prompt_line=1 \| call SlimvMarkBufferEnd()"
     augroup END
 
     call SlimvRefreshReplBuffer()
@@ -875,20 +873,19 @@ endfunction
 " Clear the contents of the REPL buffer, keeping the last prompt only
 function! SlimvClearReplBuffer()
     let this_buf = bufnr( "%" )
-    let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
-    if repl_buf == -1
+    if s:repl_buf == -1
         call SlimvError( "There is no REPL buffer." )
         return
     endif
-    if this_buf != repl_buf
+    if this_buf != s:repl_buf
         let oldpos = winsaveview()
-        execute "buf " . repl_buf
+        execute "buf " . s:repl_buf
     endif
     if b:repl_prompt_line > 1
         execute "normal! gg0d" . (b:repl_prompt_line-1) . "GG$"
         let b:repl_prompt_line = 1
     endif
-    if this_buf != repl_buf
+    if this_buf != s:repl_buf
         execute "buf " . this_buf
         call winrestview( oldpos )
     endif
@@ -997,7 +994,7 @@ function SlimvQuitInspect( force )
     if a:force
         call SlimvCommand( 'python swank_quit_inspector()' )
     endif
-    b #
+    call SlimvRestoreFocus(1)
 endfunction
 
 " Quit Threads
@@ -1006,7 +1003,7 @@ function SlimvQuitThreads()
     setlocal modifiable
     silent! %d
     call SlimvEndUpdate()
-    b #
+    call SlimvRestoreFocus(1)
 endfunction
 
 " Quit Sldb
@@ -1015,7 +1012,7 @@ function SlimvQuitSldb()
     setlocal modifiable
     silent! %d
     call SlimvEndUpdate()
-    b #
+    call SlimvRestoreFocus(1)
 endfunction
 
 " Create help text for Inspect buffer
@@ -1322,8 +1319,6 @@ endfunction
 
 " Send argument to Lisp server for evaluation
 function! SlimvSend( args, echoing, output )
-    call SlimvBeginUpdate()
-
     if ! SlimvConnectSwank()
         return
     endif
@@ -1333,9 +1328,6 @@ function! SlimvSend( args, echoing, output )
 
     let s:refresh_disabled = 1
     let s:swank_form = text
-    if a:output
-        call SlimvOpenReplBuffer()
-    endif
     if a:echoing && g:slimv_echolines != 0
         if g:slimv_echolines > 0
             let nlpos = match( s:swank_form, "\n", 0, g:slimv_echolines )
@@ -1343,7 +1335,7 @@ function! SlimvSend( args, echoing, output )
                 " Echo only the first g:slimv_echolines number of lines
                 let trimmed = strpart( s:swank_form, nlpos )
                 let s:swank_form = strpart( s:swank_form, 0, nlpos )
-                let ending = s:CloseForm( [s:swank_form] )
+                let ending = s:CloseForm( s:swank_form )
                 if ending != 'ERROR'
                     if substitute( trimmed, '\s\|\n', '', 'g' ) == ''
                         " Only whitespaces are trimmed
@@ -1355,15 +1347,13 @@ function! SlimvSend( args, echoing, output )
                 endif
             endif
         endif
-        let lines = split( s:swank_form, '\n', 1 )
-        call append( '$', lines )
+        if a:output
+            silent execute 'python append_repl("s:swank_form", 1)'
+        endif
         let s:swank_form = text
     elseif a:output
         " Open a new line for the output
-        call append( '$', '' )
-    endif
-    if a:output
-        call SlimvMarkBufferEnd()
+        silent execute "python append_repl('\\n', 0)"
     endif
     call SlimvCommand( 'python swank_input("s:swank_form")' )
     let s:swank_package = ''
@@ -1438,6 +1428,7 @@ function! SlimvRecallHistory( direction )
     if line( '.' ) == s:GetPromptLine() && c > b:repl_prompt_col
         " Search for lines beginning with the text up to the cursor position
         let searchtext = strpart( getline('.'), b:repl_prompt_col-1, c-b:repl_prompt_col )
+        let searchtext = substitute( searchtext, '^\s*$', '', 'g' )
         let searchtext = substitute( searchtext, '^\s*\(.*[^ ]\)', '\1', 'g' )
     endif
     let historypos = g:slimv_cmdhistorypos
@@ -1458,30 +1449,29 @@ function! SlimvRecallHistory( direction )
 endfunction
 
 " Return missing parens, double quotes, etc to properly close form
-function! s:CloseForm( lines )
-    let form = join( a:lines, "\n" )
+function! s:CloseForm( form )
     let end = ''
     let i = 0
-    while i < len( form )
-        if form[i] == '"'
+    while i < len( a:form )
+        if a:form[i] == '"'
             " Inside a string
             let end = '"' . end
             let i += 1
-            while i < len( form )
-                if form[i] == '\'
+            while i < len( a:form )
+                if a:form[i] == '\'
                     " Ignore next character
                     let i += 2
-                elseif form[i] == '"'
+                elseif a:form[i] == '"'
                     let end = end[1:]
                     break
                 else
                     let i += 1
                 endif
             endwhile
-        elseif form[i] == ';'
+        elseif a:form[i] == ';'
             " Inside a comment
             let end = "\n" . end
-            let cend = match(form, "\n", i)
+            let cend = match(a:form, "\n", i)
             if cend == -1
                 break
             endif
@@ -1489,14 +1479,14 @@ function! s:CloseForm( lines )
             let end = end[1:]
         else
             " We are outside of strings and comments, now we shall count parens
-            if form[i] == '('
+            if a:form[i] == '('
                 let end = ')' . end
-            elseif form[i] == '[' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
+            elseif a:form[i] == '[' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
                 let end = ']' . end
-            elseif form[i] == '{' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
+            elseif a:form[i] == '{' && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
                 let end = '}' . end
-            elseif form[i] == ')' || ((form[i] == ']' || form[i] == '}') && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*')
-                if len( end ) == 0 || end[0] != form[i]
+            elseif a:form[i] == ')' || ((a:form[i] == ']' || a:form[i] == '}') && SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*')
+                if len( end ) == 0 || end[0] != a:form[i]
                     " Oops, too many closing parens or invalid closing paren
                     return 'ERROR'
                 endif
@@ -1835,7 +1825,7 @@ function! SlimvSendCommand( close )
             endwhile
 
             " Count the number of opening and closing braces
-            let end = s:CloseForm( cmd )
+            let end = s:CloseForm( join( cmd, "\n" ) )
             if end == 'ERROR'
                 " Too many closing parens
                 call SlimvErrorWait( "Too many or invalid closing parens found." )
@@ -1865,9 +1855,7 @@ function! SlimvSendCommand( close )
             endif
         endif
     else
-        call append( '$', "Slimv error: previous EOF mark not found, re-enter last form:" )
-        call append( '$', "" )
-        call SlimvMarkBufferEnd()
+        silent execute "python append_repl('Slimv error: previous EOF mark not found, re-enter last form:\\n', 0)"
     endif
 endfunction
 
@@ -1882,7 +1870,7 @@ function! SlimvCloseForm()
         call add( form, getline( l ) )
         let l = l + 1
     endwhile
-    let end = s:CloseForm( form )
+    let end = s:CloseForm( join( form, "\n" ) )
     if end == 'ERROR'
         " Too many closing parens
         call SlimvErrorWait( "Too many or invalid closing parens found." )
@@ -2049,7 +2037,7 @@ function! SlimvHandleEnterRepl()
     endwhile
 
     " Count the number of opening and closing braces in the command before the cursor
-    let end = s:CloseForm( cmd )
+    let end = s:CloseForm( join( cmd, "\n" ) )
     if end != 'ERROR' && end != ''
         " Command part before cursor is unbalanced, insert newline
         let s:arglist_line = line('.')
@@ -2300,7 +2288,6 @@ function! SlimvDebugCommand( name, cmd )
                     call SlimvOpenSldbBuffer()
                 endif
                 call SlimvQuitSldb()
-                call SlimvRestoreFocus()
             else
                 echomsg 'Debugger re-activated by the SWANK server.'
             endif
@@ -2477,11 +2464,9 @@ function! SlimvConnectServer()
 	" Give swank server some time for disconnecting
         sleep 500m
     endif 
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
-        let repl_buf = bufnr( '^' . g:slimv_repl_name . '$' )
-        let repl_win = bufwinnr( repl_buf )
-        if repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
+        let repl_win = bufwinnr( s:repl_buf )
+        if s:repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
             call SlimvOpenReplBuffer()
         endif
     endif
@@ -2525,7 +2510,7 @@ function! SlimvEvalRegion() range
     else
         " Register was passed, so eval register contents instead
         let reg = getreg( v:register )
-        let ending = s:CloseForm( [reg] )
+        let ending = s:CloseForm( reg )
         if ending == 'ERROR'
             call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
             return
@@ -2570,7 +2555,7 @@ function! SlimvEvalSelection( outreg, testform )
             let lines = lines + [a:testform]
         endif
     endif
-    if bufname( "%" ) == g:slimv_repl_name
+    if exists( 'b:slimv_repl_buffer' )
         " If this is the REPL buffer then go to EOF
         call s:EndOfBuffer()
     endif
@@ -2629,7 +2614,7 @@ endfunction
 
 " Evaluate the whole buffer
 function! SlimvEvalBuffer()
-    if bufname( "%" ) == g:slimv_repl_name
+    if exists( 'b:slimv_repl_buffer' )
         call SlimvError( "Cannot evaluate the REPL buffer." )
         return
     endif
@@ -2715,13 +2700,12 @@ endfunction
 
 " Macroexpand-1 the current top level form
 function! SlimvMacroexpand()
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         if !SlimvSelectForm( 0 )
             return
         endif
         let s:swank_form = SlimvGetSelection()
-        if bufname( "%" ) == g:slimv_repl_name
+        if exists( 'b:slimv_repl_buffer' )
             " If this is the REPL buffer then go to EOF
             call s:EndOfBuffer()
         endif
@@ -2731,13 +2715,12 @@ endfunction
 
 " Macroexpand the current top level form
 function! SlimvMacroexpandAll()
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         if !SlimvSelectForm( 0 )
             return
         endif
         let s:swank_form = SlimvGetSelection()
-        if bufname( "%" ) == g:slimv_repl_name
+        if exists( 'b:slimv_repl_buffer' )
             " If this is the REPL buffer then go to EOF
             call s:EndOfBuffer()
         endif
@@ -2840,7 +2823,6 @@ function! SlimvInspect()
         let s = input( 'Inspect in frame ' . frame . ' (evaluated): ', sym )
         if s != ''
             let s:inspect_path = [s]
-            call SlimvBeginUpdate()
             call SlimvCommand( 'python swank_inspect_in_frame("' . s . '", ' . frame . ')' )
             call SlimvRefreshReplBuffer()
         endif
@@ -2848,7 +2830,6 @@ function! SlimvInspect()
         let s = input( 'Inspect: ', SlimvSelectSymbolExt() )
         if s != ''
             let s:inspect_path = [s]
-            call SlimvBeginUpdate()
             call SlimvCommandUsePackage( 'python swank_inspect("' . s . '")' )
         endif
     endif
@@ -2966,7 +2947,6 @@ function! SlimvCompileDefun()
         call winrestview( oldpos ) 
         return
     endif
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:swank_form = SlimvGetSelection()
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
@@ -2975,7 +2955,7 @@ endfunction
 
 " Compile and load whole file
 function! SlimvCompileLoadFile()
-    if bufname( "%" ) == g:slimv_repl_name
+    if exists( 'b:slimv_repl_buffer' )
         call SlimvError( "Cannot compile the REPL buffer." )
         return
     endif
@@ -2987,7 +2967,6 @@ function! SlimvCompileLoadFile()
             write
         endif
     endif
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:compiled_file = ''
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
@@ -3004,7 +2983,7 @@ endfunction
 
 " Compile whole file
 function! SlimvCompileFile()
-    if bufname( "%" ) == g:slimv_repl_name
+    if exists( 'b:slimv_repl_buffer' )
         call SlimvError( "Cannot compile the REPL buffer." )
         return
     endif
@@ -3016,7 +2995,6 @@ function! SlimvCompileFile()
             write
         endif
     endif
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         call SlimvCommandUsePackage( 'python swank_compile_file("' . filename . '")' )
     endif
@@ -3029,7 +3007,7 @@ function! SlimvCompileRegion() range
     else
         " Register was passed, so compile register contents instead
         let reg = getreg( v:register )
-        let ending = s:CloseForm( [reg] )
+        let ending = s:CloseForm( reg )
         if ending == 'ERROR'
             call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
             return
@@ -3040,7 +3018,6 @@ function! SlimvCompileRegion() range
         return
     endif
     let region = join( lines, "\n" )
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let s:swank_form = region
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
@@ -3051,7 +3028,6 @@ endfunction
 
 " Describe the selected symbol
 function! SlimvDescribeSymbol()
-    call SlimvBeginUpdate()
     if SlimvConnectSwank()
         let symbol = SlimvSelectSymbol()
         if symbol == ''

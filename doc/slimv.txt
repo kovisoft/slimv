@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 03 Mar 2014
+*slimv.txt*                    Slimv                 Last Change: 19 Mar 2014
 
 Slimv                                                                  *slimv*
                                Version 0.9.13
@@ -1463,6 +1463,10 @@ FAQ                                                                 *slimv-faq*
 
 ===============================================================================
 CHANGE LOG                                                    *slimv-changelog*
+
+0.9.13 - Update REPL buffer in the background, no need to bring it into focus.
+       - The evaluation result is also displayed in the status line.
+       - REPL buffer number is remembered upon creation, no need to find it by name.
 
 0.9.12 - Added support for the R language via swank-R (by Philipp Marek).
        - Test form for SlimvEvalTestExp() may wrap the selected s-expression.
