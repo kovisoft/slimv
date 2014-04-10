@@ -95,7 +95,8 @@ function! SlimvSwankCommand()
                     let path2as = globpath( &runtimepath, 'ftplugin/**/iterm.applescript')
                     return '!' . path2as . ' ' . cmd
                 else
-                    return '!osascript -e "tell application \"Terminal\" to do script \"' . cmd . '\""'
+                    " doubles quotes within 'cmd' need to become '\\\"'
+                    return '!osascript -e "tell application \"Terminal\" to do script \"' . escape(escape(cmd, '"'), '\"') . '\""'
                 endif 
         elseif $STY != ''
             " GNU screen under Linux
