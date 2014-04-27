@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  19 Mar 2014
+" Last Change:  27 Apr 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2076,7 +2076,7 @@ function! SlimvHandleEnterSldb()
     if s:sldb_level >= 0
         " Check if Enter was pressed in a section printed by the SWANK debugger
         " The source specification is within a fold, so it has to be tested first
-        let mlist = matchlist( line, '^\s\+in "\(.*\)" \(line\|byte\) \(\d\+\)$' )
+        let mlist = matchlist( line, '^\s\+in "\=\(.*\)"\= \(line\|byte\) \(\d\+\)$' )
         if len(mlist)
             if g:slimv_repl_split
                 " Switch back to other window
