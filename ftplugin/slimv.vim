@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  27 Apr 2014
+" Last Change:  02 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -599,12 +599,14 @@ endfunction
 " Refresh cursor position in the REPL buffer after new lines appended
 function! SlimvReplSetCursorPos( force )
     " We do not want these autocommands to fire, the buffer switch will be temporary
+    let savemark = getpos("'`'")
     let save_ei = &eventignore
     set eventignore=BufEnter,BufLeave,BufWinEnter
     let win = winnr()
     windo call SlimvMarkBufferEnd( a:force )
     execute win . "wincmd w"
     let &eventignore = save_ei
+    call setpos("'`", savemark)
 endfunction
 
 " View the given file in a top/bottom/left/right split window
