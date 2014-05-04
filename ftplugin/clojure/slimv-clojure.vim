@@ -1,7 +1,7 @@
 " slimv-clojure.vim:
 "               Clojure filetype plugin for Slimv
-" Version:      0.9.10
-" Last Change:  12 Jan 2013
+" Version:      0.9.13
+" Last Change:  04 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -30,7 +30,7 @@ endfunction
 
 " Build a Clojure startup command by adding
 " all clojure*.jar files found to the classpath
-function! b:SlimvBuildStartCmd( lisps )
+function! s:BuildStartCmd( lisps )
     let cp = s:TransformFilename( a:lisps[0] )
     let i = 1
     while i < len( a:lisps )
@@ -48,7 +48,7 @@ endfunction
 
 " Try to autodetect Clojure executable
 " Returns list [Clojure executable, Clojure implementation]
-function! b:SlimvAutodetect( preferred )
+function! SlimvAutodetect( preferred )
     " Firts try the most basic setup: everything in the path
     if executable( 'lein' )
         return ['"lein repl"', 'clojure']
@@ -67,37 +67,37 @@ function! b:SlimvAutodetect( preferred )
         let lisps = lisps + 'clojure-contrib.jar'
     endif
     if len( lisps ) > 0
-        return b:SlimvBuildStartCmd( lisps )
+        return s:BuildStartCmd( lisps )
     endif
 
     " Check if Clojure is bundled with Slimv
     let lisps = split( globpath( &runtimepath, 'swank-clojure/clojure*.jar'), '\n' )
     if len( lisps ) > 0
-        return b:SlimvBuildStartCmd( lisps )
+        return s:BuildStartCmd( lisps )
     endif
 
     " Try to find Clojure in the PATH
     let path = substitute( $PATH, ';', ',', 'g' )
     let lisps = split( globpath( path, 'clojure*.jar' ), '\n' )
     if len( lisps ) > 0
-        return b:SlimvBuildStartCmd( lisps )
+        return s:BuildStartCmd( lisps )
     endif
 
     if g:slimv_windows
         " Try to find Clojure on the standard installation places
         let lisps = split( globpath( 'c:/*clojure*,c:/*clojure*/lib', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
-            return b:SlimvBuildStartCmd( lisps )
+            return s:BuildStartCmd( lisps )
         endif
     else
         " Try to find Clojure in the home directory
         let lisps = split( globpath( '/usr/local/bin/*clojure*', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
-            return b:SlimvBuildStartCmd( lisps )
+            return s:BuildStartCmd( lisps )
         endif
         let lisps = split( globpath( '~/*clojure*', 'clojure*.jar' ), '\n' )
         if len( lisps ) > 0
-            return b:SlimvBuildStartCmd( lisps )
+            return s:BuildStartCmd( lisps )
         endif
     endif
 
@@ -105,7 +105,7 @@ function! b:SlimvAutodetect( preferred )
 endfunction
 
 " Try to find out the Clojure implementation
-function! b:SlimvImplementation()
+function! SlimvImplementation()
     if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
         " Return Lisp implementation if defined
         return tolower( g:slimv_impl )
@@ -115,7 +115,7 @@ function! b:SlimvImplementation()
 endfunction
 
 " Try to autodetect SWANK and build the command to load the SWANK server
-function! b:SlimvSwankLoader()
+function! SlimvSwankLoader()
     " First autodetect Leiningen and Cake
     if executable( 'lein' )
         if globpath( '~/.lein/plugins', 'lein-ritz*.jar' ) != ''
@@ -137,12 +137,12 @@ function! b:SlimvSwankLoader()
 endfunction
 
 " Filetype specific initialization for the REPL buffer
-function! b:SlimvInitRepl()
+function! SlimvInitRepl()
     set filetype=clojure
 endfunction
 
 " Lookup symbol in the list of Clojure Hyperspec symbol databases
-function! b:SlimvHyperspecLookup( word, exact, all )
+function! SlimvHyperspecLookup( word, exact, all )
     if !exists( 'g:slimv_cljapi_loaded' )
         runtime ftplugin/**/slimv-cljapi.vim
     endif
@@ -171,7 +171,7 @@ function! b:SlimvHyperspecLookup( word, exact, all )
 endfunction
 
 " Implementation specific REPL initialization
-function! b:SlimvReplInit( lisp_version )
+function! SlimvReplInit( lisp_version )
     " Import functions commonly used in REPL but not present when not running in repl mode
     if a:lisp_version[0:2] >= '1.3'
         call SlimvSendSilent( ["(use '[clojure.repl :only (source apropos dir pst doc find-doc)])",

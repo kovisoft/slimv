@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  02 May 2014
+" Last Change:  04 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -85,7 +85,7 @@ function! SlimvSwankCommand()
         let g:slimv_lisp = input( 'Enter Lisp path (or fill g:slimv_lisp in your vimrc): ', '', 'file' )
     endif
 
-    let cmd = b:SlimvSwankLoader()
+    let cmd = SlimvSwankLoader()
     if cmd != ''
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
@@ -134,10 +134,10 @@ endif
 if !exists( 'g:slimv_lisp' )
     let lisp = ['', '']
     if exists( 'g:slimv_preferred' )
-        let lisp = b:SlimvAutodetect( tolower(g:slimv_preferred) )
+        let lisp = SlimvAutodetect( tolower(g:slimv_preferred) )
     endif
     if lisp[0] == ''
-        let lisp = b:SlimvAutodetect( '' )
+        let lisp = SlimvAutodetect( '' )
     endif
     let g:slimv_lisp = lisp[0]
     if !exists( 'g:slimv_impl' )
@@ -148,7 +148,7 @@ endif
 " Try to find out the Lisp implementation
 " if not autodetected and not given in vimrc
 if !exists( 'g:slimv_impl' )
-    let g:slimv_impl = b:SlimvImplementation()
+    let g:slimv_impl = SlimvImplementation()
 endif
 
 " REPL buffer name
@@ -801,7 +801,7 @@ function! SlimvOpenReplBuffer()
     setlocal noreadonly
     let s:repl_buf = bufnr( "%" )
     let b:slimv_repl_buffer = 1
-    call b:SlimvInitRepl()
+    call SlimvInitRepl()
     if g:slimv_repl_syntax
         call SlimvSetSyntaxRepl()
     else
@@ -1317,9 +1317,9 @@ function! SlimvConnectSwank()
             let cmd = cmd . " (make-string " . g:swank_block_size . ")) nil)"
             call SlimvSend( [cmd], 0, 1 )
         endif
-        if exists( "*b:SlimvReplInit" )
+        if exists( "*SlimvReplInit" )
             " Perform implementation specific REPL initialization if supplied
-            call b:SlimvReplInit( s:lisp_version )
+            call SlimvReplInit( s:lisp_version )
         endif
     endif
     return s:swank_connected
@@ -3142,10 +3142,10 @@ function! SlimvLookup( word )
     let w = a:word
     let symbol = []
     while symbol == []
-        let symbol = b:SlimvHyperspecLookup( w, 1, 0 )
+        let symbol = SlimvHyperspecLookup( w, 1, 0 )
         if symbol == []
             " Symbol not found, try a match on beginning of symbol name
-            let symbol = b:SlimvHyperspecLookup( w, 0, 0 )
+            let symbol = SlimvHyperspecLookup( w, 0, 0 )
             if symbol == []
                 " We are out of luck, can't find anything
                 let msg = 'Symbol ' . w . ' not found. Hyperspec lookup word: '
@@ -3244,7 +3244,7 @@ function! SlimvComplete( base )
 
     " No completion yet, try to fetch it from the Hyperspec database
     let res = []
-    let symbol = b:SlimvHyperspecLookup( a:base, 0, 1 )
+    let symbol = SlimvHyperspecLookup( a:base, 0, 1 )
     if symbol == []
         return []
     endif

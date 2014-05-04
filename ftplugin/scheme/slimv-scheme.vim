@@ -1,7 +1,7 @@
 " slimv-scheme.vim:
 "               Scheme filetype plugin for Slimv
-" Version:      0.9.6
-" Last Change:  25 Mar 2012
+" Version:      0.9.13
+" Last Change:  04 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -21,7 +21,7 @@ let g:slimv_scheme_loaded = 1
 
 " Try to autodetect Scheme executable
 " Returns list [Scheme executable, Scheme implementation]
-function! b:SlimvAutodetect( preferred )
+function! SlimvAutodetect( preferred )
     " Currently only MIT Scheme on Linux
     if executable( 'scheme' )
         " MIT Scheme
@@ -32,7 +32,7 @@ function! b:SlimvAutodetect( preferred )
 endfunction
 
 " Try to find out the Scheme implementation
-function! b:SlimvImplementation()
+function! SlimvImplementation()
     if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
         " Return Lisp implementation if defined
         return tolower( g:slimv_impl )
@@ -42,7 +42,7 @@ function! b:SlimvImplementation()
 endfunction
 
 " Try to autodetect SWANK and build the command to load the SWANK server
-function! b:SlimvSwankLoader()
+function! SlimvSwankLoader()
     if g:slimv_impl == 'mit'
         if exists( 'g:scheme_builtin_swank' ) && g:scheme_builtin_swank
             " MIT Scheme contains a built-in swank server since version 9.1.1
@@ -58,12 +58,12 @@ function! b:SlimvSwankLoader()
 endfunction
 
 " Filetype specific initialization for the REPL buffer
-function! b:SlimvInitRepl()
+function! SlimvInitRepl()
     set filetype=scheme
 endfunction
 
 " Lookup symbol in the Hyperspec
-function! b:SlimvHyperspecLookup( word, exact, all )
+function! SlimvHyperspecLookup( word, exact, all )
     " No Hyperspec support for Scheme at the moment
     let symbol = []
     return symbol

@@ -1,7 +1,7 @@
 " slimv-r.vim:
 "               R filetype plugin for Slimv
-" Version:      0.9.12
-" Last Change:  18 Dec 2013
+" Version:      0.9.13
+" Last Change:  04 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -21,26 +21,26 @@ let g:slimv_lisp_loaded = 1
 
 " Try to autodetect Lisp executable
 " Returns list [Lisp executable, Lisp implementation]
-function! b:SlimvAutodetect( preferred )
+function! SlimvAutodetect( preferred )
     return ['R', 'R']
 endfunction
 
 " Try to find out the Lisp implementation
-function! b:SlimvImplementation()
+function! SlimvImplementation()
     return 'R'
 endfunction
 
 " Try to autodetect SWANK and build the command to load the SWANK server
-function! b:SlimvSwankLoader()
+function! SlimvSwankLoader()
 endfunction
 
 " Filetype specific initialization for the REPL buffer
-function! b:SlimvInitRepl()
+function! SlimvInitRepl()
     set filetype=r
 endfunction
 
 " Lookup symbol in the list of Lisp Hyperspec symbol databases
-function! b:SlimvHyperspecLookup( word, exact, all )
+function! SlimvHyperspecLookup( word, exact, all )
     return [ a:word ]
 endfunction
 
