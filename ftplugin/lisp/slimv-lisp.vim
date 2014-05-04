@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
-" Version:      0.9.12
-" Last Change:  13 Dec 2013
+" Version:      0.9.13
+" Last Change:  04 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -63,7 +63,7 @@ let s:lisp_desc = [
 
 " Try to autodetect Lisp executable
 " Returns list [Lisp executable, Lisp implementation]
-function! b:SlimvAutodetect( preferred )
+function! SlimvAutodetect( preferred )
     for lisp in s:lisp_desc
         if     lisp[2] =~ 'w' && !g:slimv_windows
             " Valid only on Windows
@@ -90,7 +90,7 @@ function! b:SlimvAutodetect( preferred )
 endfunction
 
 " Try to find out the Lisp implementation
-function! b:SlimvImplementation()
+function! SlimvImplementation()
     if exists( 'g:slimv_impl' ) && g:slimv_impl != ''
         " Return Lisp implementation if defined
         return tolower( g:slimv_impl )
@@ -120,7 +120,7 @@ function! b:SlimvImplementation()
 endfunction
 
 " Try to autodetect SWANK and build the command to load the SWANK server
-function! b:SlimvSwankLoader()
+function! SlimvSwankLoader()
     " First check if SWANK is bundled with Slimv
     let swanks = split( globpath( &runtimepath, 'slime/start-swank.lisp'), '\n' )
     if len( swanks ) == 0
@@ -150,12 +150,12 @@ function! b:SlimvSwankLoader()
 endfunction
 
 " Filetype specific initialization for the REPL buffer
-function! b:SlimvInitRepl()
+function! SlimvInitRepl()
     set filetype=lisp
 endfunction
 
 " Lookup symbol in the list of Lisp Hyperspec symbol databases
-function! b:SlimvHyperspecLookup( word, exact, all )
+function! SlimvHyperspecLookup( word, exact, all )
     if !exists( 'g:slimv_clhs_loaded' )
         runtime ftplugin/**/slimv-clhs.vim
     endif
