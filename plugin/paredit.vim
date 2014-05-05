@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.13
-" Last Change:  19 Mar 2014
+" Last Change:  05 May 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1361,6 +1361,16 @@ function! s:FindParenNearby()
     endif
 endfunction
 
+" Reindent current form
+function! PareditReindentForm()
+    let l = line('.')
+    let c = col('.')
+    let old_indent = len(matchstr(getline(l), '^\s*'))
+    normal! =ib
+    let new_indent = len(matchstr(getline(l), '^\s*'))
+    call cursor( l, c + new_indent - old_indent )
+endfunction
+
 " Move delimiter one atom or s-expression to the left
 function! PareditMoveLeft()
     call s:FindParenNearby()
@@ -1414,6 +1424,7 @@ function! PareditMoveLeft()
             normal! l
         endif
     endif
+    call PareditReindentForm()
 endfunction
 
 " Move delimiter one atom or s-expression to the right
@@ -1470,6 +1481,7 @@ function! PareditMoveRight()
         execute "normal! a "
         normal! h
     endif
+    call PareditReindentForm()
 endfunction
 
 " Find closing of the innermost structure: (...) or [...] or {...}
