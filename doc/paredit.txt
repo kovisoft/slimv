@@ -1,7 +1,7 @@
-*paredit.txt*                   Paredit              Last Change: 29 Dec 2013
+*paredit.txt*                   Paredit              Last Change: 12 Jul 2014
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
-                               Version 0.9.12
+                               Version 0.9.13
 
 The paredit.vim plugin performs structured editing of s-expressions used in
 the Lisp, Clojure, Scheme programming languages. It may come as part of Slimv
@@ -366,6 +366,9 @@ available even when paredit mode is switched off.
 
     di(            Same as da( but does not delete the enclosing parens.
 
+
+Davide Taviani made a cheetsheet for Paredit, which can be accessed here:
+https://github.com/StudyFlow/paredit.vim-cheatsheet
 
 ===============================================================================
 PAREDIT OPTIONS                                               *paredit-options*
