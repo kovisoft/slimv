@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  19 Mar 2014
+# Last Change:  25 Jul 2014
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -810,7 +810,7 @@ def swank_listen():
                                 retval = retval + new_line(retval) + swank_parse_compile(params) + get_prompt()
                             else:
                                 if action.name == ':simple-completions':
-                                    if type(params[0]) == list and type(params[0][0]) == str and params[0][0] != 'nil':
+                                    if type(params[0]) == list and len(params[0]) > 0 and type(params[0][0]) == str and params[0][0] != 'nil':
                                         compl = "\n".join(params[0])
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':fuzzy-completions':
