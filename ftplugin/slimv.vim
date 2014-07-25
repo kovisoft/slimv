@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  04 May 2014
+" Last Change:  25 Jul 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2518,10 +2518,13 @@ function! SlimvEvalRegion() range
     else
         " Register was passed, so eval register contents instead
         let reg = getreg( v:register )
-        let ending = s:CloseForm( reg )
-        if ending == 'ERROR'
-            call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
-            return
+        let ending = ""
+        if SlimvGetFiletype() != 'r'
+            let ending = s:CloseForm( reg )
+            if ending == 'ERROR'
+                call SlimvError( 'Too many or invalid closing parens in register "' . v:register )
+                return
+            endif
         endif
         let lines = [reg . ending]
     endif
