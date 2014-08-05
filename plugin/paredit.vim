@@ -147,8 +147,8 @@ function! PareditInitBuffer()
         call RepeatableNNoRemap(g:paredit_leader . 'w"', ':<C-U>call PareditWrap('."'".'"'."','".'"'."')")
         execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w"  :<C-U>call PareditWrapSelection('."'".'"'."','".'"'."')<CR>"
         " Spliec s-expression killing backward/forward
-        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(,S'
-        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%,S'
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(:<C-U>call PareditSplice()<CR>'
+        execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%:<C-U>call PareditSplice()<CR>'
         call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()')
         if &ft =~ '.*\(clojure\|scheme\|racket\).*'
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
