@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  25 Jul 2014
+# Last Change:  11 Oct 2014
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -45,6 +45,7 @@ frame_locals    = dict()        # Map frame variable names to their index
 inspect_lines   = 0             # Number of lines in the Inspector (excluding help text)
 inspect_newline = True          # Start a new line in the Inspector (for multi-part objects)
 inspect_package = ''            # Package used for the current Inspector
+swank_version   = ''            # Swank version string in format YYYY-MM-DD
 
 
 ###############################################################################
@@ -646,6 +647,7 @@ def swank_listen():
     global prompt
     global package
     global pid
+    global swank_version
 
     retval = ''
     msgcount = 0
@@ -783,21 +785,21 @@ def swank_listen():
                             elif element == ':pid':
                                 conn_info = make_keys(params)
                                 pid = conn_info[':pid']
-                                ver = conn_info.get(':version', 'nil')
-                                if len(ver) == 8:
+                                swank_version = conn_info.get(':version', 'nil')
+                                if len(swank_version) == 8:
                                     # Convert version to YYYY-MM-DD format
-                                    ver = ver[0:4] + '-' + ver[4:6] + '-' + ver[6:8]
+                                    swank_version = swank_version[0:4] + '-' + swank_version[4:6] + '-' + swank_version[6:8]
                                 imp = make_keys( conn_info[':lisp-implementation'] )
                                 pkg = make_keys( conn_info[':package'] )
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
-                                vim.command('let s:swank_version="' + ver + '"')
-                                if ver >= '2011-11-08':
+                                vim.command('let s:swank_version="' + swank_version + '"')
+                                if swank_version >= '2011-11-08':
                                     # Recent swank servers count bytes instead of unicode characters
                                     use_unicode = False
                                 vim.command('let s:lisp_version="' + imp[':version'] + '"')
                                 retval = retval + new_line(retval)
-                                retval = retval + imp[':type'] + ' ' + imp[':version'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + ver
+                                retval = retval + imp[':type'] + ' ' + imp[':version'] + '  Port: ' + str(input_port) + '  Pid: ' + pid + '\n; SWANK ' + swank_version
                                 retval = retval + '\n' + get_prompt()
                                 logprint(' Package:' + package + ' Prompt:' + prompt)
                             elif element == ':name':
@@ -934,10 +936,17 @@ def swank_connection_info():
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
-    swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), 't')
+    global swank_version
+    if swank_version >= '2014-10-01':
+        swank_rex(':create-repl', '(swank-repl:create-repl nil)', get_swank_package(), 't')
+    else:
+        swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), 't')
 
 def swank_eval(exp):
-    cmd = '(swank:listener-eval ' + requote(exp) + ')'
+    if swank_version >= '2014-10-01':
+        cmd = '(swank-repl:listener-eval ' + requote(exp) + ')'
+    else:
+        cmd = '(swank:listener-eval ' + requote(exp) + ')'
     swank_rex(':listener-eval', cmd, get_swank_package(), ':repl-thread')
 
 def swank_eval_in_frame(exp, n):
