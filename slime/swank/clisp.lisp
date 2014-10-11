@@ -34,11 +34,17 @@
 
 ;;; [1] http://cvs.sourceforge.net/viewcvs.py/clocc/clocc/src/tools/metering/
 
-(in-package :swank-backend)
+(defpackage swank/clisp
+  (:use cl swank/backend))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;;(use-package "SOCKET")
-  (use-package "GRAY"))
+(in-package swank/clisp)
+
+(eval-when (:compile-toplevel)
+  (unless (string< "2.44" (lisp-implementation-version))
+    (error "Need at least CLISP version 2.44")))
+
+(defimplementation gray-package-name ()
+  "GRAY")
 
 ;;;; if this lisp has the complete CLOS then we use it, otherwise we
 ;;;; build up a "fake" swank-mop and then override the methods in the
@@ -52,14 +58,14 @@
                                         :clos))))
     "True in those CLISP images which have a complete MOP implementation."))
 
-#+#.(cl:if swank-backend::*have-mop* '(cl:and) '(cl:or))
+#+#.(cl:if swank/clisp::*have-mop* '(cl:and) '(cl:or))
 (progn
   (import-swank-mop-symbols :clos '(:slot-definition-documentation))
 
   (defun swank-mop:slot-definition-documentation (slot)
     (clos::slot-definition-documentation slot)))
 
-#-#.(cl:if swank-backend::*have-mop* '(and) '(or))
+#-#.(cl:if swank/clisp::*have-mop* '(and) '(or))
 (defclass swank-mop:standard-slot-definition ()
   ()
   (:documentation
@@ -176,14 +182,14 @@
   (let ((streams (mapcar (lambda (s) (list* s :input nil)) streams)))
     (loop
      (cond ((check-slime-interrupts) (return :interrupt))
-           (timeout 
+           (timeout
             (socket:socket-status streams 0 0)
-            (return (loop for (s _ . x) in streams
+            (return (loop for (s nil . x) in streams
                           if x collect s)))
            (t
             (with-simple-restart (socket-status "Return from socket-status.")
               (socket:socket-status streams 0 500000))
-            (let ((ready (loop for (s _ . x) in streams
+            (let ((ready (loop for (s nil . x) in streams
                                if x collect s)))
               (when ready (return ready))))))))
 
@@ -192,7 +198,7 @@
   (assert (member timeout '(nil t)))
   (loop
    (cond ((check-slime-interrupts) (return :interrupt))
-         (t 
+         (t
           (let ((ready (remove-if-not #'input-available-p streams)))
             (when ready (return ready)))
           (when timeout (return nil))
@@ -308,6 +314,11 @@ Return NIL if the symbol is unbound."
     (:function (describe (symbol-function symbol)))
     (:class (describe (find-class symbol)))))
 
+(defimplementation type-specifier-p (symbol)
+  (or (ignore-errors
+       (subtypep nil symbol))
+      (not (eq (type-specifier-arglist symbol) :not-available))))
+
 (defun fspec-pathname (spec)
   (let ((path spec)
 	type
@@ -330,74 +341,83 @@ Return NIL if the symbol is unbound."
       (fspec-pathname fspec)
     (list (if type (list name type) name)
 	  (cond (file
-		 (multiple-value-bind (truename c) (ignore-errors (truename file))
+		 (multiple-value-bind (truename c) 
+                     (ignore-errors (truename file))
 		   (cond (truename
-			  (make-location (list :file (namestring truename))
-					 (if (consp lines)
-					     (list* :line lines)
-					     (list :function-name (string name)))
-                                         (when (consp type)
-                                           (list :snippet (format nil "~A" type)))))
+			  (make-location 
+                           (list :file (namestring truename))
+                           (if (consp lines)
+                               (list* :line lines)
+                               (list :function-name (string name)))
+                           (when (consp type)
+                             (list :snippet (format nil "~A" type)))))
 			 (t (list :error (princ-to-string c))))))
-		(t (list :error (format nil "No source information available for: ~S"
-					fspec)))))))
+		(t (list :error 
+                         (format nil "No source information available for: ~S"
+                                 fspec)))))))
 
 (defimplementation find-definitions (name)
-  (mapcar #'(lambda (e) (fspec-location name e)) (documentation name 'sys::file)))
+  (mapcar #'(lambda (e) (fspec-location name e)) 
+          (documentation name 'sys::file)))
 
 (defun trim-whitespace (string)
   (string-trim #(#\newline #\space #\tab) string))
 
 (defvar *sldb-backtrace*)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (when (string< "2.44" (lisp-implementation-version))
-    (pushnew :clisp-2.44+ *features*)))
-
 (defun sldb-backtrace ()
   "Return a list ((ADDRESS . DESCRIPTION) ...) of frames."
-  (do ((frames '())
-       (last nil frame)
-       (frame (sys::the-frame)
-              #+clisp-2.44+ (sys::frame-up 1 frame 1)
-              #-clisp-2.44+ (sys::frame-up-1 frame 1))) ; 1 = "all frames"
-      ((eq frame last) (nreverse frames))
-    (unless (boring-frame-p frame)
-      (push frame frames))))
+  (let* ((modes '((:all-stack-elements 1)
+                  (:all-frames 2)
+                  (:only-lexical-frames 3)
+                  (:only-eval-and-apply-frames 4)
+                  (:only-apply-frames 5)))
+         (mode (cadr (assoc :all-stack-elements modes))))
+    (do ((frames '())
+         (last nil frame)
+         (frame (sys::the-frame)
+                (sys::frame-up 1 frame mode)))
+        ((eq frame last) (nreverse frames))
+      (unless (boring-frame-p frame)
+        (push frame frames)))))
 
 (defimplementation call-with-debugging-environment (debugger-loop-fn)
   (let* (;;(sys::*break-count* (1+ sys::*break-count*))
          ;;(sys::*driver* debugger-loop-fn)
          ;;(sys::*fasoutput-stream* nil)
          (*sldb-backtrace*
-          (nthcdr 3 (member (sys::the-frame) (sldb-backtrace)))))
+          (let* ((f (sys::the-frame))
+                 (bt (sldb-backtrace))
+                 (rest (member f bt)))
+            (if rest (nthcdr 8 rest) bt))))
     (funcall debugger-loop-fn)))
 
 (defun nth-frame (index)
   (nth index *sldb-backtrace*))
 
 (defun boring-frame-p (frame)
-  (member (frame-type frame) '(stack-value bind-var bind-env)))
+  (member (frame-type frame) '(stack-value bind-var bind-env
+                               compiled-tagbody compiled-block)))
 
 (defun frame-to-string (frame)
   (with-output-to-string (s)
     (sys::describe-frame s frame)))
 
-;; FIXME: they changed the layout in 2.44 so the frame-to-string &
-;; string-matching silliness no longer works.
 (defun frame-type (frame)
   ;; FIXME: should bind *print-length* etc. to small values.
   (frame-string-type (frame-to-string frame)))
 
+;; FIXME: they changed the layout in 2.44 and not all patterns have
+;; been updated.
 (defvar *frame-prefixes*
-  '(("frame binding variables" bind-var)
+  '(("\\[[0-9]\\+\\] frame binding variables" bind-var)
     ("<1> #<compiled-function" compiled-fun)
     ("<1> #<system-function" sys-fun)
     ("<1> #<special-operator" special-op)
     ("EVAL frame" eval)
     ("APPLY frame" apply)
-    ("compiled tagbody frame" compiled-tagbody)
-    ("compiled block frame" compiled-block)
+    ("\\[[0-9]\\+\\] compiled tagbody frame" compiled-tagbody)
+    ("\\[[0-9]\\+\\] compiled block frame" compiled-block)
     ("block frame" block)
     ("nested block frame" block)
     ("tagbody frame" tagbody)
@@ -406,11 +426,12 @@ Return NIL if the symbol is unbound."
     ("handler frame" handler)
     ("unwind-protect frame" unwind-protect)
     ("driver frame" driver)
-    ("frame binding environments" bind-env)
+    ("\\[[0-9]\\+\\] frame binding environments" bind-env)
     ("CALLBACK frame" callback)
     ("- " stack-value)
     ("<1> " fun)
-    ("<2> " 2nd-frame)))
+    ("<2> " 2nd-frame)
+    ))
 
 (defun frame-string-type (string)
   (cadr (assoc-if (lambda (pattern) (is-prefix-p pattern string))
@@ -459,9 +480,6 @@ Return NIL if the symbol is unbound."
 (defun string-match (pattern string n)
   (let* ((match (nth-value n (regexp:match pattern string))))
     (if match (regexp:match-string string match))))
-
-(defimplementation format-sldb-condition (condition)
-  (trim-whitespace (princ-to-string condition)))
 
 (defimplementation eval-in-frame (form frame-number)
   (sys::eval-at (nth-frame frame-number) form))
@@ -520,9 +538,7 @@ Return two values: NAME and VALUE"
         (venv-ref (next-venv env) (- i (/ (1- (length env)) 2))))))
 
 (defun %parse-stack-values (frame)
-  (labels ((next (fp)
-             #+clisp-2.44+ (sys::frame-down 1 fp 1)
-             #-clisp-2.44+ (sys::frame-down-1 fp 1))
+  (labels ((next (fp) (sys::frame-down 1 fp 1))
            (parse (fp accu)
              (let ((str (frame-to-string fp)))
                (cond ((is-prefix-p "- " str)
@@ -537,11 +553,8 @@ Return two values: NAME and VALUE"
                      (t (parse (next fp) accu))))))
     (parse (next frame) '())))
 
-(setq *features* (remove :clisp-2.44+ *features*))
-
-(defun is-prefix-p (pattern string)
-  (not (mismatch pattern string :end2 (min (length pattern)
-                                           (length string)))))
+(defun is-prefix-p (regexp string)
+  (if (regexp:match (concatenate 'string "^" regexp) string) t))
 
 (defimplementation return-from-frame (index form)
   (sys::return-from-eval-frame (nth-frame index) form))
@@ -557,26 +570,26 @@ Return two values: NAME and VALUE"
 ;;;; Profiling
 
 (defimplementation profile (fname)
-  (eval `(mon:monitor ,fname)))         ;monitor is a macro
+  (eval `(swank-monitor:monitor ,fname)))         ;monitor is a macro
 
 (defimplementation profiled-functions ()
-  mon:*monitored-functions*)
+  swank-monitor:*monitored-functions*)
 
 (defimplementation unprofile (fname)
-  (eval `(mon:unmonitor ,fname)))       ;unmonitor is a macro
+  (eval `(swank-monitor:unmonitor ,fname)))       ;unmonitor is a macro
 
 (defimplementation unprofile-all ()
-  (mon:unmonitor))
+  (swank-monitor:unmonitor))
 
 (defimplementation profile-report ()
-  (mon:report-monitoring))
+  (swank-monitor:report-monitoring))
 
 (defimplementation profile-reset ()
-  (mon:reset-all-monitoring))
+  (swank-monitor:reset-all-monitoring))
 
 (defimplementation profile-package (package callers-p methods)
   (declare (ignore callers-p methods))
-  (mon:monitor-all package))
+  (swank-monitor:monitor-all package))
 
 ;;;; Handle compiler conditions (find out location of error etc.)
 
@@ -623,10 +636,10 @@ Execute BODY with NAME's function slot set to FUNCTION."
            (list :error "No error location available")))))
 
 (defun signal-compiler-warning (cstring args severity orig-fn)
-  (signal (make-condition 'compiler-condition
-                          :severity severity
-                          :message (apply #'format nil cstring args)
-                          :location (compiler-note-location)))
+  (signal 'compiler-condition
+          :severity severity
+          :message (apply #'format nil cstring args)
+          :location (compiler-note-location))
   (apply orig-fn cstring args))
 
 (defun c-warn (cstring &rest args)
@@ -637,13 +650,13 @@ Execute BODY with NAME's function slot set to FUNCTION."
     (signal-compiler-warning cstring args :style-warning *orig-c-style-warn*)))
 
 (defun c-error (&rest args)
-  (signal (make-condition 'compiler-condition
-                          :severity :error
-                          :message (apply #'format nil
-                                          (if (= (length args) 3)
-                                              (cdr args)
-                                              args))
-                          :location (compiler-note-location)))
+  (signal 'compiler-condition
+          :severity :error
+          :message (apply #'format nil
+                          (if (= (length args) 3)
+                              (cdr args)
+                              args))
+          :location (compiler-note-location))
   (apply *orig-c-error* args))
 
 (defimplementation call-with-compilation-hooks (function)
@@ -655,11 +668,11 @@ Execute BODY with NAME's function slot set to FUNCTION."
 
 (defun handle-notification-condition (condition)
   "Handle a condition caused by a compiler warning."
-  (signal (make-condition 'compiler-condition
-                          :original-condition condition
-                          :severity :warning
-                          :message (princ-to-string condition)
-                          :location (compiler-note-location))))
+  (signal 'compiler-condition
+          :original-condition condition
+          :severity :warning
+          :message (princ-to-string condition)
+          :location (compiler-note-location)))
 
 (defimplementation swank-compile-file (input-file output-file
                                        load-p external-format

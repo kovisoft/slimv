@@ -10,7 +10,8 @@
 
 (in-package :swank)
 
-(swank-require :swank-presentations)
+(eval-when (:compile-toplevel :load-toplevel)
+  (swank-require :swank-presentations))
 
 ;; This file contains a mechanism for printing to the slime repl so
 ;; that the printed result remembers what object it is associated
@@ -66,18 +67,18 @@ be sensitive and remember what object it is in the repl if predicate is true"
 ;;; Get pretty printer patches for SBCL at load (not compile) time.
 #+sbcl
 (eval-when (:load-toplevel)
-  (handler-bind ((simple-error 
-		  (lambda (c) 
+  (handler-bind ((simple-error
+		  (lambda (c)
 		    (declare (ignore c))
 		    (let ((clobber-it (find-restart 'sb-kernel::clobber-it)))
 		      (when clobber-it (invoke-restart clobber-it))))))
     (sb-ext:without-package-locks
-      (swank-backend::with-debootstrapping
-	(load (make-pathname 
-               :device (pathname-device swank-loader:*source-directory*)
+      (swank/sbcl::with-debootstrapping
+	(load (make-pathname
 	       :name "sbcl-pprint-patch"
 	       :type "lisp"
-	       :directory (pathname-directory swank-loader:*source-directory*)))))))
+	       :directory (pathname-directory
+			   swank-loader:*source-directory*)))))))
 
 (let ((last-stream nil)
       (last-answer nil))
@@ -316,6 +317,9 @@ says that I am starting to print an object with this id. The second says I am fi
 
 ;; Hook into SWANK.
 
-(setq *send-repl-results-function* 'present-repl-results-via-presentation-streams)
+(defslimefun init-presentation-streams ()
+  ;; FIXME: import/use swank-repl to avoid package qualifier.
+  (setq swank-repl:*send-repl-results-function*
+	'present-repl-results-via-presentation-streams))
 
 (provide :swank-presentation-streams)

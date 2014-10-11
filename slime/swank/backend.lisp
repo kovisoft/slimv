@@ -1,4 +1,4 @@
-;;; -*- Mode: lisp; indent-tabs-mode: nil; outline-regexp: ";;;;;*" -*-
+;;; -*- indent-tabs-mode: nil; outline-regexp: ";;;;;*" -*-
 ;;;
 ;;; slime-backend.lisp --- SLIME backend interface.
 ;;;
@@ -10,95 +10,109 @@
 ;;; separately for each Lisp. Each is declared as a generic function
 ;;; for which swank-<implementation>.lisp provides methods.
 
-(defpackage :swank-backend
-  (:use :common-lisp)
-  (:export #:*debug-swank-backend*
-           #:sldb-condition
-           #:compiler-condition
-           #:original-condition
-           #:message
-           #:source-context
-           #:condition
-           #:severity
-           #:with-compilation-hooks
-           #:location
-           #:location-p
-           #:location-buffer
-           #:location-position
-           #:position-p
-           #:position-pos
-           #:print-output-to-string
-           #:quit-lisp
-           #:references
-           #:unbound-slot-filler
-           #:declaration-arglist
-           #:type-specifier-arglist
-           #:with-struct
-           #:when-let
+(defpackage swank/backend
+  (:use cl)
+  (:nicknames swank-backend)
+  (:export *debug-swank-backend*
+           sldb-condition
+           compiler-condition
+           original-condition
+           message
+           source-context
+           condition
+           severity
+           with-compilation-hooks
+           make-location
+           location
+           location-p
+           location-buffer
+           location-position
+	   location-hints
+           position-p
+           position-pos
+           print-output-to-string
+           quit-lisp
+           references
+           unbound-slot-filler
+           declaration-arglist
+           type-specifier-arglist
+           with-struct
+           when-let
+	   defimplementation
+	   converting-errors-to-error-location
+	   make-error-location
+	   deinit-log-output
            ;; interrupt macro for the backend
-           #:*pending-slime-interrupts*
-           #:check-slime-interrupts
-           #:*interrupt-queued-handler*
+           *pending-slime-interrupts*
+           check-slime-interrupts
+           *interrupt-queued-handler*
            ;; inspector related symbols
-           #:emacs-inspect
-           #:label-value-line
-           #:label-value-line*
-           #:with-symbol))
+           emacs-inspect
+           label-value-line
+           label-value-line*
+           with-symbol
+           ;; package helper for backend
+           import-to-swank-mop
+           import-swank-mop-symbols
+	   ;;
 
-(defpackage :swank-mop
+           ))
+
+;; FIXME: rename to sawnk/mop
+(defpackage swank-mop
   (:use)
   (:export
    ;; classes
-   #:standard-generic-function
-   #:standard-slot-definition
-   #:standard-method
-   #:standard-class
-   #:eql-specializer
-   #:eql-specializer-object
+   standard-generic-function
+   standard-slot-definition
+   standard-method
+   standard-class
+   eql-specializer
+   eql-specializer-object
    ;; standard-class readers
-   #:class-default-initargs
-   #:class-direct-default-initargs
-   #:class-direct-slots
-   #:class-direct-subclasses
-   #:class-direct-superclasses
-   #:class-finalized-p
-   #:class-name
-   #:class-precedence-list
-   #:class-prototype
-   #:class-slots
-   #:specializer-direct-methods
+   class-default-initargs
+   class-direct-default-initargs
+   class-direct-slots
+   class-direct-subclasses
+   class-direct-superclasses
+   class-finalized-p
+   class-name
+   class-precedence-list
+   class-prototype
+   class-slots
+   specializer-direct-methods
    ;; generic function readers
-   #:generic-function-argument-precedence-order
-   #:generic-function-declarations
-   #:generic-function-lambda-list
-   #:generic-function-methods
-   #:generic-function-method-class
-   #:generic-function-method-combination
-   #:generic-function-name
+   generic-function-argument-precedence-order
+   generic-function-declarations
+   generic-function-lambda-list
+   generic-function-methods
+   generic-function-method-class
+   generic-function-method-combination
+   generic-function-name
    ;; method readers
-   #:method-generic-function
-   #:method-function
-   #:method-lambda-list
-   #:method-specializers
-   #:method-qualifiers
+   method-generic-function
+   method-function
+   method-lambda-list
+   method-specializers
+   method-qualifiers
    ;; slot readers
-   #:slot-definition-allocation
-   #:slot-definition-documentation
-   #:slot-definition-initargs
-   #:slot-definition-initform
-   #:slot-definition-initfunction
-   #:slot-definition-name
-   #:slot-definition-type
-   #:slot-definition-readers
-   #:slot-definition-writers
-   #:slot-boundp-using-class
-   #:slot-value-using-class
-   #:slot-makunbound-using-class
+   slot-definition-allocation
+   slot-definition-documentation
+   slot-definition-initargs
+   slot-definition-initform
+   slot-definition-initfunction
+   slot-definition-name
+   slot-definition-type
+   slot-definition-readers
+   slot-definition-writers
+   slot-boundp-using-class
+   slot-value-using-class
+   slot-makunbound-using-class
    ;; generic function protocol
-   #:compute-applicable-methods-using-classes
-   #:finalize-inheritance))
+   compute-applicable-methods-using-classes
+   finalize-inheritance))
 
-(in-package :swank-backend)
+(in-package swank/backend)
 
 
 ;;;; Metacode
@@ -135,21 +149,21 @@ Backends implement these functions using DEFIMPLEMENTATION."
              `(setf (get ',name 'default) (lambda ,args ,@default-body)))
            (args-as-list (args)
              (destructuring-bind (req opt key rest) (parse-lambda-list args)
-               `(,@req ,@opt 
-                       ,@(loop for k in key append `(,(kw k) ,k)) 
+               `(,@req ,@opt
+                       ,@(loop for k in key append `(,(kw k) ,k))
                        ,@(or rest '(())))))
            (parse-lambda-list (args)
-             (parse args '(&optional &key &rest) 
+             (parse args '(&optional &key &rest)
                     (make-array 4 :initial-element nil)))
            (parse (args keywords vars)
-             (cond ((null args) 
+             (cond ((null args)
                     (reverse (map 'list #'reverse vars)))
                    ((member (car args) keywords)
                     (parse (cdr args) (cdr (member (car args) keywords)) vars))
                    (t (push (car args) (aref vars (length keywords)))
                       (parse (cdr args) keywords vars))))
            (kw (s) (intern (string s) :keyword)))
-    `(progn 
+    `(progn
        (defun ,name ,args
          ,documentation
          (let ((f (or (get ',name 'implementation)
@@ -160,9 +174,8 @@ Backends implement these functions using DEFIMPLEMENTATION."
        ,(if (null default-body)
             `(pushnew ',name *unimplemented-interfaces*)
             (gen-default-impl))
-       ;; see <http://www.franz.com/support/documentation/6.2/doc/pages/variables/compiler/s_cltl1-compile-file-toplevel-compatibility-p_s.htm>
        (eval-when (:compile-toplevel :load-toplevel :execute)
-         (export ',name :swank-backend))
+         (export ',name :swank/backend))
        ',name)))
 
 (defmacro defimplementation (name args &body body)
@@ -204,55 +217,32 @@ EXCEPT is a list of symbol names which should be ignored."
         (import real-symbol :swank-mop)
         (export real-symbol :swank-mop)))))
 
-(defvar *gray-stream-symbols*
-  '(:fundamental-character-output-stream
-    :stream-write-char
-    :stream-write-string
-    :stream-fresh-line
-    :stream-force-output
-    :stream-finish-output
-    :fundamental-character-input-stream
-    :stream-read-char
-    :stream-peek-char
-    :stream-read-line
-    ;; STREAM-FILE-POSITION is not available on all implementations, or
-    ;; partially under a different name.
-    ; :stream-file-posiion
-    :stream-listen
-    :stream-unread-char
-    :stream-clear-input
-    :stream-line-column
-    :stream-read-char-no-hang
-    ;; STREAM-LINE-LENGTH is an extension to gray streams that's apparently
-    ;; supported by CMUCL, OpenMCL, SBCL and SCL.
-    #+(or cmu openmcl sbcl scl)
-    :stream-line-length))
-
-(defun import-from (package symbol-names &optional (to-package *package*))
-  "Import the list of SYMBOL-NAMES found in the package PACKAGE."
-  (dolist (name symbol-names)
-    (multiple-value-bind (symbol found) (find-symbol (string name) package)
-      (assert found () "Symbol ~A not found in package ~A" name package)
-      (import symbol to-package))))
+(definterface gray-package-name ()
+  "Return a package-name that contains the Gray stream symbols.
+This will be used like so:
+  (defpackage foo
+    (:import-from #.(gray-package-name) . #.*gray-stream-symbols*)")
 
 
 ;;;; Utilities
 
 (defmacro with-struct ((conc-name &rest names) obj &body body)
   "Like with-slots but works only for structs."
-  (flet ((reader (slot) (intern (concatenate 'string
-					     (symbol-name conc-name)
-					     (symbol-name slot))
-				(symbol-package conc-name))))
+  (check-type conc-name symbol)
+  (flet ((reader (slot)
+           (intern (concatenate 'string
+                                (symbol-name conc-name)
+                                (symbol-name slot))
+                   (symbol-package conc-name))))
     (let ((tmp (gensym "OO-")))
-    ` (let ((,tmp ,obj))
-        (symbol-macrolet
-            ,(loop for name in names collect 
-                   (typecase name
-                     (symbol `(,name (,(reader name) ,tmp)))
-                     (cons `(,(first name) (,(reader (second name)) ,tmp)))
-                     (t (error "Malformed syntax in WITH-STRUCT: ~A" name))))
-          ,@body)))))
+      ` (let ((,tmp ,obj))
+          (symbol-macrolet
+              ,(loop for name in names collect
+                     (typecase name
+                       (symbol `(,name (,(reader name) ,tmp)))
+                       (cons `(,(first name) (,(reader (second name)) ,tmp)))
+                       (t (error "Malformed syntax in WITH-STRUCT: ~A" name))))
+            ,@body)))))
 
 (defmacro when-let ((var value) &body body)
   `(let ((,var ,value))
@@ -287,18 +277,18 @@ EXCEPT is a list of symbol names which should be ignored."
            (values (cond ((<= code #xff) (code-char code))
                          ((<= #xd800 code #xdfff)
                           (error "Invalid Unicode code point: #x~x" code))
-                         ((and (< code char-code-limit) 
+                         ((and (< code char-code-limit)
                                (code-char code)))
                          (t
                           (error
                            "Can't represent code point: #x~x ~
-                            (char-code-limit is #x~x)" 
+                            (char-code-limit is #x~x)"
                            code char-code-limit)))
                    (+ index n))))))
 
 ;; Decode one character in BUFFER starting at INDEX.
 ;; Return 2 values: the character and the new index.
-;; If there aren't enough bytes between INDEX and LIMIT return nil. 
+;; If there aren't enough bytes between INDEX and LIMIT return nil.
 (defun utf8-decode (buffer index limit)
   (declare (type octets buffer) (fixnum index limit))
   (if (= index limit)
@@ -373,22 +363,26 @@ EXCEPT is a list of symbol names which should be ignored."
                               #b10111111)))
           (+ ,start ,n))))
 
+(defun %utf8-encode (code buffer start end)
+  (declare (type (unsigned-byte 31) code) (type octets buffer)
+           (type (and fixnum unsigned-byte) start end))
+  (cond ((<= code #x7f)
+         (cond ((< start end)
+                (setf (aref buffer start) code)
+                (1+ start))
+               (t start)))
+        ((<= code #x7ff) (utf8-encode-aux code buffer start end 2))
+        ((<= #xd800 code #xdfff)
+         (error "Invalid Unicode code point (surrogate): #x~x" code))
+        ((<= code #xffff) (utf8-encode-aux code buffer start end 3))
+        ((<= code #x1fffff) (utf8-encode-aux code buffer start end 4))
+        ((<= code #x3ffffff) (utf8-encode-aux code buffer start end 5))
+        (t (utf8-encode-aux code buffer start end 6))))
+
 (defun utf8-encode (char buffer start end)
-  (declare (character char) (type octets buffer) (fixnum start end))
-  (let ((code (char-code char)))
-    (cond ((<= code #x7f)
-           (cond ((< start end)
-                  (setf (aref buffer start) code)
-                  (1+ start))
-                 (t start)))
-          ((<= code #x7ff) (utf8-encode-aux code buffer start end 2))
-          ((<= #xd800 code #xdfff)
-           (error "Invalid Unicode code point (surrogate): #x~x" code))
-          ((<= code #xffff) (utf8-encode-aux code buffer start end 3))
-          ((<= code #x1fffff) (utf8-encode-aux code buffer start end 4))
-          ((<= code #x3ffffff) (utf8-encode-aux code buffer start end 5))
-          ((<= code #x7fffffff) (utf8-encode-aux code buffer start end 6))
-          (t (error "Can't encode ~s (~x)" char code)))))
+  (declare (type character char) (type octets buffer)
+           (type (and fixnum unsigned-byte) start end))
+  (%utf8-encode (char-code char) buffer start end))
 
 (defun utf8-encode-into (string start end buffer index limit)
   (declare (string string) (type octets buffer) (fixnum start end index limit))
@@ -430,16 +424,6 @@ EXCEPT is a list of symbol names which should be ignored."
   "Convert the (simple-array (unsigned-byte 8)) OCTETS to a string."
   (default-utf8-to-string octets))
 
-;;; Codepoint length
-
-;; we don't need this anymore.
-(definterface codepoint-length (string)
-  "Return the number of codepoints in STRING.
-With some Lisps, like cmucl, LENGTH returns the number of UTF-16 code
-units, but other Lisps return the number of codepoints. The slime
-protocol wants string lengths in terms of codepoints."
-  (length string))
-
 
 ;;;; TCP server
 
@@ -455,7 +439,7 @@ BACKLOG queue length for incoming connections.")
 
 (definterface accept-connection (socket &key external-format
                                         buffering timeout)
-   "Accept a client connection on the listening socket SOCKET.  
+   "Accept a client connection on the listening socket SOCKET.
 Return a stream for the new connection.
 If EXTERNAL-FORMAT is nil return a binary stream
 otherwise create a character stream.
@@ -619,7 +603,7 @@ value.
 Should return T on successful compilation, NIL otherwise.
 ")
 
-(definterface swank-compile-file (input-file output-file load-p 
+(definterface swank-compile-file (input-file output-file load-p
                                              external-format
                                              &key policy)
    "Compile INPUT-FILE signalling COMPILE-CONDITIONs.
@@ -634,7 +618,7 @@ value.
 Should return OUTPUT-TRUENAME, WARNINGS-P and FAILURE-p
 like `compile-file'")
 
-(deftype severity () 
+(deftype severity ()
   '(member :error :read-error :warning :style-warning :note :redefinition))
 
 ;; Base condition type for compiler errors, warnings and notes.
@@ -682,7 +666,7 @@ Return nil if the file contains no special markers."
   (with-open-file (s pathname :if-does-not-exist nil
                      :external-format (or (find-external-format "latin-1-unix")
                                           :default))
-    (if s 
+    (if s
         (or (let* ((line (read-line s nil))
                    (p (search "-*-" line)))
               (when p
@@ -751,14 +735,16 @@ additional information on the specifiers defined in ANSI Common Lisp.")
       (inline         '(&rest function-names))
       (notinline      '(&rest function-names))
       (declaration    '(&rest names))
-      (optimize       '(&any compilation-speed debug safety space speed))  
+      (optimize       '(&any compilation-speed debug safety space speed))
       (type           '(type-specifier &rest args))
       (ftype          '(type-specifier &rest function-names))
       (otherwise
-       (flet ((typespec-p (symbol) (member :type (describe-symbol-for-emacs symbol))))
+       (flet ((typespec-p (symbol)
+                (member :type (describe-symbol-for-emacs symbol))))
          (cond ((and (symbolp decl-identifier) (typespec-p decl-identifier))
                 '(&rest variables))
-               ((and (listp decl-identifier) (typespec-p (first decl-identifier)))
+               ((and (listp decl-identifier)
+                     (typespec-p (first decl-identifier)))
                 '(&rest variables))
                (t :not-available)))))))
 
@@ -778,10 +764,16 @@ additional information on the specifiers defined in ANSI Common Lisp.")
                   :not-available))
       (t :not-available))))
 
+(definterface type-specifier-p (symbol)
+  "Determine if SYMBOL is a type-specifier."
+  (or (documentation symbol 'type)
+      (not (eq (type-specifier-arglist symbol) :not-available))))
+
 (definterface function-name (function)
   "Return the name of the function object FUNCTION.
 
-The result is either a symbol, a list, or NIL if no function name is available."
+The result is either a symbol, a list, or NIL if no function name is
+available."
   (declare (ignore function))
   nil)
 
@@ -804,7 +796,7 @@ If FORM is a function call for which a compiler-macro has been
 defined, invoke the expander function using *macroexpand-hook* and
 return the results and T.  Otherwise, return the original form and
 NIL."
-  (let ((fun (and (consp form) 
+  (let ((fun (and (consp form)
                   (valid-function-name-p (car form))
                   (compiler-macro-function (car form)))))
     (if fun
@@ -815,11 +807,11 @@ NIL."
 (definterface compiler-macroexpand (form &optional env)
   "Repetitively call `compiler-macroexpand-1'."
   (labels ((frob (form expanded)
-	     (multiple-value-bind (new-form newly-expanded)
-		 (compiler-macroexpand-1 form env)
-	       (if newly-expanded
-		   (frob new-form t)
-		   (values new-form expanded)))))
+             (multiple-value-bind (new-form newly-expanded)
+                 (compiler-macroexpand-1 form env)
+               (if newly-expanded
+                   (frob new-form t)
+                   (values new-form expanded)))))
     (frob form env)))
 
 (definterface format-string-expand (control-string)
@@ -836,8 +828,9 @@ symbol. The recognised keys are:
   :TYPE :CLASS :ALIEN-TYPE :ALIEN-STRUCT :ALIEN-UNION :ALIEN-ENUM
 
 The value of each property is the corresponding documentation string,
-or :NOT-DOCUMENTED. It is legal to include keys not listed here (but
-slime-print-apropos in Emacs must know about them).
+or NIL (or the obsolete :NOT-DOCUMENTED). It is legal to include keys
+not listed here (but slime-print-apropos in Emacs must know about
+them).
 
 Properties should be included if and only if they are applicable to
 the symbol. For example, only (and all) fbound symbols should include
@@ -886,7 +879,7 @@ HOOK should be called for both BREAK and INVOKE-DEBUGGER."
     :initarg :original-condition
     :accessor original-condition))
   (:report (lambda (condition stream)
-             (format stream "Condition in debugger code~@[: ~A~]" 
+             (format stream "Condition in debugger code~@[: ~A~]"
                      (original-condition condition))))
   (:documentation
    "Wrapper for conditions that should not be debugged.
@@ -983,9 +976,9 @@ from the frame.")
   "Restart execution of the frame FRAME-NUMBER with the same arguments
 as it was called originally.")
 
-(definterface format-sldb-condition (condition)
-  "Format a condition for display in SLDB."
-  (princ-to-string condition))
+(definterface print-condition (condition stream)
+  "Print a condition for display in SLDB."
+  (princ condition stream))
 
 (definterface condition-extras (condition)
   "Return a list of extra for the debugger.
@@ -1009,7 +1002,7 @@ The allowed elements are of the form:
 
 (definterface sldb-break-at-start (symbol)
   "Set a breakpoint on the beginning of the function for SYMBOL.")
-  
+
 (definterface sldb-stepper-condition-p (condition)
   "Return true if SLDB was invoked due to a single-stepping condition,
 false otherwise. "
@@ -1066,7 +1059,8 @@ returns.")
   (cond ((typep datum 'condition)
          `(:error ,(format nil "Error: ~A" datum)))
         ((symbolp datum)
-         `(:error ,(format nil "Error: ~A" (apply #'make-condition datum args))))
+         `(:error ,(format nil "Error: ~A"
+                           (apply #'make-condition datum args))))
         (t
          (assert (stringp datum))
          `(:error ,(apply #'format nil datum args)))))
@@ -1093,7 +1087,7 @@ respective DEFSTRUCT definition, and so on."
   ;; supposed to return the location of the DEFGENERIC definition on
   ;; #'SOME-GENERIC-FUNCTION.
   (declare (ignore object))
-  (make-error-location "FIND-DEFINITIONS is not yet implemented on ~
+  (make-error-location "FIND-SOURCE-LOCATION is not yet implemented on ~
                         this implementation."))
 
 (definterface buffer-first-change (filename)
@@ -1211,7 +1205,7 @@ SPEC can be:
  (:defmethod NAME QUALIFIER... (SPECIALIZER...)) ; a specific method
  (:defgeneric NAME)                     ; a generic function with all methods
  (:call CALLER CALLEE)                  ; trace calls from CALLER to CALLEE.
- (:labels TOPLEVEL LOCAL) 
+ (:labels TOPLEVEL LOCAL)
  (:flet TOPLEVEL LOCAL) ")
 
 
@@ -1254,7 +1248,7 @@ output of CL:DESCRIBE."
   '())
 
 ;;; Utilities for inspector methods.
-;;; 
+;;;
 
 (defun label-value-line (label value &key (newline t))
   "Create a control list which prints \"LABEL: VALUE\" in the inspector.
@@ -1341,6 +1335,7 @@ Don't execute unwind-protected sections, don't raise conditions.
 
 (definterface send (thread object)
   "Send OBJECT to thread THREAD."
+  (declare (ignore thread))
   object)
 
 (definterface receive (&optional timeout)
@@ -1360,6 +1355,7 @@ If THREAD is nil delete the association."
 (definterface find-registered (name)
   "Find the thread that was registered for the symbol NAME.
 Return nil if the no thread was registred or if the tread is dead."
+  (declare (ignore name))
   nil)
 
 (definterface set-default-initial-binding (var form)
@@ -1370,7 +1366,7 @@ created thread.  This function sets the form which is used to produce
 the initial value."
   (set var (eval form)))
 
-;; List of delayed interrupts.  
+;; List of delayed interrupts.
 ;; This should only have thread-local bindings, so no init form.
 (defvar *pending-slime-interrupts*)
 
@@ -1402,7 +1398,7 @@ return nil.
 Return :interrupt if an interrupt occurs while waiting.")
 
 
-;;;;  Locks 
+;;;;  Locks
 
 ;; Please use locks only in swank-gray.lisp.  Locks are too low-level
 ;; for our taste.
@@ -1419,12 +1415,6 @@ but that thread may hold it more than once."
    (declare (ignore lock)
             (type function function))
    (funcall function))
-
-;; Same here: don't use this outside of swank-gray.lisp.
-(definterface call-with-io-timeout (function &key seconds)
-  "Calls function with the specified IO timeout."
-  (declare (ignore seconds))
-  (funcall function))
 
 
 ;;;; Weak datastructures
@@ -1499,3 +1489,77 @@ RESTART-FUNCTION, if non-nil, should be called when the image is loaded.")
   "Request saving a heap image to the file FILENAME.
 RESTART-FUNCTION, if non-nil, should be called when the image is loaded.
 COMPLETION-FUNCTION, if non-nil, should be called after saving the image.")
+
+(defun deinit-log-output ()
+  ;; Can't hang on to an fd-stream from a previous session.
+  (setf (symbol-value (find-symbol "*LOG-OUTPUT*" 'swank))
+        nil))
+
+
+;;;; Wrapping
+
+(definterface wrap (spec indicator &key before after replace)
+  "Intercept future calls to SPEC and surround them in callbacks.
+
+INDICATOR is a symbol identifying a particular wrapping, and is used
+to differentiate between multiple wrappings.
+
+Implementations intercept calls to SPEC and call, in this order:
+
+* the BEFORE callback, if it's provided, with a single argument set to
+  the list of arguments passed to the intercepted call;
+
+* the original definition of SPEC recursively honouring any wrappings
+  previously established under different values of INDICATOR. If the
+  compatible function REPLACE is provided, call that instead.
+
+* the AFTER callback, if it's provided, with a single set to the list
+  of values returned by the previous call, or, if that call exited
+  non-locally, a single descriptive symbol, like :EXITED-NON-LOCALLY."
+  (declare (ignore indicator))
+  (assert (symbolp spec) nil
+          "The default implementation for WRAP allows only simple names")
+  (assert (null (get spec 'slime-wrap)) nil
+          "The default implementation for WRAP allows a single wrapping")
+  (let* ((saved (symbol-function spec))
+         (replacement (lambda (&rest args)
+                        (let (retlist completed)
+                          (unwind-protect
+                               (progn
+                                 (when before
+                                   (funcall before args))
+                                 (setq retlist (multiple-value-list
+                                                (apply (or replace
+                                                           saved) args)))
+                                 (setq completed t)
+                                 (values-list retlist))
+                            (when after
+                              (funcall after (if completed
+                                                 retlist
+                                                 :exited-non-locally))))))))
+    (setf (get spec 'slime-wrap) (list saved replacement))
+    (setf (symbol-function spec) replacement))
+  spec)
+
+(definterface unwrap (spec indicator)
+  "Remove from SPEC any wrappings tagged with INDICATOR."
+  (if (wrapped-p spec indicator)
+      (setf (symbol-function spec) (first (get spec 'slime-wrap)))
+      (cerror "All right, so I did"
+              "Hmmm, ~a is not correctly wrapped, you probably redefined it"
+              spec))
+  (setf (get spec 'slime-wrap) nil)
+  spec)
+
+(definterface wrapped-p (spec indicator)
+  "Returns true if SPEC is wrapped with INDICATOR."
+  (declare (ignore indicator))
+  (and (symbolp spec)
+       (let ((prop-value (get spec 'slime-wrap)))
+         (cond ((and prop-value
+                     (not (eq (second prop-value)
+                              (symbol-function spec))))
+                (warn "~a appears to be incorrectly wrapped" spec)
+                nil)
+               (prop-value t)
+               (t nil)))))
