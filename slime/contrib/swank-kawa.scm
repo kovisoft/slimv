@@ -7,26 +7,44 @@
 
 ;;;; Installation 
 ;;
-;; 1. You need Kawa (SVN version) 
-;;    and a Sun JVM with debugger support.
-;; 2. Compile this file with:
-;;      kawa -e '(compile-file "swank-kawa.scm" "swank-kawa")'
+;; 1. You need Kawa (version 1.14) and a JVM with debugger support.
+;;
+;; 2. Compile this file and create swank-kawa.jar with:
+;;      java -cp kawa-1.14.jar:$JAVA_HOME/lib/tools.jar \
+;;           -Xss2M kawa.repl -d classes -C swank-kawa.scm &&
+;;      jar cf swank-kawa.jar -C classes .
+;;
 ;; 3. Add something like this to your .emacs:
 #|
-;; Kawa and the debugger classes (tools.jar) must be in the classpath.
-;; You also need to start the debug agent.
+;; Kawa, Swank, and the debugger classes (tools.jar) must be in the
+;; classpath.  You also need to start the debug agent.
 (setq slime-lisp-implementations
-      '((kawa ("java"
-	       "-cp" "/opt/kawa/kawa-svn:/opt/java/jdk1.6.0/lib/tools.jar"
-	       "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"
-	       "kawa.repl" "-s")
-              :init kawa-slime-init)))
+      '((kawa
+         ("java"
+          ;; needed jar files
+          "-cp" "kawa-1.14.jar:swank-kawa.jar:/opt/jdk1.6.0/lib/tools.jar"
+          ;; channel for debugger
+          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n"
+          ;; depending on JVM, compiler may need more stack 
+          "-Xss2M"
+          ;; kawa without GUI
+          "kawa.repl" "-s")
+         :init kawa-slime-init)))
 
 (defun kawa-slime-init (file _)
   (setq slime-protocol-version 'ignore)
-  (let ((swank ".../slime/contrib/swank-kawa.scm")) ; <-- insert the right path
-    (format "%S\n"
-            `(begin (require ,(expand-file-name swank)) (start-swank ,file)))))
+  (format "%S\n"
+          `(begin (import (swank-kawa))
+                  (start-swank ,file)
+                  ;; Optionally add source paths of your code so
+                  ;; that M-. works better:
+                  ;;(set! swank-java-source-path
+		  ;;  (append
+		  ;;   '(,(expand-file-name "~/lisp/slime/contrib/")
+		  ;;     "/scratch/kawa")
+		  ;;   swank-java-source-path))
+                  )))
+
 |#
 ;; 4. Start everything with  M-- M-x slime kawa
 ;;
@@ -36,14 +54,19 @@
 
 (module-export start-swank create-swank-server swank-java-source-path break)
 
-(module-static #t)
-
 (module-compile-options
+ warn-unknown-member: #t
  warn-invoke-unknown-method: #t
  warn-undefined-variable: #t
  )
 
-(require 'hash-table)
+(import (rnrs hashtables))
+(import (only (gnu kawa slib syntaxutils) expand))
+(import (only (kawa regex) regex-match))
+
+(unless (regex-match #/^1\.14( |$)/
+                     (scheme-implementation-version))
+  (error "swank-kawa.scm requires Kawa version 1.14"))
 
 
 ;;;; Macros ()
@@ -321,13 +344,13 @@
 (define-alias <array-ref> <com.sun.jdi.ArrayReference>)
 (define-alias <str-ref> <com.sun.jdi.StringReference>)
 (define-alias <meth-ref> <com.sun.jdi.Method>)
-(define-alias <class-ref> <com.sun.jdi.ClassType>)
+(define-alias <class-type> <com.sun.jdi.ClassType>)
+(define-alias <ref-type> <com.sun.jdi.ReferenceType>)
 (define-alias <frame> <com.sun.jdi.StackFrame>)
 (define-alias <field> <com.sun.jdi.Field>)
 (define-alias <local-var> <com.sun.jdi.LocalVariable>)
 (define-alias <location> <com.sun.jdi.Location>)
 (define-alias <absent-exc> <com.sun.jdi.AbsentInformationException>)
-(define-alias <ref-type> <com.sun.jdi.ReferenceType>)
 (define-alias <event> <com.sun.jdi.event.Event>)
 (define-alias <exception-event> <com.sun.jdi.event.ExceptionEvent>)
 (define-alias <step-event> <com.sun.jdi.event.StepEvent>)
@@ -564,17 +587,23 @@
 
 (df lookup-slimefun ((name <symbol>) tab)
   ;; name looks like '|swank:connection-info|
-  (let* ((str (symbol->string name))
-         (sub (substring str 6 (string-length str))))
-    (or (get tab (string->symbol sub) #f)
-        (ferror "~a not implemented" sub))))
-                         
+  (or (get tab name #f)
+      (ferror "~a not implemented" name)))
+
+(df %defslimefun ((name <symbol>) (fun <procedure>))
+  (let ((string (symbol->string name)))
+    (cond ((regex-match #/:/ string)
+           (put *slime-funs* name fun))
+          (#t
+           (let ((qname (string->symbol (string-append "swank:" string))))
+             (put *slime-funs* qname fun))))))
+
 (define-syntax defslimefun 
   (syntax-rules ()
     ((defslimefun name (args ...) body ...)
      (seq
        (df name (args ...) body ...)
-       (put *slime-funs* 'name name)))))
+       (%defslimefun 'name name)))))
 
 (defslimefun connection-info ((env <env>))
   (let ((prop java.lang.System:getProperty))
@@ -586,7 +615,9 @@
     :machine (:instance ,(prop "java.vm.name") :type ,(prop "os.name")
                         :version ,(prop "java.runtime.version"))
     :features ()
-    :package (:name "??" :prompt ,(! getName env)))))
+    :package (:name "??" :prompt ,(! getName env))
+    :encoding (:coding-systems ("iso-8859-1"))
+    )))
 
  
 ;;;; Listener
@@ -596,11 +627,12 @@
   (log "listener: ~s ~s ~s ~s\n"
        (current-thread) ((current-thread):hashCode) c env)
   (let ((out (make-swank-outport (rpc c `(get-channel)))))
-    ;;(set (current-output-port) out)
+    (set (current-output-port) out)
     (let ((vm (as <vm> (rpc c `(get-vm)))))
       (send c `(set-listener ,(vm-mirror vm (current-thread))))
       (request-uncaught-exception-events vm)
-      (request-caught-exception-events vm)
+      ;;stack snaphost are too expensive
+      ;;(request-caught-exception-events vm)
       )
     (rpc c `(get-vm))
     (listener-loop c env out)))
@@ -617,7 +649,7 @@
     ;;(log "listener-loop: ~s ~s\n" (current-thread) c)
     (mlet ((form id) (recv c))
       (let ((restart (fun ()
-                       (close-output-port port)
+                       (close-port port)
                        (reply-abort c id)
                        (send (car (spawn/chan
                                    (fun (cc) 
@@ -644,7 +676,7 @@
    (break condition)
    (ex <listener-abort> (seq))))
 
-(defslimefun create-repl (env #!rest _)
+(defslimefun |swank-repl:create-repl| (env #!rest _)
   (list "user" "user"))
 
 (defslimefun interactive-eval (env str)
@@ -658,7 +690,7 @@
          (cond ((== form #!eof) result)
                (#t (next (eval form env)))))))))
 
-(defslimefun listener-eval (env string)
+(defslimefun |swank-repl:listener-eval| (env string)
   (let* ((form (read-from-string string))
          (list (values-to-list (eval form env))))
   `(:values ,@(map pprint-to-string list))))
@@ -754,11 +786,11 @@
 (df error-loc>elisp ((e <source-error>))
   (cond ((nul? (@ filename e)) `(:error "No source location"))
         ((! starts-with (@ filename e) "(buffer ")
-         (mlet (('buffer b 'offset o 'str s) (read-from-string (@ filename e)))
-           `(:location (:buffer ,b)
-                       (:position ,(+ o (line>offset (1- (@ line e)) s)
-                                      (1- (@ column e))))
-                       nil)))
+         (mlet (('buffer b 'offset ('quote ((:position o) _)) 'str s)
+                (read-from-string (@ filename e)))
+           (let ((off (line>offset (1- (@ line e)) s))
+                 (col (1- (@ column e))))
+             `(:location (:buffer ,b) (:position ,(+ o off col)) nil))))
         (#t
          `(:location (:file ,(to-string (@ filename e)))
                      (:line ,(@ line e) ,(1- (@ column e)))
@@ -817,9 +849,9 @@
 
 ;;;; Dummy defs
 
-
 (defslimefun buffer-first-change (#!rest y) '())
 (defslimefun swank-require (#!rest y) '())
+(defslimefun frame-package-name (#!rest y) '())
 
 ;;;; arglist
 
@@ -933,18 +965,21 @@
     name))
 
 (df class>src-loc ((c <java.lang.Class>) => <location>)
-  (let* ((type (class>class-ref c))
+  (let* ((type (class>ref-type c))
          (locs (! all-line-locations type)))
     (cond ((not (! isEmpty locs)) (1st locs))
           (#t (<swank-location> (1st (! source-paths type "Java"))
                                 #f)))))
 
-(df class>class-ref ((class <java.lang.Class>) => <class-ref>)
+(df class>ref-type ((class <java.lang.Class>) => <ref-type>)
   (! reflectedType (as <com.sun.jdi.ClassObjectReference>
                        (vm-mirror *the-vm* class))))
 
+(df class>class-type ((class <java.lang.Class>) => <class-type>)
+  (class>ref-type class))
+
 (df bytemethod>src-loc ((m <gnu.bytecode.Method>) => <location>)
-  (let* ((cls (class>class-ref (! get-reflect-class (! get-declaring-class m))))
+  (let* ((cls (class>class-type (! get-reflect-class (! get-declaring-class m))))
          (name (! get-name m))
          (sig (! get-signature m))
          (meth (! concrete-method-by-name cls name sig)))
@@ -1106,16 +1141,14 @@
 
 ;;;; Macroexpansion
 
-(defslimefun swank-expand-1 (env s) (%swank-macroexpand s))
-(defslimefun swank-expand (env s) (%swank-macroexpand s))
-(defslimefun swank-expand-all (env s) (%swank-macroexpand s))
+(defslimefun swank-expand-1 (env s) (%swank-macroexpand s env))
+(defslimefun swank-expand (env s) (%swank-macroexpand s env))
+(defslimefun swank-expand-all (env s) (%swank-macroexpand s env))
 
-(df %swank-macroexpand (string)
-  (pprint-to-string (%macroexpand (read-from-string string))))
+(df %swank-macroexpand (string env)
+  (pprint-to-string (%macroexpand (read-from-string string) env)))
 
-(df %macroexpand (sexp)
-  (let ((tr :: kawa.lang.Translator (gnu.expr.Compilation:getCurrent)))
-    (! rewrite tr `(begin ,sexp))))
+(df %macroexpand (sexp env) (expand sexp env: env))
 
 
 ;;;; Inspector
@@ -1442,7 +1475,7 @@
 
 ;; Enable breakpoints event on the breakpoint function.
 (df request-breakpoint ((vm <vm>))
-  (let* ((class :: <class-ref> (1st (! classesByName vm "swank$Mnkawa")))
+  (let* ((class :: <class-type> (1st (! classesByName vm "swank$Mnkawa")))
          (meth :: <meth-ref> (1st (! methodsByName class "breakpoint")))
          (erm (! eventRequestManager vm))
          (req (! createBreakpointRequest erm (! location meth))))
@@ -1715,7 +1748,7 @@
 (df eval-in-thread ((t <thread-ref>) sexp 
 		    #!optional (env :: <env> (<env>:current)))
   (let* ((vm (! virtualMachine t))
-	 (sc :: <class-ref>
+	 (sc :: <class-type>
 	     (1st (! classes-by-name vm "kawa.standard.Scheme")))
 	 (ev :: <meth-ref>
 	     (1st (! methods-by-name sc "eval" 
@@ -2029,10 +2062,15 @@
     (<java.util.List> (! size x))
     (<object[]> (@ length x))))
 
-(df put (tab key value) (hash-table-set! tab key value) tab)
-(df get (tab key default) (hash-table-ref/default tab key default))
-(df del (tab key) (hash-table-delete! tab key) tab)
-(df tab () (make-hash-table))
+;;(df put (tab key value) (hash-table-set! tab key value) tab)
+;;(df get (tab key default) (hash-table-ref/default tab key default))
+;;(df del (tab key) (hash-table-delete! tab key) tab)
+;;(df tab () (make-hash-table))
+
+(df put (tab key value) (hashtable-set! tab key value) tab)
+(df get (tab key default) (hashtable-ref tab key default))
+(df del (tab key) (hashtable-delete! tab key) tab)
+(df tab () (make-eqv-hashtable))
 
 (df equal (x y => <boolean>) (equal? x y))
 
@@ -2058,10 +2096,14 @@
 
 (df print-object (obj stream)
   (typecase obj
+    #;
     ((or (eql #!null) (eql #!eof)
          <list> <number> <character> <string> <vector> <procedure> <boolean>)
      (write obj stream))
-    (#t (print-unreadable-object obj stream))))
+    (#t 
+     #;(print-unreadable-object obj stream)
+     (write obj stream)
+     )))
 
 (df print-unreadable-object ((o <object>) stream)
   (let* ((string (! to-string o))
@@ -2242,11 +2284,11 @@
       ((:file s) (read-bytes (<java.io.FileInputStream> (as <str> s)))))))
 
 (df all-instances ((vm <vm>) (classname <str>))
-  (mappend (fun ((c <class-ref>)) (to-list (! instances c (as long 9999))))
+  (mappend (fun ((c <class-type>)) (to-list (! instances c (as long 9999))))
 	   (%all-subclasses vm classname)))
 
 (df %all-subclasses ((vm <vm>) (classname <str>))
-  (mappend (fun ((c <class-ref>)) (cons c (to-list (! subclasses c))))
+  (mappend (fun ((c <class-type>)) (cons c (to-list (! subclasses c))))
            (to-list (! classes-by-name vm classname))))
 
 (df with-output-to-string (thunk => <str>)
@@ -2322,5 +2364,8 @@
 
 ;; Local Variables:
 ;; mode: goo 
-;; compile-command:"kawa -e '(compile-file \"swank-kawa.scm\"\"swank-kawa.zip\")'" 
+;; compile-command: "\
+;;  rm -rf classes && \
+;;  JAVA_OPTS=-Xss2M kawa -d classes -C swank-kawa.scm && \
+;;  jar cf swank-kawa.jar -C classes ."
 ;; End:

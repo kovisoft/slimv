@@ -1,14 +1,17 @@
 ;;;;                  -*- indent-tabs-mode: nil; outline-regexp: ";;;;;* "; -*-
 ;;;
-;;; swank-allegro.lisp --- Allegro CL specific code for SLIME. 
+;;; swank-allegro.lisp --- Allegro CL specific code for SLIME.
 ;;;
 ;;; Created 2003
 ;;;
 ;;; This code has been placed in the Public Domain.  All warranties
 ;;; are disclaimed.
-;;;  
+;;;
 
-(in-package :swank-backend)
+(defpackage swank/allegro
+  (:use cl swank/backend))
+
+(in-package swank/allegro)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require :sock)
@@ -17,7 +20,8 @@
   (require 'lldb)
   )
 
-(import-from :excl *gray-stream-symbols* :swank-backend)
+(defimplementation gray-package-name ()
+  "EXCL")
 
 ;;; swank-mop
 
@@ -29,13 +33,17 @@
 
 ;;;; UTF8
 
+(define-symbol-macro utf8-ef 
+    (load-time-value 
+     (excl:crlf-base-ef (excl:find-external-format :utf-8))
+     t))
+
 (defimplementation string-to-utf8 (s)
-  (let ((ef (load-time-value (excl:find-external-format :utf-8) t)))
-    (excl:string-to-octets s :external-format ef)))
+  (excl:string-to-octets s :external-format utf8-ef 
+                         :null-terminate nil))
 
 (defimplementation utf8-to-string (u)
-  (let ((ef (load-time-value (excl:find-external-format :utf-8) t)))
-    (excl:octets-to-string u :external-format ef)))
+  (excl:octets-to-string u :external-format utf8-ef))
 
 
 ;;;; TCP Server
@@ -81,12 +89,6 @@
             (excl:find-external-format (car e) 
                                        :try-variant t)))))
 
-(defimplementation format-sldb-condition (c)
-  (princ-to-string c))
-
-(defimplementation call-with-syntax-hooks (fn)
-  (funcall fn))
-
 ;;;; Unix signals
 
 (defimplementation getpid ()
@@ -110,6 +112,9 @@
     (simple-error () :not-available)))
 
 (defimplementation macroexpand-all (form)
+  #+(version>= 8 0)
+  (excl::walk-form form)
+  #-(version>= 8 0)
   (excl::walk form))
 
 (defimplementation describe-symbol-for-emacs (symbol)
@@ -139,6 +144,15 @@
     (:class
      (describe (find-class symbol)))))
 
+(defimplementation type-specifier-p (symbol)
+  (or (ignore-errors
+       (subtypep nil symbol))
+      (not (eq (type-specifier-arglist symbol) :not-available))))
+
+(defimplementation function-name (f)
+  (check-type f function)
+  (cross-reference::object-to-function-name f))
+
 ;;;; Debugger
 
 (defvar *sldb-topframe*)
@@ -163,11 +177,11 @@
                               (find-package :swank)))
         (top-frame (excl::int-newest-frame (excl::current-thread))))
     (loop for frame = top-frame then (next-frame frame)
-          for name  = (debugger:frame-name frame)
           for i from 0
-          when (eq name magic-symbol)
+          while (and frame (< i 30))
+          when (eq (debugger:frame-name frame) magic-symbol)
             return (next-frame frame)
-          until (= i 10) finally (return top-frame))))
+          finally (return top-frame))))
 
 (defun next-frame (frame)
   (let ((next (excl::int-next-older-frame frame)))
@@ -210,27 +224,29 @@
   (let* ((frame (nth-frame index)))
     (multiple-value-bind (x fun xx xxx pc) (debugger::dyn-fd-analyze frame)
       (declare (ignore x xx xxx))
-      (cond (pc
-             #+(version>= 8 2)
-             (pc-source-location fun pc)
-             #-(version>= 8 2)
-             (function-source-location fun))
+      (cond ((and pc
+                  #+(version>= 8 2)
+                  (pc-source-location fun pc)
+                  #-(version>= 8 2)
+                  (function-source-location fun)))
             (t ; frames for unbound functions etc end up here
              (cadr (car (fspec-definition-locations
                          (car (debugger:frame-expression frame))))))))))
 
 (defun function-source-location (fun)
-  (cadr (car (fspec-definition-locations (xref::object-to-function-name fun)))))
+  (cadr (car (fspec-definition-locations 
+              (xref::object-to-function-name fun)))))
 
 #+(version>= 8 2)
 (defun pc-source-location (fun pc)
   (let* ((debug-info (excl::function-source-debug-info fun)))
     (cond ((not debug-info)
            (function-source-location fun))
-          (t 
+          (t
            (let* ((code-loc (find-if (lambda (c)
                                        (<= (- pc (sys::natural-width))
-                                           (excl::ldb-code-pc c)
+                                           (let ((x (excl::ldb-code-pc c)))
+                                             (or x -1))
                                            pc))
                                      debug-info)))
              (cond ((not code-loc)
@@ -240,28 +256,35 @@
 
 #+(version>= 8 2)
 (defun ldb-code-to-src-loc (code)
-  (let* ((start (excl::ldb-code-start-char code))
-         (func (excl::ldb-code-func code))
+  (declare (optimize debug))
+  (let* ((func (excl::ldb-code-func code))
+         (debug-info (excl::function-source-debug-info func))
+         (start (loop for i from (excl::ldb-code-index code) downto 0
+                      for bpt = (aref debug-info i)
+                      for start = (excl::ldb-code-start-char bpt)
+                      when start return start))
          (src-file (excl:source-file func)))
-    (cond (start 
+    (cond (start
            (buffer-or-file-location src-file start))
-          (t
+          (func
            (let* ((debug-info (excl::function-source-debug-info func))
                   (whole (aref debug-info 0))
                   (paths (source-paths-of (excl::ldb-code-source whole)
                                           (excl::ldb-code-source code)))
-                  (path (longest-common-prefix paths))
-                  (start (excl::ldb-code-start-char whole)))
-             (buffer-or-file 
-              src-file 
-              (lambda (file) 
-                (make-location `(:file ,file) 
+                  (path (if paths (longest-common-prefix paths) '()))
+                  (start 0))
+             (buffer-or-file
+              src-file
+              (lambda (file)
+                (make-location `(:file ,file)
                                `(:source-path (0 . ,path) ,start)))
               (lambda (buffer bstart)
                 (make-location `(:buffer ,buffer)
                                `(:source-path (0 . ,path)
-                                              ,(+ bstart start))))))))))
- 
+                                              ,(+ bstart start)))))))
+          (t
+           nil))))
+
 (defun longest-common-prefix (sequences)
   (assert sequences)
   (flet ((common-prefix (s1 s2)
@@ -285,11 +308,19 @@
     ;; let-bind lexical variables
     (let ((vars (loop for i below (debugger:frame-number-vars frame)
                       for name = (debugger:frame-var-name frame i)
-                      if (symbolp name)
+                      if (typep name '(and symbol (not null) (not keyword)))
                       collect `(,name ',(debugger:frame-var-value frame i)))))
-      (debugger:eval-form-in-context 
+      (debugger:eval-form-in-context
        `(let* ,vars ,form)
        (debugger:environment-of-frame frame)))))
+
+(defimplementation frame-package (frame-number)
+  (let* ((frame (nth-frame frame-number))
+         (exp (debugger:frame-expression frame)))
+    (typecase exp
+      ((cons symbol) (symbol-package (car exp)))
+      ((cons (cons (eql :internal) (cons symbol)))
+       (symbol-package (cadar exp))))))
 
 (defimplementation return-from-frame (frame-number form)
   (let ((frame (nth-frame frame-number)))
@@ -336,13 +367,20 @@
   `(satisfies redefinition-p))
 
 (defun signal-compiler-condition (&rest args)
-  (signal (apply #'make-condition 'compiler-condition args)))
+  (apply #'signal 'compiler-condition args))
 
 (defun handle-compiler-warning (condition)
   (declare (optimize (debug 3) (speed 0) (space 0)))
-  (cond ((and (not *buffer-name*) 
+  (cond ((and (not *buffer-name*)
               (compiler-undefined-functions-called-warning-p condition))
          (handle-undefined-functions-warning condition))
+        ((and (typep condition 'excl::compiler-note)
+              (let ((format (slot-value condition 'excl::format-control)))
+                (and (search "Closure" format)
+                     (search "will be stack allocated" format))))
+         ;; Ignore "Closure <foo> will be stack allocated" notes.
+         ;; That occurs often but is usually uninteresting.
+         )
         (t
          (signal-compiler-condition
           :original-condition condition
@@ -354,7 +392,7 @@
                       (reader-error  :read-error)
                       (error         :error))
           :message (format nil "~A" condition)
-          :location (if (typep condition 'reader-error) 
+          :location (if (typep condition 'reader-error)
                         (location-for-reader-error condition)
                         (location-for-warning condition))))))
 
@@ -436,30 +474,65 @@
 (defvar *temp-file-map* (make-hash-table :test #'equal)
   "A mapping from tempfile names to Emacs buffer names.")
 
+(defun write-tracking-preamble (stream file file-offset)
+  "Instrument the top of the temporary file to be compiled.
+
+The header tells allegro that any definitions compiled in the temp
+file should be found in FILE exactly at FILE-OFFSET.  To get Allegro
+to do this, this factors in the length of the inserted header itself."
+  (with-standard-io-syntax
+    (let* ((*package* (find-package :keyword))
+           (source-pathname-form
+            `(cl:eval-when (:compile-toplevel :load-toplevel :execute)
+               (cl:setq excl::*source-pathname*
+                        (pathname ,(sys::frob-source-file file)))))
+           (source-pathname-string (write-to-string source-pathname-form))
+           (position-form-length-bound 80) ; should be enough for everyone
+           (header-length (+ (length source-pathname-string)
+                             position-form-length-bound))
+           (position-form
+            `(cl:setq excl::*partial-source-file-p* ,(- file-offset
+                                                        header-length
+                                                        1 ; for the newline
+                                                        )))
+           (position-form-string (write-to-string position-form))
+           (padding-string (make-string (- position-form-length-bound
+                                           (length position-form-string))
+                                        :initial-element #\;)))
+      (write-string source-pathname-string stream)
+      (write-string position-form-string stream)  
+      (write-string padding-string stream)
+      (write-char #\newline stream))))
+
 (defun compile-from-temp-file (string buffer offset file)
   (call-with-temp-file 
    (lambda (stream filename)
-     (let ((excl:*load-source-file-info* t)
-           (sys:*source-file-types* '(nil)) ; suppress .lisp extension
-           #+(version>= 8 2)
-           (compiler:save-source-level-debug-info-switch t)
-           #+(version>= 8 2)
-           (excl:*load-source-debug-info* t) ; NOTE: requires lldb
-           )
-       (write-string string stream)
-       (finish-output stream)
-       (multiple-value-bind (binary-filename warnings? failure?)
-           (excl:without-redefinition-warnings
-             ;; Suppress Allegro's redefinition warnings; they are
-             ;; pointless when we are compiling via a temporary
-             ;; file.
-             (compile-file filename :load-after-compile t))
-         (declare (ignore warnings?))
-         (when binary-filename
+     (when (and file offset (probe-file file)) 
+       (write-tracking-preamble stream file offset))
+     (write-string string stream)
+     (finish-output stream)
+     (multiple-value-bind (binary-filename warnings? failure?)
+         (let ((sys:*source-file-types* '(nil)) ; suppress .lisp extension
+               #+(version>= 8 2)
+               (compiler:save-source-level-debug-info-switch t)
+               (excl:*redefinition-warnings* nil))
+           (compile-file filename))
+       (declare (ignore warnings?))
+       (when binary-filename
+         (let ((excl:*load-source-file-info* t)
+               ;; NOTE: requires lldb. jt -- don't know the meaning of
+               ;; this note.
+               ;;
+               #+(version>= 8 2)
+               (excl:*load-source-debug-info* t))
+           excl::*source-pathname*
+           (load binary-filename))
+         (when (and buffer offset (or (not file)
+                                      (not (probe-file file))))
            (setf (gethash (pathname stream) *temp-file-map*)
-                 (list buffer offset file))
-           (delete-file binary-filename))
-         (not failure?))))))
+                 (list buffer offset)))
+         (delete-file binary-filename))
+       (not failure?)))))
 
 (defimplementation swank-compile-string (string &key buffer position filename
                                          policy)
@@ -468,11 +541,7 @@
       (with-compilation-hooks ()
         (let ((*buffer-name* buffer)
               (*buffer-start-position* position)
-              (*buffer-string* string)
-              (*default-pathname-defaults*
-               (if filename 
-                   (merge-pathnames (pathname filename))
-                   *default-pathname-defaults*)))
+              (*buffer-string* string))
           (compile-from-temp-file string buffer position filename)))
     (reader-error () nil)))
 
@@ -481,8 +550,7 @@
 (defun buffer-or-file (file file-fun buffer-fun)
   (let* ((probe (gethash file *temp-file-map*)))
     (cond (probe 
-           (destructuring-bind (buffer start file) probe
-             (declare (ignore file))
+           (destructuring-bind (buffer start) probe
              (funcall buffer-fun buffer start)))
           (t (funcall file-fun (namestring (truename file)))))))
 
@@ -523,14 +591,14 @@
         (pathname
          (let ((probe (gethash file *temp-file-map*)))
            (cond (probe
-                  (destructuring-bind (buffer offset file) probe
-                    (declare (ignore file))
+                  (destructuring-bind (buffer offset) probe
                     (make-location `(:buffer ,buffer)
                                    `(:offset ,offset 0))))
                  (t
                   (find-definition-in-file fspec type file top-level)))))
         ((member :top-level)
-         (make-error-location "Defined at toplevel: ~A" (fspec->string fspec))))
+         (make-error-location "Defined at toplevel: ~A" 
+                              (fspec->string fspec))))
     (error (e)
       (make-error-location "Error: ~A" e))))
 
@@ -546,12 +614,6 @@
 
 (defun fspec-definition-locations (fspec)
   (cond
-    ((and (listp fspec)
-          (eql (car fspec) :top-level-form))
-     (destructuring-bind (top-level-form file &optional (position 0)) fspec 
-       (declare (ignore top-level-form))
-       `((,fspec
-          ,(buffer-or-file-location file position)))))
     ((and (listp fspec) (eq (car fspec) :internal))
      (destructuring-bind (_internal next _n) fspec
        (declare (ignore _internal _n))
@@ -576,6 +638,9 @@
 
 (defimplementation find-definitions (symbol)
   (fspec-definition-locations symbol))
+
+(defimplementation find-source-location (obj)
+  (first (rest (first (fspec-definition-locations obj)))))
 
 ;;;; XREF
 
@@ -643,7 +708,8 @@
 ;;;; Profiling
 
 ;; Per-function profiling based on description in
-;;  http://www.franz.com/support/documentation/8.0/doc/runtime-analyzer.htm#data-collection-control-2
+;;  http://www.franz.com/support/documentation/8.0/\
+;;  doc/runtime-analyzer.htm#data-collection-control-2
 
 (defvar *profiled-functions* ())
 (defvar *profile-depth* 0)
@@ -937,3 +1003,36 @@
   (loop for name being the hash-keys of excl::*name-to-char-table*
        when (funcall matchp prefix name)
        collect (string-capitalize name)))
+
+
+;;;; wrap interface implementation
+
+(defimplementation wrap (spec indicator &key before after replace)
+  (let ((allegro-spec (process-fspec-for-allegro spec)))
+    (excl:fwrap allegro-spec
+                indicator
+                (excl:def-fwrapper allegro-wrapper (&rest args)
+                  (let (retlist completed)
+                    (unwind-protect
+                         (progn
+                           (when before
+                             (funcall before args))
+                           (setq retlist (multiple-value-list
+                                          (if replace
+                                              (funcall replace args)
+                                              (excl:call-next-fwrapper))))
+                           (setq completed t)
+                           (values-list retlist))
+                      (when after
+                        (funcall after (if completed
+                                           retlist
+                                           :exited-non-locally)))))))
+    allegro-spec))
+
+(defimplementation unwrap (spec indicator)
+  (let ((allegro-spec (process-fspec-for-allegro spec)))
+    (excl:funwrap allegro-spec indicator)
+    allegro-spec))
+
+(defimplementation wrapped-p (spec indicator)
+  (getf (excl:fwrap-order (process-fspec-for-allegro spec)) indicator))
