@@ -150,7 +150,7 @@ Insert Mode:
                    electric returns when appropriate.
 
     "              When outside of string, inserts '""' and moves the cursor
-                   inside. When inside string then moves to the closing '"'.                   
+                   inside. When inside string then moves to the closing '"'.
                    Inserts '"' when inside comment. Also insert '"' when inside
                    string and preceded by a '\'.
 
@@ -167,7 +167,7 @@ Insert Mode:
     <Enter>        If |g:paredit_electric_return| is on then insert an
                    "electric return", i.e. create an empty line by inserting
                    two newline characters.
-                   
+
 
 Normal Mode:
 
@@ -374,6 +374,8 @@ https://github.com/StudyFlow/paredit.vim-cheatsheet
 PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_disable_clojure|  If defined, paredit is disabled for clojure files.
+
+|g:paredit_disable_hy|       If defined, paredit is disabled for hy files.
 
 |g:paredit_disable_lisp|     If defined, paredit is disabled for lisp files.
 
