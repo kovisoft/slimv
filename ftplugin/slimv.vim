@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  25 Jul 2014
+" Last Change:  01 Dec 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1313,7 +1313,11 @@ function! SlimvConnectSwank()
         echon "\rConnected to SWANK server on port " . g:swank_port . "."
         if exists( "g:swank_block_size" ) && SlimvGetFiletype() == 'lisp'
             " Override SWANK connection output buffer size
-            let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank-backend::buffer)"
+            if s:swank_version >= '2014-09-08'
+                let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank/gray::buffer)"
+            else
+                let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank-backend::buffer)"
+            endif
             let cmd = cmd . " (make-string " . g:swank_block_size . ")) nil)"
             call SlimvSend( [cmd], 0, 1 )
         endif
