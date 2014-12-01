@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.13
-" Last Change:  12 Jul 2014
+" Last Change:  01 Dec 2014
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -567,23 +567,47 @@ function! s:IsBalanced()
         " Do not go before the last command prompt in the REPL buffer
         let matchb = prompt
     endif
-    let p1 = searchpair( '(', '', ')', 'brnmW', s:skip_sc, matchb )
-    let p2 = searchpair( '(', '', ')',  'rnmW', s:skip_sc, matchf )
-    if !(p1 == p2) && !(p1 == p2 - 1 && line[c-1] == '(') && !(p1 == p2 + 1 && line[c-1] == ')')
+    if line[c-1] == '('
+        let p1 = searchpair( '(', '', ')', 'brnmWc', s:skip_sc, matchb )
+        let p2 = searchpair( '(', '', ')',  'rnmW' , s:skip_sc, matchf )
+    elseif line[c-1] == ')'
+        let p1 = searchpair( '(', '', ')', 'brnmW' , s:skip_sc, matchb )
+        let p2 = searchpair( '(', '', ')',  'rnmWc', s:skip_sc, matchf )
+    else
+        let p1 = searchpair( '(', '', ')', 'brnmW' , s:skip_sc, matchb )
+        let p2 = searchpair( '(', '', ')',  'rnmW' , s:skip_sc, matchf )
+    endif
+    if p1 != p2
         " Number of opening and closing parens differ
         return 0
     endif
 
     if &ft =~ s:fts_balancing_all_brackets
-        let b1 = searchpair( '\[', '', '\]', 'brnmW', s:skip_sc, matchb )
-        let b2 = searchpair( '\[', '', '\]',  'rnmW', s:skip_sc, matchf )
-        if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '[') && !(b1 == b2 + 1 && line[c-1] == ']')
+        if line[c-1] == '\['
+            let b1 = searchpair( '\[', '', '\]', 'brnmWc', s:skip_sc, matchb )
+            let b2 = searchpair( '\[', '', '\]',  'rnmW' , s:skip_sc, matchf )
+        elseif line[c-1] == '\]'
+            let b1 = searchpair( '\[', '', '\]', 'brnmW' , s:skip_sc, matchb )
+            let b2 = searchpair( '\[', '', '\]',  'rnmWc', s:skip_sc, matchf )
+        else
+            let b1 = searchpair( '\[', '', '\]', 'brnmW' , s:skip_sc, matchb )
+            let b2 = searchpair( '\[', '', '\]',  'rnmW' , s:skip_sc, matchf )
+        endif
+        if b1 != b2
             " Number of opening and closing brackets differ
             return 0
         endif
-        let b1 = searchpair( '{', '', '}', 'brnmW', s:skip_sc, matchb )
-        let b2 = searchpair( '{', '', '}',  'rnmW', s:skip_sc, matchf )
-        if !(b1 == b2) && !(b1 == b2 - 1 && line[c-1] == '{') && !(b1 == b2 + 1 && line[c-1] == '}')
+        if line[c-1] == '{'
+            let b1 = searchpair( '{', '', '}', 'brnmWc', s:skip_sc, matchb )
+            let b2 = searchpair( '{', '', '}',  'rnmW' , s:skip_sc, matchf )
+        elseif line[c-1] == '}'
+            let b1 = searchpair( '{', '', '}', 'brnmW' , s:skip_sc, matchb )
+            let b2 = searchpair( '{', '', '}',  'rnmWc', s:skip_sc, matchf )
+        else
+            let b1 = searchpair( '{', '', '}', 'brnmW' , s:skip_sc, matchb )
+            let b2 = searchpair( '{', '', '}',  'rnmW' , s:skip_sc, matchf )
+        endif
+        if b1 != b2
             " Number of opening and closing curly braces differ
             return 0
         endif
