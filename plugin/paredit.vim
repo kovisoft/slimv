@@ -583,10 +583,10 @@ function! s:IsBalanced()
     endif
 
     if &ft =~ s:fts_balancing_all_brackets
-        if line[c-1] == '\['
+        if line[c-1] == '['
             let b1 = searchpair( '\[', '', '\]', 'brnmWc', s:skip_sc, matchb )
             let b2 = searchpair( '\[', '', '\]',  'rnmW' , s:skip_sc, matchf )
-        elseif line[c-1] == '\]'
+        elseif line[c-1] == ']'
             let b1 = searchpair( '\[', '', '\]', 'brnmW' , s:skip_sc, matchb )
             let b2 = searchpair( '\[', '', '\]',  'rnmWc', s:skip_sc, matchf )
         else
