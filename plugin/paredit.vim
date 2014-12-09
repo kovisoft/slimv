@@ -109,6 +109,7 @@ function! PareditInitBuffer()
         inoremap <buffer> <silent> )            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('(',')')<CR><C-O>:let &ve=save_ve<CR>
         inoremap <buffer> <expr>   "            PareditInsertQuotes()
         inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
+        inoremap <buffer> <expr>   <C-h>        PareditBackspace(0)
         inoremap <buffer> <expr>   <Del>        PareditDel()
         if &ft =~ s:fts_balancing_all_brackets && g:paredit_smartjump
             noremap  <buffer> <silent> (            :<C-U>call PareditSmartJumpOpening(0)<CR>
@@ -202,6 +203,7 @@ function! PareditInitBuffer()
         silent! iunmap <buffer> )
         silent! iunmap <buffer> "
         silent! iunmap <buffer> <BS>
+        silent! iunmap <buffer> <C-h>
         silent! iunmap <buffer> <Del>
         silent! unmap  <buffer> (
         silent! unmap  <buffer> )
