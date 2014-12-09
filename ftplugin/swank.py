@@ -18,6 +18,7 @@ import socket
 import time
 import select
 import string
+import os
 
 input_port      = 4005
 output_port     = 4006
@@ -46,6 +47,7 @@ inspect_lines   = 0             # Number of lines in the Inspector (excluding he
 inspect_newline = True          # Start a new line in the Inspector (for multi-part objects)
 inspect_package = ''            # Package used for the current Inspector
 swank_version   = ''            # Swank version string in format YYYY-MM-DD
+swank_param = ''
 
 
 ###############################################################################
@@ -648,6 +650,7 @@ def swank_listen():
     global package
     global pid
     global swank_version
+    global swank_param
 
     retval = ''
     msgcount = 0
@@ -819,6 +822,19 @@ def swank_listen():
                                     if type(params[0]) == list and type(params[0][0]) == list:
                                         compl = "\n".join(map(lambda x: x[0], params[0]))
                                         retval = retval + compl.replace('"', '')
+                                elif action.name == ':find-definitions-for-emacs':
+                                    if type(params[0]) == list and type(params[0][1]) == list and params[0][1][0] == ':location':
+                                        myitems = [[elem[1][1][1], elem[1][2][1]] for elem in params]
+                                        temp = open(os.environ['HOME']+'/tmp_tags', 'w')
+                                        for i in myitems:
+                                            temp.write(swank_param)
+                                            temp.write('\t')
+                                            temp.write(i[0].replace('"', ''))
+                                            temp.write('\t')
+                                            temp.write(":go %s" % i[1])
+                                            temp.write('\n')
+                                        temp.close()
+                                        retval = swank_param
                                 elif action.name == ':list-threads':
                                     swank_parse_list_threads(r[1])
                                 elif action.name == ':xref':
@@ -1160,6 +1176,12 @@ def swank_kill_thread(index):
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
     swank_rex(':debug-thread', cmd, get_swank_package(), 't', str(index))
+
+def swank_find_definitions_for_emacs(str):
+    global swank_param
+    swank_param = str
+    cmd = '(swank:find-definitions-for-emacs "' + str + '")'
+    swank_rex(':find-definitions-for-emacs', cmd, get_package(), ':repl-thread')
 
 ###############################################################################
 # Generic SWANK connection handling

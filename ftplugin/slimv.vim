@@ -3316,6 +3316,30 @@ function! SlimvSetPackage()
     endif
 endfunction
 
+function! SlimvFindDefinitionsForEmacs()
+    if SlimvConnectSwank()
+        let symbol = SlimvSelectSymbol()
+        if symbol == ''
+            call SlimvError( "No symbol under cursor." )
+            return
+        endif
+        let msg = SlimvCommandGetResponse( ':find-definitions-for-emacs', 'python swank_find_definitions_for_emacs("' . symbol . '")', 0 )
+        if msg != ''
+            exec ":tag " . msg
+        endif
+    endif
+endfunction
+
+function! SlimvFindDefinitionsForEmacsPrompt()
+    if SlimvConnectSwank()
+        let symbol = input( 'Symbol: ')
+        let msg = SlimvCommandGetResponse( ':find-definitions-for-emacs', 'python swank_find_definitions_for_emacs("' . symbol . '")', 0 )
+        if msg != ''
+            exec ":tag " . msg
+        endif
+    endif
+endfunction
+
 " =====================================================================
 "  Slimv keybindings
 " =====================================================================
@@ -3462,6 +3486,8 @@ call s:MenuMap( 'Slim&v.&Repl.&Connect-Server',                 g:slimv_leader.'
 call s:MenuMap( '',                                             g:slimv_leader.'g',  g:slimv_leader.'rp',  ':call SlimvSetPackage()<CR>' )
 call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         g:slimv_leader.'y',  g:slimv_leader.'ri',  ':call SlimvInterrupt()<CR>' )
 call s:MenuMap( 'Slim&v.&Repl.Clear-&REPL',                     g:slimv_leader.'-',  g:slimv_leader.'-',   ':call SlimvClearReplBuffer()<CR>' )
+call s:MenuMap( '',                                             g:slimv_leader.'j',  '', ':call SlimvFindDefinitionsForEmacs()<CR>' )
+call s:MenuMap( '',                                             g:slimv_leader.'J',  '', ':call SlimvFindDefinitionsForEmacsPrompt()<CR>' )
 
 
 " =====================================================================
