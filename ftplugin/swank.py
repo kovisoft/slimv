@@ -762,7 +762,7 @@ def swank_listen():
                                     retval = retval + unquote(params)
                                     if action:
                                         action.result = retval
-                                vim.command("let s:swank_ok_result='%s'" % retval.replace("'", "''"))
+                                vim.command("let s:swank_ok_result='%s'" % retval.replace("'", "''").replace("\0", "^@"))
                                 if element == 'nil' or (action and action.name in to_prompt):
                                     # No more output from REPL, write new prompt
                                     retval = retval + new_line(retval) + get_prompt()
