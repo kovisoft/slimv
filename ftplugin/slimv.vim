@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  01 Dec 2014
+" Last Change:  15 Mar 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -997,7 +997,7 @@ function SlimvQuitInspect( force )
         unlet b:inspect_pos
     endif
     setlocal modifiable
-    silent! %d
+    silent! %d _
     call SlimvEndUpdate()
     if a:force
         call SlimvCommand( 'python swank_quit_inspector()' )
@@ -1009,7 +1009,7 @@ endfunction
 function SlimvQuitThreads()
     " Clear the contents of the Threads buffer
     setlocal modifiable
-    silent! %d
+    silent! %d _
     call SlimvEndUpdate()
     call SlimvRestoreFocus(1)
 endfunction
@@ -1018,7 +1018,7 @@ endfunction
 function SlimvQuitSldb()
     " Clear the contents of the Sldb buffer
     setlocal modifiable
-    silent! %d
+    silent! %d _
     call SlimvEndUpdate()
     call SlimvRestoreFocus(1)
 endfunction
