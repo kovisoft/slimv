@@ -97,7 +97,7 @@ function! SlimvSwankCommand()
                 else
                     " doubles quotes within 'cmd' need to become '\\\"'
                     return '!osascript -e "tell application \"Terminal\" to do script \"' . escape(escape(cmd, '"'), '\"') . '\""'
-                endif 
+                endif
         elseif $STY != ''
             " GNU screen under Linux
             return '! screen -X eval "title swank" "screen ' . cmd . '" "select swank"'
@@ -310,7 +310,7 @@ let s:arglist_line = 0                                    " Arglist was requeste
 let s:arglist_col = 0                                     " ... and column
 let s:inspect_path = []                                   " Inspection path of the current object
 let s:skip_sc = 'synIDattr(synID(line("."), col("."), 0), "name") =~ "[Ss]tring\\|[Cc]omment"'
-                                                          " Skip matches inside string or comment 
+                                                          " Skip matches inside string or comment
 let s:skip_q = 'getline(".")[col(".")-2] == "\\"'         " Skip escaped double quote characters in matches
 let s:frame_def = '^\s\{0,2}\d\{1,}:'                     " Regular expression to match SLDB restart or frame identifier
 let s:spec_indent = 'flet\|labels\|macrolet\|symbol-macrolet'
@@ -327,7 +327,7 @@ function! SlimvError( msg )
     echohl ErrorMsg
     echo a:msg
     echohl None
-endfunction 
+endfunction
 
 " Display an error message and a question, return user response
 function! SlimvErrorAsk( msg, question )
@@ -336,18 +336,18 @@ function! SlimvErrorAsk( msg, question )
     echo ""
     echohl None
     return answer
-endfunction 
+endfunction
 
 " Display an error message and wait for ENTER
 function! SlimvErrorWait( msg )
     call SlimvErrorAsk( a:msg, " Press ENTER to continue." )
-endfunction 
+endfunction
 
 " Shorten long messages to fit status line
 function! SlimvShortEcho( msg )
     let saved=&shortmess
     set shortmess+=T
-    exe "normal :echomsg a:msg\n" 
+    exe "normal :echomsg a:msg\n"
     let &shortmess=saved
 endfunction
 
@@ -1550,7 +1550,7 @@ function SlimvLispindent( lnum )
         endif
         let c = c + 1
     endwhile
-    if total_extra == 0  
+    if total_extra == 0
         " No multi-byte character, lispindent() is OK
         return li
     endif
@@ -1800,7 +1800,7 @@ function! SlimvIndent( lnum )
         return li + gap - 2
     endif
     return li
-endfunction 
+endfunction
 
 " Convert indent value to spaces or a mix of tabs and spaces
 " depending on the value of 'expandtab'
@@ -2453,7 +2453,7 @@ function! SlimvArglist( ... )
                 redraw
                 if SlimvGetFiletype() == 'r'
                     call SlimvShortEcho( arg . '(' . msg . ')' )
-                elseif match( msg, "\\V" . arg ) != 1 " Use \V ('very nomagic') for exact string match instead of regex 
+                elseif match( msg, "\\V" . arg ) != 1 " Use \V ('very nomagic') for exact string match instead of regex
                     " Function name is not received from REPL
                     call SlimvShortEcho( "(" . arg . ' ' . msg[1:] )
                 else
@@ -2475,7 +2475,7 @@ function! SlimvConnectServer()
         let s:swank_connected = 0
 	" Give swank server some time for disconnecting
         sleep 500m
-    endif 
+    endif
     if SlimvConnectSwank()
         let repl_win = bufwinnr( s:repl_buf )
         if s:repl_buf == -1 || ( g:slimv_repl_split && repl_win == -1 )
@@ -2493,7 +2493,7 @@ function! SlimvGetRegion(first, last)
         " No range was selected, select current paragraph
         normal! vap
         execute "normal! \<Esc>"
-        call winrestview( oldpos ) 
+        call winrestview( oldpos )
         let lines = getline( "'<", "'>" )
         if lines == [] || lines == ['']
             call SlimvError( "No range selected." )
@@ -2511,13 +2511,13 @@ function! SlimvGetRegion(first, last)
 
     " Find and set package/namespace definition preceding the region
     call SlimvFindPackage()
-    call winrestview( oldpos ) 
+    call winrestview( oldpos )
     return lines
 endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    if v:register == '"'
+    if v:register == '+'
         let lines = SlimvGetRegion(a:firstline, a:lastline)
     else
         " Register was passed, so eval register contents instead
@@ -2547,7 +2547,7 @@ endfunction
 " If the test form contains '%1' then it 'wraps' the selection around the '%1'
 function! SlimvEvalSelection( outreg, testform )
     let sel = SlimvGetSelection()
-    if a:outreg != '"'
+    if a:outreg != '+'
         " Register was passed, so store current selection in register
         call setreg( a:outreg, sel )
     endif
@@ -2618,7 +2618,7 @@ function! SlimvEvalTestDefun( testform )
         return
     endif
     call SlimvFindPackage()
-    call winrestview( oldpos ) 
+    call winrestview( oldpos )
     call SlimvEvalSelection( outreg, a:testform )
 endfunction
 
@@ -2673,7 +2673,7 @@ function! SlimvEvalTestExp( testform )
         return
     endif
     call SlimvFindPackage()
-    call winrestview( oldpos ) 
+    call winrestview( oldpos )
     call SlimvEvalSelection( outreg, a:testform )
 endfunction
 
@@ -2959,7 +2959,7 @@ endfunction
 function! SlimvCompileDefun()
     let oldpos = winsaveview()
     if !SlimvSelectDefun()
-        call winrestview( oldpos ) 
+        call winrestview( oldpos )
         return
     endif
     if SlimvConnectSwank()
@@ -3017,7 +3017,7 @@ endfunction
 
 " Compile buffer lines in the given range
 function! SlimvCompileRegion() range
-    if v:register == '"'
+    if v:register == ''
         let lines = SlimvGetRegion(a:firstline, a:lastline)
     else
         " Register was passed, so compile register contents instead
@@ -3059,7 +3059,7 @@ function! SlimvDescribe(arg)
     if a:arg == ''
         let arg = expand('<cword>')
     endif
-    " We don't want to try connecting here ... the error message would just 
+    " We don't want to try connecting here ... the error message would just
     " confuse the balloon logic
     if !s:swank_connected
         return ''
