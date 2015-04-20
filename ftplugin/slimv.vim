@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  15 Mar 2015
+" Last Change:  19 Apr 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3349,8 +3349,12 @@ function! SlimvInitBuffer()
     if SlimvGetFiletype() == 'r'
         inoremap <silent> <buffer> (          (<C-R>=SlimvArglist()<CR>
     else
-        inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
-        inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        if !exists("g:slimv_unmap_space") || g:slimv_unmap_space == 0
+            inoremap <silent> <buffer> <Space>    <Space><C-R>=SlimvArglist()<CR>
+        endif
+        if !exists("g:slimv_unmap_cr") || g:slimv_unmap_cr == 0
+            inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
+        endif
     endif
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     augroup SlimvInsertLeave
@@ -3358,7 +3362,9 @@ function! SlimvInitBuffer()
         au InsertLeave * :let &showmode=s:save_showmode
     augroup END
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
-    inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
+    if !exists("g:slimv_unmap_tab") || g:slimv_unmap_tab == 0
+        inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
+    endif
     inoremap <silent> <buffer> <S-Tab>    <C-R>=pumvisible() ? "\<lt>C-P>" : "\<lt>S-Tab>"<CR>
 
     " Setup balloonexp to display symbol description
