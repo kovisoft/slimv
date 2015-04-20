@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Mar 2014
+*slimv.txt*                    Slimv                 Last Change: 19 Apr 2015
 
 Slimv                                                                  *slimv*
                                Version 0.9.13
@@ -218,6 +218,12 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_timeout|            Timeout defined for starting up or connecting
                              to the SWANK server.
 
+|g:slimv_unmap_cr|           Do not add special insert mode mapping for <CR>.
+
+|g:slimv_unmap_tab|          Do not add special insert mode mapping for <Tab>.
+
+|g:slimv_unmap_space|        Do not add special insert mode mapping for <Space>.
+
 |g:slimv_updatetime|         Alternative value for 'updatetime' during REPL
                              refresh.
 
@@ -397,6 +403,18 @@ Value 2 defines the easy keybinding with two-key bindings (after <Leader>).
         Example: Eval-Defun is mapped to ,ed
 Other values mean no predefined keybinding is wanted.
 <Leader> is set to "," by default in Slimv.
+
+                                                            *g:slimv_unmap_cr*
+                                                           *g:slimv_unmap_tab*
+                                                         *g:slimv_unmap_space*
+If nonzero then Slimv does not add special insert mode mapping for the
+<CR>/<Tab>/<Space> keys in the editor buffer. This might come in handy when
+additional scripts are installed for Vim together with Slimv and there is a
+collision in the mappings for these keys. Of course in this case the related
+Slimv functions will not work when pressing those keys.
+
+Note: in case Paredit is used then the |g:paredit_electric_return| option shall
+also be set to 0 in order to completely disable mappings for <CR>.
 
                                                                *g:slimv_leader*
 This option allows a custom <Leader> setting for the Slimv keybindings.
