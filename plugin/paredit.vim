@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.13
-" Last Change:  01 Dec 2014
+" Last Change:  26 Apr 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -106,7 +106,7 @@ function! PareditInitBuffer()
     if g:paredit_mode
         " Paredit mode is on: add buffer specific keybindings
         inoremap <buffer> <expr>   (            PareditInsertOpening('(',')')
-        inoremap <buffer> <silent> )            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('(',')')<CR><C-O>:let &ve=save_ve<CR>
+        inoremap <buffer> <silent> )            <C-R>=PareditInsertClosing('(',')')<CR>
         inoremap <buffer> <expr>   "            PareditInsertQuotes()
         inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
         inoremap <buffer> <expr>   <C-h>        PareditBackspace(0)
@@ -156,9 +156,9 @@ function! PareditInitBuffer()
         call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()')
         if &ft =~ s:fts_balancing_all_brackets
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
-            inoremap <buffer> <silent> ]            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('[',']')<CR><C-O>:let &ve=save_ve<CR>
+            inoremap <buffer> <silent> ]            <C-R>=call PareditInsertClosing('[',']')<CR>
             inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
-            inoremap <buffer> <silent> }            <C-R>=(pumvisible() ? "\<lt>C-Y>" : "")<CR><C-O>:let save_ve=&ve<CR><C-O>:set ve=all<CR><C-O>:<C-U>call PareditInsertClosing('{','}')<CR><C-O>:let &ve=save_ve<CR>
+            inoremap <buffer> <silent> }            <C-R>=call PareditInsertClosing('{','}')<CR>
             call RepeatableNNoRemap(g:paredit_leader . 'w[', ':<C-U>call PareditWrap("[","]")')
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
             call RepeatableNNoRemap(g:paredit_leader . 'w{', ':<C-U>call PareditWrap("{","}")')
@@ -852,21 +852,30 @@ endfunction
 
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
+    let retval = ""
+    if pumvisible()
+        let retval = "\<C-Y>"
+    endif
+    let save_ve = &ve
+    set ve=all 
     let line = getline( '.' )
     let pos = col( '.' ) - 1
     if !g:paredit_mode || s:InsideComment() || s:InsideString() || !s:IsBalanced()
         call setline( line('.'), line[0 : pos-1] . a:close . line[pos : -1] )
         normal! l
-        return
+        let &ve = save_ve
+        return retval
     endif
     if pos > 0 && line[pos-1] == '\' && (pos < 2 || line[pos-2] != '\')
         " About to enter a \) or \]
         call setline( line('.'), line[0 : pos-1] . a:close . line[pos : -1] )
         normal! l
-        return
+        let &ve = save_ve
+        return retval
     elseif line[pos] == a:close
         call s:ReGatherUp()
-        return
+        let &ve = save_ve
+        return retval
     endif
     let open  = escape( a:open , '[]' )
     let close = escape( a:close, '[]' )
@@ -889,23 +898,28 @@ function! PareditInsertClosing( open, close )
             " Re-gather electric returns in the line of the closing ')'
             call setline( line('.'), substitute( getline('.'), '\s*$', '', 'g' ) )
             normal! Jl
-            return
+            let &ve = save_ve
+            return retval
         endif
         if len(nextline) > 0 && nextline[0] =~ '\]\|}' && &ft =~ s:fts_balancing_all_brackets
             " Re-gather electric returns in the line of the closing ']' or '}'
             call setline( line('.'), substitute( line, '\s*$', '', 'g' ) )
             normal! Jxl
-            return
+            let &ve = save_ve
+            return retval
         endif
     elseif g:paredit_electric_return && line =~ '^\s*)'
         " Re-gather electric returns in the current line
         call s:ReGatherUp()
-        return
+        let &ve = save_ve
+        return retval
     endif
     if searchpair( open, '', close, 'W', s:skip_sc ) > 0
         normal! l
     endif
     "TODO: indent after going to closing character
+    let &ve = save_ve
+    return retval
 endfunction
 
 " Insert an (opening or closing) double quote
