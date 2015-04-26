@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  19 Apr 2015
+" Last Change:  26 Apr 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2517,7 +2517,7 @@ endfunction
 
 " Eval buffer lines in the given range
 function! SlimvEvalRegion() range
-    if v:register == '"'
+    if v:register == '"' || v:register == '+'
         let lines = SlimvGetRegion(a:firstline, a:lastline)
     else
         " Register was passed, so eval register contents instead
@@ -3017,7 +3017,7 @@ endfunction
 
 " Compile buffer lines in the given range
 function! SlimvCompileRegion() range
-    if v:register == '"'
+    if v:register == '"' || v:register == '+'
         let lines = SlimvGetRegion(a:firstline, a:lastline)
     else
         " Register was passed, so compile register contents instead
