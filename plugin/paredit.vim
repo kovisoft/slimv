@@ -156,9 +156,9 @@ function! PareditInitBuffer()
         call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()')
         if &ft =~ s:fts_balancing_all_brackets
             inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
-            inoremap <buffer> <silent> ]            <C-R>=call PareditInsertClosing('[',']')<CR>
+            inoremap <buffer> <silent> ]            <C-R>=PareditInsertClosing('[',']')<CR>
             inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
-            inoremap <buffer> <silent> }            <C-R>=call PareditInsertClosing('{','}')<CR>
+            inoremap <buffer> <silent> }            <C-R>=PareditInsertClosing('{','}')<CR>
             call RepeatableNNoRemap(g:paredit_leader . 'w[', ':<C-U>call PareditWrap("[","]")')
             execute 'vnoremap <buffer> <silent> ' . g:paredit_leader.'w[  :<C-U>call PareditWrapSelection("[","]")<CR>'
             call RepeatableNNoRemap(g:paredit_leader . 'w{', ':<C-U>call PareditWrap("{","}")')
