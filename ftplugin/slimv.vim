@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  26 Apr 2015
+" Last Change:  10 May 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2547,7 +2547,7 @@ endfunction
 " If the test form contains '%1' then it 'wraps' the selection around the '%1'
 function! SlimvEvalSelection( outreg, testform )
     let sel = SlimvGetSelection()
-    if a:outreg != '"'
+    if a:outreg != '"' && a:outreg != '+'
         " Register was passed, so store current selection in register
         call setreg( a:outreg, sel )
     endif
