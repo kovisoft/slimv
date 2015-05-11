@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  10 May 2015
+" Last Change:  11 May 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3172,7 +3172,7 @@ function! SlimvLookup( word )
     endwhile
     if symbol != [] && len(symbol) > 1
         " Symbol found, open HS page in browser
-        if match( symbol[1], ':' ) < 0 && exists( g:slimv_hs_root )
+        if match( symbol[1], ':' ) < 0 && exists( 'g:slimv_hs_root' )
             let page = g:slimv_hs_root . symbol[1]
         else
             " URL is already a fully qualified address
