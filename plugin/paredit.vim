@@ -1108,8 +1108,14 @@ function! s:EraseFwd( count, startcol )
             normal! l
         elseif pos < len(line) && pos >= a:startcol
             " Erasing a non-special character
-            let reg = reg . line[pos]
-            let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
+            let chars = split(strpart(line, pos), '\zs')
+            if len(chars) > 0
+                " Identify the character to be erased and it's length
+                " The length may be >1 if this is a multi-byte character
+                let ch = chars[0]
+                let reg = reg . ch
+                let line = strpart( line, 0, pos ) . strpart( line, pos+len(ch) )
+            endif
         endif
         let c = c - 1
     endwhile
@@ -1145,8 +1151,15 @@ function! s:EraseBck( count )
             call s:AddYankPos( len(reg) )
         else
             " Erasing a non-special character
-            let reg = reg . line[pos-1]
-            let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
+            let chars = split(strpart(line, 0, pos), '\zs')
+            if len(chars) > 0
+                " Identify the character to be erased and it's length
+                " The length may be >1 if this is a multi-byte character
+                let ch = chars[-1]
+                let reg = reg . ch
+                let line = strpart( line, 0, pos-len(ch) ) . strpart( line, pos )
+                let pos = pos - len(ch) + 1
+            endif
         endif
         normal! h
         let pos = pos - 1
