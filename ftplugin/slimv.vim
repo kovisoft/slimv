@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  11 May 2015
+" Last Change:  26 Jul 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -818,6 +818,7 @@ function! SlimvOpenReplBuffer()
     " Add keybindings valid only for the REPL buffer
     inoremap <buffer> <silent>        <C-CR> <End><C-O>:call SlimvSendCommand(1)<CR><End>
     inoremap <buffer> <silent>        <C-C>  <C-O>:call SlimvInterrupt()<CR>
+    inoremap <buffer> <silent> <expr> <C-W>  SlimvHandleCW()
 
     if g:slimv_repl_simple_eval
         inoremap <buffer> <silent>        <CR>     <C-R>=pumvisible() ? "\<lt>C-Y>"  : "\<lt>End>\<lt>C-O>:call SlimvSendCommand(0)\<lt>CR>\<lt>End>"<CR>
@@ -1967,6 +1968,25 @@ function! SlimvHandleBS()
     else
         return "\<BS>"
     endif
+endfunction
+
+" Handle insert mode Ctrl-W keypress in the REPL buffer
+function! SlimvHandleCW()
+    if line( "." ) == s:GetPromptLine()
+        let trim_prompt = substitute( b:repl_prompt, '\s\+$', '', 'g' )
+        let promptlen = len( trim_prompt )
+        if col( "." ) > promptlen
+            let after_prompt = strpart( getline("."), promptlen-1, col(".")-promptlen )
+        else
+            let after_prompt = ''
+        endif
+        let word = matchstr( after_prompt, '^.*\s\S' )
+        if len( word ) == 0
+            " No word found after prompt, C-W not allowed
+            return ""
+        endif
+    endif
+    return "\<C-W>"
 endfunction
 
 " Recall previous command from command history
