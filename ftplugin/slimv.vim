@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  26 Jul 2015
+" Last Change:  05 Sep 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3010,6 +3010,7 @@ function! SlimvCompileLoadFile()
             call SlimvSwankResponse()
         endwhile
         if s:compiled_file != ''
+            let s:compiled_file = substitute( s:compiled_file, '\\', '/', 'g' )
             call SlimvCommandUsePackage( 'python swank_load_file("' . s:compiled_file . '")' )
             let s:compiled_file = ''
         endif
