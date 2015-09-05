@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.13
-" Last Change:  26 Apr 2015
+" Last Change:  05 Sep 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1248,7 +1248,7 @@ function! s:PrevElement( skip_whitespc )
             " Skip comments
         else
             let line = getline( '.' )
-            if s:InsideString()
+            if s:InsideString() && !(a:skip_whitespc && line[c] =~ '\s' && symbol_end != [0, 0])
                 let symbol_pos = [l, c]
             elseif symbol_pos == [0, 0]
                 if line[c-1] =~ b:any_closing_char
@@ -1322,7 +1322,7 @@ function! s:NextElement( skip_whitespc )
         endwhile
 
         let line = getline( '.' )
-        if s:InsideString()
+        if s:InsideString() && !(a:skip_whitespc && line[c-2] =~ '\s' && symbol_end != [0, 0])
             let symbol_pos = [l, c]
         elseif symbol_pos == [0, 0]
             if line[c-1] =~ s:any_macro_prefix && line[c] =~ b:any_opening_char
