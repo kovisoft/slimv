@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  11 Oct 2014
+# Last Change:  01 Nov 2015
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -1160,6 +1160,10 @@ def swank_kill_thread(index):
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
     swank_rex(':debug-thread', cmd, get_swank_package(), 't', str(index))
+
+def swank_quit_lisp():
+    swank_rex(':quit-lisp', '(swank:quit-lisp)', 'nil', 't')
+    swank_disconnect()
 
 ###############################################################################
 # Generic SWANK connection handling
