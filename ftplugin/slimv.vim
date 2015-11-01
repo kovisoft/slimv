@@ -3336,6 +3336,30 @@ function! SlimvSetPackage()
     endif
 endfunction
 
+" Close lisp process running the swank server
+" and quit REPL buffer
+function! SlimvQuitRepl()
+    if s:swank_connected
+        call SlimvCommand( 'python swank_quit_lisp()' )
+        let s:swank_connected = 0
+        let buf = bufnr( '^' . g:slimv_repl_name . '$' )
+        if buf != -1
+            if g:slimv_repl_split
+                " REPL buffer exists, check if it is open in a window
+                let win = bufwinnr( buf )
+                if win != -1
+                    " Switch to the REPL window and close it
+                    if winnr() != win
+                        execute win . "wincmd w"
+                    endif
+                    execute "wincmd c"
+                endif
+            endif
+            execute "bd " . buf
+        endif
+    endif
+endfunction
+
 " =====================================================================
 "  Slimv keybindings
 " =====================================================================
@@ -3489,6 +3513,7 @@ call s:MenuMap( 'Slim&v.&Repl.&Connect-Server',                 g:slimv_leader.'
 call s:MenuMap( '',                                             g:slimv_leader.'g',  g:slimv_leader.'rp',  ':call SlimvSetPackage()<CR>' )
 call s:MenuMap( 'Slim&v.&Repl.Interrup&t-Lisp-Process',         g:slimv_leader.'y',  g:slimv_leader.'ri',  ':call SlimvInterrupt()<CR>' )
 call s:MenuMap( 'Slim&v.&Repl.Clear-&REPL',                     g:slimv_leader.'-',  g:slimv_leader.'-',   ':call SlimvClearReplBuffer()<CR>' )
+call s:MenuMap( 'Slim&v.&Repl.&Quit-REPL',                      g:slimv_leader.'Q',  g:slimv_leader.'rq',  ':call SlimvQuitRepl()<CR>' )
 
 
 " =====================================================================

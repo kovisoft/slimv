@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Apr 2015
+*slimv.txt*                    Slimv                 Last Change: 01 Nov 2015
 
 Slimv                                                                  *slimv*
                                Version 0.9.13
@@ -714,6 +714,8 @@ sequence, then you may want to fine tune these Vim options:
     Repl commands:
     ,c      ,rc      Connect to Server
     ,y      ,ri      Interrupt Lisp Process
+    ,-      ,-       Clear REPL
+    ,Q      ,rq      Quit REPL
 
 
     Set#1   Set#2    Command
@@ -1083,6 +1085,7 @@ currently implemented in the Slimv SWANK client.
   swank:profile-reset
   swank:profiled-functions
   swank:quit-inspector
+  swank:quit-lisp
   swank:set-package
   swank:simple-completions
   swank:sldb-abort
@@ -1159,6 +1162,9 @@ Insert Mode:
 
 Please note that the behaviour of <CR>, <Up>, <Down> is affected by the value
 of option |g:slimv_repl_simple_eval|.
+
+The Lisp REPL can be closed by the 'Quit REPL' command (mapped to <Leader>Q
+by default). This also closes the lisp process running the SWANK server. 
 
 
 ===============================================================================
