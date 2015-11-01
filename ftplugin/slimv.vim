@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  05 Sep 2015
+" Last Change:  01 Nov 2015
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2467,7 +2467,6 @@ function! SlimvArglist( ... )
                 " Print argument list in status line with newlines removed.
                 " Disable showmode until the next ESC to prevent
                 " immeditate overwriting by the "-- INSERT --" text.
-                let s:save_showmode = &showmode
                 set noshowmode
                 let msg = substitute( msg, "\n", "", "g" )
                 redraw
@@ -3380,6 +3379,7 @@ function! SlimvInitBuffer()
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     augroup SlimvInsertLeave
         au!
+        au InsertEnter * :let s:save_showmode=&showmode
         au InsertLeave * :let &showmode=s:save_showmode
     augroup END
     inoremap <silent> <buffer> <C-X>0     <C-O>:call SlimvCloseForm()<CR>
