@@ -261,7 +261,7 @@ Normal Mode:
 
     <Leader>I      Raise the current symbol, i.e. replace the current list with
                    the current symbol by deleting everything else (except the
-                   symbol) in the list, including the eclosing pair of parens.
+                   symbol) in the list, including the enclosing pair of parens.
                    For example pressing <Leader>I at position marked with |:
                        (aaa (b|bb ccc) ddd)  --->    (aaa |bbb ddd)
 
