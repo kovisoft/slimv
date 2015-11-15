@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  01 Nov 2015
+# Last Change:  15 Nov 2015
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -950,8 +950,12 @@ def swank_eval(exp):
     swank_rex(':listener-eval', cmd, get_swank_package(), ':repl-thread')
 
 def swank_eval_in_frame(exp, n):
-    cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ')'
-    swank_rex(':eval-string-in-frame', cmd, get_swank_package(), current_thread, str(n))
+    pkg = get_swank_package()
+    if swank_version >= '2011-11-21':
+        cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ' ' + pkg + ')'
+    else:
+        cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ')'
+    swank_rex(':eval-string-in-frame', cmd, pkg, current_thread, str(n))
 
 def swank_pprint_eval(exp):
     cmd = '(swank:pprint-eval ' + requote(exp) + ')'
