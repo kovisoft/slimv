@@ -3375,6 +3375,9 @@ function! s:MenuMap( name, shortcut1, shortcut2, command )
     elseif g:slimv_keybindings == 2
         " Easy to remember (two-key) keybinding set
         let shortcut = a:shortcut2
+    else
+        " No bindings
+        let shortcut = ''
     endif
 
     if shortcut != ''
