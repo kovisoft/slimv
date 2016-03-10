@@ -347,7 +347,7 @@ endfunction
 function! SlimvShortEcho( msg )
     let saved=&shortmess
     set shortmess+=T
-    exe "normal :echomsg a:msg\n" 
+    exe "echomsg" string(a:msg)
     let &shortmess=saved
 endfunction
 
