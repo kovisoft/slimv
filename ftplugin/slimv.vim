@@ -2985,6 +2985,7 @@ function! SlimvCompileDefun()
         let s:swank_form = SlimvGetSelection()
         call SlimvCommandUsePackage( 'python swank_compile_string("s:swank_form")' )
     endif
+    call winrestview( oldpos )
 endfunction
 
 " Compile and load whole file
