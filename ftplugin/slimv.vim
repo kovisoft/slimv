@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  01 Nov 2015
+" Last Change:  06 Apr 2016
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1575,7 +1575,8 @@ function SlimvLispindent( lnum )
 endfunction
 
 " Return Lisp source code indentation at the given line
-function! SlimvIndent( lnum )
+" Does not keep the cursor position
+function! SlimvIndentUnsafe( lnum )
     if &autoindent == 0 || a:lnum <= 1
         " Start of the file
         return 0
@@ -1802,6 +1803,14 @@ function! SlimvIndent( lnum )
     endif
     return li
 endfunction 
+
+" Indentation routine, keeps original cursor position
+function! SlimvIndent( lnum )
+    let oldpos = getpos( '.' )
+    let indent = SlimvIndentUnsafe( a:lnum )
+    call cursor( oldpos[1], oldpos[2] )
+    return indent
+endfunction
 
 " Convert indent value to spaces or a mix of tabs and spaces
 " depending on the value of 'expandtab'
