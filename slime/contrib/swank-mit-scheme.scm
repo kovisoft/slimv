@@ -63,6 +63,7 @@
 
 ;; Modified for Slimv:
 ;; - load options
+;; - remove extension in compile-file-for-emacs
 (load-option 'format)
 (load-option 'sos)
 
@@ -353,7 +354,7 @@
   (apply
    (lambda (errors seconds)
      (list ':compilation-result errors 't seconds load? 
-	   (->namestring (pathname-new-type file "com"))))
+	   (->namestring (pathname-name file))))
    (call-compiler
     (lambda () (with-output-to-repl socket (lambda () (compile-file file)))))))
 
