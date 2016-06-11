@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  06 Apr 2016
+" Last Change:  11 Jun 2016
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -297,6 +297,7 @@ let s:save_showmode = &showmode                           " The original value f
 let s:python_initialized = 0                              " Is the embedded Python initialized?
 let s:swank_connected = 0                                 " Is the SWANK server connected?
 let s:swank_package = ''                                  " Package to use at the next SWANK eval
+let s:swank_package_form = ''                             " The entire form that was used to set current package
 let s:swank_form = ''                                     " Form to send to SWANK
 let s:refresh_disabled = 0                                " Set this variable temporarily to avoid recursive REPL rehresh calls
 let s:sldb_level = -1                                     " Are we in the SWANK debugger? -1 == no, else SLDB level
@@ -1220,14 +1221,18 @@ function! SlimvFindPackage()
     if found
         " Find the package name with all folds open
         normal! zn
-        silent normal! ww
+        silent normal! w
+        let l:package_command = expand('<cword>')
+        silent normal! w
         let l:packagename_tokens = split(expand('<cWORD>'),')\|\s')
         normal! zN
         if l:packagename_tokens != []
             " Remove quote character from package name
             let s:swank_package = substitute( l:packagename_tokens[0], "'", '', '' )
+            let s:swank_package_form = "(" . l:package_command . " " . l:packagename_tokens[0] . ")\n"
         else
             let s:swank_package = ''
+            let s:swank_package_form = ''
         endif
     endif
     let &ignorecase = save_ic
@@ -1240,6 +1245,7 @@ function! SlimvCommandUsePackage( cmd )
     let s:refresh_disabled = 1
     call SlimvCommand( a:cmd )
     let s:swank_package = ''
+    let s:swank_package_form = ''
     let s:refresh_disabled = 0
     call SlimvRefreshReplBuffer()
 endfunction
@@ -1370,6 +1376,7 @@ function! SlimvSend( args, echoing, output )
     endif
     call SlimvCommand( 'python swank_input("s:swank_form")' )
     let s:swank_package = ''
+    let s:swank_package_form = ''
     let s:refresh_disabled = 0
     call SlimvRefreshModeOn()
     call SlimvRefreshReplBuffer()
@@ -2577,7 +2584,7 @@ function! SlimvEvalSelection( outreg, testform )
     let sel = SlimvGetSelection()
     if a:outreg != '"' && a:outreg != '+'
         " Register was passed, so store current selection in register
-        call setreg( a:outreg, sel )
+        call setreg( a:outreg, s:swank_package_form . sel)
     endif
     let lines = [sel]
     if a:testform != ''
