@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  11 Feb 2016
+# Last Change:  05 Sep 2016
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -704,10 +704,12 @@ def swank_listen():
                 elif message == ':read-string':
                     # REPL requests entering a string
                     read_string = r[1:3]
+                    vim.command('let s:read_string_mode=1')
 
                 elif message == ':read-from-minibuffer':
                     # REPL requests entering a string in the command line
                     read_string = r[1:3]
+                    vim.command('let s:read_string_mode=1')
                     vim.command("let s:input_prompt='%s'" % unquote(r[3]).replace("'", "''"))
 
                 elif message == ':indentation-update':
@@ -720,6 +722,7 @@ def swank_listen():
 
                 elif message == ':return':
                     read_string = None
+                    vim.command('let s:read_string_mode=0')
                     if len(r) > 1:
                         result = r[1][0].lower()
                     else:
@@ -1032,12 +1035,14 @@ def swank_return_string(s):
     global read_string
     swank_send('(:emacs-return-string ' + read_string[0] + ' ' + read_string[1] + ' ' + requote(s) + ')')
     read_string = None
+    vim.command('let s:read_string_mode=0')
 
 def swank_return(s):
     global read_string
     if s != '':
         swank_send('(:emacs-return ' + read_string[0] + ' ' + read_string[1] + ' "' + s + '")')
     read_string = None
+    vim.command('let s:read_string_mode=0')
 
 def swank_inspect(symbol):
     global inspect_package

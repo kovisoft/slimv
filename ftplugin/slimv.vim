@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  11 Jun 2016
+" Last Change:  05 Sep 2016
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -307,6 +307,7 @@ let s:win_id = 0                                          " Counter for generati
 let s:repl_buf = -1                                       " Buffer number for the REPL buffer
 let s:current_buf = -1                                    " Swank action was requested from this buffer
 let s:current_win = 0                                     " Swank action was requested from this window
+let s:read_string_mode = 0                                " Read string mode indicator
 let s:arglist_line = 0                                    " Arglist was requested in this line ...
 let s:arglist_col = 0                                     " ... and column
 let s:inspect_path = []                                   " Inspection path of the current object
@@ -2456,7 +2457,7 @@ function! SlimvArglist( ... )
         endif
     endif
     call s:SetKeyword()
-    if s:swank_connected && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
+    if s:swank_connected && !s:read_string_mode && c > 0 && line[c-1] =~ '\k\|)\|\]\|}\|"'
         " Display only if entering the first space after a keyword
         let arg = ''
         if SlimvGetFiletype() == 'r'
@@ -3098,7 +3099,7 @@ function! SlimvDescribe(arg)
     endif
     " We don't want to try connecting here ... the error message would just 
     " confuse the balloon logic
-    if !s:swank_connected
+    if !s:swank_connected || s:read_string_mode
         return ''
     endif
     call SlimvFindPackage()
