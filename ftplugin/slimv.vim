@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  05 Sep 2016
+" Last Change:  06 Sep 2016
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3254,7 +3254,7 @@ function! SlimvComplete( base )
     if a:base == ''
         return []
     endif
-    if s:swank_connected
+    if s:swank_connected && !s:read_string_mode
         " Save current buffer and window in case a swank command causes a buffer change
         let buf = bufnr( "%" )
         if winnr('$') < 2
