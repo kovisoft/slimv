@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  06 Sep 2016
+" Last Change:  02 Oct 2016
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -226,6 +226,21 @@ if !exists( 'g:slimv_ctags' )
     if len( ctags ) > 0
         " Remove -a option to regenerate every time
         let g:slimv_ctags = '"' . ctags[0] . '" -a --language-force=lisp *.lisp *.clj'
+    endif
+endif
+
+" Name of tags file used by slimv for find-definitions
+" If this is the empty string then no tags file is used
+if !exists( 'g:slimv_tags_file' )
+    let g:slimv_tags_file = tempname()
+endif
+
+" Prepend tags file to the tags list
+if g:slimv_tags_file != ''
+    if &tags == ''
+        let &tags=g:slimv_tags_file
+    else
+        let &tags=g:slimv_tags_file . ',' . &tags
     endif
 endif
 
@@ -3340,6 +3355,45 @@ function! SlimvCommandComplete( arglead, cmdline, cursorpos )
     return compl
 endfunction
 
+" Create a tags file containing the definitions
+" of the given symbol, then perform a tag lookup
+function! SlimvFindDefinitionsForEmacs( symbol )
+    if g:slimv_tags_file == ''
+        let msg = ''
+    else
+        let msg = SlimvCommandGetResponse( ':find-definitions-for-emacs', 'python swank_find_definitions_for_emacs("' . a:symbol . '")', 0 )
+    endif
+    try
+        if msg != ''
+            exec ":tag " . msg
+        else
+            exec ":tag " . a:symbol
+        endif
+    catch /^Vim\%((\a\+)\)\=:E426/
+        call SlimvError( "\r" . v:exception )
+    endtry
+endfunction
+
+" Lookup definition(s) of the symbol under cursor
+function! SlimvFindDefinitions()
+    if SlimvConnectSwank()
+        let symbol = SlimvSelectSymbol()
+        if symbol == ''
+            call SlimvError( "No symbol under cursor." )
+            return
+        endif
+        call SlimvFindDefinitionsForEmacs( symbol )
+    endif
+endfunction
+
+" Lookup definition(s) of symbol entered in prompt
+function! SlimvFindDefinitionsPrompt()
+    if SlimvConnectSwank()
+        let symbol = input( 'Find Definitions For: ', SlimvSelectSymbol() )
+        call SlimvFindDefinitionsForEmacs( symbol )
+    endif
+endfunction
+
 " Set current package
 function! SlimvSetPackage()
     if SlimvConnectSwank()
@@ -3432,6 +3486,9 @@ function! SlimvInitBuffer()
         inoremap <silent> <buffer> <Tab>      <C-R>=SlimvHandleTab()<CR>
     endif
     inoremap <silent> <buffer> <S-Tab>    <C-R>=pumvisible() ? "\<lt>C-P>" : "\<lt>S-Tab>"<CR>
+    if g:slimv_tags_file != ''
+        nnoremap <silent> <buffer> <C-]>      :call SlimvFindDefinitions()<CR>
+    endif
 
     " Setup balloonexp to display symbol description
     if g:slimv_balloon && has( 'balloon_eval' )
@@ -3447,6 +3504,7 @@ endfunction
 " Edit commands
 call s:MenuMap( 'Slim&v.Edi&t.Close-&Form',                     g:slimv_leader.')',  g:slimv_leader.'tc',  ':<C-U>call SlimvCloseForm()<CR>' )
 call s:MenuMap( 'Slim&v.Edi&t.&Complete-Symbol<Tab>Tab',        '',                  '',                   '<Ins><C-X><C-O>' )
+call s:MenuMap( 'Slim&v.Edi&t.Find-&Definitions\.\.\.',         g:slimv_leader.'j',  g:slimv_leader.'fd', ':call SlimvFindDefinitionsPrompt()<CR>' )
 
 if exists( 'g:paredit_loaded' )
 call s:MenuMap( 'Slim&v.Edi&t.&Paredit-Toggle',                 g:slimv_leader.'(',  g:slimv_leader.'(t',  ':<C-U>call PareditToggle()<CR>' )

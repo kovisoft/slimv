@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  05 Sep 2016
+# Last Change:  02 Oct 2016
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -46,6 +46,7 @@ inspect_lines   = 0             # Number of lines in the Inspector (excluding he
 inspect_newline = True          # Start a new line in the Inspector (for multi-part objects)
 inspect_package = ''            # Package used for the current Inspector
 swank_version   = ''            # Swank version string in format YYYY-MM-DD
+swank_param     = ''            # Additional parameter for the swank listener
 
 
 ###############################################################################
@@ -648,6 +649,7 @@ def swank_listen():
     global package
     global pid
     global swank_version
+    global swank_param
 
     retval = ''
     msgcount = 0
@@ -824,6 +826,20 @@ def swank_listen():
                                     if type(params[0]) == list and type(params[0][0]) == list:
                                         compl = "\n".join(map(lambda x: x[0], params[0]))
                                         retval = retval + compl.replace('"', '')
+                                elif action.name == ':find-definitions-for-emacs':
+                                    if type(params[0]) == list and type(params[0][1]) == list and params[0][1][0] == ':location':
+                                        tags_file = vim.eval("g:slimv_tags_file")
+                                        temp = open(tags_file, 'w')
+                                        myitems = [[elem[1][1][1], elem[1][2][1]] for elem in params]
+                                        for i in myitems:
+                                            temp.write(swank_param)
+                                            temp.write('\t')
+                                            temp.write(i[0].replace('"', ''))
+                                            temp.write('\t')
+                                            temp.write(":go %s" % i[1])
+                                            temp.write('\n')
+                                        temp.close()
+                                        retval = swank_param
                                 elif action.name == ':list-threads':
                                     swank_parse_list_threads(r[1])
                                 elif action.name == ':xref':
@@ -1167,6 +1183,12 @@ def swank_list_threads():
 def swank_kill_thread(index):
     cmd = '(swank:kill-nth-thread ' + str(index) + ')'
     swank_rex(':kill-thread', cmd, get_swank_package(), 't', str(index))
+
+def swank_find_definitions_for_emacs(str):
+    global swank_param
+    swank_param = str
+    cmd = '(swank:find-definitions-for-emacs "' + str + '")'
+    swank_rex(':find-definitions-for-emacs', cmd, get_package(), ':repl-thread')
 
 def swank_debug_thread(index):
     cmd = '(swank:debug-nth-thread ' + str(index) + ')'
