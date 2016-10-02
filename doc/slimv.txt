@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 01 Nov 2015
+*slimv.txt*                    Slimv                 Last Change: 02 Oct 2016
 
 Slimv                                                                  *slimv*
                                Version 0.9.13
@@ -213,6 +213,8 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_swank_scheme|       Command used to start the Scheme SWANK server.
 
+|g:slimv_tags_file|          Name of tags file used by Slimv. 
+
 |g:slimv_threads_name|       Name of the Threads buffer.
 
 |g:slimv_timeout|            Timeout defined for starting up or connecting
@@ -393,6 +395,13 @@ If ctags.exe is stored somewhere else, or the default ctags options are
 unsatisfactory, then override this option with the desired command.
 The default ctags command is:
   "ctags.exe -a --language-force=lisp *.lisp *.clj"
+
+                                                            *g:slimv_tags_file*
+The Find-Definition function gets location information from the SWANK server.
+Slimv uses a dedicated tags file for Find-Definitions. By default this is a
+temporary file but the filename can be overridden via this option. If this
+variable is set to the empty string ('') then the whole Find-Definitions
+function is disabled.
 
                                                           *g:slimv_keybindings*
 Defines the keybinding set used by Slimv.
@@ -653,10 +662,12 @@ sequence, then you may want to fine tune these Vim options:
     <C-X>0           Close Form
     <Tab>            Complete Symbol
     <Space>          Function Arglist
+    <C-]>            Find Definitions (Tag Lookup)
 
     Edit commands (Normal mode):
     ,)      ,tc      Close Form
     ,(      ,(t      Paredit Toggle
+    ,j      ,fd      Find Definitions
 
     Evaluation commands:
 ["x],d  ["x],ed      Eval Defun (current top level form) [put in register x]
