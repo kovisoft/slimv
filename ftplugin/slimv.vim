@@ -100,7 +100,7 @@ function! SlimvSwankCommand()
                 endif 
         elseif $STY != ''
             " GNU screen under Linux
-            return '! screen -X eval "title swank" "screen ' . cmd . '" "select swank"'
+            return "! screen -X eval 'title swank' 'screen " . cmd . "' 'select swank'"
         elseif $TMUX != ''
             " tmux under Linux
             return "! tmux new-window -d -n swank '" . cmd . "'"
