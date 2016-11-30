@@ -292,10 +292,8 @@ def parse_location(lst):
     return 'no source line information'
 
 def unicode_len(text):
-    if use_unicode:
-        return len(unicode(text, "utf-8"))
-    else:
-        return len(text)
+    # Note, python 3 uses only unicode
+    return len(str(text))
 
 def swank_send(text):
     global sock
@@ -307,7 +305,7 @@ def swank_send(text):
     if debug:
         print( 'Sending:', t)
     try:
-        sock.send(t)
+        sock.send(t.encode('utf-8'))
     except socket.error:
         vim.command("let s:swank_result='Socket error when sending to SWANK server.\n'")
         swank_disconnect()
@@ -328,7 +326,7 @@ def swank_recv_len(timeout):
             swank_disconnect()
             return rec
         while data and len(rec) < lenbytes:
-            rec = rec + data
+            rec = rec + data.decode('utf-8')
             l = l - len(data)
             if l > 0:
                 try:
@@ -368,7 +366,7 @@ def swank_recv(msglen, timeout):
                     vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
                     swank_disconnect()
                     return rec
-                rec = rec + data
+                rec = rec + data.decode('utf-8')
     rec = ''
 
 def swank_parse_inspect_content(pcont):
