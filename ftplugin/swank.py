@@ -13,12 +13,12 @@
 # 
 ############################################################################### 
 
+from __future__ import print_function
 
 import socket
 import time
 import select
 import string
-from __future__ import print_function
 
 input_port      = 4005
 output_port     = 4006
