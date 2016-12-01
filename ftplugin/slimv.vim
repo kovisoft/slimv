@@ -30,11 +30,9 @@ endif
 if has( 'python3' )
     let s:py_cmd = 'python3 ' "note space
     let s:pyfile_cmd = 'py3file '
-    let s:swank_file = 'swank3.py' "for g:swank_file
 elseif has( 'python' )
     let s:py_cmd = 'python '  "note space
     let s:pyfile_cmd = 'pyfile '
-    let s:swank_file = 'swank.py'  "for g:swank_file
 else
     echoerr "Python feature unavailable - stopping slimv plugin"
     finish
@@ -58,11 +56,11 @@ endfunction
 
 " Find swank.py in the Vim ftplugin directory (if not given in vimrc)
 if !exists( 'g:swank_path' )
-    let plugins = split( globpath( &runtimepath, 'ftplugin/**/' . s:swank_file ), '\n' )
+    let plugins = split( globpath( &runtimepath, 'ftplugin/**/swank.py'), '\n' )
     if len( plugins ) > 0
         let g:swank_path = s:Cygpath( plugins[0] )
     else
-        let g:swank_path = s:swank_file
+        let g:swank_path = 'swank.py'
     endif
 endif
 
