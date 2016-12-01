@@ -294,7 +294,7 @@ def parse_location(lst):
 
 def unicode_len(text):
     if use_unicode:
-        return len(text.decode('utf-8'))
+        return len(text.encode('utf-8'))
     else:
         return len(text)
 
