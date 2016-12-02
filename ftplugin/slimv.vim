@@ -27,15 +27,13 @@ elseif has( 'macunix' )
     let g:slimv_osx = 1
 endif
 
-if has( 'python3' )
+if ( has( 'python3' ) && !exists('g:slimv_python_version') )
+    \ || ( exists( 'g:slimv_python_version' ) && g:slimv_python_version == 3 )
     let s:py_cmd = 'python3 ' "note space
     let s:pyfile_cmd = 'py3file '
-elseif has( 'python' )
+else
     let s:py_cmd = 'python '  "note space
     let s:pyfile_cmd = 'pyfile '
-else
-    echoerr "Python feature unavailable - stopping slimv plugin"
-    finish
 endif
 
 
