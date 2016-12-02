@@ -19,6 +19,7 @@ import socket
 import time
 import select
 import string
+import sys
 
 input_port      = 4005
 output_port     = 4006
@@ -697,7 +698,7 @@ def swank_listen():
                 if message == ':open-dedicated-output-stream':
                     output_port = int( r[1].lower(), 10 )
                     if debug:
-                        print(':open-dedicated-output-stream result:', file=output_port)
+                        print(':open-dedicated-output-stream result:', output_port)
                     break
 
                 elif message == ':presentation-start':
