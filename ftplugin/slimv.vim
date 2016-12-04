@@ -1278,7 +1278,8 @@ endfunction
 " Initialize embedded Python and connect to SWANK server
 function! SlimvConnectSwank()
     if !s:python_initialized
-        if ( ! has('python3') ) && ( ! has('python') )
+        if ( s:py_cmd == 'python3 ' && ! has('python3') ) &&
+         \ ( ! has('python') )
             call SlimvErrorWait( 'Vim is compiled without the Python feature or Python is not installed. Unable to run SWANK client.' )
             return 0
         endif
