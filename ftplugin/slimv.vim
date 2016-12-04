@@ -27,8 +27,8 @@ elseif has( 'macunix' )
     let g:slimv_osx = 1
 endif
 
-if ( has( 'python3' ) && !exists('g:slimv_python_version') )
-    \ || ( exists( 'g:slimv_python_version' ) && g:slimv_python_version == 3 )
+if ( !exists( 'g:slimv_python_version' ) && has( 'python3' ) ) ||
+\  (  exists( 'g:slimv_python_version' ) && g:slimv_python_version == 3 )
     let s:py_cmd = 'python3 ' "note space
     let s:pyfile_cmd = 'py3file '
 else
@@ -1278,7 +1278,7 @@ endfunction
 " Initialize embedded Python and connect to SWANK server
 function! SlimvConnectSwank()
     if !s:python_initialized
-        if ( ! has('python') ) && ( ! has('python3') )
+        if ( ! has('python3') ) && ( ! has('python') )
             call SlimvErrorWait( 'Vim is compiled without the Python feature or Python is not installed. Unable to run SWANK client.' )
             return 0
         endif
