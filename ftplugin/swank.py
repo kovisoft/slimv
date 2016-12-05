@@ -13,11 +13,13 @@
 # 
 ############################################################################### 
 
+from __future__ import print_function
 
 import socket
 import time
 import select
 import string
+import sys
 
 input_port      = 4005
 output_port     = 4006
@@ -293,7 +295,10 @@ def parse_location(lst):
 
 def unicode_len(text):
     if use_unicode:
-        return len(unicode(text, "utf-8"))
+        if sys.version_info[0] > 2:
+            return len(text.encode('utf-8'))
+        else:
+            return len(unicode(text, "utf-8"))
     else:
         return len(text)
 
@@ -305,9 +310,12 @@ def swank_send(text):
     l = "%06x" % unicode_len(text)
     t = l + text
     if debug:
-        print 'Sending:', t
+        print( 'Sending:', t)
     try:
-        sock.send(t)
+        if sys.version_info[0] > 2:
+            sock.send(t.encode('utf-8'))
+        else:
+            sock.send(t)
     except socket.error:
         vim.command("let s:swank_result='Socket error when sending to SWANK server.\n'")
         swank_disconnect()
@@ -328,7 +336,10 @@ def swank_recv_len(timeout):
             swank_disconnect()
             return rec
         while data and len(rec) < lenbytes:
-            rec = rec + data
+            if sys.version_info[0] > 2:
+                rec = rec + data.decode('utf-8')
+            else:
+                rec = rec + data
             l = l - len(data)
             if l > 0:
                 try:
@@ -368,7 +379,10 @@ def swank_recv(msglen, timeout):
                     vim.command("let s:swank_result='Socket error when receiving from SWANK server.\n'")
                     swank_disconnect()
                     return rec
-                rec = rec + data
+                if sys.version_info[0] > 2:
+                    rec = rec + data.decode('utf-8')
+                else:
+                    rec = rec + data
     rec = ''
 
 def swank_parse_inspect_content(pcont):
@@ -662,10 +676,10 @@ def swank_listen():
         timeout = 0.0
         msgcount = msgcount + 1
         if debug:
-            print 'swank_recv_len received', rec
+            print('swank_recv_len received', rec)
         msglen = int(rec, 16)
         if debug:
-            print 'Received length:', msglen
+            print('Received length:', msglen)
         if msglen > 0:
             # length already received so it must be followed by data
             # use a higher timeout
@@ -674,17 +688,17 @@ def swank_listen():
             logprint(rec)
             [s, r] = parse_sexpr( rec )
             if debug:
-                print 'Parsed:', r
+                print('Parsed:', r)
             if len(r) > 0:
                 r_id = r[-1]
                 message = r[0].lower()
                 if debug:
-                    print 'Message:', message
+                    print('Message:', message)
 
                 if message == ':open-dedicated-output-stream':
                     output_port = int( r[1].lower(), 10 )
                     if debug:
-                        print ':open-dedicated-output-stream result:', output_port
+                        print(':open-dedicated-output-stream result:', output_port)
                     break
 
                 elif message == ':presentation-start':
