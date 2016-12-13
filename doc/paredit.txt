@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 12 Jul 2014
+*paredit.txt*                   Paredit              Last Change: 13 Dec 2016
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.13
@@ -381,6 +381,8 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_disable_scheme|   If defined, paredit is disabled for scheme files.
 
+|g:paredit_disable_shen|     If defined, paredit is disabled for shen files.
+
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
 |g:paredit_smartjump|        If nonzero, '(' and ')' also target square brackets
@@ -400,6 +402,7 @@ PAREDIT OPTIONS                                               *paredit-options*
                                                     *g:paredit_disable_clojure*
                                                        *g:paredit_disable_lisp*
                                                      *g:paredit_disable_scheme*
+                                                       *g:paredit_disable_shen*
 If defined then paredit is disabled for the given file type. Useful to use
 a different plugin for a specific file type, but keep using paredit for the
 others.
