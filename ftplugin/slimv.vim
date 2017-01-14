@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  02 Oct 2016
+" Last Change:  14 Jan 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3394,6 +3394,7 @@ function! SlimvFindDefinitions()
             call SlimvError( "No symbol under cursor." )
             return
         endif
+        call SlimvFindPackage()
         call SlimvFindDefinitionsForEmacs( symbol )
     endif
 endfunction
