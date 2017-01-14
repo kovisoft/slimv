@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  02 Oct 2016
+# Last Change:  14 Jan 2017
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -296,11 +296,14 @@ def parse_location(lst):
 def unicode_len(text):
     if use_unicode:
         if sys.version_info[0] > 2:
-            return len(text.encode('utf-8'))
+            return len(str(text))
         else:
             return len(unicode(text, "utf-8"))
     else:
-        return len(text)
+        if sys.version_info[0] > 2:
+            return len(text.encode('utf-8'))
+        else:
+            return len(text)
 
 def swank_send(text):
     global sock
