@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.13
-# Last Change:  14 Jan 2017
+# Last Change:  16 Jan 2017
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -818,7 +818,7 @@ def swank_listen():
                                 package = pkg[':name']
                                 prompt = pkg[':prompt']
                                 vim.command('let s:swank_version="' + swank_version + '"')
-                                if swank_version >= '2011-11-08':
+                                if len(swank_version) < 8 or swank_version >= '2011-11-08':
                                     # Recent swank servers count bytes instead of unicode characters
                                     use_unicode = False
                                 vim.command('let s:lisp_version="' + imp[':version'] + '"')
@@ -975,13 +975,13 @@ def swank_connection_info():
 
 def swank_create_repl():
     global swank_version
-    if swank_version >= '2014-10-01':
+    if len(swank_version) < 8 or swank_version >= '2014-10-01':
         swank_rex(':create-repl', '(swank-repl:create-repl nil)', get_swank_package(), 't')
     else:
         swank_rex(':create-repl', '(swank:create-repl nil)', get_swank_package(), 't')
 
 def swank_eval(exp):
-    if swank_version >= '2014-10-01':
+    if len(swank_version) < 8 or swank_version >= '2014-10-01':
         cmd = '(swank-repl:listener-eval ' + requote(exp) + ')'
     else:
         cmd = '(swank:listener-eval ' + requote(exp) + ')'
@@ -989,7 +989,7 @@ def swank_eval(exp):
 
 def swank_eval_in_frame(exp, n):
     pkg = get_swank_package()
-    if swank_version >= '2011-11-21':
+    if len(swank_version) < 8 or swank_version >= '2011-11-21':
         cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ' ' + pkg + ')'
     else:
         cmd = '(swank:eval-string-in-frame ' + requote(exp) + ' ' + str(n) + ')'
