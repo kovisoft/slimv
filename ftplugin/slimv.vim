@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  14 Jan 2017
+" Last Change:  16 Jan 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -319,6 +319,7 @@ let s:last_update = 0                                     " The last update time
 let s:save_updatetime = &updatetime                       " The original value for 'updatetime'
 let s:save_showmode = &showmode                           " The original value for 'showmode'
 let s:python_initialized = 0                              " Is the embedded Python initialized?
+let s:swank_version = ''                                  " SWANK server version string
 let s:swank_connected = 0                                 " Is the SWANK server connected?
 let s:swank_package = ''                                  " Package to use at the next SWANK eval
 let s:swank_package_form = ''                             " The entire form that was used to set current package
@@ -347,6 +348,29 @@ let s:binding_form = 'let\|let\*'                         " List of symbols with
 " =====================================================================
 "  General utility functions
 " =====================================================================
+
+" Check that current SWANK version is same or newer than the given parameter
+function! s:SinceVersion( ver )
+    " Before ver 2.18 SWANK version string was a date of form YYYY-MM-DD
+    if len( a:ver ) >= 8
+        " Checking for old style version string YYYY-MM-DD
+        if len( s:swank_version ) < 8
+            " Current version is new style -> must be newer than the one we are checking for
+            return 1
+        endif
+    else
+        " Checking for new style version string X.XX
+        if len( s:swank_version ) >= 8
+            " Current version is old style -> must be older than the one we are checking for
+            return 0
+        endif
+    endif
+    if s:swank_version >= a:ver
+        return 1
+    else
+        return 0
+    endif
+endfunction 
 
 " Display an error message
 function! SlimvError( msg )
@@ -1335,11 +1359,11 @@ function! SlimvConnectSwank()
         endif
         execute s:py_cmd . "swank_require('(" . contribs . ")')"
         call SlimvSwankResponse()
-        if s:swank_version >= '2011-12-04'
+        if s:SinceVersion( '2011-12-04' )
             execute s:py_cmd . "swank_require('swank-repl')"
             call SlimvSwankResponse()
         endif
-        if s:swank_version >= '2008-12-23'
+        if s:SinceVersion( '2008-12-23' )
             call SlimvCommandGetResponse( ':create-repl', s:py_cmd . 'swank_create_repl()', g:slimv_timeout )
         endif
         let s:swank_connected = 1
@@ -1347,7 +1371,7 @@ function! SlimvConnectSwank()
         echon "\rConnected to SWANK server on port " . g:swank_port . "."
         if exists( "g:swank_block_size" ) && SlimvGetFiletype() == 'lisp'
             " Override SWANK connection output buffer size
-            if s:swank_version >= '2014-09-08'
+            if s:SinceVersion( '2014-09-08' )
                 let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank/gray::buffer)"
             else
                 let cmd = "(progn (setf (slot-value (swank::connection.user-output swank::*emacs-connection*) 'swank-backend::buffer)"
@@ -2809,7 +2833,7 @@ endfunction
 " Toggle debugger break on exceptions
 " Only for ritz-swank 0.4.0 and above
 function! SlimvBreakOnException()
-    if SlimvGetFiletype() =~ '.*clojure.*' && s:swank_version >= '2010-11-13'
+    if SlimvGetFiletype() =~ '.*clojure.*' && s:SinceVersion( '2010-11-13' )
         " swank-clojure is abandoned at protocol version 20100404, so it must be ritz-swank
         if SlimvConnectSwank()
             let s:break_on_exception = ! s:break_on_exception
