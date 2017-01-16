@@ -84,10 +84,6 @@
    openmcl-mop:slot-boundp-using-class
    openmcl-mop:slot-makunbound-using-class))
 
-(defmacro swank-sym (sym)
-  (let ((str (symbol-name sym)))
-    `(or (find-symbol ,str :swank)
-         (error "There is no symbol named ~a in the SWANK package" ,str))))
 ;;; UTF8
 
 (defimplementation string-to-utf8 (string)
@@ -333,10 +329,9 @@
 ;; such as *emacs-connection*.
 (defun find-repl-thread ()
   (let* ((*break-on-signals* nil)
-         (conn (funcall (swank-sym default-connection))))
-    (and conn
-         (ignore-errors ;; this errors if no repl-thread
-           (funcall (swank-sym repl-thread) conn)))))
+         (conn (swank::default-connection)))
+    (and (swank::multithreaded-connection-p conn)
+         (swank::mconn.repl-thread conn))))
 
 (defimplementation call-with-debugger-hook (hook fun)
   (let ((*debugger-hook* hook)
@@ -420,7 +415,8 @@
   (etypecase name
     (null nil)
     (symbol (symbol-package name))
-    ((cons (eql setf) symbol) (symbol-package (cadr name)))
+    ((cons (eql ccl::traced)) (function-name-package (second name)))
+    ((cons (eql setf)) (symbol-package (second name)))
     ((cons (eql :internal)) (function-name-package (car (last name))))
     ((cons (and symbol (not keyword)) (cons list null))
      (symbol-package (car name)))
@@ -630,23 +626,36 @@
     (:type
      (describe (or (find-class symbol nil) symbol)))))
 
+;; spec ::= (:defmethod <name> {<qualifier>}* ({<specializer>}*))
+(defun parse-defmethod-spec (spec)
+  (values (second spec)
+          (subseq spec 2 (position-if #'consp spec))
+          (find-if #'consp (cddr spec))))
+
 (defimplementation toggle-trace (spec)
   "We currently ignore just about everything."
-  (ecase (car spec)
-    (setf
-     (ccl:trace-function spec))
-    ((:defgeneric)
-     (ccl:trace-function (second spec)))
-    ((:defmethod)
-     (destructuring-bind (name qualifiers specializers) (cdr spec)
-       (ccl:trace-function
-        (find-method (fdefinition name) qualifiers specializers)))))
-  t)
+  (let ((what (ecase (first spec)
+                ((setf)
+                 spec)
+                ((:defgeneric)
+                 (second spec))
+                ((:defmethod)
+                 (multiple-value-bind (name qualifiers specializers)
+                     (parse-defmethod-spec spec)
+                   (find-method (fdefinition name)
+                                qualifiers
+                                specializers))))))
+    (cond ((member what (trace) :test #'equal)
+           (ccl::%untrace what)
+           (format nil "~S is now untraced." what))
+          (t
+           (ccl:trace-function what)
+           (format nil "~S is now traced." what)))))
 
 ;;; Macroexpansion
 
-(defimplementation macroexpand-all (form)
-  (ccl:macroexpand-all form))
+(defimplementation macroexpand-all (form &optional env)
+  (ccl:macroexpand-all form env))
 
 ;;;; Inspection
 

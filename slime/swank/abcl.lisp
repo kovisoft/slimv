@@ -135,7 +135,7 @@
    mop:slot-definition-writers
    slot-boundp-using-class
    slot-value-using-class
-   ))
+   mop:slot-makunbound-using-class))
 
 ;;;; TCP Server
 
@@ -281,8 +281,17 @@
 (defimplementation function-name (function)
   (nth-value 2 (function-lambda-expression function)))
 
-(defimplementation macroexpand-all (form)
-  (macroexpand form))
+(defimplementation macroexpand-all (form &optional env)
+  (ext:macroexpand-all form env))
+
+(defimplementation collect-macro-forms (form &optional env)
+  ;; Currently detects only normal macros, not compiler macros.
+  (declare (ignore env))
+  (with-collected-macro-forms (macro-forms)
+      (handler-bind ((warning #'muffle-warning))
+        (ignore-errors
+          (compile nil `(lambda () ,(macroexpand-all form env)))))
+    (values macro-forms nil)))
 
 (defimplementation describe-symbol-for-emacs (symbol)
   (let ((result '()))
@@ -375,15 +384,39 @@
   (write-string (sys:frame-to-string frame)
                 stream))
 
+;;; Sorry, but can't seem to declare DEFIMPLEMENTATION under FLET.
+;;; --ME 20150403
+(defun nth-frame-list (index)
+  (java:jcall "toLispList" (nth-frame index)))
+
+(defun match-lambda (operator values)
+  (jvm::match-lambda-list
+   (multiple-value-list
+    (jvm::parse-lambda-list (ext:arglist operator)))
+   values))
+
 (defimplementation frame-locals (index)
- (loop
-    :with name = "??"
-    :for id :upfrom 0
-    :for value :in (java:jcall "toLispList" (nth-frame index))
-    :collecting  (list :name name :id id :value value)))
+  (loop
+     :for id :upfrom 0
+     :with frame = (nth-frame-list index)
+     :with operator = (first frame)
+     :with values = (rest frame)
+     :with arglist = (if (and operator (consp values) (not (null values)))
+                         (handler-case
+                             (match-lambda operator values)
+                           (jvm::lambda-list-mismatch (e)
+                             :lambda-list-mismatch))
+                         :not-available)
+     :for value :in values
+     :collecting (list
+                  :name (if (not (keywordp arglist))
+                            (first (nth id arglist))
+                            (format nil "arg~A" id))
+                  :id id
+                  :value value)))
 
 (defimplementation frame-var-value (index id)
- (elt (java:jcall "toLispList" (nth-frame index)) id))
+  (elt (rest (java:jcall "toLispList" (nth-frame index))) id))
 
 
 #+nil
@@ -465,14 +498,16 @@
                        (not (load fn)))))))))
 
 (defimplementation swank-compile-string (string &key buffer position filename
-                                         policy)
+                                                policy)
   (declare (ignore filename policy))
   (let ((jvm::*resignal-compiler-warnings* t)
         (*abcl-signaled-conditions* nil))
     (handler-bind ((warning #'handle-compiler-warning))
       (let ((*buffer-name* buffer)
             (*buffer-start-position* position)
-            (*buffer-string* string))
+            (*buffer-string* string)
+            (sys::*source* (make-pathname :device "emacs-buffer" :name buffer))
+            (sys::*source-position* position))
         (funcall (compile nil (read-from-string
                                (format nil "(~S () ~A)" 'lambda string))))
         t))))
@@ -507,13 +542,29 @@
 
 (defmethod source-location ((symbol symbol))
   (when (pathnamep (ext:source-pathname symbol))
-    (let ((pos (ext:source-file-position symbol)))
-      `(:location
-        (:file ,(namestring (ext:source-pathname symbol)))
-        ,(if pos
-             (list :position (1+ pos))
-             (list :function-name (string symbol)))
-        (:align t)))))
+    (let ((pos (ext:source-file-position symbol))
+          (path (namestring (ext:source-pathname symbol))))
+      (cond ((ext:pathname-jar-p path)
+             `(:location
+               ;; strip off "jar:file:" = 9 characters
+               (:zip ,@(split-string (subseq path 9) "!/"))
+               ;; pos never seems right. Use function name.
+               (:function-name ,(string symbol))
+               (:align t)))
+            ((equal (pathname-device (ext:source-pathname symbol)) "emacs-buffer")
+             ;; conspire with swank-compile-string to keep the buffer
+             ;; name in a pathname whose device is "emacs-buffer".
+             `(:location
+                (:buffer ,(pathname-name (ext:source-pathname symbol)))
+                (:function-name ,(string symbol))
+                (:align t)))
+            (t
+             `(:location
+                (:file ,path)
+                ,(if pos
+                     (list :position (1+ pos))
+                     (list :function-name (string symbol)))
+                (:align t)))))))
 
 (defmethod source-location ((frame sys::java-stack-frame))
   (destructuring-bind (&key class method file line) (sys:frame-to-list frame)
@@ -790,3 +841,7 @@ part of *sysdep-pathnames* in swank.loader.lisp.
 
 (defimplementation quit-lisp ()
   (ext:exit))
+;;;
+#+#.(swank/backend:with-symbol 'package-local-nicknames 'ext)
+(defimplementation package-local-nicknames (package)
+  (ext:package-local-nicknames package))
