@@ -1396,8 +1396,8 @@ A utility for debugging DEBUG-FUNCTION-ARGLIST."
 
 ;;;; Miscellaneous.
 
-(defimplementation macroexpand-all (form)
-  (walker:macroexpand-all form))
+(defimplementation macroexpand-all (form &optional env)
+  (walker:macroexpand-all form env))
 
 (defimplementation compiler-macroexpand-1 (form &optional env)
   (ext:compiler-macroexpand-1 form env))
@@ -2239,8 +2239,7 @@ The `symbol-value' of each element is a type tag.")
 
 ;; this should probably not be here, but where else?
 (defun background-message (message)
-  (funcall (find-symbol (string :background-message) :swank)
-           message))
+  (swank::background-message message))
 
 (defun print-bytes (nbytes &optional stream)
   "Print the number NBYTES to STREAM in KB, MB, or GB units."

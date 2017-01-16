@@ -752,9 +752,7 @@ forward keywords to OPERATOR."
                  (not (swank-mop:class-finalized-p class)))
         ;; Try to finalize the class, which can fail if
         ;; superclasses are not defined yet
-        (handler-case (swank-mop:finalize-inheritance class)
-          (program-error (c)
-            (declare (ignore c)))))
+        (ignore-errors (swank-mop:finalize-inheritance class)))
       class)))
 
 (defun extra-keywords/slots (class)
@@ -1569,17 +1567,22 @@ datum for subsequent logics to rely on."
 	  (make-arglist-dummy string)))))
 
 (defun test-print-arglist ()
-  (flet ((test (arglist string)
+  (flet ((test (arglist &rest strings)
            (let* ((*package* (find-package :swank))
                   (actual (decoded-arglist-to-string
                            (decode-arglist arglist)
                            :print-right-margin 1000)))
-             (unless (string= actual string)
-               (warn "Test failed: ~S => ~S~%  Expected: ~S"
-                     arglist actual string)))))
+             (unless (loop for string in strings
+                           thereis (string= actual string))
+               (warn "Test failed: ~S => ~S~%  Expected: ~A"
+                     arglist actual
+                     (if (cdr strings)
+                         (format nil "One of: ~{~S~^, ~}" strings)
+                         (format nil "~S" (first strings))))))))
     (test '(function cons) "(function cons)")
     (test '(quote cons) "(quote cons)")
-    (test '(&key (function #'+)) "(&key (function #'+))")
+    (test '(&key (function #'+))
+          "(&key (function #'+))" "(&key (function (function +)))")
     (test '(&whole x y z) "(y z)")
     (test '(x &aux y z) "(x)")
     (test '(x &environment env y) "(x y)")
