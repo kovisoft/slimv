@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  16 Jan 2017
+" Last Change:  18 Jan 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3401,9 +3401,9 @@ function! SlimvFindDefinitionsForEmacs( symbol )
     endif
     try
         if msg != ''
-            exec ":tag " . msg
+            exec ":tjump " . msg
         else
-            exec ":tag " . a:symbol
+            exec ":tjump " . a:symbol
         endif
     catch /^Vim\%((\a\+)\)\=:E426/
         call SlimvError( "\r" . v:exception )
