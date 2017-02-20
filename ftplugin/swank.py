@@ -1098,7 +1098,7 @@ def swank_inspector_pop():
 
 def swank_inspect_in_frame(symbol, n):
     key = str(n) + " " + symbol
-    if frame_locals.has_key(key):
+    if key in frame_locals:
         cmd = '(swank:inspect-frame-var ' + str(n) + " " + str(frame_locals[key]) + ')'
     else:
         cmd = '(swank:inspect-in-frame "' + symbol + '" ' + str(n) + ')'
