@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.13
-" Last Change:  18 Jan 2017
+" Last Change:  18 Mar 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1815,8 +1815,8 @@ function! SlimvIndentUnsafe( lnum )
                 return c + 1
             endif
         endif
+        " Fix indentation issues not handled by the default lisp.vim
         if SlimvGetFiletype() =~ '.*clojure.*'
-            " Fix clojure specific indentation issues not handled by the default lisp.vim
             if match( func, 'defn$' ) >= 0
                 return c + 1
             endif
@@ -1824,6 +1824,9 @@ function! SlimvIndentUnsafe( lnum )
             if match( func, 'defgeneric$' ) >= 0 || match( func, 'defsystem$' ) >= 0 || match( func, 'aif$' ) >= 0
                 return c + 1
             endif
+        endif
+        if match( func, 'if$' ) >= 0 || match( func, 'do$' ) >= 0
+            return c + funclen - 1
         endif
         " Remove package specification
         let func = substitute(func, '^.*:', '', '')
