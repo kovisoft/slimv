@@ -22,7 +22,7 @@ Slimv supports SLIME's debugger, inspector, profiler, cross reference, arglist, 
 Slimv comes with Paredit Mode, which is similar to the functionality of paredit.el in Emacs. Paredit Mode tries to maintain the balanced state of matched characters (parenthesis marks, square and curly braces, double quotes). Matched characters are inserted and removed in pairs, also when working with a block of text (well, mostly). Slimv also implements many paredit.el s-expression handling functions, like Split/Join/Wrap/Splice/Raise. Slurpage and Barfage known from Emacs is also possible but in a different fashion: you don't move the list element in or out of the list, rather you move the opening or closing parenthesis over the element or sub-list.
 
 Please visit the Slimv Tutorial for a more complete introduction:
-http://kovisoft.bitbucket.org/tutorial.html
+https://kovisoft.bitbucket.io/tutorial.html
 
 Please find the most recent development version in the repository:
 https://bitbucket.org/kovisoft/slimv
