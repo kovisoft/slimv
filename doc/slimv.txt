@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 02 Oct 2016
+*slimv.txt*                    Slimv                 Last Change: 19 Mar 2017
 
 Slimv                                                                  *slimv*
                                Version 0.9.13
@@ -1512,6 +1512,74 @@ CHANGE LOG                                                    *slimv-changelog*
 0.9.13 - Update REPL buffer in the background, no need to bring it into focus.
        - The evaluation result is also displayed in the status line.
        - REPL buffer number is remembered upon creation, no need to find it by name.
+       - In Vim 7.4 normal mode cursor movements and winrestview() cannot be
+         used in an 'indentexpr'.
+       - Concealing should not hide whitespaces in the Inspector buffer.
+       - Do not load contribs by default when starting the swank server.
+       - Place cursor at prompt position in the REPL buffer upon tab switch.
+       - Bugfix: Scheme builtin swank not launching.
+       - Fix for pressing Enter on a filename in SLDB when the filename is
+         not enclosed in double quotes.
+       - Save and restore marks ` and ' in the source buffer while updating REPL.
+       - Removed "b:" prefix from function names because latest vim version does not.
+       - Raising s-expressions now support [] and {}.
+       - Reindent current form after ,< and ,>.
+       - Paredit: always leave cursor to opening char's pos after wrapping selection.
+       - Paredit: fix possible cursor move problem caused by &indentexpr
+         when using the c operator.
+       - Added Clozure CL specific code to read environment variable SWANK_PORT.
+       - Changed nnoremap to noremap in normal mode movement mappings (, ), [[, ]].
+       - R language related fixes.
+       - Bugfix: 2 keymaps assumed g:paredit_leader is identical to ','.
+       - Fix for paredit 'x' and 'X' when clipboard=unnamed.
+       - Paredit: added support for hy.
+       - Paredit: use <Leader> instead of mapleader.
+       - Paredit: enhanced detection of forms balanced state.
+       - Paredit: unescaped square brackets in balance detection.
+       - Add support for alternate backspace keybinding.
+       - Bugfix: Null character should not be inserted from Python side.
+       - Delete contents into the black hole register when exiting the
+         Inspect/Threads/Sldb buffer.
+       - Added options g:slimv_unmap_cr, g:slimv_unmap_tab, g:slimv_unmap_space.
+       - Paredit bugfix: pressing <Tab> (for completion) followed by ')'.
+       - Fixed selection handling in EvalRegion and CompileRegion when
+         "set clipboard=unnamedplus".
+       - Paredit: Remove invalid uses of `call`.
+       - Do not destroy clipboard contents in EvalDefun when set clipboard=unnamed.
+       - Added missing quotes in the existence check for g:slimv_hs_root.
+       - Paredit: fixed problem with 'x' and 'X' commands when erasing
+         multi-byte unicode character.
+       - Insert mode Ctrl-W does not delete the prompt in the REPL buffer.
+       - Replace '\' characters with '/' in the compiled file name returned
+         by the swank server.
+       - Fix Paredit burfing (by moving parens left or right) when there are
+         stings as elements.
+       - Bugfix: arglist printing sometimes permanently disabled 'showmode'.
+       - Added command 'Quit REPL' mapped to <Leader>Q.
+       - Bugfix: wrong number of arguments when calling swank:eval-string-in-frame.
+       - Print REPL result string in a new line.
+       - Bugfix: MenuMap now correctly sets no keybindings when
+         g:slimv_keybindings is other than '1' or '2'.
+       - Bugfix: call winrestview() after SlimvCompileDefun.
+       - Indentation routine keeps original cursor position.
+       - Removed "com" extension from the scheme swank server when loading
+         compiled file.
+       - Store package in register when SlimvEvalTestDefun() is called
+         with an output register.
+       - Disable swank completion and arglist display while in :read_string mode.
+       - Added Find-Definitions function.
+       - Compatibility modifications for Python3.
+       - Updated logic for python version selection.
+       - Added paredit support for shen language.
+       - Use current package in Find-Definition.
+       - Fix unicode string length calculation for Python 3.x.
+       - Ignore Vim generated tags file.
+       - Paredit: Do not skip parens after \\ when searching for pairs.
+       - Use :tjump instead of :tag to jump to a definiton upon pressing Ctrl+].
+       - Modify Applescript for modern version iTerm.
+       - Fixed indentation of 'if' when the swank server does not provide it.
+       - Support both old and new style SWANK version strings (YYYY-MM-DD vs X.XX).
+       - Updated bundled swank server to slime version 2.19.
 
 0.9.12 - Added support for the R language via swank-R (by Philipp Marek).
        - Test form for SlimvEvalTestExp() may wrap the selected s-expression.
@@ -2158,7 +2226,9 @@ Jon Thacker, Andrew Hills, Jerome Baum, John Obbele, Andreas Fredriksson,
 Andrew Lyon, Andrew Smirnoff, Brett Kosinski, David Greenberg, Sung Pae,
 Conrad Schuler, Tim Pope, David Soria Parra, Colin Jones, Logan Campbell,
 John Szakmeister, Glen Gibb, Federico Churca-Torrusio, Robert Kerr, Jimmy Lu,
-Seth Price for additional notes and contributions.
+Seth Price, Philip Xu, Junegunn Choi, and github users elmart, chiku-samugari,
+dusenberrymw, bclube, vi1, FreeBlues, bnoordhuis, bvnierop, mattn, D4ryus,
+jakykong, Prajjwal, Neetless, jurov for additional notes and contributions.
 
 I would also like to say a big thank you to everyone donating to support
 development. This is a one-element list at the moment: :)
