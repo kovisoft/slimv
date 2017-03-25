@@ -25,7 +25,7 @@ Please visit the Slimv Tutorial for a more complete introduction:
 https://kovisoft.bitbucket.io/tutorial.html
 
 Please find the most recent development version in the repository:
-https://bitbucket.org/kovisoft/slimv
+https://github.com/kovisoft/slimv
 
 Here follows a list of Slimv commands, any similarity with SLIME's menu is not coincidental. :)
 
