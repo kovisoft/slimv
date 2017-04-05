@@ -1,7 +1,7 @@
 " clojure.vim:
 "               Clojure indent plugin for Slimv
-" Version:      0.9.5
-" Last Change:  21 Feb 2012
+" Version:      0.9.14
+" Last Change:  05 Apr 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -10,10 +10,14 @@
 " =====================================================================
 "
 "  Load Once:
-if exists("b:did_indent") || exists("g:slimv_disable_clojure")
+if exists("b:did_indent") || exists("b:slimv_did_indent") || exists("g:slimv_disable_clojure")
    finish
 endif
 
+" Prevent recursive call but allow loading other clojure plugins
+let b:slimv_did_indent = 1
+
+runtime! indent/**/clojure.vim
 runtime indent/**/lisp.vim
 
 setlocal nolisp

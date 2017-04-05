@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
-" Version:      0.9.13
-" Last Change:  18 Mar 2017
+" Version:      0.9.14
+" Last Change:  05 Apr 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1575,7 +1575,11 @@ endfunction
 " TODO: implement custom indent procedure and omit lispindent()
 function SlimvLispindent( lnum )
     set lisp
-    let li = lispindent( a:lnum )
+    if SlimvGetFiletype() =~ '.*clojure.*' && exists( '*GetClojureIndent' ) && line('.') == a:lnum
+        let li = GetClojureIndent()
+    else
+        let li = lispindent( a:lnum )
+    endif
     set nolisp
     let backline = max([a:lnum-g:slimv_indent_maxlines, 1])
     let oldpos = getpos( '.' )
@@ -1714,6 +1718,11 @@ function! SlimvIndentUnsafe( lnum )
             let [lb, cb] = searchpairpos( '\[', '', '\]', 'bW', s:skip_sc, backline )
             if lb >= l && (lb > l || cb > c)
                 return cb
+            endif
+            " Is this a multi-arity function definition?
+            let line = strpart( getline(l), c-1 )
+            if match( line, '(\s*\[' ) >= 0
+                return c + 1
             endif
         endif
         " Is this a form with special indentation?
