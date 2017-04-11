@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  05 Apr 2017
+" Last Change:  11 Apr 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -636,7 +636,7 @@ function! SlimvReplLeave()
         " Check if REPL menu exists, then remove it
         aunmenu REPL
         execute ':unmap ' . g:slimv_leader . '\'
-    catch /.*/
+    catch
         " REPL menu not found, we cannot remove it
     endtry
     if g:slimv_repl_split
@@ -3417,7 +3417,7 @@ function! SlimvFindDefinitionsForEmacs( symbol )
         else
             exec ":tjump " . a:symbol
         endif
-    catch /^Vim\%((\a\+)\)\=:E426/
+    catch
         call SlimvError( "\r" . v:exception )
     endtry
 endfunction
