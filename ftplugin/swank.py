@@ -1,4 +1,4 @@
-#!/usr/bin/env python)
+#!/usr/bin/env python
 
 ###############################################################################
 #
@@ -857,7 +857,7 @@ def swank_listen():
                                         temp.write(":go %s" % i[1])
                                         if i[2][0] == '"':
                                             # swank provided a code snippet too
-                                            temp.write(" \" %s" % unquote(i[2]))
+                                            temp.write(" \" %s" % unquote(i[2]).replace("\n", '').replace("\r", ''))
                                         elif i[3][0] == '"':
                                             # no code snippet, print location name
                                             temp.write(" \" %s" % unquote(i[3]))
