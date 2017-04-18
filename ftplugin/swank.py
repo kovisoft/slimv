@@ -4,8 +4,8 @@
 #
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
-# Version:      0.9.13
-# Last Change:  16 Jan 2017
+# Version:      0.9.14
+# Last Change:  18 Apr 2017
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -844,19 +844,20 @@ def swank_listen():
                                         compl = "\n".join(map(lambda x: x[0], params[0]))
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':find-definitions-for-emacs':
-                                    if type(params[0]) == list and type(params[0][1]) == list and params[0][1][0] == ':location':
-                                        tags_file = vim.eval("g:slimv_tags_file")
-                                        temp = open(tags_file, 'w')
-                                        myitems = [[elem[1][1][1], elem[1][2][1]] for elem in params]
-                                        for i in myitems:
-                                            temp.write(swank_param)
-                                            temp.write('\t')
-                                            temp.write(i[0].replace('"', ''))
-                                            temp.write('\t')
-                                            temp.write(":go %s" % i[1])
-                                            temp.write('\n')
-                                        temp.close()
-                                        retval = swank_param
+                                    tags_file = vim.eval("g:slimv_tags_file")
+                                    temp = open(tags_file, 'w')
+                                    myitems = [[elem[1][1][1], elem[1][2][1]]
+                                               for elem in params
+                                                   if type(elem) == list and type(elem[1]) == list and elem[1][0] == ':location']
+                                    for i in myitems:
+                                        temp.write(swank_param)
+                                        temp.write('\t')
+                                        temp.write(i[0].replace('"', ''))
+                                        temp.write('\t')
+                                        temp.write(":go %s" % i[1])
+                                        temp.write('\n')
+                                    temp.close()
+                                    retval = swank_param
                                 elif action.name == ':list-threads':
                                     swank_parse_list_threads(r[1])
                                 elif action.name == ':xref':
