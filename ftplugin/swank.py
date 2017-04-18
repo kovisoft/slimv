@@ -846,7 +846,7 @@ def swank_listen():
                                 elif action.name == ':find-definitions-for-emacs':
                                     tags_file = vim.eval("g:slimv_tags_file")
                                     temp = open(tags_file, 'w')
-                                    myitems = [[elem[1][1][1], elem[1][2][1]]
+                                    myitems = [[elem[1][1][1], elem[1][2][1], elem[1][3][1], elem[0]]
                                                for elem in params
                                                    if type(elem) == list and type(elem[1]) == list and elem[1][0] == ':location']
                                     for i in myitems:
@@ -855,6 +855,12 @@ def swank_listen():
                                         temp.write(i[0].replace('"', ''))
                                         temp.write('\t')
                                         temp.write(":go %s" % i[1])
+                                        if i[2][0] == '"':
+                                            # swank provided a code snippet too
+                                            temp.write(" \" %s" % unquote(i[2]))
+                                        elif i[3][0] == '"':
+                                            # no code snippet, print location name
+                                            temp.write(" \" %s" % unquote(i[3]))
                                         temp.write('\n')
                                     temp.close()
                                     retval = swank_param
