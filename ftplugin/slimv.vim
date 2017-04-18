@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  17 Apr 2017
+" Last Change:  18 Apr 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3443,6 +3443,7 @@ endfunction
 function! SlimvFindDefinitionsPrompt()
     if SlimvConnectSwank()
         let symbol = input( 'Find Definitions For: ', SlimvSelectSymbol() )
+        echon "\r"
         call SlimvFindDefinitionsForEmacs( symbol )
     endif
 endfunction
