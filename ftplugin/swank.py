@@ -845,6 +845,7 @@ def swank_listen():
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':find-definitions-for-emacs':
                                     tags_file = vim.eval("g:slimv_tags_file")
+                                    maxwidth = int(vim.eval("&columns")) - 16
                                     temp = open(tags_file, 'w')
                                     myitems = [[elem[1][1][1], elem[1][2][1], elem[1][3][1], elem[0]]
                                                for elem in params
@@ -853,15 +854,14 @@ def swank_listen():
                                         temp.write(swank_param)
                                         temp.write('\t')
                                         temp.write(i[0].replace('"', ''))
-                                        temp.write('\t')
-                                        temp.write(":go %s" % i[1])
+                                        cmd = ":go %s" % i[1]
                                         if i[2][0] == '"':
                                             # swank provided a code snippet too
-                                            temp.write(" \" %s" % unquote(i[2]).replace("\n", '').replace("\r", ''))
+                                            cmd = cmd + ' " ' + ' '.join(unquote(i[2]).split())
                                         elif i[3][0] == '"':
                                             # no code snippet, print location name
-                                            temp.write(" \" %s" % unquote(i[3]))
-                                        temp.write('\n')
+                                            cmd = cmd + ' " ' + ' '.join(unquote(i[3]).split())
+                                        temp.write("\t%s\n" % cmd[:maxwidth])
                                     temp.close()
                                     retval = swank_param
                                 elif action.name == ':list-threads':
