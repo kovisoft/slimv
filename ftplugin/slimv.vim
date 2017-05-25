@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  18 Apr 2017
+" Last Change:  25 May 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2736,7 +2736,12 @@ function! SlimvEvalBuffer()
         call SlimvError( "Cannot evaluate the REPL buffer." )
         return
     endif
-    let lines = getline( 1, '$' )
+    let first_line = 1
+    if getline( first_line )[0] == '#'
+        " skip shebang line
+        let first_line += 1
+    endif
+    let lines = getline( first_line, '$' )
     if SlimvGetFiletype() == 'scheme'
         " Swank-scheme requires us to pass a single s-expression
         " so embed buffer lines in a (begin ...) block
