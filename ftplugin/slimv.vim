@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  25 May 2017
+" Last Change:  10 Jul 2017
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -521,9 +521,14 @@ function! SlimvSwankResponse()
     endif
     if s:swank_actions_pending == 0 && s:last_update >= 0 && s:last_update < localtime() - 2
         " All SWANK output handled long ago, restore original update frequency
-        let &updatetime = s:save_updatetime
+        if &updatetime == g:slimv_updatetime
+            let &updatetime = s:save_updatetime
+        endif
     else
         " SWANK output still pending, keep higher update frequency
+        if &updatetime != g:slimv_updatetime
+            let s:save_updatetime = &updatetime
+        endif
         let &updatetime = g:slimv_updatetime
     endif
 endfunction
@@ -531,11 +536,12 @@ endfunction
 " Execute the given command and write its output at the end of the REPL buffer
 function! SlimvCommand( cmd )
     silent execute a:cmd
-    if g:slimv_updatetime < &updatetime
-        " Update more frequently until all swank responses processed
-        let &updatetime = g:slimv_updatetime
-        let s:last_update = -1
+    if &updatetime != g:slimv_updatetime
+        let s:save_updatetime = &updatetime
     endif
+    " Update more frequently until all swank responses processed
+    let &updatetime = g:slimv_updatetime
+    let s:last_update = -1
 endfunction
 
 " Execute the given SWANK command, wait for and return the response
