@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  10 Jul 2017
+" Last Change:  20 Jan 2018
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -183,6 +183,11 @@ endif
 " Shall we open REPL buffer in split window?
 if !exists( 'g:slimv_repl_split' )
     let g:slimv_repl_split = 1
+endif
+
+" Size of the split window
+if !exists( 'g:slimv_repl_split_size' )
+    let g:slimv_repl_split_size = ''
 endif
 
 " Wrap long lines in REPL buffer
@@ -693,13 +698,13 @@ function! s:SplitView( filename )
         call s:MakeWindowId()
         " No windows yet, need to split
         if g:slimv_repl_split == 1
-            execute "silent topleft sview! " . a:filename
+            execute "silent topleft " . g:slimv_repl_split_size . "sview! " . a:filename
         elseif g:slimv_repl_split == 2
-            execute "silent botright sview! " . a:filename
+            execute "silent botright " . g:slimv_repl_split_size . "sview! " . a:filename
         elseif g:slimv_repl_split == 3
-            execute "silent topleft vertical sview! " . a:filename
+            execute "silent topleft vertical " . g:slimv_repl_split_size . "sview! " . a:filename
         elseif g:slimv_repl_split == 4
-            execute "silent botright vertical sview! " . a:filename
+            execute "silent botright vertical " . g:slimv_repl_split_size . "sview! " . a:filename
         else
             execute "silent view! " . a:filename
         endif

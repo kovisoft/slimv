@@ -1,7 +1,7 @@
-*slimv.txt*                    Slimv                 Last Change: 19 Mar 2017
+*slimv.txt*                    Slimv                 Last Change: 20 Jan 2018
 
 Slimv                                                                  *slimv*
-                               Version 0.9.13
+                               Version 0.9.14
 
 The Superior Lisp Interaction Mode for Vim.
 This plugin is aimed to help Lisp development by interfacing between Vim and
@@ -200,6 +200,9 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_repl_split|         Open the Lisp REPL buffer in a split window
                              or in a separate buffer.
+
+|g:slimv_repl_split_size|    Size of the newly created split window in case
+                             |g:slimv_repl_split| is set.
 
 |g:slimv_repl_syntax|        Enable syntax coloring for the REPL buffer.
 
@@ -499,6 +502,12 @@ values may be used for |g:slimv_repl_split|:
     2: horizontal split below
     3: vertical split left
     4: vertical split right
+
+                                                      *g:slimv_repl_split_size*
+Size of the newly created split window in case |g:slimv_repl_split| is set.
+The default value is an empty string ('') meaning split size is automatically
+determined by vim. Define this either to 20 or '20' in order to set the split
+window size to 20 lines or columns (depending on the split direction).
 
                                                            *g:slimv_updatetime*
 The REPL buffer is refreshed at every keystroke or when the user doesn't press
