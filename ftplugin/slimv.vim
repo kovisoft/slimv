@@ -98,6 +98,12 @@ function! SlimvSwankCommand()
     if cmd != ''
         if g:slimv_windows || g:slimv_cygwin
             return '!start /MIN ' . cmd
+        elseif $STY != ''
+            " GNU screen under Linux or macOS
+            return "! screen -X eval 'title swank' 'screen " . cmd . "' 'select swank'"
+        elseif $TMUX != ''
+            " tmux under Linux or macOS
+            return "! tmux new-window -d -n swank '" . cmd . "'"
         elseif g:slimv_osx
             let result = system('osascript -e "exists application \"iterm\""')
                 if result[:-2] == 'true'
@@ -107,12 +113,6 @@ function! SlimvSwankCommand()
                     " doubles quotes within 'cmd' need to become '\\\"'
                     return '!osascript -e "tell application \"Terminal\" to do script \"' . escape(escape(cmd, '"'), '\"') . '\""'
                 endif 
-        elseif $STY != ''
-            " GNU screen under Linux
-            return "! screen -X eval 'title swank' 'screen " . cmd . "' 'select swank'"
-        elseif $TMUX != ''
-            " tmux under Linux
-            return "! tmux new-window -d -n swank '" . cmd . "'"
         elseif $DISPLAY == ''
             " No X, no terminal multiplexer. Cannot run swank server.
             call SlimvErrorWait( 'No X server. Run Vim from screen/tmux or start SWANK server manually.' )
