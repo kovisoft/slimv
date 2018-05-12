@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  20 Jan 2018
+" Last Change:  12 May 2018
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -681,6 +681,13 @@ function! s:SplitView( filename )
             let winnr1 = winnr
         endif
     endfor
+    " create a unique buffer name that does not collide with any file or directory name
+    let bname = a:filename
+    let i = 0
+    while filereadable(bname) || isdirectory(bname)
+        let i = i+1
+        let bname = a:filename . i
+    endwhile
     if winnr1 > 0 && winnr2 > 0
         " We have already at least two windows used by slimv
         let winid = getwinvar( winnr(), 'id' )
@@ -692,21 +699,21 @@ function! s:SplitView( filename )
                 execute winnr2 . "wincmd w"
             endif
         endif
-        execute "silent view! " . a:filename
+        execute "silent view! " . bname
     else
         " Generate unique window id for the old window if not yet done
         call s:MakeWindowId()
         " No windows yet, need to split
         if g:slimv_repl_split == 1
-            execute "silent topleft " . g:slimv_repl_split_size . "sview! " . a:filename
+            execute "silent topleft " . g:slimv_repl_split_size . "sview! " . bname
         elseif g:slimv_repl_split == 2
-            execute "silent botright " . g:slimv_repl_split_size . "sview! " . a:filename
+            execute "silent botright " . g:slimv_repl_split_size . "sview! " . bname
         elseif g:slimv_repl_split == 3
-            execute "silent topleft vertical " . g:slimv_repl_split_size . "sview! " . a:filename
+            execute "silent topleft vertical " . g:slimv_repl_split_size . "sview! " . bname
         elseif g:slimv_repl_split == 4
-            execute "silent botright vertical " . g:slimv_repl_split_size . "sview! " . a:filename
+            execute "silent botright vertical " . g:slimv_repl_split_size . "sview! " . bname
         else
-            execute "silent view! " . a:filename
+            execute "silent view! " . bname
         endif
         " Generate unique window id for the new window as well
         call s:MakeWindowId()
