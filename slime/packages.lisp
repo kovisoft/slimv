@@ -60,12 +60,15 @@
            profile-reset
            profile-package
 
-           with-collected-macro-forms))
+           with-collected-macro-forms
+           auto-flush-loop
+           *auto-flush-interval*))
 
 (defpackage swank/rpc
   (:use :cl)
   (:export
    read-message
+   read-packet
    swank-reader-error
    swank-reader-error.packet
    swank-reader-error.cause
