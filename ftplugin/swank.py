@@ -62,7 +62,10 @@ def logprint(text):
         f.close()
 
 def logtime(text):
-    logprint(text + ' ' + str(time.clock()))
+    if sys.version_info >= (3, 3):
+        logprint(text + ' ' + str(time.process_time())
+    else:
+        logprint(text + ' ' + str(time.clock())
 
 ###############################################################################
 # Simple Lisp s-expression parser
