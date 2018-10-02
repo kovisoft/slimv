@@ -72,7 +72,7 @@ let s:repeat             = 0
 let s:yank_pos           = []
 
 " Filetypes with [] and {} pairs balanced as well
-let s:fts_balancing_all_brackets = '.*\(clojure\|hy\|scheme\|racket\|shen\|lfe\).*'
+let s:fts_balancing_all_brackets = '.*\(clojure\|hy\|scheme\|racket\|shen\|lfe\|fennel\).*'
 
 " =====================================================================
 "  General utility functions
@@ -1864,4 +1864,8 @@ endif
 
 if !exists("g:paredit_disable_lfe")
     au FileType lfe       call PareditInitBuffer()
+endif
+
+if !exists("g:paredit_disable_fennel")
+    au FileType fennel    call PareditInitBuffer()
 endif
