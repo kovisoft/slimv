@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
-" Version:      0.9.13
-" Last Change:  15 Jan 2017
+" Version:      0.9.14
+" Last Change:  08 Nov 2018
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1097,8 +1097,14 @@ function! s:EraseFwd( count, startcol )
             let line = strpart( line, 0, pos )
         elseif s:InsideComment() || ( s:InsideString() && line[pos] != '"' )
             " Erasing any character inside string or comment
-            let reg = reg . line[pos]
-            let line = strpart( line, 0, pos ) . strpart( line, pos+1 )
+            let chars = split(strpart(line, pos), '\zs')
+            if len(chars) > 0
+                " Identify the character to be erased and it's length
+                " The length may be >1 if this is a multi-byte character
+                let ch = chars[0]
+                let reg = reg . ch
+                let line = strpart( line, 0, pos ) . strpart( line, pos+len(ch) )
+            endif
         elseif pos > 0 && line[pos-1:pos] =~ b:any_matched_pair
             if pos > a:startcol
                 " Erasing an empty character-pair
@@ -1150,8 +1156,15 @@ function! s:EraseBck( count )
             normal! h
             let pos = pos - 1
         elseif s:InsideComment() || ( s:InsideString() && line[pos-1] != '"' )
-            let reg = reg . line[pos-1]
-            let line = strpart( line, 0, pos-1 ) . strpart( line, pos )
+            let chars = split(strpart(line, 0, pos), '\zs')
+            if len(chars) > 0
+                " Identify the character to be erased and it's length
+                " The length may be >1 if this is a multi-byte character
+                let ch = chars[-1]
+                let reg = reg . ch
+                let line = strpart( line, 0, pos-len(ch) ) . strpart( line, pos )
+                let pos = pos - len(ch) + 1
+            endif
         elseif line[pos-1:pos] =~ b:any_matched_pair
             " Erasing an empty character-pair
             let p2 = s:RemoveYankPos()
