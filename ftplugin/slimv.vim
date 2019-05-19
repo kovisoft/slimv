@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  12 May 2018
+" Last Change:  19 May 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1188,6 +1188,21 @@ function! SlimvSelectSymbolExt()
     return symbol
 endfunction
 
+" Find the matching pair
+function! SlimvFindMatchingPair()
+    let c = col( '.' ) - 1
+    let firstchar = getline( '.' )[c]
+    while c < len( getline( '.' ) ) && getline( '.' )[c] !~ '(\|)\|\[\|\]\|{\|}'
+        normal! l
+        let c = c + 1
+    endwhile
+    if getline( '.' )[c] =~ '(\|\[\|{'
+        call searchpair( '(', '', ')', 'W', s:skip_sc )
+    else
+        call searchpair( '(', '', ')', 'bW', s:skip_sc )
+    endif
+endfunction
+
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm( extended )
     if SlimvGetFiletype() == 'r'
@@ -1202,13 +1217,22 @@ function! SlimvSelectForm( extended )
         normal! l
         let c = c + 1
     endwhile
-    normal! va(
+    " select the whole form
+"    if firstchar != '('
+    if getline( '.' )[c] != '('
+        call searchpair( '(', '', ')', 'bW', s:skip_sc )
+    endif
+    silent! normal v
+    call searchpair( '(', '', ')', 'W', s:skip_sc )
+    if &selection == 'exclusive' 
+        silent! normal l
+    endif
     let p1 = getpos('.')
     normal! o
     let p2 = getpos('.')
     if firstchar != '(' && p1[1] == p2[1] && (p1[2] == p2[2] || p1[2] == p2[2]+1)
         " Empty selection and no paren found, select current word instead
-        normal! aw
+        normal! vvaw
     elseif a:extended || firstchar != '('
         " Handle '() or #'() etc. type special syntax forms (but stop at prompt)
         let c = col( '.' ) - 2
@@ -3552,6 +3576,7 @@ function! SlimvInitBuffer()
             inoremap <silent> <buffer> <CR>       <C-R>=pumvisible() ?  "\<lt>C-Y>" : SlimvHandleEnter()<CR><C-R>=SlimvArglistOnEnter()<CR>
         endif
     endif
+    nnoremap <silent> <buffer> %          :call SlimvFindMatchingPair()<CR>
     "noremap  <silent> <buffer> <C-C>      :call SlimvInterrupt()<CR>
     augroup SlimvInsertLeave
         au!
