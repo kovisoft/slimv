@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  15 Jun 2019
+" Last Change:  20 Aug 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -146,6 +146,8 @@ function! PareditInitBuffer()
         nnoremap <buffer> <silent> cb           :<C-U>call PareditChangeSpec('cb',0)<CR>
         nnoremap <buffer> <silent> ciw          :<C-U>call PareditChangeSpec('ciw',1)<CR>
         nnoremap <buffer> <silent> caw          :<C-U>call PareditChangeSpec('caw',1)<CR>
+        nnoremap <buffer> <silent> do           do
+        nnoremap <buffer> <silent> dp           dp
         call RepeatableNNoRemap('p', ':<C-U>call PareditPut("p")')
         call RepeatableNNoRemap('P', ':<C-U>call PareditPut("P")')
         call RepeatableNNoRemap(g:paredit_leader . 'w(', ':<C-U>call PareditWrap("(",")")')
