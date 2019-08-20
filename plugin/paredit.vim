@@ -197,6 +197,10 @@ function! PareditInitBuffer()
             call RepeatableNNoRemap(g:paredit_leader . 'S', ':<C-U>call PareditSplice()') 
         endif
 
+        if !exists( 'g:slimv_loaded' )
+            execute 'nnoremap <buffer> <silent> ' . g:paredit_leader.'(  :<C-U>call PareditToggle()<CR>'
+        endif
+
         if g:paredit_electric_return && mapcheck( "<CR>", "i" ) == ""
             " Do not override any possible mapping for <Enter>
             inoremap <buffer> <expr>   <CR>         PareditEnter()
