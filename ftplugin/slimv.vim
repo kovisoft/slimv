@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  19 May 2019
+" Last Change:  01 Sep 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -3409,7 +3409,7 @@ function! SlimvComplete( base )
     endif
     call sort( symbol )
     for m in symbol
-        if m =~ '^' . a:base
+        if m =~ '^' . escape( a:base, '~' )
             call add( res, m )
         endif
     endfor
