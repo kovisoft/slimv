@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  01 Sep 2019
+" Last Change:  30 Sep 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2089,8 +2089,12 @@ endfunction
 " Handle insert mode 'Backspace' keypress in the REPL buffer
 function! SlimvHandleBS()
     if line( "." ) == s:GetPromptLine() && col( "." ) <= b:repl_prompt_col
-        " No BS allowed before the previous EOF mark
-        return ""
+        if col( "." ) == b:repl_prompt_col
+            return "\<BS> "
+        else
+            " No BS allowed before the previous EOF mark
+            return ""
+        endif
     else
         return "\<BS>"
     endif

@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  20 Aug 2019
+" Last Change:  30 Sep 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -995,9 +995,13 @@ endfunction
 function! PareditBackspace( repl_mode )
     let [lp, cp] = s:GetReplPromptPos()
     if a:repl_mode && line( "." ) == lp && col( "." ) <= cp
-        " No BS allowed before the previous EOF mark in the REPL
-        " i.e. don't delete Lisp prompt
-        return ""
+        if col( "." ) == cp
+            return "\<BS> "
+        else
+            " No BS allowed before the previous EOF mark in the REPL
+            " i.e. don't delete Lisp prompt
+            return ""
+        endif
     endif
 
     if !g:paredit_mode || s:InsideComment()
