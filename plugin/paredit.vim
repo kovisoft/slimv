@@ -1069,7 +1069,7 @@ endfunction
 
 " Initialize yank position list
 function! s:InitYankPos()
-    call setreg( &clipboard == 'unnamed' ? '*' : '"', '' ) 
+    call setreg( v:register, '' )
     let s:yank_pos = []
 endfunction
 
@@ -1150,7 +1150,7 @@ function! s:EraseFwd( count, startcol )
     endwhile
     let &virtualedit = ve_save
     call setline( '.', line )
-    call setreg( &clipboard == 'unnamed' ? '*' : '"', reg ) 
+    call setreg( v:register, reg )
 endfunction
 
 " Backward erasing a character in normal mode, do not check if current form balanced
@@ -1202,7 +1202,7 @@ function! s:EraseBck( count )
         let c = c - 1
     endwhile
     call setline( '.', line )
-    call setreg( &clipboard == 'unnamed' ? '*' : '"', reg ) 
+    call setreg( v:register, reg )
 endfunction
 
 " Forward erasing a character in normal mode
