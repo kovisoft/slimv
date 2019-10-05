@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 15 Jun 2018
+*paredit.txt*                   Paredit              Last Change: 05 Oct 2019
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.14
@@ -13,6 +13,7 @@ but it is also distributed separately as a standalone plugin.
 
 ===============================================================================
 PAREDIT MODE                                                     *paredit-mode*
+                                                                  *parentheses*
 
 Paredit mode is a special editing mode that keeps all matched characters
 (parentheses, square and curly braces, double quotes) balanced, i.e. all opening
@@ -418,6 +419,8 @@ paredit triggers 'filetype plugin on' and 'filetype indent on', these options
 disable the corresponding feature.
 
                                                     *g:paredit_electric_return*
+                                                                      *newline*
+                                                              *carriage-return*
 If nonzero then "electric return" feature is enabled. This means that when an
 <Enter> is pressed before a closing paren in insert mode, paredit will actually
 insert two newlines creating an empty line. The extra newline is consumed at
@@ -430,7 +433,7 @@ option |g:slimv_repl_simple_eval| is nonzero. In this case <Enter> is used
 to send the command line to the swank server for evaluation.
 
 Please find a video demonstration of the electric return feature here:
-http://img8.imageshack.us/img8/9479/openparen.gif
+https://kovisoft.bitbucket.io/openparen.gif
 
                                                           *g:paredit_smartjump*
 If nonzero, this option changes the behavior of '(' and ')' in normal and visual

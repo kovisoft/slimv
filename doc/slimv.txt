@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 20 Jan 2018
+*slimv.txt*                    Slimv                 Last Change: 05 Oct 2019
 
 Slimv                                                                  *slimv*
                                Version 0.9.14
@@ -1301,6 +1301,7 @@ b. install a Clojure Vim syntax plugin, like VimClojure.
 c. newest Vim versions contain a specific Clojure syntax script.
 
 
+                                                            *slimv-indentation*
 2. Indentation
 
 The indentation is also done via the default lisp.vim indent plugin, or an
@@ -1326,11 +1327,19 @@ such mappings are not defined by Slimv.
     gg=G                    Reindent whole file.
 
 
-3. Parenthesis handling
+                                                            *slimv-parentheses*
+                                                                *slimv-newline*
+3. Parenthesis and newline handling
 
-First of all there is paredit mode. If you don't like it, Vim still obtains
-many tools to aid working with parentheses. This is a very important topic
-for a Lisp programmer.
+First of all there is paredit mode that is provided by the paredit.vim script
+(also part of Slimv).
+For a detailed introduction on paredit mode please consult the |paredit| help.
+Paredit mode also changes the way newlines are handled, this feature is called
+"electric return", see more on this topic in |g:paredit_electric_return|.
+
+If you don't like paredit mode, Vim still obtains many tools to aid working
+with parentheses. This is a very important topic for a Lisp programmer.
+
 
     :inoremap ( ()<Esc>i    Automatically insert closing parenthesis mark when
                             an opening one is inserted.
