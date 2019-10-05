@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  30 Sep 2019
+" Last Change:  05 Oct 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -279,6 +279,12 @@ function! PareditOpfunc( func, type, visualmode )
     set virtualedit=all
     let regname = v:register
     let save_0 = getreg( '0' )
+    if s:repeat > 0
+        let oldreg = getreg( v:register )
+        let s:repeat = s:repeat - 1
+    else
+        let oldreg = ''
+    endif
 
     if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
         silent exe "normal! `<" . a:type . "`>"
@@ -296,10 +302,10 @@ function! PareditOpfunc( func, type, visualmode )
     if !g:paredit_mode || (a:visualmode && (a:type == 'block' || a:type == "\<C-V>"))
         " Block mode is too difficult to handle at the moment
         silent exe "normal! d"
-        let putreg = getreg( '"' )
+        let putreg = oldreg . getreg( '"' )
     else
         silent exe "normal! y"
-        let putreg = getreg( '"' )
+        let putreg = oldreg . getreg( '"' )
         if a:func == 'd'
             " Register "0 is corrupted by the above 'y' command
             call setreg( '0', save_0 ) 
@@ -356,16 +362,16 @@ endfunction
 " Set delete mode also saving repeat count
 function! PareditSetDelete( count )
     let s:repeat = a:count
+    call setreg( v:register, '' ) 
     set opfunc=PareditDelete
 endfunction
 
 " General delete operator handling
 function! PareditDelete( type, ... )
     call PareditOpfunc( 'd', a:type, a:0 )
-    if s:repeat > 1
-        call feedkeys( (s:repeat-1) . "." )
+    if s:repeat > 0
+        call feedkeys( "." )
     endif
-    let s:repeat = 0
 endfunction
 
 " General change operator handling
