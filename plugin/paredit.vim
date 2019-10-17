@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  05 Oct 2019
+" Last Change:  17 Oct 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -72,6 +72,7 @@ endif
 let s:any_macro_prefix   = "'" . '\|`\|#\|@\|\~\|,\|\^'
 
 " Repeat count for some remapped edit functions (like 'd')
+let s:count              = 0
 let s:repeat             = 0
 
 let s:yank_pos           = []
@@ -279,11 +280,9 @@ function! PareditOpfunc( func, type, visualmode )
     set virtualedit=all
     let regname = v:register
     let save_0 = getreg( '0' )
+    let oldreg = (s:repeat < s:count) ? getreg( regname ) : ''
     if s:repeat > 0
-        let oldreg = getreg( v:register )
         let s:repeat = s:repeat - 1
-    else
-        let oldreg = ''
     endif
 
     if a:visualmode  " Invoked from Visual mode, use '< and '> marks.
@@ -302,10 +301,10 @@ function! PareditOpfunc( func, type, visualmode )
     if !g:paredit_mode || (a:visualmode && (a:type == 'block' || a:type == "\<C-V>"))
         " Block mode is too difficult to handle at the moment
         silent exe "normal! d"
-        let putreg = oldreg . getreg( '"' )
+        let putreg = oldreg . getreg( regname )
     else
         silent exe "normal! y"
-        let putreg = oldreg . getreg( '"' )
+        let putreg = oldreg . getreg( regname )
         if a:func == 'd'
             " Register "0 is corrupted by the above 'y' command
             call setreg( '0', save_0 ) 
@@ -354,15 +353,14 @@ function! PareditOpfunc( func, type, visualmode )
     if a:func == 'd' && regname == '"'
         " Do not currupt the '"' register and hence the "0 register
         call setreg( '1', putreg ) 
-    else
-        call setreg( regname, putreg ) 
     endif
+    call setreg( regname, putreg ) 
 endfunction
 
 " Set delete mode also saving repeat count
 function! PareditSetDelete( count )
-    let s:repeat = a:count
-    call setreg( v:register, '' ) 
+    let s:count  = a:count
+    let s:repeat = s:count
     set opfunc=PareditDelete
 endfunction
 
@@ -464,7 +462,7 @@ function! PareditPut( cmd )
 
     if matched !~ '\S\+'
         " Register contents is balanced, perform default put function
-        silent exe "normal! " . (v:count>1 ? v:count : '') . (regname=='"' ? '' : '"'.regname) . a:cmd
+        silent exe "normal! " . (v:count>1 ? v:count : '') . '"' . regname . a:cmd
         return
     endif
 
@@ -479,7 +477,7 @@ function! PareditPut( cmd )
 
     " Store balanced text in put register and call the appropriate put command
     call setreg( regname, putreg ) 
-    silent exe "normal! " . (v:count>1 ? v:count : '') . (regname=='"' ? '' : '"'.regname) . a:cmd
+    silent exe "normal! " . (v:count>1 ? v:count : '') . '"' . regname . a:cmd
     call setreg( regname, reg_save ) 
 endfunction
 
