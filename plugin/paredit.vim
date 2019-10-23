@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  17 Oct 2019
+" Last Change:  23 Oct 2019
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -120,10 +120,10 @@ function! PareditInitBuffer()
             vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditSmartJumpOpening(1)<CR>
             vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditSmartJumpClosing(1)<CR>
         else
-            noremap  <buffer> <silent> (            :<C-U>call PareditFindOpening('(',')',0)<CR>
-            noremap  <buffer> <silent> )            :<C-U>call PareditFindClosing('(',')',0)<CR>
-            vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditFindOpening('(',')',1)<CR>
-            vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditFindClosing('(',')',1)<CR>
+            noremap  <buffer> <silent> (            :<C-U>call PareditJumpOpening('(',')',0)<CR>
+            noremap  <buffer> <silent> )            :<C-U>call PareditJumpClosing('(',')',0)<CR>
+            vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditJumpOpening('(',')',1)<CR>
+            vnoremap <buffer> <silent> )            <Esc>:<C-U>call PareditJumpClosing('(',')',1)<CR>
         endif
         noremap  <buffer> <silent> [[           :<C-U>call PareditFindDefunBck()<CR>
         noremap  <buffer> <silent> ]]           :<C-U>call PareditFindDefunFwd()<CR>
@@ -730,6 +730,12 @@ function! PareditFindOpening( open, close, select )
     endif
 endfunction
 
+" Jump to opening matched character
+function! PareditJumpOpening( open, close, select )
+    normal! m`
+    call PareditFindOpening( a:open, a:close, a:select )
+endfunction
+
 " Find closing matched character
 function! PareditFindClosing( open, close, select )
     let open  = escape( a:open , '[]' )
@@ -751,9 +757,16 @@ function! PareditFindClosing( open, close, select )
     endif
 endfunction
 
+" Jump to closing matched character
+function! PareditJumpClosing( open, close, select )
+    normal! m`
+    call PareditFindClosing( a:open, a:close, a:select )
+endfunction
+
 " Returns the nearest opening character to the cursor
 " Used for smart jumping in Clojure
 function! PareditSmartJumpOpening( select )
+    normal! m`
     let [paren_line, paren_col] = searchpairpos('(', '', ')', 'bWn', 's:SkipExpr()')
     let [bracket_line, bracket_col] = searchpairpos('\[', '', '\]', 'bWn', 's:SkipExpr()')
     let [brace_line, brace_col] = searchpairpos('{', '', '}', 'bWn', 's:SkipExpr()')
@@ -772,6 +785,7 @@ endfunction
 " Returns the nearest opening character to the cursor
 " Used for smart jumping in Clojure
 function! PareditSmartJumpClosing( select )
+    normal! m`
     let [paren_line, paren_col] = searchpairpos('(', '', ')', 'Wn', 's:SkipExpr()')
     let [bracket_line, bracket_col] = searchpairpos('\[', '', '\]', 'Wn', 's:SkipExpr()')
     let [brace_line, brace_col] = searchpairpos('{', '', '}', 'Wn', 's:SkipExpr()')
@@ -789,6 +803,7 @@ endfunction
 
 " Find defun start backwards
 function! PareditFindDefunBck()
+    normal! m`
     let l = line( '.' )
     let matchb = max( [l-g:paredit_matchlines, 1] )
     let oldpos = getpos( '.' ) 
@@ -815,6 +830,7 @@ endfunction
 
 " Find defun start forward
 function! PareditFindDefunFwd()
+    normal! m`
     let l = line( '.' )
     let matchf = min( [l+g:paredit_matchlines, line('$')] )
     let oldpos = getpos( '.' ) 
