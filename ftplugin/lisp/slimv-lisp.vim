@@ -136,7 +136,7 @@ function! SlimvSwankLoader()
     endif
 
     " Build proper SWANK loader command for the Lisp implementation used
-    if g:slimv_impl == 'sbcl'
+    if g:slimv_impl == 'sbcl' || g:slimv_impl == 'ecl'
         return '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
     elseif g:slimv_impl == 'clisp'
         return '"' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
