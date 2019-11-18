@@ -103,7 +103,7 @@
 
 ;;;; Compiler / Execution
 
-(def compiler-exception-location-re #"Exception:.*\(([^:]+):([0-9]+)\)")
+(def compiler-exception-location-re #"Exception:.*\(([^:]+):([0-9]+)(:[0-9]+)?\)")
 (defn- guess-compiler-exception-location [#^Throwable t]
   (when (instance? clojure.lang.Compiler$CompilerException t)
     (let [[match file line] (re-find compiler-exception-location-re (str t))]
@@ -166,12 +166,19 @@
       (.getLineNumber f))
     (catch Exception e 1)))
 
+(defmacro compiler-exception [directory line ex]
+  `(eval (if (>= (:minor *clojure-version*) 5)
+           '(clojure.lang.Compiler$CompilerException.
+             ~directory ~line 0 ~ex)
+           '(clojure.lang.Compiler$CompilerException.
+             ~directory ~line ~ex))))
+
 (defslimefn compile-string-for-emacs [string buffer position directory debug]
   (let [start (System/nanoTime)
         line (line-at-position directory position)
         ret (with-emacs-package
               (when-not (= (name (ns-name *ns*)) *current-package*)
-                (throw (clojure.lang.Compiler$CompilerException.
+                (throw (compiler-exception
                         directory line
                         (Exception. (str "No such namespace: "
                                          *current-package*)))))
