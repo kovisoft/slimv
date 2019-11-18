@@ -32,16 +32,17 @@ endfunction
 " all clojure*.jar files found to the classpath
 function! s:BuildStartCmd( lisps )
     let cp = s:TransformFilename( a:lisps[0] )
+    let cp_delim = g:slimv_windows ? ';' : ':'
     let i = 1
     while i < len( a:lisps )
-        let cp = cp . ';' . s:TransformFilename( a:lisps[i] )
+        let cp = cp . cp_delim . s:TransformFilename( a:lisps[i] )
         let i = i + 1
     endwhile
 
     " Try to find swank-clojure and add it to classpath
     let swanks = split( globpath( &runtimepath, 'swank-clojure'), '\n' )
     if len( swanks ) > 0
-        let cp = cp . ';' . s:TransformFilename( swanks[0] )
+        let cp = cp . cp_delim . s:TransformFilename( swanks[0] )
     endif
     return ['java -cp ' . cp . ' clojure.main', 'clojure']
 endfunction
