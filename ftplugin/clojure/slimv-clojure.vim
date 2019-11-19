@@ -78,7 +78,8 @@ function! SlimvAutodetect( preferred )
     endif
 
     " Try to find Clojure in the PATH
-    let path = substitute( $PATH, ';', ',', 'g' )
+    let path_delim = g:slimv_windows ? ';' : ':'
+    let path = substitute( $PATH, path_delim, ',', 'g' )
     let lisps = split( globpath( path, 'clojure*.jar' ), '\n' )
     if len( lisps ) > 0
         return s:BuildStartCmd( lisps )
