@@ -1363,9 +1363,7 @@ with parentheses. This is a very important topic for a Lisp programmer.
     99[(v%                  Select top level form.
 
     g:lisp_rainbow          Colorize differing levels of parenthesization with
-                            different highlighting. Currently works only for
-                            the 'lisp' filetype, hopefully it will be added
-                            soon to the Clojure plugins as well.
+                            different highlighting.
 
 
 4. Completion
