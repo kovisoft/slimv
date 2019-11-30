@@ -280,7 +280,7 @@ function! PareditOpfunc( func, type, visualmode )
     set virtualedit=all
     let regname = v:register
     let save_0 = getreg( '0' )
-    let oldreg = (s:repeat < s:count) ? getreg( regname ) : ''
+    let oldreg = (s:repeat > 0 && s:repeat < s:count) ? getreg( regname ) : ''
     if s:repeat > 0
         let s:repeat = s:repeat - 1
     endif
@@ -303,7 +303,7 @@ function! PareditOpfunc( func, type, visualmode )
         silent exe "normal! d"
         let putreg = oldreg . getreg( regname )
     else
-        silent exe "normal! y"
+        silent exe 'normal! "' . regname . 'y'
         let putreg = oldreg . getreg( regname )
         if a:func == 'd'
             " Register "0 is corrupted by the above 'y' command
