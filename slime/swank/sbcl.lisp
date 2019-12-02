@@ -520,11 +520,11 @@ information."
                       (reader-error         :read-error)
                       (error                :error)
                       #+#.(swank/backend:with-symbol early-deprecation-warning sb-ext)
-                      (sb-ext:early-deprecation-warning :early-deprecation-warning)
+                      (sb-ext::early-deprecation-warning :early-deprecation-warning)
                       #+#.(swank/backend:with-symbol late-deprecation-warning sb-ext)
-                      (sb-ext:late-deprecation-warning :late-deprecation-warning)
+                      (sb-ext::late-deprecation-warning :late-deprecation-warning)
                       #+#.(swank/backend:with-symbol final-deprecation-warning sb-ext)
-                      (sb-ext:final-deprecation-warning :final-deprecation-warning)
+                      (sb-ext::final-deprecation-warning :final-deprecation-warning)
                       #+#.(swank/backend:with-symbol redefinition-warning
                             sb-kernel)
                       (sb-kernel:redefinition-warning
@@ -558,8 +558,13 @@ information."
             (sb-c::compiler-error-context-original-source context)))
           ((typep condition 'reader-error)
            (let* ((stream (stream-error-stream condition))
-                  (file   (pathname stream)))
-             (unless (open-stream-p stream)
+                  ;; If STREAM is, for example, a STRING-INPUT-STREAM,
+                  ;; an error will be signaled since PATHNAME only
+                  ;; accepts a "stream associated with a file" which
+                  ;; is a complicated predicate and hard to test
+                  ;; portably.
+                  (file   (ignore-errors (pathname stream))))
+             (unless (and file (open-stream-p stream))
                (bailout))
              (if (compiling-from-buffer-p file)
                  ;; The stream position for e.g. "comma not inside
@@ -728,7 +733,8 @@ QUALITIES is an alist with (quality . value)"
 (defvar *trap-load-time-warnings* t)
 
 (defimplementation swank-compile-string (string &key buffer position filename
-                                         policy)
+                                                line column policy)
+  (declare (ignore line column))
   (let ((*buffer-name* buffer)
         (*buffer-offset* position)
         (*buffer-substring* string)
@@ -1239,7 +1245,9 @@ stack."
           while f collect f)))
 
 (defimplementation print-frame (frame stream)
-  (sb-debug::print-frame-call frame stream))
+  (sb-debug::print-frame-call frame stream
+                              :allow-other-keys t
+                              :emergency-best-effort t))
 
 (defimplementation frame-restartable-p (frame)
   #+#.(swank/sbcl::sbcl-with-restart-frame)

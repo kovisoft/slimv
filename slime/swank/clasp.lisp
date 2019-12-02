@@ -39,15 +39,7 @@
 ;;; Swank-mop
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (import-swank-mop-symbols
-   :clos
-   nil
-   #+(or)`(:eql-specializer
-           :eql-specializer-object
-           :generic-function-declarations
-           :specializer-direct-methods
-           ,@(unless (fboundp 'clos:compute-applicable-methods-using-classes)
-               '(:compute-applicable-methods-using-classes)))))
+  (import-swank-mop-symbols :clos nil))
 
 (defimplementation gray-package-name ()
   "GRAY")
@@ -56,12 +48,6 @@
 ;;;; TCP Server
 
 (defimplementation preferred-communication-style ()
-  ;; As of March 2017 CLASP provides threads.
-  ;; But it's experimental.
-  ;; ECLs swank implementation says that CLOS is not thread safe and
-  ;; I use ECLs CLOS implementation - this is a worry for the future.
-  ;; nil or  :spawn
-  ;; nil
   :spawn
 #|  #+threads :spawn
   #-threads nil
@@ -230,44 +216,45 @@
 (defvar *buffer-name* nil)
 (defvar *buffer-start-position*)
 
-(defun signal-compiler-condition (&rest args)
-  (apply #'signal 'compiler-condition args))
+(defun condition-severity (condition)
+  (etypecase condition
+    (cmp:redefined-function-warning :redefinition)
+    (style-warning                  :style-warning)
+    (warning                        :warning)
+    (reader-error                   :read-error)
+    (error                          :error)))
 
-#-clasp-bytecmp
-(defun handle-compiler-message (condition)
-  ;; CLASP emits lots of noise in compiler-notes, like "Invoking
-  ;; external command".
-  (unless (typep condition 'c::compiler-note)
-    (signal-compiler-condition
-     :original-condition condition
-     :message (princ-to-string condition)
-     :severity (etypecase condition
-                 (cmp:compiler-fatal-error :error)
-                 (cmp:compiler-error       :error)
-                 (error                  :error)
-                 (style-warning          :style-warning)
-                 (warning                :warning))
-     :location (condition-location condition))))
+(defun condition-location (origin)
+  (if (null origin)
+      (make-error-location "No error location available")
+      ;; NOTE: If we're compiling in a buffer, the origin
+      ;; will already be set up with the offset correctly
+      ;; due to the :source-debug parameters from
+      ;; swank-compile-string (below).
+      (make-file-location
+       (core:file-scope-pathname
+        (core:file-scope origin))
+       (core:source-pos-info-filepos origin))))
 
-#-clasp-bytecmp
-(defun condition-location (condition)
-  (let ((file     (cmp:compiler-message-file condition))
-        (position (cmp:compiler-message-file-position condition)))
-    (if (and position (not (minusp position)))
-        (if *buffer-name*
-            (make-buffer-location *buffer-name*
-                                  *buffer-start-position*
-                                  position)
-            (make-file-location file position))
-        (make-error-location "No location found."))))
+(defun signal-compiler-condition (condition origin)
+  (signal 'compiler-condition
+          :original-condition condition
+          :severity (condition-severity condition)
+          :message (princ-to-string condition)
+          :location (condition-location origin)))
+
+(defun handle-compiler-condition (condition)
+  ;; First resignal warnings, so that outer handlers - which may choose to
+  ;; muffle this - get a chance to run.
+  (when (typep condition 'warning)
+    (signal condition))
+  (signal-compiler-condition (cmp:deencapsulate-compiler-condition condition)
+                             (cmp:compiler-condition-origin condition)))
 
 (defimplementation call-with-compilation-hooks (function)
-  (funcall function))
-#||  #-clasp-bytecmp
-  (handler-bind ((c:compiler-message #'handle-compiler-message))
+  (handler-bind
+      (((or error warning) #'handle-compiler-condition))
     (funcall function)))
-||#
-
 
 (defimplementation swank-compile-file (input-file output-file
                                        load-p external-format
@@ -297,8 +284,8 @@
 (defun tmpfile-to-buffer (tmp-file)
   (gethash tmp-file *tmpfile-map*))
 
-(defimplementation swank-compile-string (string &key buffer position filename policy)
-  (declare (ignore policy))
+(defimplementation swank-compile-string (string &key buffer position filename line column policy)
+  (declare (ignore column policy)) ;; We may use column in the future
   (with-compilation-hooks ()
     (let ((*buffer-name* buffer)        ; for compilation hooks
           (*buffer-start-position* position))
@@ -314,7 +301,10 @@
                (multiple-value-setq (fasl-file warnings-p failure-p)
                  (let ((truename (or filename (note-buffer-tmpfile tmp-file buffer))))
                    (compile-file tmp-file
-                                 :source-debug-namestring truename
+                                 :source-debug-pathname (pathname truename)
+                                 ;; emacs numbers are 1-based instead of 0-based,
+                                 ;; so we have to subtract
+                                 :source-debug-lineno (1- line)
                                  :source-debug-offset (1- position)))))
           (when fasl-file (load fasl-file))
           (when (probe-file tmp-file)
@@ -470,29 +460,27 @@
          (*ihs-current* *ihs-top*)
          #+frs         (*frs-base* (or (sch-frs-base *frs-top* *ihs-base*) (1+ (frs-top))))
          #+frs         (*frs-top* (frs-top))
-         (*tpl-level* (1+ *tpl-level*))
-         (*backtrace* (core::common-lisp-backtrace-frames
-                       :gather-start-trigger
-                       (lambda (frame)
-                         (let ((print-name (core::backtrace-frame-print-name frame)))
-                           (and (symbolp print-name)
-                                (eq print-name 'core::universal-error-handler))))
-                       :gather-all-frames nil)))
-    (declare (special *ihs-current*))
-    ;;#+(or)
-    (progn
-      (format ext:+process-standard-output+ "--------------- call-with-debugging-environment -----------~%")
-      (format ext:+process-standard-output+ "(length *backtrace*) -> ~a ~%" (length *backtrace*))
-      (format ext:+process-standard-output+ "Raw backtrace length: ~a ~%" (length (core:clib-backtrace-as-list)))
-      (format ext:+process-standard-output+ "Common Lisp backtrace frames length: ~a ~%" (length (core::common-lisp-backtrace-frames)))
-      (loop for f in (core::common-lisp-backtrace-frames)
-            for id from 0
-            do (progn
-                 (format ext:+process-standard-output+ "Frame ~a:   (~a ~a)~%" id (core::backtrace-frame-print-name f) (core::backtrace-frame-arguments f)))))
-    (set-break-env)
-    (set-current-ihs)
-    (let ((*ihs-base* *ihs-top*))
-      (funcall debugger-loop-fn))))
+         (*tpl-level* (1+ *tpl-level*)))
+    (core:call-with-backtrace
+     (lambda (raw-backtrace)
+       (let ((*backtrace*
+               (let ((backtrace (core::common-lisp-backtrace-frames
+                                 raw-backtrace
+                                 :gather-start-trigger
+                                 (lambda (frame)
+                                   (let ((function-name (core::backtrace-frame-function-name frame)))
+                                     (and (symbolp function-name)
+                                          (eq function-name 'core::universal-error-handler))))
+                                 :gather-all-frames nil)))
+                 (unless backtrace
+                   (setq backtrace (core::common-lisp-backtrace-frames
+                                    :gather-all-frames nil)))
+                 backtrace)))
+         (declare (special *ihs-current*))
+         (set-break-env)
+         (set-current-ihs)
+         (let ((*ihs-base* *ihs-top*))
+           (funcall debugger-loop-fn)))))))
 
 (defimplementation compute-backtrace (start end)
   (subseq *backtrace* start
@@ -525,7 +513,15 @@
       (format stream "~a" (core::backtrace-frame-print-name frame))))
 
 (defimplementation frame-source-location (frame-number)
-  (source-location (frame-function frame-number)))
+  (let* ((address (core::backtrace-frame-return-address (elt *backtrace* frame-number)))
+         (code-source-location (ext::code-source-position address)))
+    (format t "code-source-location ~s~%" code-source-location)
+    ;; (core::source-info-backtrace *backtrace*)
+    (if (ext::code-source-line-source-pathname code-source-location)
+        (make-location (list :file (namestring (ext::code-source-line-source-pathname code-source-location)))
+                       (list :line (ext::code-source-line-line-number code-source-location))
+                       '(:align t))
+        `(:error ,(format nil "No source for frame: ~a" frame-number)))))
 
 #+clasp-working
 (defimplementation frame-catch-tags (frame-number)
@@ -738,7 +734,7 @@
 
   (defstruct (mailbox (:conc-name mailbox.))
     thread
-    (mutex (mp:make-lock))
+    (mutex (mp:make-lock :name "SLIMELCK"))
     (cvar  (mp:make-condition-variable))
     (queue '() :type list))
 
@@ -803,3 +799,6 @@
   (let ((encoded (core:encode object)))
     (loop for (key . value) in encoded
        append (list (string key) ": " (list :value value) (list :newline)))))
+
+(defmethod emacs-inspect ((object core:va-list))
+  (emacs-inspect (core:list-from-va-list object)))

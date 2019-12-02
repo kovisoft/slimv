@@ -510,7 +510,7 @@ such package."
   `(call-with-compilation-hooks (lambda () (progn ,@body))))
 
 (definterface swank-compile-string (string &key buffer position filename
-                                           policy)
+                                           line column policy)
   "Compile source from STRING.
 During compilation, compiler conditions must be trapped and
 resignalled as COMPILER-CONDITIONs.
@@ -527,6 +527,10 @@ source information.
 If POLICY is supplied, and non-NIL, it may be used by certain
 implementations to compile with optimization qualities of its
 value.
+
+If LINE and COLUMN are supplied, and non-NIL, they may be used
+by certain implementations as the line and column of the start of
+the string in FILENAME. Both LINE and COLUMN are 1-based.
 
 Should return T on successful compilation, NIL otherwise.
 ")
@@ -1382,7 +1386,14 @@ which are ready (or have reached end-of-file) without waiting.
 If TIMEOUT is a number and no streams is ready after TIMEOUT seconds,
 return nil.
 
-Return :interrupt if an interrupt occurs while waiting.")
+Return :interrupt if an interrupt occurs while waiting."
+  (declare (ignore streams timeout))
+  ;; Invoking the slime debugger will just endlessly loop.
+  (call-with-debugger-hook
+   nil
+   (lambda ()
+     (error "~s not implemented. Check if ~s = ~s is supported by the implementation."
+            'wait-for-input 'swank:*communication-style* swank:*communication-style*))))
 
 
 ;;;;  Locks
