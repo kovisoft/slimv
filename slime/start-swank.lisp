@@ -16,7 +16,8 @@
 (swank-loader:init
  :delete nil         ; delete any existing SWANK packages
  :reload nil         ; reload SWANK, even if the SWANK package already exists
- :load-contribs nil) ; load all contribs
+ :load-contribs nil  ; load all contribs
+ :from-emacs nil)    ; not started from emacs
 
 (defun my-getenv (name &optional default)
   #+CMU

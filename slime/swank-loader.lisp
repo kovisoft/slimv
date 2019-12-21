@@ -23,9 +23,12 @@
            :dump-image
            :list-fasls
            :*source-directory*
-           :*fasl-directory*))
+           :*fasl-directory*
+           :*started-from-emacs*))
 
 (cl:in-package :swank-loader)
+
+(defvar *started-from-emacs* nil)
 
 (defvar *source-directory*
   (make-pathname :name nil :type nil
@@ -61,7 +64,7 @@
 
 (defparameter *architecture-features*
   '(:powerpc :ppc :x86 :x86-64 :x86_64 :amd64 :i686 :i586 :i486 :pc386 :iapx386
-    :sparc64 :sparc :hppa64 :hppa :arm :armv5l :armv6l :armv7l :arm64
+    :sparc64 :sparc :hppa64 :hppa :arm :armv5l :armv6l :armv7l :arm64 :aarch64
     :pentium3 :pentium4
     :mips :mipsel
     :java-1.4 :java-1.5 :java-1.6 :java-1.7))
@@ -331,13 +334,16 @@ If LOAD is true, load the fasl file."
         (delete-package package)))))
 
 (defun init (&key delete reload load-contribs (setup t)
-                  (quiet (not *load-verbose*)))
+                  (quiet (not *load-verbose*))
+                  from-emacs)
   "Load SWANK and initialize some global variables.
 If DELETE is true, delete any existing SWANK packages.
 If RELOAD is true, reload SWANK, even if the SWANK package already exists.
 If LOAD-CONTRIBS is true, load all contribs
 If SETUP is true, load user init files and initialize some
 global variabes in SWANK."
+  (when from-emacs
+    (setf *started-from-emacs* t))
   (when (and delete (find-package :swank))
     (delete-packages (list-swank-packages)))
   (cond ((or (not (find-package :swank)) reload)
