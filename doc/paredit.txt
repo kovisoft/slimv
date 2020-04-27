@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 05 Oct 2019
+*paredit.txt*                   Paredit              Last Change: 27 Apr 2020
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.14
@@ -367,9 +367,6 @@ available even when paredit mode is switched off.
 
     di(            Same as da( but does not delete the enclosing parens.
 
-
-Davide Taviani made a cheetsheet for Paredit, which can be accessed here:
-https://github.com/StudyFlow/paredit.vim-cheatsheet
 
 ===============================================================================
 PAREDIT OPTIONS                                               *paredit-options*
