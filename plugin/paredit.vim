@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  23 Oct 2019
+" Last Change:  18 Jun 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -222,11 +222,16 @@ function! PareditInitBuffer()
         silent! unmap  <buffer> <Del>
         silent! unmap  <buffer> X
         silent! unmap  <buffer> s
+        silent! unmap  <buffer> S
+        silent! unmap  <buffer> p
+        silent! unmap  <buffer> P
         silent! unmap  <buffer> D
         silent! unmap  <buffer> C
         silent! unmap  <buffer> d
         silent! unmap  <buffer> c
         silent! unmap  <buffer> dd
+        silent! unmap  <buffer> do
+        silent! unmap  <buffer> dp
         silent! unmap  <buffer> cc
         silent! unmap  <buffer> cw
         silent! unmap  <buffer> cW
