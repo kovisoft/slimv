@@ -1,7 +1,7 @@
 " slimv-syntax-scheme.vim:
 "               Scheme syntax plugin for Slimv
-" Version:      0.9.9
-" Last Change:  10 Nov 2012
+" Version:      0.9.14
+" Last Change:  27 Jun 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -18,15 +18,24 @@ runtime syntax/**/scheme.vim
 
 " Add lisp_rainbow handling
 
-syn region  schemeMultilineComment  start=/#|/ end=/|#/ contains=schemeMultilineComment
 syn keyword schemeExtSyntax     ->environment ->namestring
 syn match   schemeExtSyntax     "#![-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
 syn match   schemeAtomMark      "'"
 syn match   schemeAtom          "'[^ \t()\[\]{}]\+" contains=schemeAtomMark
-syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeAtom,schemeDelimiter
+
+try
+    " Check if using a more recent version of scheme.vim
+    " that defines multi-line and datum comments
+    silent syn list schemeDatumComment
+    syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeDatumComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeAtom,schemeDelimiter
+catch
+    syn region  schemeMultilineComment  start=/#|/ end=/|#/ contains=schemeMultilineComment
+    syn cluster schemeListCluster   contains=schemeSyntax,schemeFunc,schemeString,schemeCharacter,schemeNumber,schemeBoolean,schemeConstant,schemeComment,schemeMultilineComment,schemeQuoted,schemeUnquote,schemeStrucRestricted,schemeOther,schemeError,schemeExtSyntax,schemeExtFunc,schemeAtom,schemeDelimiter
+endtry
 
 hi def link schemeAtomMark      Delimiter
 hi def link schemeAtom          Identifier
+
 
 if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
     syn region schemeParen0           matchgroup=hlLevel0 start="`\=(" end=")" skip="|.\{-}|" contains=@schemeListCluster,schemeParen1

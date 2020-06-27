@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  18 Jun 2020
+" Last Change:  27 Jun 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -79,6 +79,12 @@ let s:yank_pos           = []
 
 " Filetypes with [] and {} pairs balanced as well
 let s:fts_balancing_all_brackets = '.*\(clojure\|hy\|scheme\|racket\|shen\|lfe\|fennel\|janet\).*'
+
+" Filetypes with multiline comment #| ... |#
+let s:fts_multiline_comment      = '.*\(scheme\|racket\).*'
+
+" Filetypes with datum comment #;(...)
+let s:fts_datum_comment          = '.*\(scheme\).*'
 
 " =====================================================================
 "  General utility functions
@@ -653,6 +659,7 @@ endfunction
 function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
     let inside_string  = a:start_in_string
     let inside_comment = a:start_in_comment
+    let multiline_comment = 0
     let matched = repeat( ' ', len( a:lines ) )
     let i = 0
     while i < len( a:lines )
@@ -665,8 +672,17 @@ function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
             endif
         elseif inside_comment
             " We are inside a comment, skip parens, wait for end of line
-            if a:lines[i] == "\n"
-                let inside_comment = 0
+            if multiline_comment > 0
+                if a:lines[i] == "#" && i > 0 && a:lines[i-1] == '|'
+                    let multiline_comment = multiline_comment - 1
+                    if multiline_comment == 0
+                        let inside_comment = 0
+                    endif
+                endif
+            else
+                if a:lines[i] == "\n"
+                    let inside_comment = 0
+                endif
             endif
         elseif i > 0 && a:lines[i-1] == '\' && (i < 2 || a:lines[i-2] != '\')
             " This is an escaped character, ignore it
@@ -678,6 +694,14 @@ function! s:GetMatchedChars( lines, start_in_string, start_in_comment )
             endif
             if a:lines[i] == ';'
                 let inside_comment = 1
+                if &ft =~ s:fts_datum_comment && i > 0 && a:lines[i-1] == '#'
+                    " Datum comment: pretend that we are not inside comment
+                    let inside_comment = 0
+                endif
+            endif
+            if &ft =~ s:fts_multiline_comment && a:lines[i] == "|" && i > 0 && a:lines[i-1] == '#'
+                let inside_comment = 1
+                let multiline_comment = multiline_comment + 1
             endif
             if a:lines[i] =~ b:any_openclose_char
                 let matched = strpart( matched, 0, i ) . a:lines[i] . strpart( matched, i+1 )
