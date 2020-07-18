@@ -39,8 +39,8 @@ my .emacs:
 (defun find-mit-scheme-package ()
   (save-excursion
     (let ((case-fold-search t))
-     (and (re-search-backward "^[;]+ package: \\((.+)\\).*$" nil t)
-          (match-string-no-properties 1)))))
+      (and (re-search-backward "^[;]+ package: \\((.+)\\).*$" nil t)
+           (match-string-no-properties 1)))))
 
 (setq slime-find-buffer-package-function 'find-mit-scheme-package)
 (add-hook 'scheme-mode-hook (lambda () (slime-mode 1)))
@@ -116,7 +116,7 @@ MIT Scheme's own files.  Alternatively, you could add Emacs style
 
 (define (with-keyboard-interrupt-handler fun)
   (define (set-^G-handler exp)
-    (eval `(vector-set! keyboard-interrupt-vector (char->ascii #\G) ,exp)
+    (eval `(vector-set! keyboard-interrupt-vector (char->integer #\G) ,exp)
           (->environment '(runtime interrupt-handler))))
   (dynamic-wind
     (lambda () #f)
@@ -184,7 +184,8 @@ MIT Scheme's own files.  Alternatively, you could add Emacs style
 
 (define (swank-package)
   (or (name->package '(swank))
-      (name->package '(user))))
+      ;(name->package '(user))
+      user-initial-environment))
 
 (define *buffer-package* #f)
 (define (find-buffer-package name)
