@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  27 Jun 2020
+" Last Change:  29 Jul 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1032,7 +1032,7 @@ function! PareditEnter()
         let pos = col( '.' ) - 1
         if g:paredit_electric_return && pos > 0 && line[pos] =~ b:any_closing_char && !s:InsideString() && s:IsBalanced()
             " Electric Return
-            return "\<CR>\<CR>\<Up>"
+            return "\<CR>\<Up>\<End>\<CR>"
         else
             " Regular Return
             return "\<CR>"
