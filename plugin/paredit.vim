@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  29 Jul 2020
+" Last Change:  30 Jul 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -276,10 +276,17 @@ endfunction
 " Include all prefix and special characters in 'iskeyword'
 function! s:SetKeyword()
     let old_value = &iskeyword
+    if match(old_value, '\^') >= 0
+        " temporarily remove ^ as we cannot append anything to it
+        setlocal iskeyword-=^
+    endif
     if &ft =~ s:fts_balancing_all_brackets
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
+    endif
+    if match(old_value, '\^') >= 0
+        setlocal iskeyword+=^
     endif
     return old_value
 endfunction
