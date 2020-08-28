@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 27 Apr 2020
+*paredit.txt*                   Paredit              Last Change: 28 Aug 2020
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.14
@@ -385,6 +385,8 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_disable_shen|     If defined, paredit is disabled for shen files.
 
+|g:paredit_disable_janet|    If defined, paredit is disabled for janet files.
+
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
 |g:paredit_smartjump|        If nonzero, '(' and ')' also target square brackets
@@ -405,6 +407,7 @@ PAREDIT OPTIONS                                               *paredit-options*
                                                        *g:paredit_disable_lisp*
                                                      *g:paredit_disable_scheme*
                                                        *g:paredit_disable_shen*
+                                                      *g:paredit_disable_janet*
 If defined then paredit is disabled for the given file type. Useful to use
 a different plugin for a specific file type, but keep using paredit for the
 others.
@@ -430,7 +433,7 @@ option |g:slimv_repl_simple_eval| is nonzero. In this case <Enter> is used
 to send the command line to the swank server for evaluation.
 
 Please find a video demonstration of the electric return feature here:
-https://kovisoft.bitbucket.io/openparen.gif
+https://kovisoft.github.io/slimv-tutorial/openparen.gif
 
                                                           *g:paredit_smartjump*
 If nonzero, this option changes the behavior of '(' and ')' in normal and visual
