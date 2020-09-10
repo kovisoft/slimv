@@ -20,6 +20,7 @@ import time
 import select
 import string
 import sys
+import os.path
 
 input_port      = 4005
 output_port     = 4006
@@ -49,6 +50,7 @@ inspect_newline = True          # Start a new line in the Inspector (for multi-p
 inspect_package = ''            # Package used for the current Inspector
 swank_version   = ''            # Swank version string in format YYYY-MM-DD
 swank_param     = ''            # Additional parameter for the swank listener
+secret_file     = '~/.slime-secret'  # Location of the file containing the password accepted by the swank server
 
 
 ###############################################################################
@@ -969,6 +971,14 @@ def get_indent_info(name):
     vc = ":let s:indent='" + indent + "'"
     vim.command(vc)
 
+def get_secret():
+    try:
+        with open(os.path.expanduser(secret_file), 'r') as f:
+            secret = f.readline().rstrip('\n')
+        return secret
+    except:
+        return None
+
 ###############################################################################
 # Various SWANK messages
 ###############################################################################
@@ -979,6 +989,9 @@ def swank_connection_info():
     indent_info.clear()
     frame_locals.clear()
     debug_activated = False
+    secret = get_secret()
+    if secret != None:
+        swank_send(secret)
     if vim.eval('exists("g:swank_log") && g:swank_log') != '0':
         log = True
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
