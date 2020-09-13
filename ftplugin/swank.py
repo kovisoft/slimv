@@ -983,7 +983,7 @@ def swank_connection_info():
     if vim.eval('exists("g:swank_log") && g:swank_log') != '0':
         log = True
     secret_file = os.path.expanduser('~') + '/.slime-secret'
-    if os.path.exists:
+    if os.path.exists(secret_file):
         # If the user has a .slime-secret file then the connection must start by sending the password
         with open(secret_file) as f:
             secret = f.read().splitlines()
