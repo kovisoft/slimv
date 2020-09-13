@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  18 Apr 2017
+# Last Change:  13 Sep 2020
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -15,6 +15,7 @@
 
 from __future__ import print_function
 
+import os
 import socket
 import time
 import select
@@ -981,6 +982,13 @@ def swank_connection_info():
     debug_activated = False
     if vim.eval('exists("g:swank_log") && g:swank_log') != '0':
         log = True
+    secret_file = os.path.expanduser('~') + '/.slime-secret'
+    if os.path.exists:
+        # If the user has a .slime-secret file then the connection must start by sending the password
+        with open(secret_file) as f:
+            secret = f.read().splitlines()
+            if len(secret) > 0:
+                swank_send(secret[0])
     swank_rex(':connection-info', '(swank:connection-info)', 'nil', 't')
 
 def swank_create_repl():
