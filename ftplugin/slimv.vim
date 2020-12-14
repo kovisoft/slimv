@@ -1024,11 +1024,19 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'q      :call SlimvDebugQuit()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'n      :call SlimvDebugContinue()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'N      :call SlimvDebugRestartFrame()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'si      :call SlimvDebugStepInto()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sn      :call SlimvDebugStepNext()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'so      :call SlimvDebugStepOut()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sc      :call SlimvDebugStepContinue()<CR>'
     elseif g:slimv_keybindings == 2
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugAbort()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugQuit()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dn     :call SlimvDebugContinue()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dr     :call SlimvDebugRestartFrame()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'si      :call SlimvDebugStepInto()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sn      :call SlimvDebugStepNext()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'so      :call SlimvDebugStepOut()<CR>'
+        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sc      :call SlimvDebugStepContinue()<CR>'
     endif
 
     " Set folding parameters
@@ -2436,13 +2444,18 @@ function! SlimvInterrupt()
 endfunction
 
 " Select a specific restart in debugger
-function! SlimvDebugCommand( name, cmd )
+" Added in frame argument to support stepper
+function! SlimvDebugCommand( name, cmd, frame )
     if SlimvConnectSwank()
         if s:sldb_level >= 0
             if bufname('%') != g:slimv_sldb_name
                 call SlimvOpenSldbBuffer()
             endif
-            call SlimvCommand( s:py_cmd . '' . a:cmd . '()' )
+            if a:frame == ''
+                call SlimvCommand( s:py_cmd . '' . a:cmd . '()' )
+            else
+                call SlimvCommand( s:py_cmd . '' . a:cmd . '(' . string(a:frame) . ')' )
+            endif
             call SlimvRefreshReplBuffer()
             if s:sldb_level < 0
                 " Swank exited the debugger
@@ -2461,15 +2474,37 @@ endfunction
 
 " Various debugger restarts
 function! SlimvDebugAbort()
-    call SlimvDebugCommand( ":sldb-abort", "swank_invoke_abort" )
+    call SlimvDebugCommand( ":sldb-abort", "swank_invoke_abort", '' )
 endfunction
 
 function! SlimvDebugQuit()
-    call SlimvDebugCommand( ":throw-to-toplevel", "swank_throw_toplevel" )
+    call SlimvDebugCommand( ":throw-to-toplevel", "swank_throw_toplevel", '' )
 endfunction
 
 function! SlimvDebugContinue()
-    call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue" )
+    call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue", '' )
+endfunction
+
+" Debugger stepper functions
+function! SlimvDebugStepInto()
+    let frame = s:DebugFrame()
+    call SlimvDebugCommand( ":sldb-step", "swank_step_into", frame )
+endfunction
+
+function! SlimvDebugStepNext()
+    let frame = s:DebugFrame()
+    call SlimvDebugCommand( ":sldb-next", "swank_step_next", frame )
+endfunction
+
+function! SlimvDebugStepOut()
+    let frame = s:DebugFrame()
+    call SlimvDebugCommand( ":sldb-out", "swank_step_out", frame )
+endfunction
+
+function! SlimvDebugStepContinue()
+    call SlimvQuitSldb()
+    silent execute s:py_cmd . 'swank_invoke_restart("' . s:sldb_level . '", "' . string(0) . '")'
+    call SlimvRefreshReplBuffer()
 endfunction
 
 " Restart execution of the frame with the same arguments
