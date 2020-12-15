@@ -935,13 +935,12 @@ STEPPER                            *step-into* *step-next* *step-out* *step-cont
 
 You can enter the stepper by either wrapping step around your code (e.g. 
 (step (your-function arg)) or by putting (break) in your code.  If you put
-a (break) in your code, once you get into the debugger with the cursor on
-'Restarts' enter step-into ',si' to enter the stepper.  The functions are:
+a (break) in your code, once you get into the debugger, enter step-into to 
+enter the stepper.  The functions are:
 
 step-into: steps into the function
 step-next: steps over the function
 step-out: steps out of the function
-step-continue: continues execution until the next break
 
 This has only been tested with sbcl
 
