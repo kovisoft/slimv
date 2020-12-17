@@ -1033,6 +1033,18 @@ def swank_invoke_abort():
 def swank_invoke_continue():
     swank_rex(':sldb-continue', '(swank:sldb-continue)', 'nil', current_thread)
 
+def swank_step_into(frame):
+    cmd = '(swank:sldb-step ' + frame + ')'
+    swank_rex(':sldb-step', cmd, 'nil', current_thread)
+
+def swank_step_next(frame):
+    cmd = '(swank:sldb-next ' + frame + ')'
+    swank_rex(':sldb-next', cmd, 'nil', current_thread)
+
+def swank_step_out(frame):
+    cmd = '(swank:sldb-out ' + frame + ')'
+    swank_rex(':sldb-out', cmd, 'nil', current_thread)
+
 def swank_require(contrib):
     cmd = "(swank:swank-require '" + contrib + ')'
     swank_rex(':swank-require', cmd, 'nil', 't')

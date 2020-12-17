@@ -826,6 +826,7 @@ For a complete reference of SWANK functions implemented see |swank-functions|.
 |swank-interrupt|            Interrupt Lisp process
 |swank-restarts|             SLDB: Invoke restarts
 |swank-backtrace|            SLDB: Display backtrace with locals
+|swank-stepper|              SLDB: Step through the code
 |swank-arglist|              Function argument list in status line
 |swank-describe|             Describe symbol in tooltip
 |swank-completions|          List of possible symbol completions
@@ -927,6 +928,21 @@ Some commands have modified behaviour when used on a frame:
     Interactive-Eval         Evaluates expressions in the scope of the frame.
 
     Inspect                  Inspects objects within the scope of the frame.
+
+
+-------------------------------------------------------------------------------
+STEPPER                            *step-into* *step-next* *step-out* *step-continue* 
+
+You can enter the stepper by either wrapping step around your code (e.g. 
+(step (your-function arg)) or by putting (break) in your code.  If you put
+a (break) in your code, once you get into the debugger, enter step-into to 
+enter the stepper.  The functions are:
+
+step-into: steps into the function
+step-next: steps over the function
+step-out: steps out of the function
+
+This has only been tested with sbcl
 
 
 -------------------------------------------------------------------------------
@@ -1120,6 +1136,9 @@ currently implemented in the Slimv SWANK client.
   swank:simple-completions
   swank:sldb-abort
   swank:sldb-continue
+  swank:sldb-next
+  swank:slbb-out
+  swank:sldb-step
   swank:swank-macroexpand-1
   swank:swank-macroexpand-all
   swank:swank-require
