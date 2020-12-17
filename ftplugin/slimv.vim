@@ -2493,17 +2493,23 @@ endfunction
 " Debugger stepper functions
 function! SlimvDebugStepInto()
     let frame = s:DebugFrame()
-    call SlimvDebugCommand( ":sldb-step", "swank_step_into", frame )
+    if frame != ''
+        call SlimvDebugCommand( ":sldb-step", "swank_step_into", frame )
+    endif
 endfunction
 
 function! SlimvDebugStepNext()
     let frame = s:DebugFrame()
-    call SlimvDebugCommand( ":sldb-next", "swank_step_next", frame )
+    if frame != ''
+        call SlimvDebugCommand( ":sldb-next", "swank_step_next", frame )
+    endif
 endfunction
 
 function! SlimvDebugStepOut()
     let frame = s:DebugFrame()
-    call SlimvDebugCommand( ":sldb-out", "swank_step_out", frame )
+    if frame != ''
+        call SlimvDebugCommand( ":sldb-out", "swank_step_out", frame )
+    endif
 endfunction
 
 " Restart execution of the frame with the same arguments
