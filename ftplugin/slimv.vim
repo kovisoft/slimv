@@ -1027,7 +1027,6 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'si      :call SlimvDebugStepInto()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sn      :call SlimvDebugStepNext()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'so      :call SlimvDebugStepOut()<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sc      :call SlimvDebugStepContinue()<CR>'
     elseif g:slimv_keybindings == 2
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'da     :call SlimvDebugAbort()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'dq     :call SlimvDebugQuit()<CR>'
@@ -1036,7 +1035,6 @@ function SlimvOpenSldbBuffer()
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'si      :call SlimvDebugStepInto()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sn      :call SlimvDebugStepNext()<CR>'
         execute 'noremap <buffer> <silent> ' . g:slimv_leader.'so      :call SlimvDebugStepOut()<CR>'
-        execute 'noremap <buffer> <silent> ' . g:slimv_leader.'sc      :call SlimvDebugStepContinue()<CR>'
     endif
 
     " Set folding parameters
@@ -2482,7 +2480,14 @@ function! SlimvDebugQuit()
 endfunction
 
 function! SlimvDebugContinue()
-    call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue", '' )
+    let in_stepper = search ('STEP-CONTINUE', 'bcnw')
+    if in_stepper == 0
+        call SlimvDebugCommand( ":sldb-continue", "swank_invoke_continue", '' )
+    else
+        call SlimvQuitSldb()
+        silent execute s:py_cmd . 'swank_invoke_restart("' . s:sldb_level . '", "' . string(0) . '")'
+        call SlimvRefreshReplBuffer()
+    endif
 endfunction
 
 " Debugger stepper functions
@@ -2499,12 +2504,6 @@ endfunction
 function! SlimvDebugStepOut()
     let frame = s:DebugFrame()
     call SlimvDebugCommand( ":sldb-out", "swank_step_out", frame )
-endfunction
-
-function! SlimvDebugStepContinue()
-    call SlimvQuitSldb()
-    silent execute s:py_cmd . 'swank_invoke_restart("' . s:sldb_level . '", "' . string(0) . '")'
-    call SlimvRefreshReplBuffer()
 endfunction
 
 " Restart execution of the frame with the same arguments
@@ -3692,6 +3691,9 @@ call s:MenuMap( 'Slim&v.De&bugging.&Abort',                     g:slimv_leader.'
 call s:MenuMap( 'Slim&v.De&bugging.&Quit-to-Toplevel',          g:slimv_leader.'q',  g:slimv_leader.'dq',  ':call SlimvDebugQuit()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Continue',                  g:slimv_leader.'n',  g:slimv_leader.'dc',  ':call SlimvDebugContinue()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Restart-Frame',             g:slimv_leader.'N',  g:slimv_leader.'dr',  ':call SlimvDebugRestartFrame()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Step-Into',                 g:slimv_leader.'si',  g:slimv_leader.'si',  ':call SlimvDebugStepInto()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Step-Next',                 g:slimv_leader.'sn',  g:slimv_leader.'sn',  ':call SlimvDebugStepNext()<CR>' )
+call s:MenuMap( 'Slim&v.De&bugging.&Step-Out',                  g:slimv_leader.'so',  g:slimv_leader.'so',  ':call SlimvDebugStepOut()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.-ThreadSep-',                '',                  '',                   ':' )
 call s:MenuMap( 'Slim&v.De&bugging.List-T&hreads',              g:slimv_leader.'H',  g:slimv_leader.'dl',  ':call SlimvListThreads()<CR>' )
 call s:MenuMap( 'Slim&v.De&bugging.&Kill-Thread\.\.\.',         g:slimv_leader.'K',  g:slimv_leader.'dk',  ':call SlimvKillThread()<CR>' )
