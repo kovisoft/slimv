@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  30 Jul 2020
+" Last Change:  20 Dec 2020
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -522,8 +522,8 @@ endfunction
 function! s:SkipExpr()
     let l = line('.')
     let c = col('.')
-    if synIDattr(synID(l, c, 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|[Ss]pecial\\|clojureRegexp\\|clojurePattern"
-        " Skip parens inside strings, comments, special elements
+    if synIDattr(synID(l, c, 0), "name") =~ "[Ss]tring\\|[Cc]omment\\|clojureRegexp\\|clojurePattern"
+        " Skip parens inside strings, comments
         return 1
     endif
     if getline(l)[c-2] == "\\" && getline(l)[c-3] != "\\"
@@ -1353,9 +1353,10 @@ function! s:PrevElement( skip_whitespc )
                     normal! %
                     let line2 = getline( '.' )
                     let c2 = col('.') - 1
-                    if c2 > 0 && line2[c2-1] =~ s:any_macro_prefix
+                    while c2 > 0 && line2[c2-1] =~ s:any_macro_prefix
                         normal! h
-                    endif
+                        let c2 = c2 - 1
+                    endwhile
                 elseif line[c-1] =~ b:any_opening_char
                     " Opening delimiter found: stop
                     call setpos( '.', [0, l0, c0, 0] )
@@ -1880,9 +1881,10 @@ function! PareditSplice()
     normal! %x
     call setpos( '.', [0, l, c, 0] )
     normal! x
-    if c > 1 && getline('.')[c-2] =~ s:any_macro_prefix
+    while c > 1 && getline('.')[c-2] =~ s:any_macro_prefix
         normal! X
-    endif
+        let c = c - 1
+    endwhile
 endfunction
 
 " Raise: replace containing form with the current symbol or sub-form
