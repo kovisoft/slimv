@@ -115,7 +115,7 @@ Slimv works on Windows, Linux and Mac OS X (via Terminal.app), Cygwin is support
 
 Vim's Python version can be identified with the :ver command, look for the -DDYNAMIC_PYTHON_DLL=\"pythonXX\" string (if you have it). Another way of determining Vim's Python version:
 
-:python import sys; print(sys.version)
+:execute (has('python3') ? "python3" : "python") . " import sys; print(sys.version)"
 
 Slimv tries to autodetect your Lisp/Clojure/Slime installation directories. If it fails to determine the correct directories, then you need to enter the command to start the SWANK server into your vimrc file.
 
