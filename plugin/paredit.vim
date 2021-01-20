@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  20 Dec 2020
+" Last Change:  20 Jan 2021
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -932,7 +932,7 @@ endfunction
 " Insert closing type of a paired character, like ) or ].
 function! PareditInsertClosing( open, close )
     let retval = ""
-    if pumvisible()
+    if pumvisible() && &completeopt !~# 'longest\|noinsert\|noselect'
         let retval = "\<C-Y>"
     endif
     let save_ve = &ve
@@ -1031,7 +1031,7 @@ endfunction
 
 " Handle <Enter> keypress, insert electric return if applicable
 function! PareditEnter()
-    if pumvisible()
+    if pumvisible() && &completeopt !~# 'longest\|noinsert\|noselect'
         " Pressing <CR> in a pop up selects entry.
         return "\<C-Y>"
     else
