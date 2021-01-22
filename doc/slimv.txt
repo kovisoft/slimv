@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 05 Oct 2019
+*slimv.txt*                    Slimv                 Last Change: 22 Jan 2021
 
 Slimv                                                                  *slimv*
                                Version 0.9.14
@@ -165,10 +165,13 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
+|g:slimv_indent_disable|     Disable slimv indenting, fallback to vim's
+                             default lispindent() method.
+
 |g:slimv_indent_keylists|    Enable special indentation for keyword lists.
 
 |g:slimv_indent_maxlines|    Maximum number of lines searched backwards for
-                             indenting special forms
+                             indenting special forms.
 
 |g:slimv_inspect_name|       Name of the Inspect buffer.
 
@@ -580,6 +583,11 @@ mostly unnecessary information. Closing parens are added to the end even if
 the end of the form is not echoed, so paren balance is kept.
 If this option is set to zero then no line is echoed at all, if set to -1
 then all lines are always echoed.
+
+                                                       *g:slimv_indent_disable*
+Disable slimv indenting and use vim's built-in ispindent() method.
+Please note that this option does not completely disable the indenting,
+only changes the way s-expressions are indented.
 
                                                       *g:slimv_indent_keylists*
 If nonzero then Slimv indents keyword lists like that:

@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  30 Sep 2019
+" Last Change:  22 Jan 2021
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1929,9 +1929,13 @@ endfunction
 
 " Indentation routine, keeps original cursor position
 function! SlimvIndent( lnum )
-    let oldpos = getpos( '.' )
-    let indent = SlimvIndentUnsafe( a:lnum )
-    call cursor( oldpos[1], oldpos[2] )
+    if exists("g:slimv_indent_disable") && g:slimv_indent_disable
+        let indent = lispindent( a:lnum )
+    else
+        let oldpos = getpos( '.' )
+        let indent = SlimvIndentUnsafe( a:lnum )
+        call cursor( oldpos[1], oldpos[2] )
+    endif
     return indent
 endfunction
 
