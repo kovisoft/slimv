@@ -49,7 +49,7 @@
   #+armedbear '((swank abcl))
   #+cormanlisp '((swank corman) (swank gray))
   #+ecl '((swank ecl) (swank gray))
-  #+clasp '((swank clasp) (swank gray))
+  #+clasp '(metering (swank clasp) (swank gray))
   #+mkcl '((swank mkcl) (swank gray))
   #+mezzano '((swank mezzano) (swank gray))
   )
@@ -63,7 +63,7 @@
     :unix :mezzano))
 
 (defparameter *architecture-features*
-  '(:powerpc :ppc :x86 :x86-64 :x86_64 :amd64 :i686 :i586 :i486 :pc386 :iapx386
+  '(:powerpc :ppc :ppc64 :x86 :x86-64 :x86_64 :amd64 :i686 :i586 :i486 :pc386 :iapx386
     :sparc64 :sparc :hppa64 :hppa :arm :armv5l :armv6l :armv7l :arm64 :aarch64
     :pentium3 :pentium4
     :mips :mipsel
@@ -97,7 +97,7 @@
   #+lispworks (lisp-implementation-version)
   #+allegro   (format nil "~@{~a~}"
                       excl::*common-lisp-version-number*
-                      (if (eq 'h 'H) "A" "M")     ; ANSI vs MoDeRn
+                      (if (string= 'lisp "LISP") "A" "M")     ; ANSI vs MoDeRn
                       (if (member :smp *features*) "s" "")
                       (if (member :64bit *features*) "-64bit" "")
                       (excl:ics-target-case

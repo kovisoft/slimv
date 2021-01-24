@@ -3,7 +3,7 @@
 ;; URL: https://github.com/slime/slime
 ;; Package-Requires: ((cl-lib "0.5") (macrostep "0.9"))
 ;; Keywords: languages, lisp, slime
-;; Version: 2.24
+;; Version: 2.26
 
 ;;;; License and Commentary
 
@@ -107,19 +107,19 @@ the Emacs Lisp package.")
                  :test #'string-equal))))
 
 (defvar slime-lisp-modes '(lisp-mode))
-(defvar slime-contribs nil
+(defvar slime-contribs '(slime-fancy)
   "A list of contrib packages to load with SLIME.")
 (define-obsolete-variable-alias 'slime-setup-contribs
 'slime-contribs "2.3.2")
 
-(defun slime-setup (&optional contribs)
+(cl-defun slime-setup (&optional (contribs nil contribs-p))
   "Setup Emacs so that lisp-mode buffers always use SLIME.
 CONTRIBS is a list of contrib packages to load. If `nil', use
 `slime-contribs'. "
   (interactive)
   (when (member 'lisp-mode slime-lisp-modes)
     (add-hook 'lisp-mode-hook 'slime-lisp-mode-hook))
-  (when contribs
+  (when contribs-p
     (setq slime-contribs contribs))
   (slime--setup-contribs))
 
@@ -440,7 +440,6 @@ This is a hack so that we can reinitilize the real slime-mode-map
 more easily. See `slime-init-keymaps'.")
 
 (defvar slime-buffer-connection)
-(defvar slime-dispatching-connection)
 (defvar slime-current-thread)
 
 (defun slime--on ()
@@ -1097,7 +1096,7 @@ DIRECTORY change to this directory before starting the process.
 (defun slime-start* (options)
   (apply #'slime-start options))
 
-(defun slime-connect (host port &optional _coding-system interactive-p)
+(defun slime-connect (host port &optional _coding-system interactive-p &rest parameters)
   "Connect to a running Swank server. Return the connection."
   (interactive (list (read-from-minibuffer
                       "Host: " (cl-first slime-connect-host-history)
@@ -1113,9 +1112,7 @@ DIRECTORY change to this directory before starting the process.
              (y-or-n-p "Close old connections first? "))
     (slime-disconnect-all))
   (message "Connecting to Swank on port %S.." port)
-  (let* ((process (slime-net-connect host port))
-         (slime-dispatching-connection process))
-    (slime-setup-connection process)))
+  (slime-setup-connection (apply 'slime-net-connect host port parameters)))
 
 ;; FIXME: seems redundant
 (defun slime-start-and-init (options fun)
@@ -1418,10 +1415,10 @@ first line of the file."
                              payload)))
         (process-send-string proc string)))))
 
-(defun slime-net-connect (host port)
+(defun slime-net-connect (host port &rest parameters)
   "Establish a connection with a CL."
   (let* ((inhibit-quit nil)
-         (proc (open-network-stream "SLIME Lisp" nil host port))
+         (proc (apply 'open-network-stream "SLIME Lisp" nil host port parameters))
          (buffer (slime-make-net-buffer " *cl-connection*")))
     (push proc slime-net-processes)
     (set-process-buffer proc buffer)
@@ -2086,7 +2083,7 @@ or nil if nothing suitable can be found.")
 
 (defun slime-search-buffer-package ()
   (let ((case-fold-search t)
-        (regexp (concat "^(\\(cl:\\|common-lisp:\\)?in-package\\>[ \t']*"
+        (regexp (concat "^[ \t]*(\\(cl:\\|common-lisp:\\)?in-package\\>[ \t']*"
                         "\\([^)]+\\)[ \t]*)")))
     (save-excursion
       (when (or (re-search-backward regexp nil t)
@@ -6766,7 +6763,7 @@ which to choose a new buffer. The `?' character describes the
 available methods.
 
 See `def-slime-selector-method' for defining new methods."
-  (interactive)
+  (interactive "P")
   (message "Select [%s]: "
            (apply #'string (mapcar #'car slime-selector-methods)))
   (let* ((slime-selector-other-window other-window)
@@ -7649,7 +7646,8 @@ See `slime-output-target-to-marker'."
 (run-hooks 'slime-load-hook)
 (provide 'slime)
 
-(slime-setup)
+(when (member 'lisp-mode slime-lisp-modes)
+  (add-hook 'lisp-mode-hook 'slime-lisp-mode-hook))
 
 ;; Local Variables:
 ;; outline-regexp: ";;;;+"

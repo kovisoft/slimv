@@ -83,10 +83,14 @@
 ;;; UTF8
 
 (defimplementation string-to-utf8 (string)
-  (sb-ext:string-to-octets string :external-format :utf8))
+  (sb-ext:string-to-octets string :external-format '(:utf8 :replacement
+                                                     #+sb-unicode #\Replacement_Character
+                                                     #-sb-unicode #\? )))
 
 (defimplementation utf8-to-string (octets)
-  (sb-ext:octets-to-string octets :external-format :utf8))
+  (sb-ext:octets-to-string octets :external-format '(:utf8 :replacement
+                                                     #+sb-unicode #\Replacement_Character
+                                                     #-sb-unicode #\? )))
 
 ;;; TCP Server
 
@@ -558,8 +562,13 @@ information."
             (sb-c::compiler-error-context-original-source context)))
           ((typep condition 'reader-error)
            (let* ((stream (stream-error-stream condition))
-                  (file   (pathname stream)))
-             (unless (open-stream-p stream)
+                  ;; If STREAM is, for example, a STRING-INPUT-STREAM,
+                  ;; an error will be signaled since PATHNAME only
+                  ;; accepts a "stream associated with a file" which
+                  ;; is a complicated predicate and hard to test
+                  ;; portably.
+                  (file   (ignore-errors (pathname stream))))
+             (unless (and file (open-stream-p stream))
                (bailout))
              (if (compiling-from-buffer-p file)
                  ;; The stream position for e.g. "comma not inside
@@ -728,7 +737,8 @@ QUALITIES is an alist with (quality . value)"
 (defvar *trap-load-time-warnings* t)
 
 (defimplementation swank-compile-string (string &key buffer position filename
-                                         policy)
+                                                line column policy)
+  (declare (ignore line column))
   (let ((*buffer-name* buffer)
         (*buffer-offset* position)
         (*buffer-substring* string)
@@ -801,7 +811,11 @@ QUALITIES is an alist with (quality . value)"
 (defimplementation find-definitions (name)
   (loop for type in *definition-types* by #'cddr
         for defsrcs = (sb-introspect:find-definition-sources-by-name name type)
-        append (loop for defsrc in defsrcs collect
+        for filtered-defsrcs = (if (eq type :generic-function)
+                                   (remove :invalid defsrcs
+                                           :key #'categorize-definition-source)
+                                   defsrcs)
+        append (loop for defsrc in filtered-defsrcs collect
                      (list (make-dspec type name defsrc)
                            (converting-errors-to-error-location
                              (definition-source-for-emacs defsrc
@@ -856,7 +870,7 @@ QUALITIES is an alist with (quality . value)"
 
 (defun categorize-definition-source (definition-source)
   (with-definition-source (pathname form-path character-offset plist)
-    definition-source
+                          definition-source
     (let ((file-p (and pathname (probe-file pathname)
                        (or form-path character-offset))))
       (cond ((and (getf plist :emacs-buffer) file-p) :buffer-and-file)
@@ -1018,7 +1032,7 @@ Return NIL if the symbol is unbound."
                (t :function))
          (doc 'function)))
       (maybe-push
-       :setf (and (setf-expander symbol) 
+       :setf (and (setf-expander symbol)
                   (doc 'setf)))
       (maybe-push
        :type (if (sb-int:info :type :kind symbol)
@@ -1393,14 +1407,29 @@ stack."
 
 (defun frame-debug-vars (frame)
   "Return a vector of debug-variables in frame."
-  (let ((all-vars (sb-di::debug-fun-debug-vars (sb-di:frame-debug-fun frame))))
-    (cond (*keep-non-valid-locals* all-vars)
-          (t (let ((loc (sb-di:frame-code-location frame)))
-               (remove-if (lambda (var)
-                            (ecase (sb-di:debug-var-validity var loc)
-                              (:valid nil)
-                              ((:invalid :unknown) t)))
-                          all-vars))))))
+  (let* ((all-vars (sb-di::debug-fun-debug-vars (sb-di:frame-debug-fun frame)))
+         (loc (sb-di:frame-code-location frame))
+         (vars (if *keep-non-valid-locals*
+                   all-vars
+                   (remove-if (lambda (var)
+                                (ecase (sb-di:debug-var-validity var loc)
+                                  (:valid nil)
+                                  ((:invalid :unknown) t)))
+                              all-vars)))
+         more-context
+         more-count)
+    (values (when vars
+              (loop for v across vars
+                    unless
+                    (case (debug-var-info v)
+                      (:more-context
+                       (setf more-context (debug-var-value v frame loc))
+                       t)
+                      (:more-count
+                       (setf more-count (debug-var-value v frame loc))
+                       t))
+                    collect v))
+            more-context more-count)))
 
 (defun debug-var-value (var frame location)
   (ecase (sb-di:debug-var-validity var location)
@@ -1415,59 +1444,43 @@ stack."
 
 (defimplementation frame-locals (index)
   (let* ((frame (nth-frame index))
-         (loc (sb-di:frame-code-location frame))
-         (vars (frame-debug-vars frame))
-         ;; Since SBCL 1.0.49.76 PREPROCESS-FOR-EVAL understands SB-DEBUG::MORE
-         ;; specially.
-         (more-name (or (find-symbol "MORE" :sb-debug) 'more))
-         (more-context nil)
-         (more-count nil))
-    (when vars
+         (loc (sb-di:frame-code-location frame)))
+    (multiple-value-bind (vars more-context more-count)
+        (frame-debug-vars frame)
       (let ((locals
-              (loop for v across vars
-                    unless 
-                    (case (debug-var-info v)
-                      (:more-context
-                       (setf more-context (debug-var-value v frame loc))
-                       t)
-                      (:more-count
-                       (setf more-count (debug-var-value v frame loc))
-                       t))
+              (loop for v in vars
                     collect
                     (list :name (sb-di:debug-var-symbol v)
                           :id (sb-di:debug-var-id v)
                           :value (debug-var-value v frame loc)))))
-        (when (and more-context more-count)
-          (setf locals (append locals
-                               (list
-                                (list :name more-name
-                                      :id 0
-                                      :value (multiple-value-list
-                                              (sb-c:%more-arg-values
-                                               more-context
-                                               0 more-count)))))))
-        locals))))
+        (if (and more-context more-count)
+            (append locals
+                    (list
+                     (list :name
+                           ;; Since SBCL 1.0.49.76 PREPROCESS-FOR-EVAL understands SB-DEBUG::MORE
+                           ;; specially.
+                           (or (find-symbol "MORE" :sb-debug) 'more)
+                           :id 0
+                           :value (multiple-value-list
+                                   (sb-c:%more-arg-values
+                                    more-context
+                                    0 more-count)))))
+            locals)))))
 
 (defimplementation frame-var-value (frame var)
-  (let* ((frame (nth-frame frame))
-         (vars (frame-debug-vars frame))
-         (loc (sb-di:frame-code-location frame))
-         (dvar (if (= var (length vars))
-                   ;; If VAR is out of bounds, it must be the fake var
-                   ;; we made up for &MORE.
-                   (let* ((context-var (find :more-context vars
-                                             :key #'debug-var-info))
-                          (more-context (debug-var-value context-var frame
-                                                         loc))
-                          (count-var (find :more-count vars
-                                           :key #'debug-var-info))
-                          (more-count (debug-var-value count-var frame loc)))
-                     (return-from frame-var-value
-                       (multiple-value-list (sb-c:%more-arg-values
-                                             more-context
-                                             0 more-count))))
-                   (aref vars var))))
-    (debug-var-value dvar frame loc)))
+  (let ((frame (nth-frame frame)))
+    (multiple-value-bind (vars more-context more-count)
+        (frame-debug-vars frame)
+      (let* ((loc (sb-di:frame-code-location frame))
+             (dvar (if (= var (length vars))
+                       ;; If VAR is out of bounds, it must be the fake var
+                       ;; we made up for &MORE.
+                       (return-from frame-var-value
+                         (multiple-value-list (sb-c:%more-arg-values
+                                               more-context
+                                               0 more-count)))
+                       (nth var vars))))
+        (debug-var-value dvar frame loc)))))
 
 (defimplementation frame-catch-tags (index)
   (mapcar #'car (sb-di:frame-catches (nth-frame index))))
@@ -1594,7 +1607,6 @@ stack."
                    (label-value-line*
                     (:name (sb-kernel:%simple-fun-name o))
                     (:arglist (sb-kernel:%simple-fun-arglist o))
-                    (:next (sb-kernel:%simple-fun-next o))
                     (:type (sb-kernel:%simple-fun-type o))
                     (:code (sb-kernel:fun-code-header o))))
           ((sb-kernel:closurep o)
@@ -1610,7 +1622,6 @@ stack."
   (append
    (label-value-line*
     (:code-size (sb-kernel:%code-code-size o))
-    (:entry-points (sb-kernel:%code-entry-points o))
     (:debug-info (sb-kernel:%code-debug-info o)))
    `("Constants:" (:newline))
    (loop for i from sb-vm:code-constants-offset
@@ -1757,7 +1768,7 @@ stack."
         (setf (mailbox.queue mbox)
               (nconc (mailbox.queue mbox) (list message)))
         (sb-thread:condition-broadcast (mailbox.waitqueue mbox)))))
-  
+
   (defimplementation receive-if (test &optional timeout)
     (let* ((mbox (mailbox (current-thread)))
            (mutex (mailbox.mutex mbox))
@@ -2019,7 +2030,7 @@ stack."
 #+#.(swank/backend:with-symbol 'comma-expr 'sb-impl)
 (progn
   (defmethod sexp-in-bounds-p ((s sb-impl::comma) i)
-    (= i 1))
+    (sexp-in-bounds-p (sb-impl::comma-expr s) i))
 
   (defmethod sexp-ref ((s sb-impl::comma) i)
-    (sb-impl::comma-expr s)))
+    (sexp-ref (sb-impl::comma-expr s) i)))

@@ -927,7 +927,7 @@ The processing is done in the extent of the toplevel restart."
     (stop-serving-requests c)
     (close (connection.socket-io c))
     (when (connection.dedicated-output c)
-      (close (connection.dedicated-output c)))
+      (ignore-errors (close (connection.dedicated-output c))))
     (setf *connections* (remove c *connections*))
     (run-hook *connection-closed-hook* c)
     (when (and condition (not (typep condition 'end-of-file)))
@@ -2495,7 +2495,10 @@ Record compiler notes signalled as `compiler-condition's."
 (defslimefun compile-string-for-emacs (string buffer position filename policy)
   "Compile STRING (exerpted from BUFFER at POSITION).
 Record compiler notes signalled as `compiler-condition's."
-  (let ((offset (cadr (assoc :position position))))
+  (let* ((offset (cadr (assoc :position position)))
+         (line-column (cdr (assoc :line position)))
+         (line (first line-column))
+         (column (second line-column)))
     (with-buffer-syntax ()
       (collect-notes
        (lambda () 
@@ -2504,6 +2507,8 @@ Record compiler notes signalled as `compiler-condition's."
                                  :buffer buffer
                                  :position offset 
                                  :filename filename
+                                 :line line
+                                 :column column
                                  :policy policy)))))))
 
 (defslimefun compile-multiple-strings-for-emacs (strings policy)
