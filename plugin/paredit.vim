@@ -277,17 +277,13 @@ endfunction
 function! s:SetKeyword()
     let old_value = &iskeyword
     if match(old_value, '\^$') >= 0
-        " temporarily remove trailing ^
+        " remove trailing ^ because it will be added as chr 94
         setlocal iskeyword-=^
     endif
     if &ft =~ s:fts_balancing_all_brackets
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
-    endif
-    if match(old_value, '\^$') >= 0
-        " if there was a trailing ^ then put it back
-        setlocal iskeyword+=^
     endif
     return old_value
 endfunction
