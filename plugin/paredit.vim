@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  28 Feb 2021
+" Last Change:  09 Mar 2021
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1538,7 +1538,10 @@ function! PareditMoveLeft()
     endif
 
     let [lp, cp] = s:GetReplPromptPos()
+    let ve_save = &virtualedit
+    set virtualedit=all
     let [l1, c1] = s:PrevElement( closing )
+    let &virtualedit = ve_save
     if [l1, c1] == [0, 0]
         " No previous element found
         return
@@ -1595,7 +1598,10 @@ function! PareditMoveRight()
     endif
 
     let [lp, cp] = s:GetReplPromptPos()
+    let ve_save = &virtualedit
+    set virtualedit=all
     let [l1, c1] = s:NextElement( opening )
+    let &virtualedit = ve_save
     if [l1, c1] == [0, 0]
         " No next element found
         return
