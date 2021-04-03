@@ -132,8 +132,11 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_balloon|            Specifies if tooltips are on.
 
-|g:slimv_browser_cmd|        If nonempty, this command is used to open the
-                             Common Lisp Hyperspec. 
+|g:slimv_browser_cmd|        If nonempty, this shell command is used to
+                             open the Common Lisp Hyperspec. 
+
+|g:slimv_browser_cmd_ex|     If nonempty, this Ex command is used to 
+                             open the Common Lisp Hyperspec. 
 
 |g:slimv_browser_cmd_suffix| Optional suffix for |g:slimv_browser_cmd|
 
@@ -452,13 +455,18 @@ If nonzero then the Slimv menu is added to the end of the global menu.
 Also the Slimv menu can be shown by pressing <Leader>, (defaults to ,,).
 
                                                           *g:slimv_browser_cmd*
-Specifies the command to start the browser in order to display the Common Lisp
-Hyperspec or the Clojure API. If the command contains spaces then enclose the
-whole string in double quotes or escape the spaces with a backslash.
+Specifies the shell command to start the browser in order to display the Common
+Lisp Hyperspec or the Clojure API. If the command contains spaces then enclose
+the whole string in double quotes or escape the spaces with a backslash.
 This option is empty by default, which means that the command associated with
 the .html extension (on Windows) or xdg-open (on Linux) is used to start the
 browser. If xdg-open is not installed then the Python webbrowser package is
 used to identify the default browser on Linux.
+
+                                                     *g:slimv_browser_cmd_ex*
+Specifies the Ex command to start the browser in order to display the Common
+Lisp Hyperspec or the Clojure API. If |g:slimv_browser_cmd| is empty then this
+Ex command is used.
 
                                                    *g:slimv_browser_cmd_suffix*
 When using option |g:slimv_browser_cmd| the Hyperspec page URL is appended to
