@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 28 Aug 2020
+*paredit.txt*                   Paredit              Last Change: 05 Apr 2021
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.14
@@ -389,6 +389,12 @@ PAREDIT OPTIONS                                               *paredit-options*
 
 |g:paredit_electric_return|  If nonzero, electric return feature is enabled.
 
+|g:paredit_map_func|         Specifies a function to be used for defining
+                             custom keybindings for Paredit
+
+|g:paredit_unmap_func|       Specifies a function to be used for removing
+                             custom keybindings for Paredit
+
 |g:paredit_smartjump|        If nonzero, '(' and ')' also target square brackets
                              and curly braces when editing Clojure or Scheme.
 
@@ -434,6 +440,16 @@ to send the command line to the swank server for evaluation.
 
 Please find a video demonstration of the electric return feature here:
 https://kovisoft.github.io/slimv-tutorial/openparen.gif
+
+                                                           *g:paredit_map_func*
+This option specifies a function to be used for defining custom keybindings
+for Paredit. The function takes no argument and returns no value.
+By default function 'PareditMapKeys' is called.
+
+                                                         *g:paredit_unmap_func*
+This option specifies a function to be used for removing custom keybindings
+for Paredit. The function takes no argument and returns no value.
+By default function 'PareditUnmapKeys' is called.
 
                                                           *g:paredit_smartjump*
 If nonzero, this option changes the behavior of '(' and ')' in normal and visual
