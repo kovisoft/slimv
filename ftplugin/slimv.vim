@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  22 Jan 2021
+" Last Change:  18 Jul 2021
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1165,6 +1165,11 @@ endfunction
 
 " Set 'iskeyword' option depending on file type
 function! s:SetKeyword()
+    let old_value = &iskeyword
+    if match(old_value, '\^$') >= 0
+        " remove trailing ^ because it will be added as chr 94
+        setlocal iskeyword-=^
+    endif
     if SlimvGetFiletype() =~ '.*\(clojure\|scheme\|racket\).*'
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
