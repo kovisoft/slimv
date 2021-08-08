@@ -798,7 +798,7 @@ Sample workflow:
     3. test fails, bug is in other parts of code, try to fix it
     4. send fixed code to the swank server the usual way
     5. "a,r recalls the test form from register 'a' and evaluates it
-    7. repeat steps 3.-5.
+    6. repeat steps 3.-5.
 
 It is possible to create a custom mapping that appends a test form after the
 selected s-expression so that they are evaluated together in one step.
