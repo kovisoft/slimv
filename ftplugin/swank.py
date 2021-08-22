@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  13 Sep 2020
+# Last Change:  22 Aug 2021
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -21,6 +21,7 @@ import time
 import select
 import string
 import sys
+import re
 
 input_port      = 4005
 output_port     = 4006
@@ -693,6 +694,10 @@ def swank_listen():
             rec = swank_recv(msglen, 1.0)
             logtime('[-Received-]')
             logprint(rec)
+            if vim.eval('exists("g:slimv_strip_ansi") && g:slimv_strip_ansi') != '0':
+                # strip ANSI escape sequences from output string
+                pattern = re.compile( r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]' )
+                rec = pattern.sub( '', rec )
             [s, r] = parse_sexpr( rec )
             if debug:
                 print('Parsed:', r)

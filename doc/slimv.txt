@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Jan 2021
+*slimv.txt*                    Slimv                 Last Change: 22 Aug 2021
 
 Slimv                                                                  *slimv*
                                Version 0.9.14
@@ -219,6 +219,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_sldb_name|          Name of the SLDB buffer.
 
 |g:slimv_sldb_wrap|          Set wrap mode for the SLDB buffer.
+
+|g:slimv_strip_ansi|         Strip ANSI escape sequences from the REPL output.
 
 |g:slimv_swank_clojure|      Command used to start the Clojure SWANK server.
 
@@ -583,6 +585,14 @@ will move the cursor one line on the display and not one line in the document.
 Set wrap mode for the SLDB buffer, which means the lines longer than the
 window width will not be hidden to the right. Instead they will be continued
 in the next display line. Disabled by default.
+
+                                                           *g:slimv_strip_ansi*
+Strip ANSI escape sequences from the REPL output. Vim does not handle ANSI
+escape sequences, therefore without this setting an ANSI colored output
+string looks like this:
+    [31mabc[0m
+Here follows the same output with this setting enabled:
+    abc
 
                                                             *g:slimv_echolines*
 If a long form is evaluated then echo only this number of lines from the
