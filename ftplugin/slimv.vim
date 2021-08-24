@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  18 Jul 2021
+" Last Change:  24 Aug 2021
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -300,6 +300,11 @@ endif
 " Maximum length of the REPL buffer
 if !exists( 'g:slimv_repl_max_len' )
     let g:slimv_repl_max_len = 0
+endif
+
+" Shall we strip ANSI escape sequences from the REPL output?
+if !exists( 'g:slimv_strip_ansi' )
+    let g:slimv_strip_ansi = 0
 endif
 
 " =====================================================================
