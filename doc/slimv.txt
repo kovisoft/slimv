@@ -166,6 +166,9 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_echolines|          Echo only this number of lines from the form
                              being evaluated.
 
+|g:slimv_fasl_directory|     Specify the directory for compiled FASL files to
+                             be written to.
+
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
 |g:slimv_indent_disable|     Disable slimv indenting, fallback to vim's
@@ -417,6 +420,18 @@ Slimv uses a dedicated tags file for Find-Definitions. By default this is a
 temporary file but the filename can be overridden via this option. If this
 variable is set to the empty string ('') then the whole Find-Definitions
 function is disabled.
+
+
+                                                       *g:slimv_fasl_directory*
+
+Specify a directory path that will be passed to the function
+swank:compile-file-for-emacs controlling where the compiled FASL file is
+written to and loaded from when using the Compile File or the Compile and Load
+File commands.
+Example:
+    let g:slimv_fasl_directory = '/tmp/'
+If this is set then .fasl files will be placed in /tmp/ instead of the default
+location next to the Lisp source file.
 
                                                           *g:slimv_keybindings*
 Defines the keybinding set used by Slimv.

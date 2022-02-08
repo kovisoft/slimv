@@ -1197,7 +1197,14 @@ def swank_compile_string(formvar):
     swank_rex(':compile-string-for-emacs', cmd, get_package(), 't')
 
 def swank_compile_file(name):
-    cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' t)'
+    if vim.eval("exists('g:slimv_fasl_directory')") != '0':
+        fasl_directory = vim.eval('g:slimv_fasl_directory')
+        if not fasl_directory.endswith('/'):
+            fasl_directory += '/'
+        fasl_directory_arg = ' :fasl-directory ' + requote(fasl_directory)
+    else:
+        fasl_directory_arg = ''
+    cmd = '(swank:compile-file-for-emacs ' + requote(name) + ' t' + fasl_directory_arg + ')'
     swank_rex(':compile-file-for-emacs', cmd, get_package(), 't')
 
 def swank_load_file(name):
