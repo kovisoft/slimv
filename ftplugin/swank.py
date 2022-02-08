@@ -10,8 +10,8 @@
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
 #               *** ***   Use At-Your-Own-Risk!   *** ***
-# 
-############################################################################### 
+#
+###############################################################################
 
 from __future__ import print_function
 
@@ -368,7 +368,7 @@ def swank_recv(msglen, timeout):
             sock.setblocking(1)
             rec = ''
             while True:
-                # Each codepoint has at least 1 byte; so we start with the 
+                # Each codepoint has at least 1 byte; so we start with the
                 # number of bytes, and read more if needed.
                 try:
                     needed = msglen - unicode_len(rec)
@@ -545,7 +545,7 @@ def swank_parse_compile(struct):
                     snippet = unquote(location[3][1]).replace('\r', '')
                     buf = buf + snippet + '\n'
                 buf = buf + fname + ':' + pos + '\n'
-                buf = buf + '  ' + severity + ': ' + msg + '\n\n' 
+                buf = buf + '  ' + severity + ': ' + msg + '\n\n'
                 if location[2][0] == ':line':
                     lnum = pos
                     cnum = 1
@@ -802,14 +802,14 @@ def swank_listen():
 
                         elif type(params) == list and params:
                             element = ''
-                            if type(params[0]) == str: 
+                            if type(params[0]) == str:
                                 element = params[0].lower()
                             if element == ':present':
                                 # No more output from REPL, write new prompt
                                 retval = retval + new_line(retval) + unquote(params[1][0][0]) + '\n' + get_prompt()
                             elif element == ':values':
                                 retval = retval + new_line(retval)
-                                if type(params[1]) == list: 
+                                if type(params[1]) == list:
                                     retval = retval + unquote(params[1][0]) + '\n'
                                 else:
                                     retval = retval + unquote(params[1]) + '\n' + get_prompt()
@@ -1092,7 +1092,7 @@ def swank_completions(symbol):
     swank_rex(':simple-completions', cmd, 'nil', 't')
 
 def swank_fuzzy_completions(symbol):
-    cmd = '(swank:fuzzy-completions "' + symbol + '" ' + get_swank_package() + ' :limit 2000 :time-limit-in-msec 2000)' 
+    cmd = '(swank:fuzzy-completions "' + symbol + '" ' + get_swank_package() + ' :limit 2000 :time-limit-in-msec 2000)'
     swank_rex(':fuzzy-completions', cmd, 'nil', 't')
 
 def swank_undefine_function(fn):
@@ -1115,7 +1115,7 @@ def swank_return(s):
 def swank_inspect(symbol):
     global inspect_package
     cmd = '(swank:init-inspector "' + symbol + '")'
-    inspect_package = get_swank_package() 
+    inspect_package = get_swank_package()
     swank_rex(':init-inspector', cmd, inspect_package, 't')
 
 def swank_inspect_nth_part(n):
