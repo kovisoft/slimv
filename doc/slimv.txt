@@ -133,10 +133,10 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_balloon|            Specifies if tooltips are on.
 
 |g:slimv_browser_cmd|        If nonempty, this shell command is used to
-                             open the Common Lisp Hyperspec. 
+                             open the Common Lisp Hyperspec.
 
-|g:slimv_browser_cmd_ex|     If nonempty, this Ex command is used to 
-                             open the Common Lisp Hyperspec. 
+|g:slimv_browser_cmd_ex|     If nonempty, this Ex command is used to
+                             open the Common Lisp Hyperspec.
 
 |g:slimv_browser_cmd_suffix| Optional suffix for |g:slimv_browser_cmd|
 
@@ -165,6 +165,9 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_echolines|          Echo only this number of lines from the form
                              being evaluated.
+
+|g:slimv_fasl_directory|     Specify the directory for compiled FASL files to
+                             be written to.
 
 |g:slimv_impl|               The Lisp implementation. Defaults to 'clisp'.
 
@@ -228,7 +231,7 @@ For the Swank options plese visit |swank-configuration|.
 
 |g:slimv_swank_scheme|       Command used to start the Scheme SWANK server.
 
-|g:slimv_tags_file|          Name of tags file used by Slimv. 
+|g:slimv_tags_file|          Name of tags file used by Slimv.
 
 |g:slimv_threads_name|       Name of the Threads buffer.
 
@@ -417,6 +420,18 @@ Slimv uses a dedicated tags file for Find-Definitions. By default this is a
 temporary file but the filename can be overridden via this option. If this
 variable is set to the empty string ('') then the whole Find-Definitions
 function is disabled.
+
+
+                                                       *g:slimv_fasl_directory*
+
+Specify a directory path that will be passed to the function
+swank:compile-file-for-emacs controlling where the compiled FASL file is
+written to and loaded from when using the Compile File or the Compile and Load
+File commands.
+Example:
+    let g:slimv_fasl_directory = '/tmp/'
+If this is set then .fasl files will be placed in /tmp/ instead of the default
+location next to the Lisp source file.
 
                                                           *g:slimv_keybindings*
 Defines the keybinding set used by Slimv.
@@ -668,7 +683,7 @@ Example:
     let g:slimv_clhs_user_db = [
         \["my-cool-function", "mycoolfunc.htm"],
         \["my-super-function", "mysuperfunc.htm"],
-        \["my-awesome-function", "myawesomefunc.htm"]] 
+        \["my-awesome-function", "myawesomefunc.htm"]]
 
 Remember to insert a backslash at the beginning of each additional line of a
 multi-line Vim command.
@@ -679,7 +694,7 @@ Example:
     let g:slimv_template_apropos = '(apropos "%1")'
 
                                                        *g:slimv_python_version*
-Selects the python version to use. 
+Selects the python version to use.
 When exists and set to 3, the :python3 and :py3file commands are used, when
 exists and not set to 3, the :python and :pyfile commands are used, and when
 it is not defined, has('python') has('python3') determine which are used.
@@ -889,7 +904,7 @@ It is also possible to map the Ctrl-C shortcut in normal mode to perform the
 interrupt, but this may interfere with the "Copy to clipboard" function
 especially on Windows. Here is how to do it:
 
-    noremap  <silent> <C-C>      :call SlimvInterrupt()<CR> 
+    noremap  <silent> <C-C>      :call SlimvInterrupt()<CR>
 
 When a Lisp process is interrupted, we are dropped in SLDB (SLime DeBugger)
 and the list of restarts (see |swank-restarts|) and calling frame stack
@@ -957,11 +972,11 @@ Some commands have modified behaviour when used on a frame:
 
 
 -------------------------------------------------------------------------------
-STEPPER                            *step-into* *step-next* *step-out* *step-continue* 
+STEPPER                            *step-into* *step-next* *step-out* *step-continue*
 
-You can enter the stepper by either wrapping step around your code (e.g. 
+You can enter the stepper by either wrapping step around your code (e.g.
 (step (your-function arg)) or by putting (break) in your code.  If you put
-a (break) in your code, once you get into the debugger, enter step-into to 
+a (break) in your code, once you get into the debugger, enter step-into to
 enter the stepper.  The functions are:
 
 step-into: steps into the function
@@ -1239,7 +1254,7 @@ Please note that the behaviour of <CR>, <Up>, <Down> is affected by the value
 of option |g:slimv_repl_simple_eval|.
 
 The Lisp REPL can be closed by the 'Quit REPL' command (mapped to <Leader>Q
-by default). This also closes the lisp process running the SWANK server. 
+by default). This also closes the lisp process running the SWANK server.
 
 
 ===============================================================================
@@ -1487,7 +1502,7 @@ FAQ                                                                 *slimv-faq*
      - Check if the port number matches in Slimv and the SWANK server and
        :dont-close is set to 't'.
      - Verify the SWANK server command autodetected by Slimv:
-         :echo SlimvSwankCommand()         
+         :echo SlimvSwankCommand()
      - Also check the following Slimv variables in Vim, maybe they are not
        correctly autodetected and you need to override them in your .vimrc:
          :echo g:slimv_lisp
