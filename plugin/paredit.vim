@@ -1,7 +1,7 @@
 " paredit.vim:
 "               Paredit mode for Slimv
 " Version:      0.9.14
-" Last Change:  05 Apr 2021
+" Last Change:  09 May 2022
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1697,7 +1697,7 @@ function! s:FindClosing()
         call PareditFindClosing( '[', ']', 0 )
         let lp = line( '.' )
         let cp = col( '.' )
-        if [lp, cp] != [l, c] && (lp < l2 || (lp == l2 && cp < c2))
+        if [lp, cp] != [l, c] && (l2 == 0 || lp < l2 || (lp == l2 && cp < c2))
             " Do we have a ']' closer?
             let paren = ']'
             let l2 = lp
@@ -1708,7 +1708,7 @@ function! s:FindClosing()
         call PareditFindClosing( '{', '}', 0 )
         let lp = line( '.' )
         let cp = col( '.' )
-        if [lp, cp] != [l, c] && (lp < l2 || (lp == l2 && cp < c2))
+        if [lp, cp] != [l, c] && (l2 == 0 || lp < l2 || (lp == l2 && cp < c2))
             " Do we have a '}' even closer?
             let paren = '}'
             let l2 = lp
