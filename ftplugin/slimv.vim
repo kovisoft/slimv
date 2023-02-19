@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  24 Aug 2021
+" Last Change:  19 Feb 2023
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -1415,12 +1415,11 @@ function! SlimvConnectSwank()
         if g:slimv_simple_compl == 0
             let contribs = contribs . ' swank-fuzzy'
         endif
+        if s:SinceVersion( '2011-12-04' )
+            let contribs = 'swank-repl ' . contribs
+        endif
         execute s:py_cmd . "swank_require('(" . contribs . ")')"
         call SlimvSwankResponse()
-        if s:SinceVersion( '2011-12-04' )
-            execute s:py_cmd . "swank_require('swank-repl')"
-            call SlimvSwankResponse()
-        endif
         if s:SinceVersion( '2008-12-23' )
             call SlimvCommandGetResponse( ':create-repl', s:py_cmd . 'swank_create_repl()', g:slimv_timeout )
         endif
