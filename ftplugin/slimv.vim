@@ -3405,7 +3405,7 @@ function! SlimvLookup( word )
             else
                 " On Linux it's not easy to determine the default browser
                 if executable( 'xdg-open' )
-                    silent execute '! xdg-open ' . page . ' &'
+                    silent execute '! xdg-open ' . page . ' >& /dev/null &'
                 else
                     " xdg-open not installed, ask help from Python webbrowser package
                     let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
