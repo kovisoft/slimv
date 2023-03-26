@@ -3402,13 +3402,18 @@ function! SlimvLookup( word )
                 " Run the program associated with the .html extension
                 silent execute '! start ' . page
             else
-                " On Linux it's not easy to determine the default browser
-                if executable( 'xdg-open' )
-                    silent execute '! xdg-open ' . page . ' >& /dev/null &'
+                if g:slimv_osx
+                    " Open in the application associated with the URL scheme
+                    silent execute '! open ' . page
                 else
-                    " xdg-open not installed, ask help from Python webbrowser package
-                    let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
-                    silent execute '! python -c "' . pycmd . '"'
+                    " On Linux it's not easy to determine the default browser
+                    if executable( 'xdg-open' )
+                        silent execute '! xdg-open ' . page . ' >& /dev/null &'
+                    else
+                        " xdg-open not installed, ask help from Python webbrowser package
+                        let pycmd = "import webbrowser; webbrowser.open('" . page . "')"
+                        silent execute '! python -c "' . pycmd . '"'
+                    endif
                 endif
             endif
         endif
