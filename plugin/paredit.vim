@@ -98,7 +98,7 @@ function! PareditMapKeys()
     inoremap <buffer> <expr>   <BS>         PareditBackspace(0)
     inoremap <buffer> <expr>   <C-h>        PareditBackspace(0)
     inoremap <buffer> <expr>   <Del>        PareditDel()
-    if &ft =~ s:fts_balancing_all_brackets && g:paredit_smartjump
+    if b:balancing_all_brackets && g:paredit_smartjump
         noremap  <buffer> <silent> (            :<C-U>call PareditSmartJumpOpening(0)<CR>
         noremap  <buffer> <silent> )            :<C-U>call PareditSmartJumpClosing(0)<CR>
         vnoremap <buffer> <silent> (            <Esc>:<C-U>call PareditSmartJumpOpening(1)<CR>
@@ -143,7 +143,7 @@ function! PareditMapKeys()
     execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Up>    d[(:<C-U>call PareditSplice()<CR>'
     execute 'nmap     <buffer> <silent> ' . g:paredit_leader.'<Down>  d])%:<C-U>call PareditSplice()<CR>'
     call RepeatableNNoRemap(g:paredit_leader . 'I', ':<C-U>call PareditRaise()')
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         inoremap <buffer> <expr>   [            PareditInsertOpening('[',']')
         inoremap <buffer> <silent> ]            <C-R>=PareditInsertClosing('[',']')<CR>
         inoremap <buffer> <expr>   {            PareditInsertOpening('{','}')
@@ -224,7 +224,7 @@ function! PareditUnmapKeys()
     silent! unmap  <buffer> cb
     silent! unmap  <buffer> ciw
     silent! unmap  <buffer> caw
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         silent! iunmap <buffer> [
         silent! iunmap <buffer> ]
         silent! iunmap <buffer> {
@@ -251,11 +251,30 @@ function! PareditUnmapKeys()
 endfunction
 
 " Buffer specific initialization
+function! PareditInitBalancingAllBracketsBuffer()
+  let b:balancing_all_brackets = 1
+  call PareditInitBuffer()
+endfunction
+
+" Buffer specific initialization
 function! PareditInitBuffer()
     let b:paredit_init = 1
+
+    " Allow for per buffer override value for balancing_all_backets behavior
+    " to be set in additon to the filetypes that support it.
+    " if ever explicitly unset, and the buffer is re-inited, make sure we keep
+    " the pre-existing behavior by falling back to turning it on for the
+    " filetypes that balancing_all_brackets is set for at the plugin level.
+
+    if exists("b:balancing_all_backets")
+      let b:balancing_all_brackets = b:balancing_all_brackets || (&ft =~ s:fts_balancing_all_brackets)
+    else
+      let b:balancing_all_brackets = (&ft =~ s:fts_balancing_all_brackets)
+    endif
+
     " in case they are accidentally removed
     " Also define regular expressions to identify special characters used by paredit
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         let b:any_matched_char   = '(\|)\|\[\|\]\|{\|}\|\"'
         let b:any_matched_pair   = '()\|\[\]\|{}\|\"\"'
         let b:any_opening_char   = '(\|\[\|{'
@@ -313,7 +332,7 @@ function! s:SetKeyword()
         " remove trailing ^ because it will be added as chr 94
         setlocal iskeyword-=^
     endif
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&
     else
         setlocal iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94,~,#,\|,&,.,{,},[,]
@@ -659,7 +678,7 @@ function! s:IsBalanced()
         return 0
     endif
 
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         if line[c-1] == '['
             let b1 = searchpair( '\[', '', '\]', 'brnmWc', 's:SkipExpr()', matchb )
             let b2 = searchpair( '\[', '', '\]',  'rnmW' , 's:SkipExpr()', matchf )
@@ -756,7 +775,7 @@ function! s:Unbalanced( matched )
     while 1
         let matched = tmp
         let tmp = substitute( tmp, '(\(\s*\))',   ' \1 ', 'g')
-        if &ft =~ s:fts_balancing_all_brackets
+        if b:balancing_all_brackets
             let tmp = substitute( tmp, '\[\(\s*\)\]', ' \1 ', 'g')
             let tmp = substitute( tmp, '{\(\s*\)}',   ' \1 ', 'g')
         endif
@@ -764,7 +783,7 @@ function! s:Unbalanced( matched )
         if tmp == matched
             " All paired chars eliminated
             let tmp = substitute( tmp, ')\(\s*\)(',   ' \1 ', 'g')
-            if &ft =~ s:fts_balancing_all_brackets
+            if b:balancing_all_brackets
                 let tmp = substitute( tmp, '\]\(\s*\)\[', ' \1 ', 'g')
                 let tmp = substitute( tmp, '}\(\s*\){',   ' \1 ', 'g')
             endif
@@ -945,7 +964,7 @@ function! s:ReGatherUp()
             normal! ddk
         endwhile
         normal! Jl
-    elseif g:paredit_electric_return && getline('.') =~ '^\s*\(\]\|}\)' && &ft =~ s:fts_balancing_all_brackets
+    elseif g:paredit_electric_return && getline('.') =~ '^\s*\(\]\|}\)' && b:balancing_all_brackets
         " Re-gather electric returns in the current line for ']' and '}'
         normal! k
         while getline( line('.') ) =~ '^\s*$'
@@ -1010,7 +1029,7 @@ function! PareditInsertClosing( open, close )
             let &ve = save_ve
             return retval
         endif
-        if len(nextline) > 0 && nextline[0] =~ '\]\|}' && &ft =~ s:fts_balancing_all_brackets
+        if len(nextline) > 0 && nextline[0] =~ '\]\|}' && b:balancing_all_brackets
             " Re-gather electric returns in the line of the closing ']' or '}'
             call setline( line('.'), substitute( line, '\s*$', '', 'g' ) )
             normal! Jxl
@@ -1693,7 +1712,7 @@ function! s:FindClosing()
     endif
     call setpos( '.', [0, l, c, 0] )
 
-    if &ft =~ s:fts_balancing_all_brackets
+    if b:balancing_all_brackets
         call PareditFindClosing( '[', ']', 0 )
         let lp = line( '.' )
         let cp = col( '.' )
