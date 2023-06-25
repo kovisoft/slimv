@@ -1,0 +1,5 @@
+# Set default behaviour to automatic
+* text=auto
+
+# Ensure ELISP files (i.e. slime.el) use LF endings on all platforms
+*.el text eol=lf
