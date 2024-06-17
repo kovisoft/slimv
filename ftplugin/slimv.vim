@@ -3323,11 +3323,10 @@ function! SlimvFindSymbol( word, exact, all, db, root, init )
     endif
     let lst = a:init
     let i = 0
-    let w = tolower( a:word )
     if a:exact
         while i < len( a:db )
             " Try to find an exact match
-            if a:db[i][0] == w
+            if a:db[i][0] ==? a:word
                 " No reason to check a:all here
                 return [a:db[i][0], a:root . a:db[i][1]]
             endif
@@ -3336,8 +3335,8 @@ function! SlimvFindSymbol( word, exact, all, db, root, init )
     else
         while i < len( a:db )
             " Try to find the symbol starting with the given word
-            let w2 = escape( w, '~' )
-            if match( a:db[i][0], w2 ) == 0
+            let w = escape( a:word, '~' ).'\c'
+            if match( a:db[i][0], w ) == 0
                 if a:all
                     call add( lst, a:db[i][0] )
                 else
