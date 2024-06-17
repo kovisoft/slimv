@@ -3335,7 +3335,7 @@ function! SlimvFindSymbol( word, exact, all, db, root, init )
     else
         while i < len( a:db )
             " Try to find the symbol starting with the given word
-            let w = escape( a:word, '~' )..'\c'
+            let w = escape( a:word, '~' ).'\c'
             if match( a:db[i][0], w ) == 0
                 if a:all
                     call add( lst, a:db[i][0] )
