@@ -1222,8 +1222,8 @@ endfunction
 " Select bottom level form the cursor is inside and copy it to register 's'
 function! SlimvSelectForm( extended )
     if SlimvGetFiletype() == 'r'
-        silent! normal va(
-        silent! normal "sY
+        silent! normal! va(
+        silent! normal! "sY
         return 1
     endif
     " Search the opening '(' if we are standing on a special form prefix character
@@ -1238,10 +1238,10 @@ function! SlimvSelectForm( extended )
     if getline( '.' )[c] != '('
         call searchpair( '(', '', ')', 'bW', s:skip_sc )
     endif
-    silent! normal v
+    silent! normal! v
     call searchpair( '(', '', ')', 'W', s:skip_sc )
     if &selection == 'exclusive' 
-        silent! normal l
+        silent! normal! l
     endif
     let p1 = getpos('.')
     normal! o
@@ -1288,7 +1288,7 @@ function! SlimvSelectDefun()
     call SlimvFindDefunStart()
     if SlimvGetFiletype() == 'r'
         " The cursor must be on the enclosing paren character
-        silent! normal v%"sY
+        silent! normal! v%"sY
         return 1
     else
         return SlimvSelectForm( 1 )
@@ -2267,7 +2267,7 @@ function! SlimvHandleEnterSldb()
         endif
         if foldlevel('.')
             " With a fold just toggle visibility
-            normal za
+            normal! za
             return
         endif
         let item = matchstr( line, s:frame_def )
