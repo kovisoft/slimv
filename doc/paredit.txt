@@ -1,4 +1,4 @@
-*paredit.txt*                   Paredit              Last Change: 05 Apr 2021
+*paredit.txt*                   Paredit              Last Change: 17 Nov 2024
 
 Paredit Mode for Vim                                  *paredit* *slimv-paredit*
                                Version 0.9.14
@@ -471,7 +471,10 @@ There is a separate |g:slimv_leader| option for the general Slimv keybindings.
 
                                                          *g:paredit_matchlines*
 Number of lines to look backward and forward when checking if the current
-top level form is balanced in paredit mode. Default is 100.
+top level form is balanced in paredit mode. Default is 200.
+Please note that setting this value too high may cause performance issues,
+while setting it too low may cause parentheses matching to break in files
+containing large forms.
 
                                                                *g:paredit_mode*
 If nonzero then paredit mode is switched on, i.e. the plugin tries to keep the
