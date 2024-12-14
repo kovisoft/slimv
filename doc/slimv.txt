@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 22 Aug 2021
+*slimv.txt*                    Slimv                 Last Change: 14 Dec 2024
 
 Slimv                                                                  *slimv*
                                Version 0.9.14
@@ -155,6 +155,8 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_cljapi_user_root|   Base URL for the user defined Clojure API
                              extension.
 
+|g:slimv_completions|        Completion method to use.
+
 |g:slimv_ctags|              OS command to generate tags file.
 
 |g:slimv_disable_clojure|    Disable Slimv for Clojure files.
@@ -218,6 +220,7 @@ For the Swank options plese visit |swank-configuration|.
 |g:slimv_repl_wrap|          Set wrap mode for the REPL buffer.
 
 |g:slimv_simple_compl|       Use simple completion instead of fuzzy completion.
+                             Obsolete, use |g:slimv_completions| instead.
 
 |g:slimv_sldb_name|          Name of the SLDB buffer.
 
@@ -647,10 +650,22 @@ flet, labels, macrolet. Setting it to a high value may slow down indenting.
                                                               *g:slimv_balloon*
 Specifies if describe tooltips are on (see |swank-describe|).
 
-                                                         *g:slimv_simple_compl*
-If set to 1, swank:simple-completion is used. By default the fuzzy completion
-is active, so that "mvb<TAB>" expands to "multiple-value-bind"
+                                                          *g:slimv_completions*
+This option defines the completion method used by the swank server.
+If set to 'simple' then swank:simple-completions is used.
+If set to 'fuzzy' then swank:fuzzy-completions is used.
+    Fuzzy completion expands e.g. "mvb<TAB>" to "multiple-value-bind".
+If the option is undefined or set to any value excepth the above two then
+swank:completions is used. This is the default behavior. Please note that
+neither simple nor fuzzy completion handles local-nicknamed packages.
 (see |swank-completions|).
+
+Example:
+    let g:slimv_completions = 'fuzzy'
+
+                                                         *g:slimv_simple_compl*
+If set to 1 then swank:simple-completions is used. This option is obsolete,
+kept for backward compatibility only, use |g:slimv_completions| instead.
 
                                                             *g:slimv_clhs_root*
                                                           *g:slimv_cljapi_root*
@@ -1028,8 +1043,7 @@ The keyboard shortcut for completion is <Tab>. This brings up the completions
 popup menu if there are multiple choices. In the popup menu subsequent <Tab>
 keypresses select the next possible completion.
 
-Option |g:slimv_simple_compl| determines whether simple or fuzzy completion
-is used. Default is fuzzy completion.
+Option |g:slimv_completions| determines the completion method to be used.
 
 Note: completions are not displayed when Slimv is not connected to the
 SWANK server. In this case the Hyperspec database is used for symbol lookup.
@@ -1146,6 +1160,7 @@ currently implemented in the Slimv SWANK client.
   :indentation-update
   swank:compile-file-for-emacs
   swank:compile-string-for-emacs
+  swank:completions
   swank:connection-info
   swank:create-repl
   swank:debug-nth-thread

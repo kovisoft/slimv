@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  25 Mar 2023
+# Last Change:  14 Dec 2024
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -848,7 +848,7 @@ def swank_listen():
                             elif element == ':compilation-result':
                                 retval = retval + new_line(retval) + swank_parse_compile(params) + get_prompt()
                             else:
-                                if action.name == ':simple-completions':
+                                if action.name == ':completions' or action.name == ':simple-completions':
                                     if type(params[0]) == list and len(params[0]) > 0 and type(params[0][0]) == str and params[0][0] != 'nil':
                                         compl = "\n".join(params[0])
                                         retval = retval + compl.replace('"', '')
@@ -1092,6 +1092,10 @@ def swank_op_arglist(op):
     swank_rex(':operator-arglist', cmd, pkg, 't')
 
 def swank_completions(symbol):
+    cmd = '(swank:completions "' + symbol + '" ' + get_swank_package() + ')'
+    swank_rex(':completions', cmd, 'nil', 't')
+
+def swank_simple_completions(symbol):
     cmd = '(swank:simple-completions "' + symbol + '" ' + get_swank_package() + ')'
     swank_rex(':simple-completions', cmd, 'nil', 't')
 

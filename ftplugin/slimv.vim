@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  19 Feb 2023
+" Last Change:  14 Dec 2024
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -274,8 +274,13 @@ if !exists( 'g:slimv_balloon' )
 endif
 
 " Shall we use simple or fuzzy completion?
-if !exists( 'g:slimv_simple_compl' )
-    let g:slimv_simple_compl = 0
+" Obsolete, keeping for backward compatibility, use g:slimv_completions instead
+if exists( 'g:slimv_simple_compl' )
+    if g:slimv_simple_compl == 0
+        let g:slimv_completions = 'simple'
+    else
+        let g:slimv_completions = 'fuzzy'
+    endif
 endif
 
 " Custom <Leader> for the Slimv plugin
@@ -1412,7 +1417,7 @@ function! SlimvConnectSwank()
         if SlimvGetFiletype() == 'lisp'
             let contribs = 'swank-asdf swank-package-fu ' . contribs
         endif
-        if g:slimv_simple_compl == 0
+        if exists( 'g:slimv_completions' ) && g:slimv_completions == 'fuzzy'
             let contribs = contribs . ' swank-fuzzy'
         endif
         if s:SinceVersion( '2011-12-04' )
@@ -3442,10 +3447,12 @@ function! SlimvComplete( base )
         endif
 
         call SlimvFindPackage()
-        if g:slimv_simple_compl
-            let msg = SlimvCommandGetResponse( ':simple-completions', s:py_cmd . 'swank_completions("' . a:base . '")', 0 )
-        else
+        if exists( 'g:slimv_completions' ) && g:slimv_completions == 'simple'
+            let msg = SlimvCommandGetResponse( ':simple-completions', s:py_cmd . 'swank_simple_completions("' . a:base . '")', 0 )
+        elseif exists( 'g:slimv_completions' ) && g:slimv_completions == 'fuzzy'
             let msg = SlimvCommandGetResponse( ':fuzzy-completions', s:py_cmd . 'swank_fuzzy_completions("' . a:base . '")', 0 )
+        else
+            let msg = SlimvCommandGetResponse( ':completions', s:py_cmd . 'swank_completions("' . a:base . '")', 0 )
         endif
 
         " Restore window and buffer, because it is not allowed to change buffer here
