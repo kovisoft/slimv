@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  14 Dec 2024
+# Last Change:  30 Dec 2024
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -720,7 +720,7 @@ def swank_listen():
                     # REPL has new output to display
                     if len(r) > 2 and r[2] == ':repl-result':
                         retval = retval + new_line(retval)
-                    if len(r) > 3 and r[2] == 'nil':
+                    if len(r) > 3 and r[3] != '' and r[3] != 'nil':
                         # newer swank versions require that we acknowledge the :write-string
                         if len(swank_version) < 8 and swank_version >= '2.28':
                             swank_send('(:write-done ' + r[3] + ')')
@@ -778,6 +778,14 @@ def swank_listen():
                         logprint('params: ' + str(params))
                         if params == []:
                             params = 'nil'
+                        if action.name == ':autodoc' and type(params) == list and len(params) > 0 and type(params[0]) == str:
+                            # autodoc result is received in list, we are interested in the actual result string
+                            params = params[0]
+                            if params == ':not-available':
+                                params = 'nil'
+                            else:
+                                params = params.replace('===> ', '')
+                                params = params.replace(' <===', '')
                         if type(params) == str:
                             element = params.lower()
                             to_ignore = [':frame-call', ':quit-inspector', ':kill-thread', ':debug-thread']
@@ -1090,6 +1098,12 @@ def swank_op_arglist(op):
     pkg = get_swank_package()
     cmd = '(swank:operator-arglist "' + op + '" ' + pkg + ')'
     swank_rex(':operator-arglist', cmd, pkg, 't')
+
+def swank_autodoc(op):
+    pkg = get_swank_package()
+    # Pass a high right margin value, we want a single line output
+    cmd = "(swank:autodoc '(" + '"' + op + '" swank::%cursor-marker%) :print-right-margin ' + '1000' + ')'
+    swank_rex(':autodoc', cmd, pkg, 't')
 
 def swank_completions(symbol):
     cmd = '(swank:completions "' + symbol + '" ' + get_swank_package() + ')'

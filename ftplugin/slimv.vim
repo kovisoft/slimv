@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  14 Dec 2024
+" Last Change:  30 Dec 2024
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2650,15 +2650,23 @@ function! SlimvArglist( ... )
         if arg != ''
             " Ask function argument list from SWANK
             call SlimvFindPackage()
-            let msg = SlimvCommandGetResponse( ':operator-arglist', s:py_cmd . 'swank_op_arglist("' . arg . '")', 0 )
+            let use_autodoc = (SlimvGetFiletype() == 'lisp') ? 1 : 0 
+            if use_autodoc
+                let msg = SlimvCommandGetResponse( ':autodoc', s:py_cmd . 'swank_autodoc("' . arg . '")', 0 )
+            else
+                let msg = SlimvCommandGetResponse( ':operator-arglist', s:py_cmd . 'swank_op_arglist("' . arg . '")', 0 )
+            endif
             if msg != ''
                 " Print argument list in status line with newlines removed.
                 " Disable showmode until the next ESC to prevent
                 " immeditate overwriting by the "-- INSERT --" text.
                 set noshowmode
                 let msg = substitute( msg, "\n", "", "g" )
+                let msg = substitute( msg, "\\s\\+", " ", "g" )
                 redraw
-                if SlimvGetFiletype() == 'r'
+                if use_autodoc
+                    call SlimvShortEcho( msg )
+                elseif SlimvGetFiletype() == 'r'
                     call SlimvShortEcho( arg . '(' . msg . ')' )
                 elseif match( msg, "\\V" . arg ) != 1 " Use \V ('very nomagic') for exact string match instead of regex 
                     " Function name is not received from REPL
