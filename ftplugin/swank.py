@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  30 Dec 2024
+# Last Change:  02 Jan 2025
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -27,8 +27,8 @@ input_port      = 4005
 output_port     = 4006
 lenbytes        = 6             # Message length is encoded in this number of bytes
 maxmessages     = 50            # Maximum number of messages to receive in one listening session
-recv_timeout    = 0.001         # socket recv timeout in seconds
-listen_retries  = 10            # number of retries if no response in swank_listen()
+recv_timeout    = 0.01          # socket recv timeout in seconds
+listen_retries  = 100           # number of retries if no response in swank_listen()
 sock            = None          # Swank socket object
 id              = 0             # Message id
 debug           = False

@@ -1,4 +1,4 @@
-*slimv.txt*                    Slimv                 Last Change: 14 Dec 2024
+*slimv.txt*                    Slimv                 Last Change: 02 Jan 2025
 
 Slimv                                                                  *slimv*
                                Version 0.9.14
@@ -549,7 +549,7 @@ value for 'updatetime' is restored when there is no REPL output.
 The g:slimv_updatetime option defines the alternative (lower) value for
 'updatetime' during REPL refresh. If you don't want that Slimv changes
 'updatetime', then set g:slimv_updatetime to zero.
-The default value is 200 (=0.2 sec).
+The default value is 100 (=0.1 sec).
 
                                                               *g:slimv_package*
 If nonzero then Slimv package/namespace handling is switched on. Please find

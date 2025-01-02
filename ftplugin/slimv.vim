@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  30 Dec 2024
+" Last Change:  02 Jan 2025
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -220,7 +220,7 @@ endif
 
 " Alternative value (in msec) for 'updatetime' while the REPL buffer is changing
 if !exists( 'g:slimv_updatetime' )
-    let g:slimv_updatetime = 500
+    let g:slimv_updatetime = 100
 endif
 
 " Slimv keybinding set (0 = no keybindings)
