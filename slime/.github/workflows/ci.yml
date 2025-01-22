@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+    - '**.md'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+        lisp: [ccl, sbcl]
+        os: [ubuntu-latest]
+        emacs_version: [24-5, 25-3, 26-3, 27-1, snapshot]
+      fail-fast: false
+    steps:
+
+    - uses: cachix/install-nix-action@v25
+      with:
+        nix_path: nixpkgs=channel:nixos-23.11
+    - uses: purcell/setup-emacs@v6.0
+      with:
+        version: ${{ matrix.emacs_version }}
+    - uses: actions/checkout@v2
+    - run: nix-env -i ${{ matrix.lisp }} -f '<nixpkgs>'
+    - run: make LISP="${{ matrix.lisp }}" check

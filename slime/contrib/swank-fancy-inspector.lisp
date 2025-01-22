@@ -39,7 +39,7 @@
         ;; Function
         (if (fboundp symbol)
             (append (if (macro-function symbol)
-                        `("It a macro with macro-function: "
+                        `("It is a macro with macro-function: "
                           (:value ,(macro-function symbol)))
                         `("It is a function: "
                           (:value ,(symbol-function symbol))))
@@ -727,6 +727,7 @@ SPECIAL-OPERATOR groups."
 (defmethod emacs-inspect ((package package))
   (let ((package-name         (package-name package))
         (package-nicknames    (package-nicknames package))
+        (local-nicknames      (package-local-nicknames package))
         (package-use-list     (package-use-list package))
         (package-used-by-list (package-used-by-list package))
         (shadowed-symbols     (package-shadowing-symbols package))
@@ -763,7 +764,10 @@ SPECIAL-OPERATOR groups."
     `("" ;; dummy to preserve indentation.
       "Name: " (:value ,package-name) (:newline)
 
-      "Nick names: " ,@(common-seperated-spec package-nicknames) (:newline)
+      "Nicknames: " ,@(common-seperated-spec package-nicknames) (:newline)
+
+      ,@(when local-nicknames
+          `("Package-local nicknames: " (:value ,local-nicknames) (:newline)))
 
       ,@(when (documentation package t)
           `("Documentation:" (:newline)

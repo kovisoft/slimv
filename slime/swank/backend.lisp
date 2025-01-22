@@ -10,6 +10,13 @@
 ;;; separately for each Lisp. Each is declared as a generic function
 ;;; for which swank-<implementation>.lisp provides methods.
 
+(in-package swank)
+
+;;; Forward references
+(defvar *communication-style*)
+(defvar *swank-debugger-condition* nil
+  "The condition being debugged.")
+
 (in-package swank/backend)
 
 
@@ -283,7 +290,7 @@ form suitable for testing with #+."
                (t start)))
         ((<= code #x7ff) (utf8-encode-aux code buffer start end 2))
         ((<= #xd800 code #xdfff)
-         (%utf8-encode (code-char #xFFFD) ;; Replacement_Character
+         (%utf8-encode #xFFFD ;; Replacement_Character
                        buffer start end))
         ((<= code #xffff) (utf8-encode-aux code buffer start end 3))
         ((<= code #x1fffff) (utf8-encode-aux code buffer start end 4))
@@ -477,10 +484,6 @@ This is used to resolve filenames without directory component."
   "Call FN with hooks to handle special syntax."
   (funcall fn))
 
-(definterface default-readtable-alist ()
-  "Return a suitable initial value for SWANK:*READTABLE-ALIST*."
-  '())
-
 
 ;;;; Packages
 
@@ -637,12 +640,12 @@ The stream calls READ-STRING when input is needed.")
 
 (defvar *auto-flush-interval* 0.2)
 
-(defun auto-flush-loop (stream interval &optional receive)
+(defun auto-flush-loop (stream interval &optional receive (flush #'force-output))
   (loop
    (when (not (and (open-stream-p stream)
                    (output-stream-p stream)))
      (return nil))
-   (force-output stream)
+   (funcall flush stream)
    (when receive
      (receive-if #'identity))
    (sleep interval)))
@@ -651,6 +654,10 @@ The stream calls READ-STRING when input is needed.")
   "Make an auto-flush thread"
   (spawn (lambda () (auto-flush-loop stream *auto-flush-interval* nil))
          :name "auto-flush-thread"))
+
+(definterface really-finish-output (stream)
+  "FINISH-OUTPUT or more"
+  (finish-output stream))
 
 
 ;;;; Documentation
@@ -805,9 +812,9 @@ forms."
             (compile nil `(lambda () ,expansion))))
       (values macro-forms compiler-macro-forms))))
 
-(definterface format-string-expand (control-string)
+(definterface format-string-expand (control-string &optional env)
   "Expand the format string CONTROL-STRING."
-  (macroexpand `(formatter ,control-string)))
+  (macroexpand `(formatter ,control-string) env))
 
 (definterface describe-symbol-for-emacs (symbol)
    "Return a property list describing SYMBOL.
@@ -932,7 +939,11 @@ relatively to the frame associated to FRAME-NUMBER.")
 (definterface disassemble-frame (frame-number)
   "Disassemble the code for the FRAME-NUMBER.
 The output should be written to standard output.
-FRAME-NUMBER is a non-negative integer.")
+FRAME-NUMBER is a non-negative integer."
+  (disassemble (frame-function frame-number)))
+
+(definterface frame-function (frame-number)
+  "Return the frame function.")
 
 (definterface eval-in-frame (form frame-number)
    "Evaluate a Lisp form in the lexical context of a stack frame
@@ -1213,16 +1224,6 @@ inserted into the buffer as is, or a list of the form:
  after calling the lambda.
 "))
 
-(defmethod emacs-inspect ((object t))
-  "Generic method for inspecting any kind of object.
-
-Since we don't know how to deal with OBJECT we simply dump the
-output of CL:DESCRIBE."
-   `("Type: " (:value ,(type-of object)) (:newline)
-     "Don't know how to inspect the object, dumping output of CL:DESCRIBE:"
-     (:newline) (:newline)
-     ,(with-output-to-string (desc) (describe object desc))))
-
 (definterface eval-context (object)
   "Return a list of bindings corresponding to OBJECT's slots."
   (declare (ignore object))
@@ -1412,6 +1413,11 @@ but that thread may hold it more than once."
             (type function function))
    (funcall function))
 
+(defmacro with-lock (lock &body body)
+  `(call-with-lock-held ,lock
+                        (lambda ()
+                          ,@body)))
+
 
 ;;;; Weak datastructures
 
@@ -1579,3 +1585,7 @@ Implementations intercept calls to SPEC and call, in this order:
                 nil)
                (prop-value t)
                (t nil)))))
+
+(definterface augment-features ()
+  "*features* or something else "
+  *features*)

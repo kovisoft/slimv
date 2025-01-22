@@ -41,8 +41,13 @@
   (excl:string-to-octets s :external-format utf8-ef
                          :null-terminate nil))
 
-(defimplementation utf8-to-string (u)
-  (excl:octets-to-string u :external-format utf8-ef))
+(defimplementation utf8-to-string (octets)
+  (let ((string (make-string (length octets))))
+    (multiple-value-bind (string chars-copied)
+        ;; Allegro 10.1 stops processing octets when it sees a zero,
+        ;; unless it is copying into an existing string.
+        (excl:octets-to-string octets :string string :external-format utf8-ef)
+      (subseq string 0 chars-copied))))
 
 
 ;;;; TCP Server
@@ -107,7 +112,16 @@
 ;;;; Misc
 
 (defimplementation arglist (symbol)
-  (handler-case (excl:arglist symbol)
+  (handler-case
+      (let ((lambda-expression (ignore-errors
+                                (function-lambda-expression
+                                 (symbol-function symbol)))))
+        ;; LAMBDA-EXPRESSION, if available, has the default values of
+        ;; optional and keyword arguments of compiled functions while
+        ;; EXCL:ARGLIST doesn't.
+        (if lambda-expression
+            (second lambda-expression)
+            (excl:arglist symbol)))
     (simple-error () :not-available)))
 
 (defimplementation macroexpand-all (form &optional env)
@@ -1084,3 +1098,9 @@ to do this, this factors in the length of the inserted header itself."
 
 (defimplementation wrapped-p (spec indicator)
   (getf (excl:fwrap-order (process-fspec-for-allegro spec)) indicator))
+
+;;;; Packages
+
+#+package-local-nicknames
+(defimplementation package-local-nicknames (package)
+  (excl:package-local-nicknames package))

@@ -61,12 +61,6 @@
 
 ;;; package: (swank)
 
-;; Modified for Slimv:
-;; - load options
-;; - remove extension in compile-file-for-emacs
-(load-option 'format)
-(load-option 'sos)
-
 (if (< (car (get-subsystem-version "Release"))
        '9)
     (error "This file requires MIT Scheme Release 9"))
@@ -116,7 +110,7 @@
 
 (define (with-keyboard-interrupt-handler fun)
   (define (set-^G-handler exp)
-    (eval `(vector-set! keyboard-interrupt-vector (char->integer #\G) ,exp)
+    (eval `(vector-set! keyboard-interrupt-vector (char->ascii #\G) ,exp)
 	  (->environment '(runtime interrupt-handler))))
   (dynamic-wind
       (lambda () #f)
@@ -183,9 +177,8 @@
     ((:emacs-rex) (apply emacs-rex socket level (cdr request)))))
 
 (define (swank-package)
-  (if (name->package '(swank))
-      '(swank)
-      '(user)))
+  (or (name->package '(swank))
+      (name->package '(user))))
 
 (define *buffer-package* #f)
 (define (find-buffer-package name)
@@ -873,11 +866,5 @@
   ;;(apply format log-port fstring args)
   #f
   )
-
-;; Modified for Slimv:
-;; - restart swank server in a loop
-(let loop ()
- (swank 4005)
- (loop))
 
 ;;; swank-mit-scheme.scm ends here
