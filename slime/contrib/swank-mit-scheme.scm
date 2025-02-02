@@ -61,6 +61,12 @@
 
 ;;; package: (swank)
 
+;; Modified for Slimv:
+;; - load options
+;; - remove extension in compile-file-for-emacs
+(load-option 'format)
+(load-option 'sos)
+
 (if (< (car (get-subsystem-version "Release"))
        '9)
     (error "This file requires MIT Scheme Release 9"))
@@ -866,5 +872,11 @@
   ;;(apply format log-port fstring args)
   #f
   )
+
+;; Modified for Slimv:
+;; - restart swank server in a loop
+(let loop ()
+ (swank 4005)
+ (loop))
 
 ;;; swank-mit-scheme.scm ends here
