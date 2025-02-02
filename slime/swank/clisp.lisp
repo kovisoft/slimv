@@ -251,13 +251,19 @@
 
 ;;;; Swank functions
 
+(defimplementation function-name (f)
+  (check-type f function)
+  (system::function-name f))
+
 (defimplementation arglist (fname)
   (block nil
     (or (ignore-errors
-          (let ((exp (function-lambda-expression fname)))
-            (and exp (return (second exp)))))
-        (ignore-errors
           (return (ext:arglist fname)))
+        ;; For traced functions this returns the entire encapsulating
+        ;; lambda.
+        (ignore-errors
+         (let ((exp (function-lambda-expression fname)))
+           (and exp (return (second exp)))))
         :not-available)))
 
 (defimplementation macroexpand-all (form &optional env)
@@ -928,3 +934,9 @@ Execute BODY with NAME's function slot set to FUNCTION."
                 ,@(if restart-function 
                       `((:init-function ,restart-function))))))
     (apply #'ext:saveinitmem args)))
+
+(pushnew (lambda ()
+           (when *log-output*
+             (setf *log-output* nil))
+           (swank::init-log-output))
+         custom:*init-hooks*)

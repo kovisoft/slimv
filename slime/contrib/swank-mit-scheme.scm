@@ -116,7 +116,7 @@
 
 (define (with-keyboard-interrupt-handler fun)
   (define (set-^G-handler exp)
-    (eval `(vector-set! keyboard-interrupt-vector (char->integer #\G) ,exp)
+    (eval `(vector-set! keyboard-interrupt-vector (char->ascii #\G) ,exp)
 	  (->environment '(runtime interrupt-handler))))
   (dynamic-wind
       (lambda () #f)
@@ -183,9 +183,8 @@
     ((:emacs-rex) (apply emacs-rex socket level (cdr request)))))
 
 (define (swank-package)
-  (if (name->package '(swank))
-      '(swank)
-      '(user)))
+  (or (name->package '(swank))
+      (name->package '(user))))
 
 (define *buffer-package* #f)
 (define (find-buffer-package name)

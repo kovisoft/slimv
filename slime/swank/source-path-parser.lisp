@@ -181,6 +181,7 @@ Return the form and the source-map."
   (multiple-value-bind (*readtable* *package*) (guess-reader-state stream)
     (let (#+sbcl
           (*features* (append *features*
+                              '(:sb-xc)
                               (symbol-value (find-symbol "+INTERNAL-FEATURES+" 'sb-impl)))))
       (skip-toplevel-forms n stream)
       (read-and-record-source-map stream))))
@@ -220,11 +221,19 @@ Return the form and the source-map."
 (defgeneric sexp-in-bounds-p (sexp i)
   (:method ((list list) i)
     (< i (loop for e on list
+               count t
+               if (not (listp (cdr e)))
                count t)))
   (:method ((sexp t) i) nil))
 
-(defgeneric sexp-ref (sexp i)
-  (:method ((s list) i) (elt s i)))
+(defgeneric sexp-ref (sexp n)
+  (:method ((s list) n)
+    (loop for i from 0
+          for e on s
+          when (= i n) return (car e)
+          if (and (= (1+ i) n)
+                  (not (listp (cdr e))))
+          return (cdr e))))
 
 (defun source-path-source-position (path form source-map)
   "Return the start position of PATH from FORM and SOURCE-MAP.  All

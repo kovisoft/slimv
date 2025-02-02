@@ -13,14 +13,6 @@
 
 (in-package swank/clasp)
 
-#+(or)
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (setq swank::*log-output* (open "/tmp/slime.log" :direction :output))
-  (setq swank:*log-events* t))
-
-(defmacro slime-dbg (fmt &rest args)
-  `(swank::log-event "slime-dbg ~a ~a~%" mp:*current-process* (apply #'format nil ,fmt ,args)))
-
 ;; Hard dependencies.
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require 'sockets))
@@ -30,11 +22,18 @@
   (when (probe-file "sys:profile.fas")
     (require :profile)
     (pushnew :profile *features*))
-  (when (probe-file "sys:serve-event")
+  (when (probe-file "sys:src;lisp;modules;serve-event;")
     (require :serve-event)
-    (pushnew :serve-event *features*)))
+    (pushnew :serve-event *features*))
+  (when (find-symbol "TEMPORARY-DIRECTORY" "EXT")
+    (pushnew :temporary-directory *features*)))
 
-(declaim (optimize (debug 3)))
+;;; Compatibility tests
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  ;; xref support (2.4)
+  (defun clasp-with-xref-p ()
+   (with-symbol 'who-calls 'ext)))
 
 ;;; Swank-mop
 
@@ -63,7 +62,11 @@
 			       :type :stream
 			       :protocol :tcp)))
     (setf (sb-bsd-sockets:sockopt-reuse-address socket) t)
-    (sb-bsd-sockets:socket-bind socket (resolve-hostname host) port)
+    (handler-bind
+        ((SB-BSD-SOCKETS:ADDRESS-IN-USE-ERROR (lambda (err)
+                                                (declare (ignore err))
+                                               (invoke-restart 'use-value))))
+      (sb-bsd-sockets:socket-bind socket (resolve-hostname host) port))
     (sb-bsd-sockets:socket-listen socket (or backlog 5))
     socket))
 
@@ -99,7 +102,7 @@
     (fixnum socket)
     (two-way-stream (socket-fd (two-way-stream-input-stream socket)))
     (sb-bsd-sockets:socket (sb-bsd-sockets:socket-file-descriptor socket))
-    (file-stream (si:file-stream-fd socket))))
+    (file-stream (ext:file-stream-file-descriptor socket))))
 
 (defvar *external-format-to-coding-system*
   '((:latin-1
@@ -156,7 +159,7 @@
 
 
 (defimplementation getpid ()
-  (si:getpid))
+  (clasp-posix:getpid))
 
 (defimplementation set-default-directory (directory)
   (ext:chdir (namestring directory))  ; adapts *DEFAULT-PATHNAME-DEFAULTS*.
@@ -166,7 +169,7 @@
   (namestring (ext:getcwd)))
 
 (defimplementation quit-lisp ()
-  (core:quit))
+  (sys:quit))
 
 
 
@@ -224,17 +227,21 @@
     (reader-error                   :read-error)
     (error                          :error)))
 
+(defun %condition-location (origin)
+  ;; NOTE: If we're compiling in a buffer, the origin
+  ;; will already be set up with the offset correctly
+  ;; due to the :source-debug parameters from
+  ;; swank-compile-string (below).
+  (make-file-location
+   (sys:file-scope-pathname
+    (sys:file-scope origin))
+   (sys:source-pos-info-filepos origin)))
+
 (defun condition-location (origin)
-  (if (null origin)
-      (make-error-location "No error location available")
-      ;; NOTE: If we're compiling in a buffer, the origin
-      ;; will already be set up with the offset correctly
-      ;; due to the :source-debug parameters from
-      ;; swank-compile-string (below).
-      (make-file-location
-       (core:file-scope-pathname
-        (core:file-scope origin))
-       (core:source-pos-info-filepos origin))))
+  (typecase origin
+    (null (make-error-location "No error location available"))
+    (cons (%condition-location (car origin)))
+    (t (%condition-location origin))))
 
 (defun signal-compiler-condition (condition origin)
   (signal 'compiler-condition
@@ -256,22 +263,25 @@
       (((or error warning) #'handle-compiler-condition))
     (funcall function)))
 
+(defun mkstemp (name)
+  (ext:mkstemp #+temporary-directory
+               (namestring (make-pathname :name name
+                                          :defaults (ext:temporary-directory)))
+               #-temporary-directory
+               (concatenate 'string "tmp:" name)))
+
 (defimplementation swank-compile-file (input-file output-file
                                        load-p external-format
                                        &key policy)
   (declare (ignore policy))
-  (format t "Compiling file input-file = ~a   output-file = ~a~%" input-file output-file)
-  ;; Ignore the output-file and generate our own
-  (let ((tmp-output-file (compile-file-pathname (si:mkstemp "TMP:clasp-swank-compile-file-"))))
-    (format t "Using tmp-output-file: ~a~%" tmp-output-file)
-    (multiple-value-bind (fasl warnings-p failure-p)
-        (with-compilation-hooks ()
-          (compile-file input-file :output-file tmp-output-file
-                        :external-format external-format))
+  (multiple-value-bind (fasl warnings-p failure-p)
+      (with-compilation-hooks ()
+        (compile-file input-file :output-file output-file
+                                 :external-format external-format))
       (values fasl warnings-p
               (or failure-p
                   (when load-p
-                    (not (load fasl))))))))
+                    (not (load fasl)))))))
 
 (defvar *tmpfile-map* (make-hash-table :test #'equal))
 
@@ -289,15 +299,15 @@
   (with-compilation-hooks ()
     (let ((*buffer-name* buffer)        ; for compilation hooks
           (*buffer-start-position* position))
-      (let ((tmp-file (si:mkstemp "TMP:clasp-swank-tmpfile-"))
+      (let ((tmp-file (mkstemp "clasp-swank-tmpfile-"))
             (fasl-file)
             (warnings-p)
             (failure-p))
         (unwind-protect
-             (with-open-file (tmp-stream tmp-file :direction :output
-                                                  :if-exists :supersede)
-               (write-string string tmp-stream)
-               (finish-output tmp-stream)
+             (progn
+               (with-open-file (tmp-stream tmp-file :direction :output
+                                                    :if-exists :overwrite)
+                 (write-string string tmp-stream))
                (multiple-value-setq (fasl-file warnings-p failure-p)
                  (let ((truename (or filename (note-buffer-tmpfile tmp-file buffer))))
                    (compile-file tmp-file
@@ -317,12 +327,12 @@
 
 (defimplementation arglist (name)
   (multiple-value-bind (arglist foundp)
-      (core:function-lambda-list name)     ;; Uses bc-split
+      (ext:function-lambda-list name)     ;; Uses bc-split
     (if foundp arglist :not-available)))
 
 (defimplementation function-name (f)
   (typecase f
-    (generic-function (clos::generic-function-name f))
+    (generic-function (clos:generic-function-name f))
     (function (ext:compiled-function-name f))))
 
 ;; FIXME
@@ -335,7 +345,6 @@
   (let ((macro-forms '())
         (compiler-macro-forms '())
         (function-quoted-forms '()))
-    (format t "In collect-macro-forms~%")
     (cmp:code-walk
      (lambda (form environment)
        (when (and (consp form)
@@ -346,7 +355,7 @@
                 nil)
                ((macro-function (car form) environment)
                 (push form macro-forms))
-               ((not (eq form (core:compiler-macroexpand-1 form environment)))
+               ((not (eq form (sys:compiler-macroexpand-1 form environment)))
                 (push form compiler-macro-forms))))
        form)
      form environment)
@@ -377,6 +386,24 @@
 (defimplementation type-specifier-p (symbol)
   (or (subtypep nil symbol)
       (not (eq (type-specifier-arglist symbol) :not-available))))
+
+;;; XREF
+
+#+#.(swank/clasp::clasp-with-xref-p)
+(macrolet ((defxref (name &optional (fname name))
+             `(defimplementation ,name (what)
+                (let ((r (,(find-symbol (symbol-name fname) "EXT")
+                          what)))
+                  (loop for (fname . spi) in r
+                        collect (list fname (translate-spi spi)))))))
+  (defxref who-calls)
+  (defxref who-binds)
+  (defxref who-sets)
+  (defxref who-references)
+  (defxref who-macroexpands)
+  (defxref who-specializes who-specializes-directly)
+  (defxref list-callers)
+  (defxref list-callees))
 
 
 ;;; Debugging
@@ -449,13 +476,21 @@
 (defimplementation print-frame (frame stream)
   (clasp-debug:prin1-frame-call frame stream))
 
+(defun translate-spi (spi)
+  (if spi
+      (let ((pathname (clasp-debug:code-source-line-pathname spi)))
+        (if pathname
+            (make-location (list :file (namestring (translate-logical-pathname pathname)))
+                           (list :line (clasp-debug:code-source-line-line-number spi))
+                           '(:align t))
+            nil))
+      nil))
+
 (defimplementation frame-source-location (frame-number)
-  (let ((csl (clasp-debug:frame-source-position (frame-from-number frame-number))))
-    (if (clasp-debug:code-source-line-pathname csl)
-        (make-location (list :file (namestring (clasp-debug:code-source-line-pathname csl)))
-                       (list :line (clasp-debug:code-source-line-line-number csl))
-                       '(:align t))
-        `(:error ,(format nil "No source for frame: ~a" frame-number)))))
+  (or (translate-spi
+       (clasp-debug:frame-source-position
+        (frame-from-number frame-number)))
+      `(:error ,(format nil "No source for frame: ~a" frame-number))))
 
 (defimplementation frame-locals (frame-number)
   (loop for (var . value)
@@ -479,15 +514,31 @@
                     collect `(,var ',value)))
         (progn ,form)))))
 
+(defimplementation activate-stepping (frame)
+  (declare (ignore frame))
+  (core:set-breakstep))
+
+(defimplementation sldb-stepper-condition-p (condition)
+  (typep condition 'clasp-debug:step-form))
+
+(defimplementation sldb-step-into ()
+  (invoke-restart 'clasp-debug:step-into))
+
+(defimplementation sldb-step-next ()
+  (invoke-restart 'clasp-debug:step-over))
+
+(defimplementation sldb-step-out ()
+  ;; FIXME: This stops stepping entirely. Clasp does not have step out yet.
+  (invoke-restart 'continue))
+
 #+clasp-working
 (defimplementation gdb-initial-commands ()
   ;; These signals are used by the GC.
   #+linux '("handle SIGPWR  noprint nostop"
             "handle SIGXCPU noprint nostop"))
 
-#+clasp-working
 (defimplementation command-line-args ()
-  (loop for n from 0 below (si:argc) collect (si:argv n)))
+  (loop for n below (ext:argc) collect (ext:argv n)))
 
 
 ;;;; Inspector
@@ -513,7 +564,7 @@
                  `(:align t)))
 
 (defun translate-location (location)
-  (make-location (list :file (namestring (ext:source-location-pathname location)))
+  (make-location (list :file (namestring (translate-logical-pathname (ext:source-location-pathname location))))
                  (list :position (ext:source-location-offset location))
                  '(:align t)))
 
@@ -586,7 +637,7 @@
       (mp:with-lock (*thread-id-map-lock*)
         ;; Does TARGET-THREAD have an id already?
         (maphash (lambda (id thread-pointer)
-                   (let ((thread (si:weak-pointer-value thread-pointer)))
+                   (let ((thread (ext:weak-pointer-value thread-pointer)))
                      (cond ((not thread)
                             (remhash id *thread-id-map*))
                            ((eq thread target-thread)
@@ -594,14 +645,14 @@
                  *thread-id-map*)
         ;; TARGET-THREAD not found in *THREAD-ID-MAP*
         (let ((id (incf *thread-id-counter*))
-              (thread-pointer (si:make-weak-pointer target-thread)))
+              (thread-pointer (ext:make-weak-pointer target-thread)))
           (setf (gethash id *thread-id-map*) thread-pointer)
           id))))
 
   (defimplementation find-thread (id)
     (mp:with-lock (*thread-id-map-lock*)
       (let* ((thread-ptr (gethash id *thread-id-map*))
-             (thread (and thread-ptr (si:weak-pointer-value thread-ptr))))
+             (thread (and thread-ptr (ext:weak-pointer-value thread-ptr))))
         (unless thread
           (remhash id *thread-id-map*))
         thread)))
@@ -657,56 +708,55 @@
   (defimplementation wake-thread (thread)
     (let* ((mbox (mailbox thread))
            (mutex (mailbox.mutex mbox)))
-      (format t "About to with-lock in wake-thread~%")
       (mp:with-lock (mutex)
-        (format t "In wake-thread~%")
         (mp:condition-variable-broadcast (mailbox.cvar mbox)))))
   
   (defimplementation send (thread message)
     (let* ((mbox (mailbox thread))
            (mutex (mailbox.mutex mbox)))
-      (swank::log-event "clasp.lisp: send message ~a    mutex: ~a~%" message mutex)
-      (swank::log-event "clasp.lisp:    (lock-owner mutex) -> ~a~%" (mp:lock-owner mutex))
-      (swank::log-event "clasp.lisp:    (lock-count mutex) -> ~a~%" (mp:lock-count mutex))
       (mp:with-lock (mutex)
-        (swank::log-event "clasp.lisp:  in with-lock   (lock-owner mutex) -> ~a~%" (mp:lock-owner mutex))
-        (swank::log-event "clasp.lisp:  in with-lock   (lock-count mutex) -> ~a~%" (mp:lock-count mutex))
         (setf (mailbox.queue mbox)
               (nconc (mailbox.queue mbox) (list message)))
-        (swank::log-event "clasp.lisp: send about to broadcast~%")
         (mp:condition-variable-broadcast (mailbox.cvar mbox)))))
 
   
   (defimplementation receive-if (test &optional timeout)
-    (slime-dbg "Entered receive-if")
     (let* ((mbox (mailbox (current-thread)))
            (mutex (mailbox.mutex mbox)))
-      (slime-dbg "receive-if assert")
       (assert (or (not timeout) (eq timeout t)))
       (loop
-         (slime-dbg "receive-if check-slime-interrupts")
          (check-slime-interrupts)
-         (slime-dbg "receive-if with-lock")
          (mp:with-lock (mutex)
            (let* ((q (mailbox.queue mbox))
                   (tail (member-if test q)))
              (when tail
                (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
                (return (car tail))))
-           (slime-dbg "receive-if when (eq")
            (when (eq timeout t) (return (values nil t))) 
-           (slime-dbg "receive-if condition-variable-timedwait")
            (mp:condition-variable-wait (mailbox.cvar mbox) mutex) ; timedwait 0.2
-           (slime-dbg "came out of condition-variable-timedwait")
-           (core:check-pending-interrupts)))))
+           (sys:check-pending-interrupts)))))
 
   ) ; #+threads (progn ...
 
 
-(defmethod emacs-inspect ((object core:cxx-object))
-  (let ((encoded (core:encode object)))
+(defmethod emacs-inspect ((object sys:cxx-object))
+  (let ((encoded (sys:encode object)))
     (loop for (key . value) in encoded
        append (list (string key) ": " (list :value value) (list :newline)))))
 
-(defmethod emacs-inspect ((object core:va-list))
-  (emacs-inspect (core:list-from-va-list object)))
+(defmethod emacs-inspect ((object sys:vaslist))
+  (emacs-inspect (sys:list-from-vaslist object)))
+
+;;; Packages
+
+#+package-local-nicknames
+(defimplementation package-local-nicknames (package)
+  (ext:package-local-nicknames package))
+
+;;; Floating point
+
+(defimplementation float-nan-p (float)
+  (ext:float-nan-p float))
+
+(defimplementation float-infinity-p (float)
+  (ext:float-infinity-p float))
