@@ -1,6 +1,6 @@
 " slimv.vim:    The Superior Lisp Interaction Mode for VIM
 " Version:      0.9.14
-" Last Change:  02 Jan 2025
+" Last Change:  29 Apr 2025
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -2716,7 +2716,10 @@ function! SlimvGetRegion(first, last)
         endif
     endif
     let firstcol = col( "'<" ) - 1
-    let lastcol  = col( "'>" ) - 2
+    let lastcol  = col( "'>" ) - 1
+    if &selection == 'exclusive'
+        let lastcol = lastcol - 1
+    endif
     if lastcol >= 0
         let lines[len(lines)-1] = lines[len(lines)-1][ : lastcol]
     else
