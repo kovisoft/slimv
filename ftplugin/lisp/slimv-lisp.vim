@@ -1,7 +1,7 @@
 " slimv-lisp.vim:
 "               Lisp filetype plugin for Slimv
 " Version:      0.9.13
-" Last Change:  04 May 2014
+" Last Change:  11 Oct 2025
 " Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 " License:      This file is placed in the public domain.
 "               No warranty, express or implied.
@@ -135,17 +135,24 @@ function! SlimvSwankLoader()
         return ''
     endif
 
+    let lisp = g:slimv_lisp
+    if g:slimv_lisp =~ '\s' && g:slimv_lisp !~ '"' && g:slimv_lisp !~ '^\s*ros\s'
+        " Make sure the lisp command is enclosed in double quotes in case it contains whitespaces
+        " Except when using Roswell (e.g. ros run)
+        let lisp = '"' . lisp . '"'
+    endif
+
     " Build proper SWANK loader command for the Lisp implementation used
     if g:slimv_impl == 'sbcl' || g:slimv_impl == 'ecl'
-        return '"' . g:slimv_lisp . '" --load "' . swanks[0] . '"'
+        return lisp . ' --load "' . swanks[0] . '"'
     elseif g:slimv_impl == 'clisp'
-        return '"' . g:slimv_lisp . '" -i "' . swanks[0] . '"'
+        return lisp . ' -i "' . swanks[0] . '"'
     elseif g:slimv_impl == 'allegro'
-        return '"' . g:slimv_lisp . '" -L "' . swanks[0] . '"'
+        return lisp . ' -L "' . swanks[0] . '"'
     elseif g:slimv_impl == 'cmu'
-        return '"' . g:slimv_lisp . '" -load "' . swanks[0] . '"'
+        return lisp . ' -load "' . swanks[0] . '"'
     else
-        return '"' . g:slimv_lisp . '" -l "' . swanks[0] . '"'
+        return lisp . ' -l "' . swanks[0] . '"'
     endif
 endfunction
 
