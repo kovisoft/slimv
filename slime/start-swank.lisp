@@ -32,6 +32,7 @@
     #+SBCL (sb-unix::posix-getenv name)
     #+LISPWORKS (lispworks:environment-variable name)
     #+CCL (ccl::getenv name)
+    #+ABCL (java:jstatic "getenv" "java.lang.System" name)
     default))
 
 (swank:create-server :port (parse-integer (my-getenv "SWANK_PORT" "4005"))
