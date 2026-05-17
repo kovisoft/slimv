@@ -67,7 +67,7 @@
   '(:powerpc :ppc :ppc64 :x86 :x86-64 :x86_64 :amd64 :i686 :i586 :i486 :pc386 :iapx386
     :sparc64 :sparc :hppa64 :hppa :arm :armv5l :armv6l :armv7l :arm64 :aarch64
     :pentium3 :pentium4
-    :mips :mipsel
+    :mips :mipsel :loongarch64
     :java-1.4 :java-1.5 :java-1.6 :java-1.7))
 
 (defun q (s) (read-from-string s))
@@ -264,7 +264,8 @@ If LOAD is true, load the fasl file."
     swank-mrepl
     swank-trace-dialog
     swank-macrostep
-    swank-quicklisp)
+    swank-quicklisp
+    swank-indentation)
   "List of names for contrib modules.")
 
 (defun append-dir (absolute name)
@@ -357,8 +358,8 @@ global variabes in SWANK."
   (when setup
     (setup)))
 
-(defun dump-image (filename)
-  (init :setup nil)
+(defun dump-image (filename &key load-contribs)
+  (init :setup nil :load-contribs load-contribs)
   (funcall (q "swank/backend:save-image") filename))
 
 (defun list-fasls (&key (include-contribs t) (compile t)
@@ -386,7 +387,7 @@ global variabes in SWANK."
   package definition is subsequently reevaluated. See the section on
   [package variance](http://www.sbcl.org/manual/#Package-Variance) in
   the SBCL manual."
-  `(eval-when (:compile-toplevel :load-toplevel, :execute)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
      (locally
          (declare #+sbcl
                   (sb-ext:muffle-conditions sb-kernel::package-at-variance))

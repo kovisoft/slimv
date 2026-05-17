@@ -399,49 +399,6 @@ corresponding values in the CDR of VALUE."
                `((t (error "dcase failed: ~S" ,tmp))))))))
 
 
-;;;; Interrupt handling 
-
-;; Usually we'd like to enter the debugger when an interrupt happens.
-;; But for some operations, in particular send&receive, it's crucial
-;; that those are not interrupted when the mailbox is in an
-;; inconsistent/locked state. Obviously, if send&receive don't work we
-;; can't communicate and the debugger will not work.  To solve that
-;; problem, we try to handle interrupts only at certain safe-points.
-;;
-;; Whenever an interrupt happens we call the function
-;; INVOKE-OR-QUEUE-INTERRUPT.  Usually this simply invokes the
-;; debugger, but if interrupts are disabled the interrupt is put in a
-;; queue for later processing.  At safe-points, we call
-;; CHECK-SLIME-INTERRUPTS which looks at the queue and invokes the
-;; debugger if needed.
-;;
-;; The queue for interrupts is stored in a thread local variable.
-;; WITH-CONNECTION sets it up.  WITH-SLIME-INTERRUPTS allows
-;; interrupts, i.e. the debugger is entered immediately.  When we call
-;; "user code" or non-problematic code we allow interrupts.  When
-;; inside WITHOUT-SLIME-INTERRUPTS, interrupts are queued.  When we
-;; switch from "user code" to more delicate operations we need to
-;; disable interrupts.  In particular, interrupts should be disabled
-;; for SEND and RECEIVE-IF.
-
-;; If true execute interrupts, otherwise queue them.
-;; Note: `with-connection' binds *pending-slime-interrupts*.
-(defvar *slime-interrupts-enabled*)
-
-(defmacro with-interrupts-enabled% (flag body)
-  `(progn
-     ,@(if flag '((check-slime-interrupts)))
-     (multiple-value-prog1
-         (let ((*slime-interrupts-enabled* ,flag))
-           ,@body)
-       ,@(if flag '((check-slime-interrupts))))))
-
-(defmacro with-slime-interrupts (&body body)
-  `(with-interrupts-enabled% t ,body))
-
-(defmacro without-slime-interrupts (&body body)
-  `(with-interrupts-enabled% nil ,body))
-
 (defun queue-thread-interrupt (thread function)
   (interrupt-thread thread
                     (lambda ()
@@ -777,7 +734,8 @@ first."
            (serve-requests (setf connection (make-connection socket client style))))
       (unless dont-close
         (%stop-server :socket socket)
-        (when (eq style :spawn)
+        (when (and connection
+                   (eq style :spawn))
           (with-connection (connection)
             (loop
              (dcase (wait-for-event `(:run-on-main-thread _))
@@ -879,30 +837,44 @@ if the file doesn't exist; otherwise the first line of the file."
          (force-user-output)
          ,k))))
 
-(defun handle-requests (connection &optional timeout)
+(defun handle-requests (connection &optional timeout interrupt-handler)
   "Read and process :emacs-rex requests.
 The processing is done in the extent of the toplevel restart."
   (with-connection (connection)
     (cond (*sldb-quit-restart*
-           (process-requests timeout))
+           (process-requests timeout interrupt-handler))
           (t
            (tagbody
             start
               (with-top-level-restart (connection (go start))
-                (process-requests timeout)))))))
+                (process-requests timeout interrupt-handler)))))))
 
-(defun process-requests (timeout)
+(defun process-requests (timeout &optional interrupt-handler)
   "Read and process requests from Emacs."
-  (loop
-   (multiple-value-bind (event timeout?)
-       (wait-for-event `(or (:emacs-rex . _)
-                            (:emacs-channel-send . _))
-                       timeout)
-     (when timeout? (return))
-     (dcase event
-       ((:emacs-rex &rest args) (apply #'eval-for-emacs args))
-       ((:emacs-channel-send channel (selector &rest args))
-        (channel-send channel selector args))))))
+  (prog (interruption)
+   again
+     (multiple-value-bind (event timeout?)
+         (call-with-interrupt-handler
+          (lambda (interrupt-function)
+            (when interrupt-handler
+              (funcall interrupt-handler interrupt-function))
+            (setf interruption interrupt-function)
+            (go interrupt))
+          (lambda ()
+            (wait-for-event `(or (:emacs-rex . _)
+                                 (:emacs-channel-send . _))
+                            timeout)))
+       
+       (when timeout? (return))
+       (dcase event
+         ((:emacs-rex &rest args) (apply #'eval-for-emacs args))
+         ((:emacs-channel-send channel (selector &rest args))
+          (channel-send channel selector args))))
+     (go again)
+   interrupt
+     (let ((*slime-interrupts-enabled* t))
+       (funcall interruption))
+     (go again)))
 
 (defun current-socket-io ()
   (connection.socket-io *emacs-connection*))
@@ -1027,7 +999,8 @@ The processing is done in the extent of the toplevel restart."
            :new-package :new-features :ed :indentation-update
            :eval :eval-no-wait :background-message :inspect :ping
            :y-or-n-p :read-from-minibuffer :read-string :read-aborted :test-delay
-           :write-image :ed-rpc :ed-rpc-no-wait)
+           :write-image :ed-rpc :ed-rpc-no-wait
+           :new-repl-output)
           &rest _)
          (declare (ignore _))
          (encode-message event (current-socket-io)))
@@ -1697,6 +1670,22 @@ Fall back to the current if no such package exists."
   (or (and string (guess-package string))
       *package*))
 
+(defmacro with-condition-printing (lines &body body)
+  `(let* ((*print-readably* nil)
+          (*print-pretty* t)
+          (*print-right-margin* 65)
+          (*print-circle* t)
+          #+#.(swank/backend:with-symbol '*print-circle-not-shared* 'sb-ext)
+          (sb-ext:*print-circle-not-shared* t)
+          (*print-length* (or *print-length* 64))
+          #+#.(swank/backend:with-symbol '*print-vector-length* 'sb-ext)
+          (sb-ext:*print-vector-length* (or sb-ext:*print-vector-length* 1000))
+          (*print-level* (or *print-level* 6))
+          (*print-lines* (or *print-lines* ,lines)))
+     ,@body))
+
+(defvar *eval-continuation* nil)
+
 (defun eval-for-emacs (form buffer-package id)
   "Bind *BUFFER-PACKAGE* to BUFFER-PACKAGE and evaluate FORM.
 Return the result to the continuation ID.
@@ -1706,7 +1695,8 @@ Errors are trapped and invoke our debugger."
          (let ((*buffer-package* (guess-buffer-package buffer-package))
                (*buffer-readtable* (guess-buffer-readtable buffer-package))
                (*pending-continuations* (cons id *pending-continuations*))
-               (*pre-reply-hook* *pre-reply-hook*))
+               (*pre-reply-hook* *pre-reply-hook*)
+               (*eval-continuation* id))
            (check-type *buffer-package* package)
            (check-type *buffer-readtable* readtable)
            ;; APPLY would be cleaner than EVAL. 
@@ -1718,39 +1708,72 @@ Errors are trapped and invoke our debugger."
       (send-to-emacs `(:return ,(current-thread)
                                ,(if ok
                                     `(:ok ,result)
-                                    `(:abort ,(prin1-to-string condition)))
+                                    `(:abort ,(with-condition-printing nil
+                                                (prin1-to-string condition))))
                                ,id)))))
 
 (defvar *echo-area-prefix* "=> "
   "A prefix that `format-values-for-echo-area' should use.")
 
-(defun format-values-for-echo-area (values)
+(defun format-values-for-echo-area (values max-lines width)
   (with-buffer-syntax ()
-    (let ((*print-readably* nil))
-      (cond ((null values) "; No value")
-            ((and (integerp (car values)) (null (cdr values)))
-             (let ((i (car values)))
-               (format nil "~A~D (~a bit~:p, #x~X, #o~O, #b~B)" 
-                       *echo-area-prefix*
-                       i (integer-length i) i i i)))
-            ((and (typep (car values) 'ratio)
-                  (null (cdr values))
-                  (ignore-errors
-                   ;; The ratio may be to large to be represented as a single float
-                   (format nil "~A~D (~:*~f)" 
-                           *echo-area-prefix*
-                           (car values)))))
-            (t (format nil "~a~{~S~^, ~}" *echo-area-prefix* values))))))
+    (let* ((*print-readably* nil)
+           (*print-right-margin* (- width 10))
+           (output
+             (with-output-to-string (out)
+               (cond ((null values) "; No value")
+                     ((and (integerp (car values)) (null (cdr values)))
+                      (let ((i (car values)))
+                        (format out "~A~D (~a bit~:p, #x~X, #o~O, #b~B)"
+                                *echo-area-prefix*
+                                i (integer-length i) i i i)))
+                     ((and (typep (car values) 'ratio)
+                           (null (cdr values))
+                           (ignore-errors
+                            ;; The ratio may be to large to be represented as a single float
+                            (format out "~A~D (~:*~f)"
+                                    *echo-area-prefix*
+                                    (car values)))))
+                     (t (format out "~a~{~S~^, ~}" *echo-area-prefix* values)))))
+           (max-chars (* max-lines width))
+           (lines (count #\Newline output)))
+      (if (and (<= (length output) max-chars)
+               (<= lines max-chars))
+          output
+          (let ((lines-left max-lines)
+                (chars-left max-chars)
+                (start 0))
+            (with-output-to-string (out)
+              (loop for newline = (position #\Newline output :start start)
+                    do
+                    (let* ((end (or newline
+                                    (length output)))
+                           (line-length (- end start)))
+                      (if (or (> line-length chars-left)
+                              (= lines-left 1))
+                          (cond ((zerop start)
+                                 (write-string output out :start start :end (- chars-left 25))
+                                 (write-string " ... " out)
+                                 (write-string output out :start (- (length output) 20))
+                                 (return))
+                                (t
+                                 (write-string " ... " out)
+                                 (write-string output out :start (- (length output) 20))
+                                 (return)))
+                          (write-string output out :start start
+                                                   :end (when newline
+                                                          (1+ newline))))
+                      (decf lines-left)
+                      (decf chars-left line-length))
+                    while newline
+                    do (setf start (1+ newline)))))))))
 
-(defmacro values-to-string (values)
-  `(format-values-for-echo-area (multiple-value-list ,values)))
-
-(defslimefun interactive-eval (string)
+(defslimefun interactive-eval (string lines width)
   (with-buffer-syntax ()
     (with-retry-restart (:msg "Retry SLIME interactive evaluation request.")
       (let ((values (multiple-value-list (eval (from-string string)))))
         (finish-output)
-        (format-values-for-echo-area values)))))
+        (format-values-for-echo-area values lines width)))))
 
 (defslimefun eval-and-grab-output (string)
   (with-buffer-syntax ()
@@ -1776,10 +1799,10 @@ last form."
          (setq values (multiple-value-list (eval form)))
          (finish-output))))))
 
-(defslimefun interactive-eval-region (string)
+(defslimefun interactive-eval-region (string lines width)
   (with-buffer-syntax ()
     (with-retry-restart (:msg "Retry SLIME interactive evaluation request.")
-      (format-values-for-echo-area (eval-region string)))))
+      (format-values-for-echo-area (eval-region string) lines width))))
 
 (defslimefun re-evaluate-defvar (form)
   (with-buffer-syntax ()
@@ -2080,6 +2103,7 @@ after Emacs causes a restart to be invoked."
                             (symbol-value '*buffer-package*))
                        *package*))
         (*sldb-level* (1+ *sldb-level*))
+        (*print-readably* nil)
         (*sldb-stepping-p* nil))
     (force-user-output)
     (call-with-debugging-environment
@@ -2122,23 +2146,15 @@ conditions are simply reported."
   (let ((limit (ash 1 16)))
     (with-string-stream (stream :length limit)
       (handler-case
-          (let ((*print-readably* nil)
-                (*print-pretty* t)
-                (*print-right-margin* 65)
-                (*print-circle* t)
-                (*print-length* (or *print-length* 64))
-                #+#.(swank/backend:with-symbol '*print-vector-length* 'sb-ext)
-                (sb-ext:*print-vector-length* (or sb-ext:*print-vector-length* 1000))
-                (*print-level* (or *print-level* 6))
-                (*print-lines* (or *print-lines* limit)))
+          (with-condition-printing limit
             (print-condition condition stream))
         (serious-condition (c)
           (ignore-errors
-            (with-standard-io-syntax
-              (let ((*print-readably* nil))
-                (format stream "~&Error (~a) during printing: " (type-of c))
-                (print-unreadable-object (condition stream :type t
-                                                    :identity t))))))))))
+           (with-standard-io-syntax
+             (let ((*print-readably* nil))
+               (format stream "~&Error (~a) during printing: " (type-of c))
+               (print-unreadable-object (condition stream :type t
+                                                          :identity t))))))))))
 
 (defun %condition-message (condition)
   (string-trim #(#\newline #\space #\tab)
@@ -2294,8 +2310,9 @@ has changed, ignore the request."
     (with-buffer-syntax (package)
       (funcall print values))))
 
-(defslimefun eval-string-in-frame (string frame package)
-  (eval-in-frame-aux frame string package #'format-values-for-echo-area))
+(defslimefun eval-string-in-frame (string frame package lines width)
+  (eval-in-frame-aux frame string package
+                     (lambda (values) (format-values-for-echo-area values lines width))))
 
 (defslimefun pprint-eval-string-in-frame (string frame package)
   (eval-in-frame-aux frame string package #'swank-pprint))
@@ -2519,7 +2536,8 @@ Record compiler notes signalled as `compiler-condition's."
 ;;;; Loading
 
 (defslimefun load-file (filename)
-  (to-string (load (filename-to-pathname filename))))
+  (with-buffer-syntax ()
+    (to-string (load (filename-to-pathname filename)))))
 
 
 ;;;;; swank-require
@@ -2528,11 +2546,12 @@ Record compiler notes signalled as `compiler-condition's."
   "Load the module MODULE."
   (dolist (module (ensure-list modules))
     (unless (member (string module) *modules* :test #'string=)
-      (require module (if filename
-                          (filename-to-pathname filename)
-                          (module-filename module)))
-      (assert (member (string module) *modules* :test #'string=)
-              () "Required module ~s was not provided" module)))
+      (catch 'dont-load
+        (require module (if filename
+                            (filename-to-pathname filename)
+                            (module-filename module)))
+        (assert (member (string module) *modules* :test #'string=)
+                () "Required module ~s was not provided" module))))
   *modules*)
 
 (defvar *find-module* 'find-module
@@ -2644,8 +2663,7 @@ the filename of the module (or nil if the file doesn't exist).")
 
 (defslimefun simple-completions (prefix package)
   "Return a list of completions for the string PREFIX."
-  (let ((strings (all-completions prefix package)))
-    (list strings (longest-common-prefix strings))))
+  (all-completions prefix package))
 
 (defun all-completions (prefix package)
   (multiple-value-bind (name pname intern) (tokenize-symbol prefix)
@@ -2658,7 +2676,7 @@ the filename of the module (or nil if the file doesn't exist).")
            (strings (loop for sym in syms
                           for str = (unparse-symbol sym)
                           when (prefix-match-p name str) ; remove |Foo|
-                          collect str)))
+                          collect (cons str sym))))
       (format-completion-set strings intern pname))))
 
 (defun matching-symbols (package external test)
@@ -2693,11 +2711,45 @@ the filename of the module (or nil if the file doesn't exist).")
                  (if diff-pos (subseq s1 0 diff-pos) s1))))
         (reduce #'common-prefix strings))))
 
+(defun symbol-classification-string (symbol)
+  "Return a string in the form -f-c---- where each letter stands for
+boundp fboundp generic-function class macro special-operator package accessor"
+  (let ((letters "bfgctmspa")
+        (result (copy-seq "---------")))
+    (flet ((flip (letter)
+             (setf (char result (position letter letters))
+                   letter)))
+      (when (boundp symbol) (flip #\b))
+      (when (fboundp symbol)
+        (flip #\f)
+        (when (typep (ignore-errors (fdefinition symbol))
+                     'generic-function)
+          (flip #\g)))
+      (when (type-specifier-p symbol) (flip #\t))
+      (when (find-class symbol nil)   (flip #\c) )
+      (when (macro-function symbol)   (flip #\m))
+      (when (special-operator-p symbol) (flip #\s))
+      (when (find-package symbol)       (flip #\p))
+      (when (structure-accessor-p symbol) (flip #\a))
+      result)))
+
 (defun format-completion-set (strings internal-p package-name)
   "Format a set of completion strings.
 Returns a list of completions with package qualifiers if needed."
-  (mapcar (lambda (string) (untokenize-symbol package-name internal-p string))
-          (sort strings #'string<)))
+  (with-standard-io-syntax
+    (let ((*package* (find-package :keyword)))
+      (sort (mapcar (lambda (c)
+                      (if (stringp c)
+                          (list (untokenize-symbol package-name internal-p c))
+                          (destructuring-bind (name &rest symbol) c
+                            (list* (untokenize-symbol package-name internal-p name)
+                                   (if (stringp symbol)
+                                       symbol
+                                       (symbol-classification-string symbol))
+                                   (when (symbolp symbol)
+                                     (list (write-to-string symbol :readably t)))))))
+                    strings)
+            #'string< :key #'car))))
 
 
 ;;;; Simple arglist display
@@ -3381,14 +3433,36 @@ Return nil if there's no previous object."
    ('car (car cons))
    ('cdr (cdr cons))))
 
+(defun find-cycle (x)
+  (let ((fast x)
+        (slow x))
+    (loop (pop fast)
+          (pop fast)
+          (pop slow)
+          (when (eq fast slow)
+            (return)))
+    (loop for i from 0
+          when (eq x fast)
+            return (values x i)
+          do (pop x)
+             (pop fast))))
+
 (defun inspect-list (list)
   (multiple-value-bind (length tail) (safe-length list)
     (flet ((frob (title list)
              (list* title '(:newline) (inspect-list-aux list))))
       (cond ((not length)
-             (frob "A circular list:"
-                   (cons (car list)
-                         (ldiff (cdr list) list))))
+             (multiple-value-bind (cycle distance) (find-cycle list)
+               (if (= distance 0)
+                   (frob "A circular list:"
+                         (cons (car list)
+                               (ldiff (cdr list) list)))
+                   (frob (format nil "A list containing a cycle, starting from ~
+                                      element ~D:"
+                                 distance)
+                         (append (subseq list 0 distance)
+                                 (cons (car cycle)
+                                       (ldiff (cdr cycle) cycle)))))))
             ((not tail)
              (frob "A proper list:" list))
             (t
@@ -3859,6 +3933,7 @@ Collisions are caused because package information is ignored."
   (pushnew :swank *features*)
   (setq *swank-wire-protocol-version* version)
   (setq *load-path* load-path))
+
 
 (defun init ()
   (run-hook *after-init-hook*))

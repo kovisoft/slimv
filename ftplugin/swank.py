@@ -5,7 +5,7 @@
 # SWANK client for Slimv
 # swank.py:     SWANK client code for slimv.vim plugin
 # Version:      0.9.14
-# Last Change:  02 Jan 2025
+# Last Change:  17 May 2026
 # Maintainer:   Tamas Kovacs <kovisoft at gmail dot com>
 # License:      This file is placed in the public domain.
 #               No warranty, express or implied.
@@ -831,6 +831,7 @@ def swank_listen():
                                 conn_info = make_keys(params)
                                 pid = conn_info[':pid']
                                 swank_version = conn_info.get(':version', 'nil')
+                                swank_version = swank_version.replace('.git', '')
                                 if len(swank_version) == 8:
                                     # Convert version to YYYY-MM-DD format
                                     swank_version = swank_version[0:4] + '-' + swank_version[4:6] + '-' + swank_version[6:8]
@@ -857,8 +858,14 @@ def swank_listen():
                                 retval = retval + new_line(retval) + swank_parse_compile(params) + get_prompt()
                             else:
                                 if action.name == ':completions' or action.name == ':simple-completions':
-                                    if type(params[0]) == list and len(params[0]) > 0 and type(params[0][0]) == str and params[0][0] != 'nil':
-                                        compl = "\n".join(params[0])
+                                    if (len(params) == 2 and type(params[0]) == list and type(params[1]) == str and len(params[0]) > 0 and type(params[0][0]) == str):
+                                        names = params[0]
+                                    elif all((type(param) == list and type(param[0]) == str) for param in params):
+                                        names = [param[0] for param in params]
+                                    else:
+                                        names = ['nil']
+                                    if names[0] != 'nil':
+                                        compl = "\n".join(names)
                                         retval = retval + compl.replace('"', '')
                                 elif action.name == ':fuzzy-completions':
                                     if type(params[0]) == list and type(params[0][0]) == list:

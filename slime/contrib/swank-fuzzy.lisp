@@ -39,21 +39,15 @@ function. See Fuzzy Completion in the manual for details.")
 The main result is a list of completion objects, where a completion
 object is:
 
-    (COMPLETED-STRING SCORE (&rest CHUNKS) CLASSIFICATION-STRING)
+    (COMPLETED-STRING CLASSIFICATION-STRING SYMBOL-NAME (&rest CHUNKS))
 
 where a CHUNK is a description of a matched substring:
 
     (OFFSET SUBSTRING)
 
-and FLAGS is short string describing properties of the symbol (see
-SYMBOL-CLASSIFICATION-STRING).
+and CLASSIFICATION-STRING is a short string describing properties of
+the symbol (see SYMBOL-CLASSIFICATION-STRING).
 
-E.g., completing \"mvb\" in a package that uses COMMON-LISP would
-return something like:
-
-    ((\"multiple-value-bind\" 26.588236 ((0 \"m\") (9 \"v\") (15 \"b\"))
-     (:FBOUNDP :MACRO))
-     ...)
 
 If STRING is package qualified the result list will also be
 qualified.  If string is non-qualified the result strings are
@@ -148,13 +142,16 @@ that emacs is expecting.  Converts symbols to strings, fixes case
 issues, and adds information (as a string) describing if the symbol is
 bound, fbound, a class, a macro, a generic-function, a
 special-operator, or a package."
-  (with-struct (fuzzy-matching. symbol score package-chunks symbol-chunks
+  (with-struct (fuzzy-matching. symbol package-chunks symbol-chunks
                                 symbol-p)
                fuzzy-matching
     (multiple-value-bind (name added-length)
         (fuzzy-format-matching fuzzy-matching user-input-string)
       (list name
-            (format nil "~,2f" score)
+            (if symbol-p
+                (symbol-classification-string symbol)
+                "-------p-")
+            (and symbol-p (write-to-string symbol))
             (append package-chunks
                     (mapcar (lambda (chunk)
                               ;; Fix up chunk positions to account for possible
@@ -162,10 +159,7 @@ special-operator, or a package."
                               (let ((offset (first chunk))
                                     (string (second chunk)))
                                 (list (+ added-length offset) string)))
-                            symbol-chunks))
-            (if symbol-p
-                (symbol-classification-string symbol)
-                "-------p")))))
+                            symbol-chunks))))))
 
 (defun fuzzy-completion-set (string default-package-name
                              &key limit time-limit-in-msec)
@@ -186,9 +180,12 @@ exhausted."
       (if (array-has-fill-pointer-p matchings)
           (setf (fill-pointer matchings) limit)
           (setf matchings (make-array limit :displaced-to matchings))))
-    (map-into matchings #'(lambda (m)
-                            (fuzzy-convert-matching-for-emacs m string))
-              matchings)
+    (with-standard-io-syntax
+      (let ((*package* (find-package :keyword))
+            (*print-readably* nil))
+        (map-into matchings (lambda (m)
+                              (fuzzy-convert-matching-for-emacs m string))
+                  matchings)))
     (values matchings interrupted-p)))
 
 

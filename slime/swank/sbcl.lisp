@@ -50,7 +50,13 @@
      (let ((sym (find-symbol "META-INFO" "SB-C")))
        (and sym
             (fboundp sym)
-            (funcall sym :setf :inverse ()))))))
+            (funcall sym :setf :inverse ())))))
+
+  (defun sbcl-version>= (&rest subversions)
+    #+#.(swank/backend:with-symbol 'assert-version->= 'sb-ext)
+    (values (ignore-errors (apply #'sb-ext:assert-version->= subversions) t))
+    #-#.(swank/backend:with-symbol 'assert-version->= 'sb-ext)
+    nil))
 
 ;;; swank-mop
 
@@ -253,7 +259,7 @@
 (progn
   (defun input-ready-p (stream)
     (or (not (fd-stream-input-buffer-empty-p stream))
-        (handle-listen (sockint::fd->handle (sb-impl::fd-stream-fd stream)))))
+        (handle-listen (sb-impl::fd-stream-fd stream))))
 
   (sb-alien:define-alien-routine ("WSACreateEvent" wsa-create-event)
       sb-win32:handle)
@@ -556,7 +562,7 @@ When Emacs presents the message it already has the source popped up
 and the source form highlighted. This makes much of the information in
 the error-context redundant."
   (let ((sb-int:*print-condition-references* nil))
-    (princ-to-string condition)))
+    (swank::safe-condition-message condition)))
 
 (defun compiler-error-context (error-context)
   "Describe a compiler error for Emacs including context information."
@@ -1329,19 +1335,15 @@ stack."
     (code-location-source-location
      (sb-di:frame-code-location (nth-frame index)))))
 
-(defvar *keep-non-valid-locals* nil)
-
 (defun frame-debug-vars (frame)
   "Return a vector of debug-variables in frame."
   (let* ((all-vars (sb-di::debug-fun-debug-vars (sb-di:frame-debug-fun frame)))
          (loc (sb-di:frame-code-location frame))
-         (vars (if *keep-non-valid-locals*
-                   all-vars
-                   (remove-if (lambda (var)
-                                (ecase (sb-di:debug-var-validity var loc)
-                                  (:valid nil)
-                                  ((:invalid :unknown) t)))
-                              all-vars)))
+         (vars (remove-if (lambda (var)
+                            (ecase (sb-di:debug-var-validity var loc)
+                              (:valid nil)
+                              ((:invalid :unknown) t)))
+                          all-vars))
          more-context
          more-count)
     (values (when vars
@@ -1732,11 +1734,12 @@ stack."
 
   (defun mailbox (thread)
     "Return THREAD's mailbox."
-    (sb-thread:with-mutex (*mailbox-lock*)
-      (or (find thread *mailboxes* :key #'mailbox.thread)
-          (let ((mb (make-mailbox :thread thread)))
-            (push mb *mailboxes*)
-            mb))))
+    (sb-sys:without-interrupts
+     (sb-thread:with-mutex (*mailbox-lock*)
+       (or (find thread *mailboxes* :key #'mailbox.thread)
+           (let ((mb (make-mailbox :thread thread)))
+             (push mb *mailboxes*)
+             mb)))))
 
   (defimplementation wake-thread (thread)
     #-darwin
@@ -1748,15 +1751,16 @@ stack."
     (signal-sem (mailbox.sem (mailbox thread))))
 
   (defimplementation send (thread message)
-    (let* ((mbox (mailbox thread))
-           (mutex (mailbox.mutex mbox)))
-      (sb-thread:with-mutex (mutex)
-        (setf (mailbox.queue mbox)
-              (nconc (mailbox.queue mbox) (list message)))
-        #-darwin
-        (sb-thread:condition-broadcast (mailbox.waitqueue mbox))
-        #+darwin
-        (signal-sem (mailbox.sem mbox)))))
+    (sb-sys:without-interrupts
+      (let* ((mbox (mailbox thread))
+             (mutex (mailbox.mutex mbox)))
+        (sb-thread:with-mutex (mutex)
+          (setf (mailbox.queue mbox)
+                (nconc (mailbox.queue mbox) (list message)))
+          #-darwin
+          (sb-thread:condition-broadcast (mailbox.waitqueue mbox))
+          #+darwin
+          (signal-sem (mailbox.sem mbox))))))
   
   (defimplementation receive-if (test &optional timeout)
     (let* ((mbox (mailbox (current-thread)))
@@ -1768,17 +1772,20 @@ stack."
       (assert (or (not timeout) (eq timeout t)))
       (loop
        (check-slime-interrupts)
-       (sb-thread:with-mutex (mutex)
-         (let* ((q (mailbox.queue mbox))
-                (tail (member-if test q)))
-           (when tail
-             (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
-             (return (car tail)))
-           (when (eq timeout t) (return (values nil t)))
-           #-darwin
+       (sb-thread:with-recursive-lock (mutex)
+         (sb-sys:without-interrupts
+           (let* ((q (mailbox.queue mbox))
+                  (tail (member-if test q)))
+             (when tail
+               (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
+               (return (car tail)))
+             (when (eq timeout t) (return (values nil t)))))
+         #-darwin
+         (let ((*slime-interrupts-enabled* t))
            (sb-thread:condition-wait waitq mutex)))
        #+darwin
-       (wait-sem sem))))
+       (let ((*slime-interrupts-enabled* t))
+         (wait-sem sem)))))
 
   (let ((alist '())
         (mutex (sb-thread:make-mutex :name "register-thread")))
@@ -1975,12 +1982,6 @@ stack."
 
 ;;;; wrap interface implementation
 
-(defun sbcl-version>= (&rest subversions)
-  #+#.(swank/backend:with-symbol 'assert-version->= 'sb-ext)
-  (values (ignore-errors (apply #'sb-ext:assert-version->= subversions) t))
-  #-#.(swank/backend:with-symbol 'assert-version->= 'sb-ext)
-  nil)
-
 (defimplementation wrap (spec indicator &key before after replace)
   (when (wrapped-p spec indicator)
     (warn "~a already wrapped with indicator ~a, unwrapping first"
@@ -2032,3 +2033,26 @@ stack."
 
 (defimplementation augment-features ()
   (append *features* #+sb-devel sb-impl:+internal-features+))
+
+(defimplementation structure-accessor-p (symbol)
+  #+#.(swank/backend:with-symbol 'structure-instance-accessor-p 'sb-kernel)
+  (sb-kernel:structure-instance-accessor-p symbol))
+
+#+#.(swank/backend:with-symbol '*interrupt-handler* 'sb-thread)
+(defimplementation call-with-interrupt-handler (interrupt-handler function)
+  (let ((sb-thread:*interrupt-handler* interrupt-handler))
+    (funcall function)))
+
+#+#.(swank/backend:boolean-to-feature-expression (swank/sbcl::sbcl-version>= 2 5 10 1))
+(defimplementation install-special-backquote-readers (rt)
+  (set-macro-character #\` (lambda (s c)
+                             (declare (ignore c))
+                             (list 'backq (read s t nil t))) t rt)
+  (set-macro-character #\, (lambda (s c)
+                             (declare (ignore c))
+                             (let ((n (read-char s)))
+			       (case n
+				 ((#\. #\@))
+				 (t (unread-char n s)))
+			       (list 'comma (read s t nil t))))
+		       t rt))
